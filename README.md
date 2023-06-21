@@ -1,4 +1,4 @@
-# ApacheCN 量化交易译文集
+# 飞龙的量化交易译文集
 
 > 协议：[CC BY-NC-SA 4.0](http://creativecommons.org/licenses/by-nc-sa/4.0/)
 > 
