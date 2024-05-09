@@ -1,0 +1,816 @@
+- en: '12'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Signals and Execution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '"We have two ears and one mouth, so that we can listen twice as much as we
+    speak,"'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: – Epictetus
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'This chapter will tell you exactly how you should prioritize orders and the
+    reasons behind this. We will look at managing portfolios with relative series,
+    but executing in absolute series. We will deep dive into exits, starting with
+    unprofitable and profitable ones. We will consider the mental hygiene of exits.
+    Then, we will move on to a popular topic: entries and re-entries. We will come
+    up with counterintuitive yet effective low-risk high-reward entry techniques.
+    The entire book has led up to this and the following chapter, so we will be revisiting
+    parts of the book, putting out some code that synthesizes everything we have seen
+    so far, and visualizing the results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Along the way, we will discuss the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing libraries
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Timing is money: the importance of timing orders'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Order prioritization
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Exits
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Entries
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You can access color versions of all images in this chapter via the following
+    link: [https://static.packt-cdn.com/downloads/9781801815192_ColorImages.pdf](https://static.packt-cdn.com/downloads/9781801815192_ColorImages.pdf).
+    You can also access source code for this chapter via the book''s GitHub repository:
+    [https://github.com/PacktPublishing/Algorithmic-Short-Selling-with-Python-Published-by-Packt](https://github.com/PacktPublishing/Algorithmic-Short-Selling-with-Python-Published-by-Packt).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing libraries
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'For this chapter and the rest of the book, we will be working with the `pandas`,
+    `numpy`, `yfinance`, and `matplotlib` libraries. We will also be working with
+    `find_peaks` from the ScientificPython library. So, please remember to import
+    them first:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Timing is money: the importance of timing orders'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In 2005, the Japanese market experienced an exponential rise. Zombie stocks
+    were alive again! In late January 2006, the police raided the party, literally.
+    They arrested the poster child of this new-Japan paradigm. And suddenly, it felt
+    like a nightclub closing. Crude neon lights were suddenly switched on. Haggard
+    drunk people were staring at each other on the dance floor, confused and disoriented.
+    Reality was back with a vengeance. The levitating zombies had rediscovered Newtonian
+    physics. Unfortunately, the availability and cost of borrow on any single issue
+    was dissuasive, so with my buddies on the Merrill Lynch stock lending desk, we
+    came up with a **Credit Rating Asset Price** (**CRAP**) basket-swap idea. We dumped
+    in all the zombies we could find. The cost of borrow was an affordable 2%. The
+    price would be end of day closing price. Capacity was virtually unlimited. At
+    a composite beta of 2.3, it had far more torque than index futures. We were in
+    business.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'But when it was time to pull the trigger, the principal balked. He complained
+    that it was too volatile, too risky, too unorthodox. So, we ended up "monitoring"
+    it, a fancy word for minting Monopoly money: -2%, -4%, -5%, day in, day out. Still,
+    he was not comfortable with the trade. After three weeks, I concluded that exotic
+    is a holiday destination, not a short position in a three-quarter of a billion-dollar
+    portfolio. Then, one day, the swap got in. It had my name on it too. I couldn''t
+    sleep that night. The next day, it tanked an additional -2%. The day after that,
+    it fell another -0.5%, but then, it started to stabilise. It went up +0.5%, +3%,
+    +6%. We had perfectly timed the bottom. But now, the mother of all short squeezes
+    was bringing democracy to short-sellers. Eventually, we closed the position with
+    a large loss on a short instrument that had come down -63% in less than 2 months.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The moral of the story: timing is money. Having the right idea is one thing.
+    Executing it well is another. Bear market rallies happen with metronomic regularity.
+    There are three certainties in life: taxes, death, and somewhere in between, bear
+    market rallies. Some market participants claim that markets cannot be timed. On
+    the long side, markets are more forgiving. Idea generation and execution can be
+    blended. The same upward drift that bails long participants penalises short sellers.
+    Many fundamental short sellers often lament they were too early, or sometimes
+    too late.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order prioritization
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Entry is a choice and exit a necessity. You may enter as you see fit, but you
+    rarely have the luxury to exit on your own terms. In execution trader English,
+    entries are limit orders while exits are stop or market orders. Long-only managers
+    often struggle with cash balances. They need to know how much they can buy on
+    a daily basis. A long/short portfolio has a few more moving parts than a classic
+    long-only book. Things can get messy quite quickly. It is therefore prudent to
+    set "right of way" for entries and exits. In execution trader English, exits always
+    come first. Cash-depleting orders have the "right of way." This can be summed
+    up as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Buy-to-cover is the highest priority. It functions like a buy order. It depletes
+    cash. Short-cover has an impact on long buying power and gross exposure. Buy-to-cover
+    may in rare cases trigger margin calls.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Sell long is the second-highest priority. It frees up immobilized cash.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Sell short: short entries generate cash. This excess cash can be used to buy
+    more stocks. Some jurisdictions compel short sellers to secure stock borrow before
+    placing short orders. Failure to do so results in **naked short selling**. This
+    practice refers to selling short without locating the borrow beforehand. This
+    is not illegal per se, but severely frowned upon. Trades are usually reclassified
+    as "failure to deliver" and closed. If you want to be taken seriously, just don''t…'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Buy long: once again, the most prestigious trade comes last. Only when all
+    trades have been lined up should buy long orders take place. If shorts are not
+    covered but longs are entered, this will reduce the cash balance. This may present
+    some risk if short positions need to be covered hastily.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Let''s recap. Trades that reduce risk come first. Those are buy-to-cover and
+    sell long. Then, trades that aim to increase the cash balance come next: sell
+    short and buy long.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Re-entry signals are one case where repeat offenders should be given a front-row
+    seat. Any re-entry signal is a confirmation that the longer trend is still valid.
+    Besides, there is already embedded P&L from prior positions. Consolidated open
+    risk is therefore lower than any new entry. This has limitations, however. Adding
+    to an existing position is called **pyramiding**. Like everything in life, trends
+    mature. Every new position is taken closer to the maturity—and eventually the
+    exhaustion—of a trend. This increases concentration risk and volatility. It is
+    therefore prudent to depreciate risk, for example by taking smaller positions
+    for each re-entry. Position sizes will eventually be too small and rejected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we will look in more detail at what happens when we run a system on relative
+    series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Relative prices and absolute execution
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While your system runs on currency-adjusted and benchmark-relative prices, sending
+    an order for Japanese stocks in U.S. dollars relative to MSCI World is guaranteed
+    to elicit some comical facial expressions on the trading desk. This may be as
+    clear as day to you, but for the record, traders suck at mind-reading. When communicating
+    in the real world, orders must be placed in local currency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since the system runs on currency-adjusted and benchmark-relative prices, stop
+    loss does not need to be translated. In fact, stop loss has no relationship to
+    the local absolute price. In the preceding chapters, stop losses were based on
+    relative price instead of absolute. This is because your system should run on
+    relative series. This means stop-loss orders do not need to rest on your broker''s
+    server. One benefit of not having resting stop-loss orders is that they cannot
+    be gamed by the predatory smart money: **High-Frequency Trading** (**HFT**) players.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order types
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The advent of HFT has seriously embellished the repertoire of trading orders.
+    Market participants who want to refine their execution beyond beating volume-weighted
+    average price are more than welcome to explore the ordering landscape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the purpose of this book, let''s stick to a simple principle: entry is
+    a choice, exit a necessity. This means exit trades are either at market, stop,
+    or stop limit orders. Entries are either fill or kill, limit or stop limit orders.
+    When we pull the trigger, we want to be filled. Our inner idiot loves the chase,
+    but our track record hates poor execution. A lack of discipline in your entries
+    and exits will affect your track record, so stick to the plan. A little restraint
+    pays off. There will be minor slippage in the conversion from relative to absolute
+    series with what the system suggests, but this all rounds up in the end.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, let's go over exits and entries—we discuss them in that order since, as
+    we already noted, exits should be prioritized over entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exits
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Exits are split between unprofitable and profitable exits. The former aims
+    at survival while the latter builds prosperity. We copiously discussed exits in
+    *Part II*, *The Outer Game: Developing a Robust Trading Edge*. Below is a step-by-step
+    short encapsulation that covers both the practical aspect and the mental hygiene
+    of exits.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stop loss
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Stop loss has a direct measurable impact on three out of the four variables
+    in the trading edge formula: win rate, loss rate, and average loss. For this reason
+    only, it always sits at the top of the priority list. Remember that what separates
+    pro short sellers from tourists is the ability to set stop losses and honor them.
+    Think of what follows as an essential checklist. We covered all those topics throughout
+    the book, with particular emphasis in *Chapter 7*, *Improve Your Trading Edge*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Set the stop loss at a logical articulation where the thesis is invalidated
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Set a loss mitigation trailing stop: This has two positive impacts:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: It mitigates losses and tilts gain expectancy toward break-even
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It will psychologically be easier to deal with and stop a smaller position
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Position size: Run your risk management to calculate your exposures before
+    sending trades'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Conservative at a fixed stop loss
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Aggressive at a trailing stop
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Up next is mental preparation. Taking small losses takes its toll on your emotional
+    capital. Do not neglect your mental hygiene. As a reminder, all great traders
+    focus on the mental capital, while the mediocre ones worry about moving average
+    duration or other meaningless trivia.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pre-mortem
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Visualize yourself closing the trade at a loss and take in the associated negative
+    emotions. Repeat the process and resize until you feel comfortable taking a loss.
+    That pre-packages your grief. Hit send and say goodbye to your money, taking the
+    following into consideration:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Time stop**: Cut or reduce position size. Time stops are psychologically
+    difficult to execute: "If I give it just one more day, week, month..." One trick
+    is to think of a real-life time waster and anchor the image to the position.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Mitigation loss**: Meditate, be mindful. This prevents eagerness or fear.
+    Losses are part of the game.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Stop loss**: This is the worst-case scenario. If you did your homework on
+    the pre-mortem, this should be a formality. First and foremost, forgive yourself.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Pre-mortem dates back to Stoic philosopher and Roman emperor Marcus Aurelius.
+    It is one of the most powerful visualization exercises for remaining stoic under
+    pressure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Zeigarnik effect
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Remind yourself of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the position is out of sight, you will barely remember that position in
+    2 weeks. Your capital is more important than the brain fog caused by a single
+    bad trade.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Taking small losses will ensure you live to trade another day. Bring the ruler
+    (prefrontal cortex) and the warrior mentality to execute the trade.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When you periodically go through your trading journal, pay particular attention
+    to stop losses. Be mindful of your feelings. This is not as emotionally charged
+    as it once was. You see, it was not that hard after all. If you smile, great.
+    Store that feeling. You are building new neural pathways of a wise trading warrior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Profitable exits
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Below is a step-by-step method for profitable exits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Decide on the risk reduction method in advance: target price, trailing exit,
+    options. Do not deviate.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Do not wait for the bear market rally. Cover your shorts as people continue
+    to sell to avoid market impact.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'This is the minimum quantity to close to break even on the trade:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Roll with the bear market rally. Let it wash over. If you have reduced risk
+    in advance, this should not affect your mental state. When the bear rally rolls
+    over, reset your stop loss.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the peak of the rally is lower than the previous one, then reload; else,
+    do nothing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Let''s wrap this up with some Python code. First, we will set up a target exit
+    price using three variables: `price`, `stop_loss`, and `r_multiplier`. We calculate
+    `r` as the distance from `price` to `stop_loss`. We then apply a multiplier, aptly
+    named `r_multiplier`. This number is added back to cost to calculate a target
+    price. Then, we will calculate the quantity to exit using the same `r_multiplier`.
+    In *Chapter 7*, *Improve Your Trading Edge*, we saw the inverse relationship between
+    target price and quantity to exit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output will be as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Half of the position will be exited at 80\. This reduces risk by 100%. Next,
+    let's consider how to time your entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Entry
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '"Look at market fluctuations as your friend rather than your enemy; profit
+    from folly rather than participate in it."'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: – Warren Buffett
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Great poker players do not play their hand. They play other players' hands.
+    To be successful, you need to systematically tilt probabilities in your favor.
+    Markets happen to be a probabilistic game. The way to achieve greatness is not
+    only to play your hand but the market's invisible hand as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first way to play the market's hand is something we saw in *Chapter 5*,
+    *Regime Definition*. Let the market decide on which side stocks should go. Let's
+    be honest for one second. Market participants who short bubbly stocks are repressed
+    revenge traders. Deep down, they are angry at their shadow selves for not participating
+    on the long side. Maybe they closed out too early. Maybe they dismissed that boat
+    altogether. Either way, they vent their frustration by putting other people's
+    precious money in immediate harm's way on the short side. Behind the adult call
+    for a return to "fair" valuation lies the shadow "need to be right" of a a 6 year
+    old child’s wounded ego.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is no better illustration of that phenomenon than TSLA. This is a car
+    manufacturer, in a notoriously difficult fragile sector, valued as a tech stock,
+    whose bonds are priced as junk. Something has to give. This gives short sellers
+    ample reason to ferociously raid the stock. In the wake of the Coronavirus pandemic,
+    the share price dropped to $400\. That gave short sellers the ammunition to double
+    their efforts, only to face a steep triple bagger rally in the following six months.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Had short sellers seized the drop as an opportunistic buying opportunity, would
+    they still have laid siege? Of course not, they would laugh and dance their way
+    to the bank. Everyone on the planet, from Nauru to Bobo-Dioulasso, would know
+    how smart they were for picking that stock. Now, they are miserably reduced to
+    demanding justice for that rude price. Either way, other people's money is not
+    a valid IQ test. Yet again, they allowed their ego to step on their toes in the
+    everlasting dance of the markets. Beware of the Cassandras who play God with Icarus
+    stocks, for they might drag you down to the underperforming world. When heeding
+    their advice, save the last coin for the Styx ferryman. If the short selling game
+    is about playing the invisible hand of the markets, then let the markets do the
+    heavy lifting for you. Short sell issues that the markets denigrate and enter
+    long on the ones in demand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second way to play the market's hand is to time the entry. For years, I
+    used to whine about short squeezes. I would enter a position, feel good, and then
+    be unceremoniously stopped out at the next bear market rally. The financial capital
+    suffers injury and the emotional capital suffers yet another insult. More importantly,
+    it seemed like the lesson was lost. Then one day, the energy of a short squeeze
+    dawned upon the density of my intellect. Since price seemed to rally beyond my
+    "line in the sand" stop loss anyways, all I had to do was to wait for the next
+    bear market rally to see the new shoreline and get a better execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I began to see bear market rallies as gifts. They brought their treasure trove
+    to shore for the picking. Once a bear market rally starts to recede, price wobbles
+    like a career politician. Short sellers are stranded ashore. Optimistic long holders
+    have yet to be dragged out to new depths. The line of demarcation is clear. In
+    execution trader English, this is a low-risk high-reward entry price with a clear
+    stop loss around the top and a probable drop ahead. Wait for the market to roll
+    over, then print a new lower swing high along a bearish trend to enter short.
+    By the way, this is the mirror entry of the "buy the dips" technique on the long
+    side.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The third way to play the market's hand is execution. Short sellers are dealt
+    disproportionately unfavorable probabilities. If you short on breakdowns, just
+    remember that 90%+ of market participants will only enter long, and that someone
+    somewhere sees the current weakness as an opportunity to buy at a discount. If
+    you short bearish stocks as they rally, you might be carried out by a short squeeze
+    or the beginning of a bull phase. As a short-seller, there is only a narrow window
+    of time when probabilities are in your favor. For this, you need to pay close
+    attention to price action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A good analogy is the leopard, the smallest of the African big four. Despite
+    outsmarting, outrunning, and outgunning their prey, leopards never chase. They
+    hide in trees and wait for the kill to come to them. Short sellers need to behave
+    in the same way. This is a three-step process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, your regime analysis (from *Chapter 5*, *Regime Definition*) should have
+    determined that stocks may be in either sideways or bearish mode. Agreeing with
+    the market generally tilts probabilities in your favor.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Second, the universe has been narrowed down into a short list of investable
+    candidates.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Third, the bear market rally rollover sends a clear signal that bulls are not
+    in charge.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Two steps are dictated by the market: setup and execution. One step comes out
+    of analysis: the short list of investable candidates. We have already discussed
+    how to tilt your trading edge in *Part II*, *The Outer Game: Developing a Robust
+    Trading Edge*, but we will revisit some of the key ideas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, use relative series.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Second, triage underperformers and outperformers with the regime.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Third, enter short after a swing high or long after a swing low.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fourth, set a stop loss at a logical articulation.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fifth, plan a partial exit to reduce risk.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Let's go back to the leopard. Once it pounces, it does not pause mid-air to
+    reflect upon the meaning of life, animal cruelty, or the comparative benefits
+    of a vegetarian diet at a cellular level. The time for introspection is over.
+    Now, it is execution time. Tourists will jump and swim after the boat as soon
+    as they conclude it is the right one. Pros will patiently wait for the market
+    to rally and flush out tourists. They will stand by as the rally docks in and
+    rolls over, and only then will they take a seat on the ferry. The best news about
+    short selling is the metronomic regularity of bear market rallies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rollover: the aikido of bear market rallies'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Every short seller who has been practicing the craft long enough has been hurt
+    in a bear market rally. A simple change in perspective can turn this energy from
+    devastation into power to harness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The objective is to enter as early as possible with a reasonable probability
+    of success. Short squeezes can be tricky. They always go further and last longer
+    than expected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The hallmark of short sellers on their way to mastery is to be right on the
+    next big down move, but still underestimate the energy of the bear market rally.
+    Respect the markets, for they most certainly have no respect for you. The market
+    does not know your name, nor should it care. Accept that you will have to pay
+    for confirmation. Wait for the local peak to pass and the rollover to start. We
+    will illustrate this with a few charts later, but for now, let's look at the pros
+    of this method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This rollover or rolling of the tide method has a few advantages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Risk management**: the current high is below the peak. Bulls are not in charge
+    anymore. Should the peak rise above, it is an early indication that the regime
+    may have changed. The trend is your friend.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Entry is close to the top**. Bears are in disarray. Bulls are optimistic.
+    You are opportunistic. Probabilities are in your corner of the ring for now.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Availability of borrow**: bear markets usually flush out tourists. Borrow
+    is available again. Even the most vocal short sellers are too scared to dip their
+    feet in the water.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Bigger position size**: the proximity of the top warrants a bigger size than
+    at breakdown level. You are closer to a logical stop loss. Should price rally
+    beyond the current top, you have your exit plan drawn out for you'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Clear demarcation line**: the top is where bulls and bears settle. There
+    is information available on supply, demand, and volatility.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: As follows are some other classic entry methods, which we discussed previously.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moving averages
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Moving averages are simple, valid, and sufficiently robust signals. Although
+    there's no perfect strategy, it's generally best to use a short duration moving
+    average, something like closing below the 5-day moving average. Please refer to
+    *Chapter 5*, *Regime Definition*, for further information on the moving average
+    crossover.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Retracements
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Retracements signal the distance from the highest point. This can be either
+    the distance from the highest high or the highest low, expressed in the average
+    true range. Think of it as a form of trailing stop loss. As a reminder, please
+    have a look at the retracement swing function we outlined in *Chapter 5*, *Regime
+    Definition*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next, let's remind ourselves about the `retest_swing` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Retest
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The swing detection code provided in *Chapter 5*, *Regime Definition* is based
+    on retest. Price prints a high, followed by a low. Price tries to climb to new
+    highs, but fails and drops below the previous low. The farther the distance from
+    the previous swing, the less noisy retests tend to be. As a reminder, please see
+    the source code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next, we will consider a Wells Fargo example, where both the retest and retracement
+    swing are active. If one method fails, the other can compensate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Putting it all together
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'It is now time to bring the ideas together, and synthesize the approach in
+    one block of code. In *Chapter 5*, *Regime Definition*, we put out a chart of
+    Wells Fargo versus the S&P 500 in absolute and relative series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.1: Wells Fargo price in absolute and relative to S&P500 from Sept
+    2015'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have covered pretty much everything already, so there is no real need to
+    comment on the code except for two things:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start with the initialization of the benchmark and download data for the
+    stock below. If you want to repeat the process for a list of tickers, insert a
+    loop above the `df` download line.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Secondly, we re-initialized the `_o`, `_h`, `_l`, and`_c` attributes via a list
+    comprehension. This will make sense in the next part of the code.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Next, we use the swing detection functions to calculate swings and the regime
+    across the absolute and relative series. It is more efficient to run the same
+    functions twice but assign either the absolute or relative series. This is why
+    we re-initialized `_o`, `_h`, `_l`, and`_c` before and the swing values below.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Below is the actual important code, which will print the graph shown in *Figure
+    12.1*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We run a loop over the absolute series first. We calculate swings and regime
+    using the floor ceiling method. At the end of the first loop, we re-initialize
+    `_o`, `_h`, `_l`, `_c` and swing variables using the relative series. We have
+    now calculated swings and regime for Wells Fargo in absolute and relative to S&P
+    500\. Let''s visualize the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will plot three distinctive charts: absolute, relative, and combined. We
+    will therefore store absolute and relative parameters in lists. Without further
+    ado, here are the three charts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.2: Wells Fargo swings and floor/ceiling regime in absolute'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Regime has been a fair predictor of behavior, especially in the latter part
+    of the period. The 2020 rally did not lead to a change in regime until a swing
+    low was registered in 2021\. Next, we will plot the relative series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.3: Wells Fargo swings and floor/ceiling regime relative to S&P 500'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we saw in an earlier chapter, Wells Fargo took it hard when the scandal
+    erupted and didn''t recover until 2021\. The regime looks superficially more nervous.
+    There were quite a few bullish false positives along the way. They were short
+    in scope and duration. Note how the red dots above the price line constitute good
+    entry and/or mobile stop levels. There is of course a small lag between printing
+    a swing high and their discovery. Finally, we combine both in one chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.4: Wells Fargo swings and floor/ceiling regime absolute and relative
+    to S&P 500'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This final chart looks a lot noisier than the previous two. Note how the floor/ceiling
+    method nailed the September 2016 scandal. The relative series consistently leads
+    the regime throughout the entire duration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s visualise the absolute and relative charts one more time using the graph
+    regime function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following is the regime plotted in absolute: the darker colors are loss-making
+    periods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.5: Wells Fargo colored floor/ceiling regime in absolute'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, let''s look at the relative series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_12_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.6: Wells Fargo colored floor/ceiling regime relative to S&P 500'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This last chart really shows the extent of the underperformance over the last
+    few years. There are numerous methods that identify trend exhaustion, such as
+    stochastics, RSI, MACD, DeMark indicators, and the latter's ancestor, Fibonacci
+    retracements. Most of those techniques boil down to bringing order to chaos. Unfortunately,
+    popularity does not necessarily indicate statistical robustness. If you still
+    believe in using predictive technical analysis, you could split your order in
+    two, where the first tranche uses predictive analysis and the second tranche is
+    added upon confirmation that the prediction was accurate. You will have marginally
+    better average execution when it works and will not be bankrupted when it does
+    not.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Above all, remember that one person's breakdown is someone else's "buy-on-weakness."
+    This is the short side; the market does not cooperate. Use bear market rallies
+    and short squeezes to time your entry. Cover when everyone else pukes. Reduce
+    risk when you can by trimming your positions and/or resetting your stop losses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This entire book has led to this and the next chapter. In summary, to put together
+    all we have covered in the preceding chapters, switch to relative series and triage
+    with the market regime. Enter short after a swing high or long after a swing low.
+    Set a stop loss above or below the swing and a target price to reduce risk. Calculate
+    your position size using your cost, stop loss, and risk budget.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keep a separate risk budget for each long/short side of each strategy. Honor
+    your stop losses and respect your strategy. Keep a clean trading journal. Refine
+    your mandate along the way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the next chapter, we will be looking at one of the most underrated tools
+    in your arsenal: your portfolio management system. Being a stock picker and a
+    portfolio manager are two distinct jobs that require different skill sets. The
+    moment you chose to manage a portfolio, you are no longer a stock jockey. You
+    have become a stable master. Your job is not to cross the finish line on horseback.
+    Your job is to nurture (or discard) horses that will cross (or fail to cross)
+    finish lines for the foreseeable future.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A relative long/short portfolio is a different beast from a classic long-only
+    or even an absolute long/short. Whatever tools you have been using so far are
+    in dire need of a radical upgrade. If you want a fighting chance in the markets,
+    you need an Iron Man suit.
+  prefs: []
+  type: TYPE_NORMAL

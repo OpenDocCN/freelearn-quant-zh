@@ -1,0 +1,824 @@
+- en: '9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Risk is a Number
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '"Facts are stubborn, but statistics are more pliable."'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: – Mark Twain
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'At the end of the day, whether you trade U.S. equities, pork bellies, or colorful
+    language with your significant other, you trade only one thing: risk. Academics
+    build their careers on developing complicated abstract metrics with fancy names.
+    The more arcane, the more likely they will land tenure somewhere. Proof by mathematical
+    intimidation is an easy path to a cushy academic tenure. Unfortunately, those
+    metrics ignore the experience of unsophisticated clients who stomach gut-wrenching
+    drawdowns. When market participants and investors cannot reconcile abstract numbers
+    with the reality of managing portfolios, they fall back on stories.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will introduce three metrics: Grit Index, Common Sense
+    Ratio, and t-stat of gain expectancy. The objective is to demystify risk and bring
+    it back to something everyone can intuitively relate to.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will cover the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing libraries
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Interpreting risk
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sharpe ratio: the right mathematical answer to the wrong question'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The Grit Index
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Common Sense Ratio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Van Tharp's SQN
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Robustness score
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You can access color versions of all images in this chapter via the following
+    link: [https://static.packt-cdn.com/downloads/9781801815192_ColorImages.pdf](https://static.packt-cdn.com/downloads/9781801815192_ColorImages.pdf).
+    You can also access source code for this chapter via the book''s GitHub repository:
+    [https://github.com/PacktPublishing/Algorithmic-Short-Selling-with-Python-Published-by-Packt](https://github.com/PacktPublishing/Algorithmic-Short-Selling-with-Python-Published-by-Packt).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing libraries
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'For this chapter and the rest of the book, we will be working with the `pandas`,
+    `numpy`, `yfinance`, and `matplotlib` libraries. So, please remember to import
+    them first:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Interpreting risk
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: On the short side, the markets do not cooperate. Market Darwinism dictates that
+    short sellers become exceptional risk managers. In the coming sections, we will
+    explore three vastly underrated risk metrics and their source code. Calibrate
+    risk using any or all of them, and you may have a long-term fighting chance. When
+    asked about risk, market participants usually do one of two things.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first one is to roll out a battery of metrics. They start with the Sharpe
+    ratio, add a measure of tracking error, spice it up with Sortino, a teaspoon of
+    Treynor, a drop of Jensen Alpha to make it look good, apply the finishing touch
+    with information ratio, and it is ready to serve to a bunch of incredulous clients,
+    who pretend to love the number "haute-cuisine." The indiscriminate proliferation
+    of metrics tells us one thing: we are hardwired to not understand risk.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second thing market participants do is to drop into dissertation mode. They
+    tell stories about the Fed, quantitative easing, interest rates, technological
+    disruption (the new synonym for trendy), and [insert laundry list of alarmist
+    news flow here…].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In financial creole, the sum of all fears about a future over which no one has
+    any control is called **the wall of worry**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Risk is not the sum of all fears. Risk is not a story. Risk is a number. At
+    the micro level, it is how much you can afford to lose on a single trade. At the
+    portfolio level, it is how much drawdown as an aggregate you can withstand and
+    still come out ahead. At the professional level, it is how much, how often, and
+    how long you can afford to lose before someone unceremoniously yanks the plug.
+    At the lifestyle level, it is how often you can jump from one shop to the next
+    before teaching math to bored high school students.
+  prefs: []
+  type: TYPE_NORMAL
+- en: No one can predict what happens in this world, but every market participant
+    can control the vulnerability of their portfolio to shocks. In *Chapter 1*, *The
+    Stock Market Game*, we considered finite versus infinite games. The objective
+    of the infinite game is to stay in the game. If you want to play an infinite game,
+    then you need to focus exclusively on the metrics that will unapologetically assess
+    your ability to survive shocks and live to trade another day. The logical way
+    to measure robustness is therefore to include drawdowns somewhere in the equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Sharpe ratio: the right mathematical answer to the wrong question'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The Sharpe ratio is such an intricate part of life in the industry that a mundane
+    greeting such as "how are you?" could easily be interchanged with "how is your
+    Sharpe?" The question the ratio is trying to answer is conceptually simple: for
+    every unit of volatility, how many units of excess returns over a risk-free asset
+    do you receive in return? Now, all the problems derive not from the formula, but
+    from the meaning people have ascribed to volatility. Is volatility bad, risky,
+    or uncertain?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the mathematical formula of the Sharpe ratio, where Rp is equal to
+    asset returns, and Rf is equal to risk-free returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This ratio looks at the annualized average excess returns over a risk-free
+    asset divided by the standard deviation of those returns. Standard deviation measures
+    the variance from the median returns. The more volatile the returns, the higher
+    the standard deviation, and the lower the ratio (and vice versa). The excess returns
+    over a risk-free asset is a simple test: for every additional unit of volatility,
+    are you better off parking money with a specific manager or keeping it safe with
+    T-bonds or money market funds?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Even the genius William Sharpe has become critical of the measure he created
+    and that has now become the default industry standard: the Sharpe ratio. This
+    metric served its purpose. There are two things it did really well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Cross-asset unified measure**: it is now widely accepted that the most critical
+    component in alpha generation is asset allocation. The difficulty is to have a
+    unified risk-adjusted measure of alpha across asset classes. This is where the
+    Sharpe ratio did the job. It can be calculated across fixed income, equities,
+    commodities, and so on.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Uncertainty**: the human brain is hardwired to associate uncertainty with
+    risk. It triggers the amygdala and activates the fight, flight, or freeze reflex.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Now, the Sharpe ratio was invented in 1966\. It was revolutionary in revolutionary
+    times: El Che Guevara and Fidel Castro were still fighting Batista in Cuba. As
+    the pioneer William Sharpe himself said, it was good when computing power was
+    still limited. But since then, times have changed. Doctors have stopped prescribing
+    cigarettes to pregnant women, plastic has become the dominant marine species,
+    and computers more powerful than those that sent people to the moon now fit in
+    everyone''s pocket.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, let us take the example of our favorite *Turtle for dummies* strategy,
+    and reuse the `regime_breakout()` and `turtle_trader()` functions. We will calculate
+    the risk metrics on both rolling and cumulative series. This strategy is run on
+    absolute series. It is here purely for education purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Log returns are used instead of arithmetic ones. They are easier to manipulate.
+    Cumulative returns are the sum of daily returns to which the `np.exp` method is
+    applied.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.1: Softbank turtle for dummies, positions, and returns'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is also a graph we saw previously. It shows the closing price of Softbank,
+    with a trailing stop loss above or below the close. It shows long and short positions
+    and cumulative returns. Now that we have a strategy, let's run the risk metrics
+    on both a rolling and cumulative basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will get started with the Sharpe ratio. Risk-free return is set at an arbitrary
+    one-tenth of a basis point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There is no big mystery to the code. First, we calculate a rolling Sharpe,
+    and then a cumulative one. Results are annualized using the standard formula:
+    square root of 252 business days.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.2: Softbank cumulative returns and Sharpe ratios: rolling and cumulative'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The rolling Sharpe dash-dotted line is more volatile and responsive than the
+    solid one representing cumulative Sharpe. This is simply due to the data sample
+    size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Risk is often equated to volatility. It makes up for agreeable formulas. In
+    this context, the Sharpe ratio appears to be the perfect metric of risk-adjusted
+    returns. The only problem is that in practice, volatility is not a measure of
+    risk. To prove this point, let us bring up a few high Sharpe ratio strategies
+    that hit an iceberg overnight, and a few low ones that have remarkably endured.
+    Now, some low volatility strategies are extremely risky. Here are a few examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Long Term Capital Management** (**LTCM**) had a fairly low volatility strategy
+    until a few months before their demise. They were trading mean reversion strategies.
+    Those strategies have consistent low volatility returns, which is conducive to
+    high Sharpe ratios. They might have survived one Nobel prize, but two was too
+    much.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Short Gamma volatility funds**: pre-Great Financial Crisis, volatility funds
+    were fashionable investment vehicles. Their strategy consisted of collecting premiums
+    from selling **out-of-the-money** (**OTM**) options. Since the probability of
+    those options expiring in the money was extremely low, they printed consistent
+    low volatility performance. They had Sharpe ratios above the industry average.
+    It all worked well until volatility spiked and options expired in the money. Losses
+    mounted exponentially and years of accumulated returns were vaporized in weeks.
+    Short Gamma is the financial equivalent of playing a statistical Russian roulette
+    with a gigantic barrel. Nothing happens until the day you blow your brains out.
+    In industry jargon, this is referred to as "picking pennies in front of a steam
+    roller."'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Conversely, some volatile strategies have exceptionally strong track records,
+    despite awful Sharpe ratios. As a group, systematic trend-following **Commodity
+    Trading Advisors** (**CTAs**) such as Paul Tudor Jones, Ed Seykota, Bill Dunn,
+    and William Eckhardt have towered the alpha generation pyramid for decades. Returns
+    are lumpy. Trend followers spend most of the year protecting their capital and
+    harvest outsized returns only a few times a year.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Bottom line, with all humble respect due to its creator, the Sharpe ratio is
+    the right mathematical answer to the wrong question. Is volatility the right measure
+    of risk? The Sharpe ratio is a measure of volatility-adjusted returns. Volatility
+    does not equate to risk, but reflects uncertainty. As much as uncertainty may
+    trigger some alarms in our mammal brain, our job description as market participants
+    clearly states: "get comfortable with discomfort."'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building a combined risk metric
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The next three metrics are arguably closer approximations of risk and are more
+    intuitive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Grit Index
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '"When I left the dining room after sitting next to Gladstone, I thought he
+    was the cleverest man in England. But when I sat next to Disraeli, I left feeling
+    that I was the cleverest woman."'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: – Jennie Jerome, mother of Winston Churchill
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Investors often seem to act counterintuitively to their interests. They say
+    they want returns, but they react to drawdowns. More specifically, they react
+    to drawdowns in three ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Magnitude**: never test the stomach of your investors'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Frequency**: never test the nerves of your investors'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Period of recovery**: never test the patience of your investors'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **Grit Index** is arguably the most underrated metric in the entire finance
+    multiverse. Less than a handful of metrics capture robustness so elegantly. Broadly
+    speaking, it looks at downside risk by dividing performance by the entire surface
+    of the losses over a period. The index has the rare privilege of a mathematical
+    formulation so intuitive it can be visualized by anyone. The gut-wrenching time
+    spent agonizing about the multitude and magnitude of losses seems so long ago
+    that it feels like a long surface of pain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The mathematical calculation of a surface is called an **integral**. Next, since
+    those losses obviously weigh on the financial and emotional capitals, they should
+    be in the denominator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Returns are what investors end up perceiving in the end. The Grit Index is what
+    investors end up getting in the end divided by all the agony of losses. This formula
+    was originally invented by Peter G. Martin in 1987 and published as the **Ulcer
+    Index** in his book *The Investor's Guide to Fidelity Funds*. Legendary trader
+    Ed Seykota recycled it and renamed it the **Seykota Lake ratio**. These are the
+    exact same formulas, just with a different name. Since Ulcer Index or Seykota
+    Lake ratio may fail to draw the attention they truly deserve, how about renaming
+    it the Grit Index?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the source code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The Grit calculation sequence is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Calculate the peak cumulative returns using `rolling().max()` or `expanding().max()`
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate the squared drawdown by subtracting cumulative returns from the  peak
+    and squaring them
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate the least square sum by taking the square root of the squared drawdowns
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Divide the cumulative returns by the ulcer
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The code produces the following chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.3: Softbank cumulative returns and Grit ratios: rolling and cumulative'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s have a look at the progression across the chart. In the first half,
+    the Grit Index mirrors performance. In the second half, performance jumps, but
+    so do the magnitude and duration of drawdowns. The index trails behind the meteoric
+    ascent. This strategy works but has some periods of drawdown, hence the lackluster
+    index. This metric uses the only two variables that ever matter to investors:
+    performance and drawdowns. If you think of performance as the end destination,
+    then dividing it by the surface of losses shows the journey, and all the bumps
+    along the road.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At the end of the day, human beings do not achieve greatness because of the
+    absence of lofty goals. They give up along the way because of how hard the journey
+    is. And this is precisely what this ratio does. This index accomplishes the same
+    things as the Sharpe ratio while accounting for all the bumps along the road to
+    great performance. It has the following advantages over the Sharpe ratio:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Cross-asset unified measure**: it works uniformly across every asset class,
+    every strategy, every time frame, in absolute and relative series.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Uncertainty**: This metric focuses on the aspects of drawdowns that really
+    matter to investors: magnitude, frequency, and a period of recovery. In contrast,
+    the Sharpe ratio confuses uncertainty with fear. It punishes high volatility strategies,
+    regardless of their profitability.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: And it does more than the Sharpe ratio. The easiest way to reverse engineer
+    a high Sharpe ratio is to dampen volatility. As long as volatility is compressed,
+    even the most tepid returns look good. A tiny denominator will magnify any numerator,
+    however mediocre. No wonder money flows to fixed income. Returns are pathetically
+    mediocre, but predictably so.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'On the other hand, the grit index focuses on cumulative instead of average
+    returns. This is the number at the bottom of the bank statement the day after
+    retirement. This metric therefore has a low tolerance for a fixed income type
+    of stable mediocrity. Yet, this index will also penalize the only thing investors
+    genuinely care about: the downside volatility. Upon retirement, pensioners only
+    look at the total amount of money in their account. They do not care about the
+    stability of the average daily returns. Stable daily returns are a feel-good measure
+    for the fund managers, not the pensioners. When market participants allocate assets
+    using Sharpe or the **Capital Asset Pricing Model** (**CAPM**), they trade returns
+    for stability. Fixed income has, by definition, a higher Sharpe ratio than equity.
+    It also has asthmatic returns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The privilege of the Grit metric is that it imposes itself, even to those who
+    are completely financially illiterate. There is no better metaphor than life for
+    this index. Performance is what you have accomplished. Life is what happened to
+    you when you had other plans, with all the setbacks along the way. Divide your
+    accomplishments by the obstacles and you have a pretty robust measure of grit.
+    In practice, the robustness of the Grit Index means it could be used as an asset
+    allocation key between strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Common Sense Ratio
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '"Common sense is not so common."'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: – Voltaire, freedom fighter
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: Enter Jack Schwager. In my personal bucket list, having a one-on-one meeting
+    with the author of the *Market Wizards* series is as close as it will ever get
+    to a "thank you very much" from Elvis or a blood transfusion from James Brown.
+    His books are as relevant now as they were when they were published decades ago.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I had the immense privilege of being instrumental to having Mr Schwager deliver
+    a keynote speech at a CLSA conference in Tokyo. So, here we are discussing his
+    underrated gem of wisdom, *Market Sense and Nonsense*. In it, he discusses the
+    gain to pain ratio, better known as the **profit ratio**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In essence, this is a fractional version of the trading edge/gain expectancy.
+    Somewhere along the conversation, I introduced my homemade small metric, a blend
+    of two ratios, to which his response was, "hmm, common sense." The master has
+    spoken. I can die now, happy but somewhat perplexed. A couple of hours later back
+    at the ranch, I unveil it to my boss and explain the rationale: "yeah dude, that
+    is common sense," my boss vastly elaborated.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When two people for whom respect is plotted on a logarithmic scale reach the
+    same conclusion... voilà: the **Common Sense Ratio** (**CSR**) is born. The rationale
+    behind this metric is that there are two ways to lose a fight: either on points
+    or by way of knock-out. There are two ways a strategy can fail: either with excess
+    cumulative losses or by a few devastating blows. This goes back to the only two
+    types of strategies ever traded: trend following or mean reversion. The risk associated
+    with trend following is in the aggregates. The risk associated with mean reversion
+    is in the tails.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Both strategies have different risk factors, aggregate or tail. They require
+    different risk metrics. The rationale for the CSR is to come up with a unified
+    measure. Back in elementary school, when my math skills had not yet reached a
+    "permanently low plateau," there was this wonderful notion of transitivity of
+    multiplication. The simplest way to combine those risk metrics for both strategies
+    is to multiply the gain to pain (profit) ratio by the tail ratio. Here is a refresher
+    of the original code from *Chapter 6*, *The Trading Edge is a Number, and Here
+    is the Formula*, plus the CSR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we calculate rolling and cumulative ratios and print them:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.4: Cumulative returns and common sense ratios: cumulative and rolling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The profit ratio is the most appropriate risk measure for trend-following strategies.
+    Risk is in the aggregates, as we saw in *Chapter 6*, *The Trading Edge is a Number,
+    and Here is the Formula*, and *Chapter 8*, *Position Sizing:* *Money is Made in
+    the Money Management Module*. The preceding chart shows a healthy but not spectacular
+    profit ratio. In other words, the strategy, in its current pro-consul (the ancestor
+    of the homo erectus) format, seems to work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will conclude with the CSR, which is the product of both the profit and
+    tail ratios:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The chart reflects a relatively healthy CSR, with no hidden surprises.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.5: Cumulative returns and common sense ratios: cumulative and rolling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Patterns that would be a cause for concern for a trend-following strategy would
+    be an increasingly heavy index value. As strategy progresses, the cumulative weight
+    of losses would bear heavier on the profit ratio. Patterns that would be a cause
+    for concern for a mean reversion strategy would be a steady low-value index with
+    sudden drops. This would suggest that profits fail to compensate for losses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The CSR recaptures risks associated with both strategies. It also gives powerful
+    indications of the ability to recover from losses and the cyclicality of strategies.
+    The following examples demonstrate how this metric works in practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Example 1: assume a strategy returns 10% per annum. The 95^(th) percentile
+    of best months has been at +0.6%, while the bottom 5^(th) percentile of worst
+    months has been at -2%. The following values can be calculated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gain to pain ratio = 1.1
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tail ratio = |0.6%/-2%| = 0.3
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: CSR = 1.1* 0.3 = 0.33
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A CSR below 1 means the strategy is vulnerable to shocks. A ratio below 0.5
+    means the strategy will probably fail to recover from serious shocks. The CSR
+    is particularly efficient at identifying hidden risks with mean reversion strategies.
+    Mean reversion strategies give the appearance of stability and robustness. Profits
+    roll in with metronomic regularity. Yet, unpredictable left tail events derail
+    this stability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This strategy may seem like it generates a solid consistent profit of +10%
+    per annum, but the tail ratio of 0.3 suggests it would take three times longer
+    to recover from accidents. The only question that matters is: are investors going
+    to be patient enough or will they cut their losses and look for alternative vehicles?
+    The answer to this question might be found in the tale of the quants demise in
+    2007\. Those strategies did well for years, but when they experienced unexpected
+    drawdowns, relatively large to their monthly average returns, investors redeemed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will consider some of the failures of previous strategies, and some pitfalls
+    to avoid, in *Chapter 10*, *Refining the Investment Universe*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Example 2: let''s take a strategy that trails the benchmark by 2% over a complete
+    cycle (GPR = 0.98). Assume winners are three times bigger than losers, or a tail
+    ratio of 3\. Again, calculate the necessary values from the previously defined
+    functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gain to pain ratio = 0.98
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tail ratio = 3
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: CSR = 0.98 * 3 = 2.94
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: With a relative gain to pain ratio of 0.98, you may be thinking, "Why invest
+    in a vehicle that loses money over time?" Welcome to your average **mutual fund**.
+    Over time, fees eat performance away, causing mutual funds to underperform their
+    benchmark. Yet, performance is cyclical. Sometimes, managers shoot the ball out
+    of the park. The CSR is a simple way to time entry and, more importantly, exit.
+    A high CSR combined with a subpar profit/gain to pain ratio is evidence of strong
+    seasonality. Those products work very well some of the time but fail in the long
+    run. In *Chapter 5*, *Regime Definition*, we saw several regime definition methodologies,
+    which should help when identifying seasonality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Van Tharp's SQN
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This statistical measure was brought back to fame by Dr Van Tharp. System Quality
+    Number SQN® is a brilliant interpretation of the time-honored t-stat. It has all
+    the ingredients necessary to measure robustness. Firstly, a strategy is viable
+    only if it has a trading edge. Nothing happens until gain expectancy turns positive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Secondly, it incorporates trading frequency. Making money is one thing, trading
+    on the appointment is another. The more a strategy can trade while maintaining
+    a positive gain expectancy, the faster returns compound. Time is the variable
+    that immediately jumps to mind.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market participants should lower their time frames as long as they can maintain
+    a positive gain expectancy. For example, a strategy viable on daily and 4-hour
+    bars will generate more signals on the lower time frame. Besides, shorter time
+    frames mean tighter stop losses and bigger positions, but also noisier signals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thirdly, results are normalized. They are expressed in standard deviations,
+    which, in this case, means trading edge volatility. When it comes to returns,
+    everyone likes the peaks, but no one likes the valleys. Last but not least, the
+    code is straightforward to implement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is how the code works:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The number of signals needs to be disentangled from the regime. `.diff()` identifies
+    when there is a change in regime: from 0 to 1 and vice versa. The `notnull()`
+    method ensures that signals are counted once upon entry. From there, `abs()` counts
+    all trades as one. The cumulative sum is done via `cumsum()`. Then, the `fillna`
+    method fills all the missing values forward. `.diff(window)` applied to the trades
+    column returns the rolling number of trades.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Next, we calculate the rolling series. Copy the daily returns and assign N/A
+    to losing days. This leaves positive returns. We calculate a moving average count
+    and divide it by the window. Similarly, we calculate rolling profits and losses
+    and divide them by the window.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The cumulative calculation works a bit differently. Calculate the cumulative
+    count of returns using the expanding method. Calculate the cumulative count of
+    positive returns the same way. Then, calculate the win rate, average win, and
+    loss.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We reuse the code for gain expectancy in *Chapter 6*, *The Trading Edge is a
+    Number, and Here is the Formula*.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The SQN is a regular t-stat with gain expectancy and signal count as input
+    variables. We multiply the square root of trades by the information ratio of the
+    gain expectancy. The execution trader English translation is: we factor in trading
+    frequency to the trading edge.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.6: Softbank cumulative returns and t-stat (Van Tharp''s SQN): cumulative
+    and rolling'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Without trading frequency, SQN would be yet another variation on the Sharpe
+    ratio, using gain expectancy instead of average returns. Instead, it's a very
+    useful function, which incorporates both trading frequency and edge. For example,
+    if a strategy makes money but trades on appointments every leap year, chances
+    are investors will not stick with you. Conversely, if a strategy maintains the
+    same positive edge at a lower timeframe from daily to 1 hour, it would make more
+    sense to trade the lower time frame to compound profits faster.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Robustness score
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '"Masala: a varying blend of spices used in Indian cooking."'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: ''
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: – Merriam Webster dictionary
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'The Grit Index, Common Sense Ratio, and Van Tharp''s SQN all measure robustness.
+    The Grit Index is probably the most elegant and accessible metric for non-finance
+    people. The CSR is a good canary in the coal mine to ferret out dodgy mean reversion
+    strategies. SQN is a solid staple measure of quality. They all do the job. They
+    measure a specific aspect of robustness:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Grit Index integrates losses throughout the period. It gives an accurate
+    vision of performance of all aspects of downside: magnitude, frequency, and duration.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The CSR combines risks endemic to the two types of strategies in a single measure.
+    It shows how risk is balanced for each metric.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The t-stat SQN incorporates trading frequency into the trading edge formula
+    to show the most efficient use of capital.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Yet, after publicly railing against the proliferation of risk metrics, coming
+    out with three robustness measures may come across as a bit hypocritical. The
+    easiest solution is to throw all of them in the pot and stir using the transitivity
+    of multiplication:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The robustness score function rebases all variables to the first date where
+    all variables are not null. This puts all variables on the same starting value.
+    We produce the following chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_09_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.7: Softbank robustness score: rolling and cumulative'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The robustness score metric is aimed at participants who want one final score
+    to rule them all, or more likely one sorting key to rank several strategies. This
+    score is as recomposed as Frankenstein, so it is difficult to read. Each risk
+    metric brings its own value to the table. This is why the metric rebases all values
+    to the beginning of the series. Combining them into a single metric is not going
+    to produce a super risk metric, but one tangible benefit would be as a unified
+    sorting key. This metric will privilege strategies that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Trade frequently thanks to SQN
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Have acceptable drawdowns thanks to the Grit Index
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Generate decent returns
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Conversely, it will penalize strategies that:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Have no positive trading edge thanks to all the metrics
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Have nasty tail ratios thanks to the CSR index
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Trade infrequently thanks to the SQN
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As long as the moving average metric remains above 1 and the value appears to
+    be rising, the strategy can be considered reasonably robust. One of the use cases
+    for this robustness score may be as a sorting key for ranking or asset allocation
+    purposes. When there are several metrics to choose from, combine them into one
+    unified rebased indicator and sort. Proceed with caution, however. Familiarize
+    yourself with it before deploying it in production.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we did not have a polite conversation about risk. We explored
+    risk metrics that will unapologetically assess your ability to live to trade another
+    day. We considered the Grit Index, which integrates drawdowns (magnitude, frequency,
+    and duration). Then, we introduced the common sense ratio, which recaptures risk
+    specific to both trend-following and mean reversion strategies. Finally, we looked
+    at the system quality number ratio, before combining all three into a combined
+    robustness score, which helps assess risk by combining trading frequency and trading
+    edge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Part II*, *The Outer Game: Developing a Robust Trading Edge*, we looked
+    at how to generate ideas on the short side. We then looked at what the trading
+    edge exactly is and how to boost it. We came up with an innovative equity trading
+    algorithm. Finally, we looked at risk metrics that really measure robustness.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now that we have plenty of ideas on both sides, and know how to size and prioritize
+    them, it is time to organize them. *Part III*, *The Long/Short Game: Building
+    a Long/Short Product*, is about long/short portfolio construction.'
+  prefs: []
+  type: TYPE_NORMAL

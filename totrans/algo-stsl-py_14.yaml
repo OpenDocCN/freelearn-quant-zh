@@ -1,0 +1,647 @@
+- en: 'Appendix: Stock Screening'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'This appendix provides a stock screener tool that will allow you to put everything
+    we have learned in this book into practice. It addresses the most pressing issue
+    for market participants: **idea generation**. We will build a screener across
+    all the constituents of the S&P 500 index.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The sequence of events is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Download all the current constituents of the S&P 500 from its Wikipedia webpage.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Batch download OHLCV prices data from Yahoo Finance. We will drop the level
+    to process each stock individually.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate the rebased relative series.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate regimes—breakout, turtle, moving averages (**Simple Moving Average**
+    (**SMA**) and **Exponential Moving Average** (**EMA**)), and floor/ceiling—on
+    both absolute and relative series. There will be an option to save each stock
+    as a CSV file.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Create a dictionary with the last row of each stock and append a list, from
+    which we will create a dataframe.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Sum up the regime methods and sort the dataframe. You will have an option to
+    save the save this last row dataframe as a CSV file.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Join the original dataframe containing the Wikipedia information with the last
+    row dataframe. You will have an option to save this dataframe as a CSV file.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Generate heatmaps by sector and sub-industry.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If you want to visualize any stock in particular, there will be a single stock
+    download, process, and visualization module at the end of the screening.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'You can access color versions of all images in this chapter via the following
+    link: [https://static.packt-cdn.com/downloads/9781801815192_ColorImages.pdf](https://static.packt-cdn.com/downloads/9781801815192_ColorImages.pdf).
+    You can also access source code for this chapter via the book''s GitHub repository:
+    [https://github.com/PacktPublishing/Algorithmic-Short-Selling-with-Python-Published-by-Packt](https://github.com/PacktPublishing/Algorithmic-Short-Selling-with-Python-Published-by-Packt).'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Import libraries
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We start with importing standard libraries. `pathlib` has been commented out.
+    If you wish to save CSV files somewhere on your computer or a server, you can
+    use libraries such as `pathlib` or `os`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: This was, of course, profoundly Earth shattering—we will use the ensuing momentary
+    lapse of reason to swiftly proceed to the next step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Define functions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'As follows are are functions that have been used throughout this book. You
+    can find the full versions on the GitHub. Functions will generally be preceded
+    with their chapter of appearance. The screening will feature both absolute and
+    relative series, so we need the relative function. This will be followed by the
+    classic regime definition functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The floor/ceiling methodology is much more computationally intense. It therefore
+    deserves its own sandbox:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Let's group this indigestible code into two simple functions, `swings()` and
+    `regime()`. All we have to do is pass the `relative` argument to obtain either
+    the absolute or relative series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This screening also allows slick visualization for individual stocks. To achieve
+    that, run the `graph_regime_combo()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next two functions have not been featured in the book yet. Using them,
+    we need to extract single stock data and aggregate it into a dataframe. The `yf_droplevel()`
+    function gets the OHLC columns for a single ticker out of the multi-index dataframe
+    coming from `batch_download`, and creates an OHLCV dataframe:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This function is inserted in a loop that will run for the length of the `batch_download`.
+    The `last_row_dictionary(df)` function creates a dictionary out of the last row
+    in a dataframe:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, we list the columns. Second, we populate them with tickers and dates
+    to make each row uniquely identifiable. Third, we iterate through using `enumerate`
+    to return both an index and a column name. If the last row contains a missing
+    value, we add `_dt` to the column name and look for the index of the last occurrence.
+    If the last row contains a value, we simply add the column name as a key and a
+    value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This dictionary will append a list of last row dictionaries. We will then create
+    a dataframe from this list. An alternative would be to create a dataframe and
+    append it for every stock, which works well but is slightly more time consuming.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Control panel
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Having variables disseminated across a notebook is a source of errors. All
+    parameters, variables, websites, lists, and Booleans are centralized in one place
+    before processing the data. This is where you will adjust settings if desired:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The website we''re using is the Wikipedia webpage of the S&P500\. The parameters
+    are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`start`: `yfinance` download start date'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`end`: `yfinance` download end date'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`vlty_n`: duration, for average true range and standard deviation calculations'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dist_pct`: variable in the `test_distance()` function'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`retrace_pct`: variable in the `retracement_swing()` function'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`threshold`: units of volatility for floor/ceiling regime definition'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`dgt`: decimals in the `round()` function'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`d_vol`: units of volatility in the `test_distance()` function'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`r_vol`: variable in the `retracement_swing()` function'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`lvl`: indicates which swing levels should be used to calculate regime definition—Hi2/Lo2
+    or Hi3/Lo3'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`rel_var` arguments are explained as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`bm_ticker`: Yahoo Finance ticker of the benchmark'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bm_col`: name of the benchmark column'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`ccy_col`: name of the currency'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`window`, `st`, `fast`, `lt`, `slow`: variables for breakout and moving averages'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`batch_size`: size of the batch download from `yfinance`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`show_batch`: Boolean, display tickers downloaded'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`save_ticker_df`: Boolean, providing an option to save individual ticker dataframes
+    post-process'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`save_last_row_df`: Boolean, providing an option to save last row dataframe'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`save_regime_df`: Boolean, providing an option to save last row dataframe'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`web_df_cols`: columns to be displayed from the original Wikipedia dataframe'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`regime_cols`: regime definition columns re-ordered'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`swings_cols`: floor/ceiling columns'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`symbol_cols`: descriptive fields, `Symbol`, `date`, `Close`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`last_row_df_cols`: the last row dataframe has 50+ columns. This reduces the
+    number of columns to a minimum.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Data download and processing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We''ll start by downloading the ticker lists from Wikipedia. This uses the
+    powerful `pd.read_html` method we saw in *Chapter 4*, *Long/Short Methodologies:
+    Absolute and Relative*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`tickers_list` can be truncated by filling numbers in the bracket section of
+    `tickers_list[:]`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, this is where the action is happening. There are a few nested loops in
+    the engine room.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Batch download: this is the high-level loop. OHLCV is downloaded in a multi-index
+    dataframe in a succession of batches. The number of iterations is a function of
+    the length of the tickers list and the batch size. 505 constituents divided by
+    a batch size of 20 is 26 (the last batch being 6 tickers long).'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Drop level loop: this breaks the multi-index dataframe into single ticker OHLCV
+    dataframes. The number of iterations equals the batch size. Regimes are processed
+    at this level.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Absolute/relative process: There are 2 passes. The first pass processes data
+    in the absolute series. Variables are reset to the relative series at the end
+    and then processed accordingly in the second pass. There is an option to save
+    the ticker information as a CSV file. The last row dictionary is created at the
+    end of the second pass.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Next, let''s go through the process step-by-step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Benchmark download closing price and currency adjustment. This needs to be done
+    once, so it is placed at the beginning of the sequence.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Dataframes and lists instantiation.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Loop size: number of iterations necessary to loop over the `tickers_list`.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Outer loop: batch download:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`m,n`: index along the `batch_list`.'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`batch_download`: download using `yfinance`.'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Print batch tickers, with a Boolean if you want to see the tickers names.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Download batch.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`try`/`except`: append failed list.'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Second loop: Single stock drop level loop:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Drop level to ticker level.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Calculate swings and regime: `abs`/`rel`.'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Third loop: absolute/relative series:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Process regimes in absolute series.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Reset variables to relative series and process regimes a second time.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Boolean to provide a `save_ticker_df` option.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Create a dictionary with last row values.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Append list of dictionary rows.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Create a dataframe `last_row_df` from dictionary.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`score` column: lateral sum of regime methods in absolute and relative.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Join `last_row_df` with `web_df`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Boolean `save_regime_df`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Let''s publish the code and give further explanations afterwards:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`last_row_list.append(last_row_dictionary(df))` happens at the end of the third
+    loop once every individual ticker has been fully processed. This list automatically
+    updates for every ticker and every batch. Once the three loops are finished, we
+    create the `last_row_df` dataframe from this list of dictionaries using `pd.DataFrame.from_dict(last_row_list)`.
+    This process of creating a list of dictionaries and rolling it up into a dataframe
+    is marginally faster than directly appending them to a dataframe. The `score`
+    column is a lateral sum of all the regime methodologies. The last row dataframe
+    is then sorted by `score` in ascending order. There is an option to save a datestamped
+    version. The `regime` dataframe is created by joining the Wikipedia web dataframe
+    and the last row dataframe. Note that the `Symbol` column is set as `index`. Again,
+    there is an option to save a datestamped version.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, let's visualize what the market is doing with a few heatmaps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heatmaps
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The wikipedia page features the **Global Industry Classification Standard**
+    (**GICS**) structure of sectors and sub-industries. We will aggregate the data
+    by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sector, for a top-down view
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sub-industry, for a bottom-up view
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, sector *and* sub-industry, to pick winners and losers within each sector
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We use the `.groupby()` method and sort by `score`. We then use the Styler
+    constructor `.style.background_gradient()` to paint the market by numbers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The heatmap covers all regime methodologies in both absolute and relative:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**score**: lateral sum of all the methods at the stock level.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**rg**: floor/ceiling regime in absolute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**rrg**: floor/ceiling regime in relative.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**smaC50200**: moving average crossover ST/LT in absolute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**smar50200**: moving average crossover ST/LT relative.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**bohl200**: range breakout (200 days).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**ttH50L200**: turtle for dummies 50/200 (fast/slow) in absolute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**ttr50r200**: turtle for dummies 50/200 (fast/slow) in relative.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Let''s see what it looks like:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Graphical user interface  Description automatically generated with medium
+    confidence](img/B17704_Appendix_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 1: Industry-level heatmap of regime scores'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sector heatmap gives a bird's eye view of the market. Highly leveraged sectors
+    such as financials, real estate and tech are still at the top of the pyramid.
+    Meanwhile, defensive sectors such as consumer staples trail the pack. At the time
+    of writing, this bull market is alive and well. It is literally that simple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then dive into sub-industries:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This gives us a pixelized picture of the market, with poorer-performing sub-industries
+    at the top:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Graphical user interface, application  Description automatically generated](img/B17704_Appendix_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2: Sub-industry level of regime scores'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The S&P 500 is a broad and deep index. This granular picture of the market shows
+    how each sub-industry is currently faring. Pay particular attention to the absolute/relative
+    dichotomy. Remember that relative performance leads the absolute one. This is
+    how you catch inflections and build or exit positions accordingly, and wait for
+    the rest of the crowd to show up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This detailed picture is a classic example of information versus decision. This
+    heatmap will make you knowledgeable of what is going on in the market. It is however
+    not formatted efficiently enough to make you act on the information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This leads us to the final sort, by sector and sub-industry.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: This produces a heatmap where sub-industries are sorted in ascending order within
+    their industry. Meanwhile, sectors are classified in alphabetical order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Chart, treemap chart  Description automatically generated](img/B17704_Appendix_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3: Sector and sub-industry level heatmap'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This final heatmap gives actionable information. Sub-industries are ranked in
+    ascending order within their sector. This allows arbitrage between underperformers
+    and outperformers. Repeat the process over sectors and over time and you will
+    smoothly follow the sector rotation. This is the essence of the long/short 2.0
+    relative method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Individual process
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Once the screening is complete, you may want to have a look at some stocks
+    within that list. So, the remainder of the notebook is about data visualization
+    at the individual stock level. Input a ticker, for example, `ticker = ''FMC''`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This will print something similar to the following chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_Appendix_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4: FMC closing price in absolute and relative series'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following section plots the data in three charts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This creates three charts: absolute, relative, and absolute and relative combined.
+    The red/green dots are swings. The horizontal lines are regime change swings.
+    Note that the following charts are produced with `lvl` set to `2` on both absolute
+    and relative series. You can increase or decrease or increase the sensitivity
+    on either series by changing this value in the `df = regime(df,lvl = 2,rel = False)`
+    line for absolute, and the `df = regime(df,lvl = 2,rel = True)` for relative.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_Appendix_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5: Absolute chart with floor/ceiling regime shown with a dashed line'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_Appendix_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6: Relative chart with floor/ceiling regime shown with a dashed line.
+    Red/green dots are swings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_Appendix_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7: Absolute and relative chart with floor/ceiling regimes'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The next block of code uses the `graph_regime_combo()` for a nice visual rendition.
+    First, this absolute series comes out, then the relative series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: This produces the following two charts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_Appendix_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 8: Absolute chart with multiple regime methodologies'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B17704_Appendix_09.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9: Relative chart with multiple regime methodologies'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the end of this book and the beginning of your journey in the vast wilderness
+    of short selling. You now have a map that will help you navigate the treacherous
+    waters of the short side.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As a parting word, our ruthless industry faithfully abides by one law: supply
+    and demand. In the long/short business, there is an ample supply of long side
+    stock pickers and a cruel shortage of skilled short sellers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When markets are down, those who stand up, stand out.
+  prefs: []
+  type: TYPE_NORMAL
