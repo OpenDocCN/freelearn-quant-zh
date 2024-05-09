@@ -1,11 +1,15 @@
 - en: '12'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '12'
 - en: Boosting Your Trading Strategy
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 提升您的交易策略
 - en: In the previous chapter, we saw how **random forests** improve on the predictions
     of a decision tree by combining many trees into an ensemble. The key to reducing
     the high variance of an individual tree is the use of **bagging**, short for **bootstrap
@@ -16,8 +20,10 @@
     so that both the rows and the columns of the training set for each tree are random
     versions of the original data. The ensemble then generates predictions by averaging
     over the outputs of the individual trees.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章中，我们看到**随机森林**通过将许多树组合成集成来改进决策树的预测。降低个别树高方差的关键在于使用**装袋**，简称**自助聚合**，它在生长个别树的过程中引入了随机性。更具体地说，装袋从数据中进行替换抽样，使每棵树都在一个不同但大小相等的随机子集上训练，一些观测值重复出现。此外，随机森林随机选择一些特征的子集，使每棵树的训练集的行和列都是原始数据的随机版本。然后，集成通过对各个树的输出进行平均来生成预测。
 - en: Individual random forest trees are usually grown deep to ensure low bias while
     relying on the randomized training process to produce different, uncorrelated
     prediction errors that have a lower variance when aggregated than individual tree
@@ -25,8 +31,10 @@
     *diversify*) the errors of individual trees. It does this so that the ensemble
     is less susceptible to overfitting, has a lower variance, and thus generalizes
     better to new data.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 个别随机森林树通常生长较深，以确保低偏差，同时依靠随机化训练过程产生不同的、不相关的预测误差，当聚合时，这些误差的方差较低于个别树的预测。换句话说，随机化训练旨在去相关（考虑*多样化*）各个树的误差。它这样做是为了使整体对过拟合的影响较小，方差较低，从而更好地推广到新数据。
 - en: This chapter explores **boosting**, an alternative ensemble algorithm for decision
     trees that often produces even better results. The key difference is that boosting
     modifies the training data for each new tree based on the cumulative errors made
@@ -34,73 +42,103 @@
     using samples of the training set, boosting proceeds sequentially using reweighted
     versions of the data. State-of-the-art boosting implementations also adopt the
     randomization strategies of random forests.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 这一章探讨了**提升（boosting）**，这是一种替代决策树的集成算法，通常能够产生更好的结果。其关键区别在于，提升根据模型到目前为止累积的错误修改每个新树的训练数据。与独立训练许多树的随机森林不同，提升使用数据的重新加权版本进行顺序处理。最先进的提升实现还采用了随机森林的随机化策略。
 - en: Over the last three decades, boosting has become one of the most successful
     **machine learning** (**ML**) algorithms, dominating many ML competitions for
     structured, tabular data (as opposed to high-dimensional image or speech data
     with a more complex input-out relationship where deep learning excels). We will
     show how boosting works, introduce several high-performance implementations, and
     apply boosting to **high-frequency data** and backtest an **intraday trading strategy**.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 在过去的三十年中，提升已经成为最成功的**机器学习**（**ML**）算法之一，主导着许多结构化、表格数据的ML竞赛（与高维图像或具有更复杂输入输出关系的语音数据相反，在这些领域深度学习表现出色）。我们将展示提升的工作原理，介绍几种高性能实现，并将提升应用于**高频数据**并对**日内交易策略**进行回测。
 - en: 'More specifically, after reading this chapter, you will be able to:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，阅读本章后，您将能够：
 - en: Understand how boosting differs from bagging and how gradient boosting evolved
     from adaptive boosting.
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 理解提升与装袋的区别，以及梯度提升如何从自适应提升演变而来。
 - en: Design and tune adaptive boosting and gradient boosting models with scikit-learn.
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用scikit-learn设计和调整自适应提升和梯度提升模型。
 - en: Build, tune, and evaluate gradient boosting models on large datasets using the
     state-of-the-art implementations XGBoost, LightGBM, and CatBoost.
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用最先进的实现XGBoost、LightGBM和CatBoost在大型数据集上构建、调整和评估梯度提升模型。
 - en: Interpret and gain insights from gradient boosting models.
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 解释并从梯度提升模型中获得见解。
 - en: Use boosting with high-frequency data to design an intraday strategy.
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用高频数据进行提升，设计日内策略。
 - en: You can find the code samples for this chapter and links to additional resources
     in the corresponding directory of the GitHub repository. The notebooks include
     color versions of the images.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以在GitHub存储库的相应目录中找到本章的代码示例和其他资源链接。笔记本包括图像的彩色版本。
 - en: Getting started – adaptive boosting
+  id: totrans-13
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 入门–自适应增强
 - en: Like bagging, boosting is an ensemble learning algorithm that combines base
     learners (typically decision trees) into an ensemble. Boosting was initially developed
     for classification problems, but can also be used for regression, and has been
     called one of the most potent learning ideas introduced in the last 20 years (Hastie,
     Tibshirani, and Friedman 2009). Like bagging, it is a general method or metamethod
     that can be applied to many statistical learning methods.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 像装袋一样，增强是一种集成学习算法，它将基学习器（通常是决策树）组合成一个集成。增强最初是为分类问题开发的，但也可用于回归，并且被称为过去20年中引入的最有效的学习思想之一（Hastie，Tibshirani和Friedman
+    2009）。与装袋一样，它是一种通用方法或元方法，可应用于许多统计学习方法。
 - en: The motivation behind boosting was to find a method that **combines** the outputs
     of **many weak models**, where "weak" means they perform only slightly better
     than a random guess, into a highly **accurate**, **boosted joint prediction**
     (Schapire and Freund 2012).
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 增强的动机是找到一种方法，**将许多弱模型**（即它们仅比随机猜测略好一点）的输出**合并**成高度**准确**的**增强联合预测**（Schapire和Freund
+    2012）。
 - en: 'In general, boosting learns an additive hypothesis, *H*[M], of a form similar
     to linear regression. However, each of the *m*= 1,..., *M* elements of the summation
     is a weak base learner, called *h*[t], which itself requires training. The following
     formula summarizes this approach:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 一般来说，增强学习得出一个类似于线性回归的加法假设*H*[M]。然而，求和的每个*m*= 1,..., *M*元素都是一个称为*h*[t]的弱基学习器，它本身需要训练。以下公式总结了这种方法：
 - en: '![](img/B15439_12_001.png)'
+  id: totrans-17
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_001.png)'
 - en: As discussed in the previous chapter, bagging trains base learners on different
     random samples of the data. Boosting, in contrast, proceeds sequentially by training
     the base learners on data that it repeatedly modifies to reflect the cumulative
@@ -108,8 +146,10 @@
     shortcomings of the current ensemble. We will see in this chapter that boosting
     algorithms differ in how they define shortcomings. The ensemble makes predictions
     using a weighted average of the predictions of the weak models.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如前一章所讨论的，装袋在不同的数据随机样本上训练基学习器。相比之下，增强通过在数据上顺序训练基学习器，该数据反复修改以反映累积学习。其目标是确保下一个基学习器弥补当前集成的缺陷。我们将在本章中看到，增强算法在定义缺陷方面存在差异。集成使用弱模型的预测的加权平均值进行预测。
 - en: The first boosting algorithm that came with a mathematical proof that it enhances
     the performance of weak learners was developed by Robert Schapire and Yoav Freund
     around 1990\. In 1997, a practical solution for classification problems emerged
@@ -118,20 +158,28 @@
     this algorithm was extended to arbitrary objective functions when Leo Breiman
     (who invented random forests) connected the approach to gradient descent, and
     Jerome Friedman came up with **gradient boosting** in 1999 (Friedman 2001).
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个具有数学证明的增强算法，可以增强弱学习者的性能，是由罗伯特·沙皮尔和约阿夫·弗洛伊德于1990年左右开发的。1997年，一种解决分类问题的实用解决方案以**自适应增强**（**AdaBoost**）算法的形式出现，该算法在2003年获得了哥德尔奖（Freund和Schapire
+    1997）。大约另外5年后，当Leo Breiman（发明随机森林的人）将这种方法与梯度下降联系起来，并且Jerome Friedman于1999年提出**梯度增强**时，该算法被扩展到任意目标函数（Friedman
+    2001）。
 - en: Numerous optimized implementations, such as XGBoost, LightGBM, and CatBoost,
     which we will look at later in this chapter, have emerged in recent years and
     firmly established gradient boosting as the go-to solution for structured data.
     In the following sections, we'll briefly introduce AdaBoost and then focus on
     the gradient boosting model, as well as the three state-of-the-art implementations
     of this very powerful and flexible algorithm we just mentioned.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 近年来出现了许多优化的实现，例如XGBoost、LightGBM和CatBoost，我们稍后将在本章中介绍，这些实现已经确立了梯度增强作为结构化数据的首选解决方案。在接下来的章节中，我们将简要介绍AdaBoost，然后重点介绍梯度增强模型，以及我们刚刚提到的这个非常强大和灵活的算法的三种最新实现。
 - en: The AdaBoost algorithm
+  id: totrans-21
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: AdaBoost算法
 - en: When it emerged in the 1990s, AdaBoost was the first ensemble algorithm to iteratively
     adapt to the cumulative learning progress when fitting an additional ensemble
     member. In particular, AdaBoost changed the weights on the training data to reflect
@@ -139,8 +187,12 @@
     a new, weak learner. AdaBoost was the most accurate classification algorithm at
     the time, and Leo Breiman referred to it as the best off-the-shelf classifier
     in the world at the 1996 NIPS conference (Hastie, Tibshirani, and Friedman 2009).
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 当 AdaBoost 在 1990 年代出现时，它是第一个集成算法，通过迭代适应累积学习进展，当拟合额外的集成成员时。特别地，AdaBoost 改变了训练数据上的权重，以反映当前集成在训练集上的累积误差，然后拟合一个新的弱学习器。AdaBoost
+    当时是最准确的分类算法，利奥·布雷曼在 1996 年 NIPS 会议上称其为世界上最好的现成分类器（Hastie、Tibshirani 和 Friedman
+    2009）。
 - en: Over the subsequent decades, the algorithm had a large impact on machine learning
     because it provided theoretical performance guarantees. These guarantees only
     require sufficient data and a weak learner that reliably predicts just better
@@ -148,8 +200,11 @@
     the development of an accurate ML model no longer required accurate performance
     over the entire feature space. Instead, the design of a model could focus on finding
     weak learners that just outperformed a coin flip using a small subset of the features.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 在随后的几十年里，该算法对机器学习产生了巨大影响，因为它提供了理论性能保证。这些保证仅需要足够的数据和一个可靠地预测略优于随机猜测的弱学习器。由于这种分阶段学习的自适应方法，开发准确的
+    ML 模型不再需要在整个特征空间上准确地表现。相反，模型的设计可以专注于找到仅在一小部分特征上优于硬币翻转的弱学习器。
 - en: In contrast to bagging, which builds ensembles of very large trees to reduce
     bias, AdaBoost grows shallow trees as weak learners, often producing superior
     accuracy with stumps—that is, trees formed by a single split. The algorithm starts
@@ -159,190 +214,267 @@
     so that subsequent weak learners focus more on particularly difficult cases. Once
     trained, the new decision tree is incorporated into the ensemble with a weight
     that reflects its contribution to reducing the training error.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 与 bagging 相反，bagging 构建了非常大的树的集成以减小偏差，AdaBoost 则以浅树为弱学习器，通常使用树桩（即由单一分裂形成的树）产生更高的准确性。该算法从均匀加权的训练集开始，然后逐步改变样本分布。在每次迭代后，AdaBoost
+    增加被错误分类的观察值的权重，并减少正确预测样本的权重，以便随后的弱学习器更多地关注特别困难的情况。一旦训练完成，新的决策树将根据其减少训练误差的贡献加入到集成中。
 - en: 'The AdaBoost algorithm for an ensemble of base learners, *h*[m](*x*), *m=1*,
     ..., *M*, that predicts discrete classes, *y* ![](img/B15439_12_002.png), and
     *N* training observations can be summarized as follows:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于预测离散类别 *y* ![](img/B15439_12_002.png) 的 *N* 个训练观测结果，基础学习器的集成算法 AdaBoost 可以总结如下：
 - en: Initialize sample weights *w*[i]=*1/N* for observations *i*=*1*, ..., *N*.
+  id: totrans-26
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对于观察值 *i*=*1*, ..., *N*，初始化样本权重 *w*[i]=*1/N*。
 - en: 'For each base classifier, *h*[m], *m*=*1*, ..., *M*, do the following:'
+  id: totrans-27
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对于每个基础分类器 *h*[m]，*m*=*1*, ..., *M*，执行以下操作：
 - en: Fit *h*[m](*x*) to the training data, weighted by *w*[i].
+  id: totrans-28
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 *w*[i] 加权拟合 *h*[m](*x*) 到训练数据。
 - en: Compute the base learner's weighted error rate ![](img/B15439_12_003.png) on
     the training set.
+  id: totrans-29
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算基础学习器在训练集上的加权错误率 ![](img/B15439_12_003.png)。
 - en: Compute the base learner's ensemble weight ![](img/B15439_12_004.png) as a function
     of its error rate, as shown in the following formula:![](img/B15439_12_005.png)
+  id: totrans-30
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据其错误率计算基础学习器的集成权重 ![](img/B15439_12_004.png)，如下公式所示：![](img/B15439_12_005.png)
 - en: Update the weights for misclassified samples according to ![](img/B15439_12_006.png)
+  id: totrans-31
   prefs:
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据 ![](img/B15439_12_006.png) 更新误分类样本的权重。
 - en: 'Predict the positive class when the weighted sum of the ensemble members is
     positive, and negative otherwise, as shown in the following formula:'
+  id: totrans-32
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 当集成成员的加权和为正时，预测为正类，否则为负类，如下公式所示：
 - en: '![](img/B15439_12_007.png)'
+  id: totrans-33
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_007.png)'
 - en: AdaBoost has many practical **advantages**, including ease of implementation
     and fast computation, and can be combined with any method for identifying weak
     learners. Apart from the size of the ensemble, there are no hyperparameters that
     require tuning. AdaBoost is also useful for identifying outliers because the samples
     that receive the highest weights are those that are consistently misclassified
     and inherently ambiguous, which is also typical for outliers.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: AdaBoost有许多实际的**优势**，包括易于实现和快速计算，并且可以与任何用于识别弱学习器的方法结合使用。除了集成大小之外，没有需要调整的超参数。AdaBoost也适用于识别异常值，因为接收最高权重的样本是那些始终被错误分类和固有模糊的样本，这也是异常值的典型特征。
 - en: 'There are also **disadvantages**: the performance of AdaBoost on a given dataset
     depends on the ability of the weak learner to adequately capture the relationship
     between features and outcome. As the theory suggests, boosting will not perform
     well when there is insufficient data, or when the complexity of the ensemble members
     is not a good match for the complexity of the data. It can also be susceptible
     to noise in the data.'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有**缺点**：AdaBoost在给定数据集上的性能取决于弱学习器充分捕获特征与结果之间关系的能力。正如理论所述，当数据不足或者集成成员的复杂度与数据的复杂度不匹配时，Boosting效果不佳。它也容易受到数据中的噪声影响。
 - en: See Schapire and Freund (2012) for a thorough introduction and review of boosting
     algorithms.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 详细介绍和审查了提升算法，请参阅Schapire和Freund (2012)。
 - en: Using AdaBoost to predict monthly price moves
+  id: totrans-37
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用AdaBoost预测月度价格走势
 - en: As part of its ensemble module, scikit-learn provides an `AdaBoostClassifier`
     implementation that supports two or more classes. The code examples for this section
     are in the notebook `boosting_baseline`, which compares the performance of various
     algorithms with a dummy classifier that always predicts the most frequent class.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为其集成模块的一部分，scikit-learn提供了一个支持两个或更多类别的`AdaBoostClassifier`实现。本节的代码示例在笔记本`boosting_baseline`中，该笔记本将各种算法的性能与始终预测最频繁类别的虚拟分类器进行比较。
 - en: We need to first define a `base_estimator` as a template for all ensemble members
     and then configure the ensemble itself. We'll use the default `DecisionTreeClassifier`
     with `max_depth=1` — that is, a stump with a single split. Alternatives include
     any other model from linear or logistic regression to a neural network that conforms
     to the scikit-learn interface (see the documentation). However, decision trees
     are by far the most common in practice.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要首先将`base_estimator`定义为所有集成成员的模板，然后配置集成本身。我们将使用默认的`DecisionTreeClassifier`，`max_depth=1`
+    — 即，具有单一拆分的桩。可选的包括符合scikit-learn接口的任何其他模型，从线性或逻辑回归到神经网络（请参阅文档）。然而，在实践中，决策树是最常见的。
 - en: 'The complexity of `base_estimator` is a key tuning parameter because it depends
     on the nature of the data. As demonstrated in the previous chapter, changes to
     `max_depth` should be combined with appropriate regularization constraints using
     adjustments to, for example, `min_samples_split`, as shown in the following code:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: '`base_estimator`的复杂度是一个关键的调节参数，因为它取决于数据的性质。正如前一章所示，对于`max_depth`的更改应与适当的正则化约束相结合，使用例如对`min_samples_split`的调整，如下面的代码所示：'
 - en: '[PRE0]'
+  id: totrans-41
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'In the second step, we''ll design the ensemble. The `n_estimators` parameter
     controls the number of weak learners, and `learning_rate` determines the contribution
     of each weak learner, as shown in the following code. By default, weak learners
     are decision tree stumps:'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 在第二步中，我们将设计集成。`n_estimators`参数控制弱学习器的数量，而`learning_rate`确定每个弱学习器的贡献，如下面的代码所示。默认情况下，弱学习器是决策树桩：
 - en: '[PRE1]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: The main tuning parameters that are responsible for good results are `n_estimators`
     and the `base_estimator` complexity. This is because the depth of the tree controls
     the extent of the interaction among the features.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 负责良好结果的主要调节参数是`n_estimators`和`base_estimator`的复杂度。这是因为树的深度控制了特征之间的相互作用程度。
 - en: 'We will cross-validate the AdaBoost ensemble using the custom `OneStepTimeSeriesSplit`,
     a simplified version of the more flexible `MultipleTimeSeriesCV` (see *Chapter
     6*, *The Machine Learning Process*). It implements a 12-fold rolling time-series
     split to predict 1 month ahead for the last 12 months in the sample, using all
     available prior data for training, as shown in the following code:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用自定义的`OneStepTimeSeriesSplit`来交叉验证AdaBoost集成，这是`MultipleTimeSeriesCV`的简化版本（请参见*第6章*
+    *机器学习过程*）。它实现了一个12折滚动时间序列拆分，以预测样本中最后12个月的1个月，使用所有可用的先前数据进行训练，如下面的代码所示：
 - en: '[PRE2]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'The validation results show a weighted accuracy of 0.5068, an AUC score of
     0.5348, and precision and recall values of 0.547 and 0.576, respectively, implying
     an F1 score of 0.467\. This is marginally below a random forest with default settings
     that achieves a validation AUC of 0.5358\. *Figure 12.1* shows the distribution
     of the various metrics for the 12 train and test folds as a boxplot (note that
     the random forest perfectly fits the training set):'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 验证结果显示加权准确率为0.5068，AUC分数为0.5348，精度和召回率分别为0.547和0.576，相应地，F1分数为0.467。这略低于采用默认设置的随机森林，在验证AUC为0.5358时，*图12.1*以箱形图显示了12个训练和测试折的各种指标的分布（注意，随机森林完全适应于训练集）：
 - en: '![](img/B15439_12_01.png)'
+  id: totrans-48
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_01.png)'
 - en: 'Figure 12.1: AdaBoost cross-validation performance'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.1：AdaBoost交叉验证性能
 - en: See the companion notebook for additional details on the code to cross-validate
     and process the results.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关交叉验证和处理结果的代码的详细信息，请参阅附带的笔记本。
 - en: Gradient boosting – ensembles for most tasks
+  id: totrans-51
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 梯度提升 - 大多数任务的集成
 - en: 'AdaBoost can also be interpreted as a stagewise forward approach to minimizing
     an exponential loss function for a binary outcome, *y* ![](img/B15439_12_002.png),
     that identifies a new base learner, *h*[m], at each iteration, *m*, with the corresponding
     weight,![](img/B15439_12_009.png), and adds it to the ensemble, as shown in the
     following formula:'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: AdaBoost也可以解释为一种逐步向前的方法，用于最小化二元结果的指数损失函数，*y* ![](img/B15439_12_002.png)，在每次迭代，*m*，中识别一个新的基学习器，*h*[m]，具有相应的权重，![](img/B15439_12_009.png)，并将其添加到集成中，如下面的公式所示：
 - en: '![](img/B15439_12_010.png)'
+  id: totrans-53
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_010.png)'
 - en: This interpretation of AdaBoost as a gradient descent algorithm that minimizes
     a particular loss function, namely exponential loss, was only discovered several
     years after its original publication.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 将AdaBoost解释为最小化特定损失函数，即指数损失的梯度下降算法，是在其原始发布几年后才发现的。
 - en: '**Gradient boosting** leverages this insight and **applies the boosting method
     to a much wider range of loss functions**. The method enables the design of machine
     learning algorithms to solve any regression, classification, or ranking problem,
     as long as it can be formulated using a loss function that is differentiable and
     thus has a gradient. Common example loss functions for different tasks include:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '**梯度提升**利用这一见解，**将提升方法应用于更广泛范围的损失函数**。该方法使得可以设计机器学习算法来解决任何回归、分类或排名问题，只要能够使用可微分的损失函数并且具有梯度。不同任务的常见示例损失函数包括：'
 - en: '**Regression**: The mean-squared and absolute loss'
+  id: totrans-56
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**回归（Regression）**：均方和绝对损失'
 - en: '**Classification**: Cross-entropy'
+  id: totrans-57
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**分类（Classification）**：交叉熵'
 - en: '**Learning to rank**: Lambda rank loss'
+  id: totrans-58
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**学习排名（Learning to rank）**：Lambda排名损失'
 - en: We covered regression and classification loss functions in *Chapter 6*, *The
     Machine Learning Process*; learning to rank is outside the scope of this book,
     but see Nakamoto (2011) for an introduction and Chen et al. (2009) for details
     on ranking loss.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在*第6章* *机器学习过程*中讨论了回归和分类损失函数；学习排名超出了本书的范围，但可以参考中本（2011年）进行介绍和陈等人（2009年）了解排名损失的详细信息。
 - en: The flexibility to customize this general method to many specific prediction
     tasks is essential to boosting's popularity. Gradient boosting is also not limited
     to weak learners and often achieves the best performance with decision trees several
     levels deep.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 将此通用方法定制为许多特定预测任务的灵活性对于提升其受欢迎程度至关重要。梯度提升也不局限于弱学习器，并且通常使用数层深度的决策树获得最佳性能。
 - en: The main idea behind the resulting **gradient boosting machines** (**GBMs**)
     algorithm is training the base learners to learn the negative gradient of the
     current loss function of the ensemble. As a result, each addition to the ensemble
@@ -350,65 +482,90 @@
     made by prior ensemble members. Since each new member represents a new function
     of the data, gradient boosting is also said to optimize over the functions *h*[m]
     in an additive fashion.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果**梯度提升机器**（**GBMs**）算法背后的主要思想是训练基本学习者学习集成当前损失函数的负梯度。因此，集成的每个添加直接有助于减少整体训练误差，考虑到先前集成成员的错误。由于每个新成员代表数据的新函数，因此也可以说梯度提升是以加法方式优化数据的函数
+    *h*[m]。
 - en: 'In short, the algorithm successively fits weak learners *h*[m], such as decision
     trees, to the negative gradient of the loss function that is evaluated for the
     current ensemble, as shown in the following formula:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 简而言之，该算法连续拟合弱学习者 *h*[m]，例如决策树，到当前集成评估的损失函数的负梯度，如下公式所示：
 - en: '![](img/B15439_12_011.png)'
+  id: totrans-63
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_011.png)'
 - en: In other words, at a given iteration *m*, the algorithm computes the gradient
     of the current loss for each observation and then fits a regression tree to these
     pseudo-residuals. In a second step, it identifies an optimal prediction for each
     leaf node that minimizes the incremental loss due to adding this new learner to
     the ensemble.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 换句话说，在给定迭代次数 *m* 的情况下，该算法计算每个观察值的当前损失的梯度，然后将回归树拟合到这些伪残差上。在第二步中，它确定每个叶节点的最佳预测，以最小化由于将此新学习者添加到集成中而产生的增量损失。
 - en: This differs from standalone decision trees and random forests, where the prediction
     depends on the outcomes for the training samples assigned to a terminal node,
     namely their average, in the case of regression, or the frequency of the positive
     class for binary classification. The focus on the gradient of the loss function
     also implies that gradient boosting uses regression trees to learn both regression
     and classification rules because the gradient is always a continuous function.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 这与独立决策树和随机森林不同，独立决策树和随机森林的预测取决于分配给终端节点的训练样本的结果，即回归的平均值或二元分类的正类别频率。对损失函数梯度的关注还意味着梯度提升使用回归树来学习回归和分类规则，因为梯度始终是连续函数。
 - en: 'The final ensemble model makes predictions based on the weighted sum of the
     predictions of the individual decision trees, each of which has been trained to
     minimize the ensemble loss, given the prior prediction for a given set of feature
     values, as shown in the following diagram:'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终的集成模型根据个体决策树预测的加权和进行预测，每个个体决策树都已经训练以最小化集成损失，考虑到给定一组特征值的先前预测，如下图所示：
 - en: '![](img/B15439_12_02.png)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_02.png)'
 - en: 'Figure 12.2: The gradient boosting algorithm'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 12.2：梯度提升算法
 - en: Gradient boosting trees have produced **state-of-the-art performance on many
     classification**, **regression**, and **ranking benchmarks**. They are probably
     the most popular ensemble learning algorithms as standalone predictors in a diverse
     set of ML competitions, as well as in real-world production pipelines, for example,
     to predict click-through rates for online ads.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 梯度提升树已经在许多分类、回归和排名基准上产生了**最先进的性能**。它们可能是最受欢迎的集成学习算法，作为多种ML竞赛中的独立预测器，以及现实世界生产管道中的独立预测器，例如，用于预测在线广告的点击率。
 - en: The success of gradient boosting is based on its ability to learn complex functional
     relationships in an incremental fashion. However, the flexibility of this algorithm
     requires the careful management of the **risk of overfitting** by tuning **hyperparameters**
     that constrain the model's tendency to learn noise, as opposed to the signal,
     in the training data.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 梯度提升成功的基础在于其以增量方式学习复杂的功能关系。然而，该算法的灵活性需要通过调整 **超参数** 来谨慎管理**过拟合风险**，这些超参数限制了模型学习训练数据中的噪声而不是信号的倾向。
 - en: We will introduce the key mechanisms to control the complexity of a gradient
     boosting tree model, and then illustrate model tuning using the sklearn implementation.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将介绍控制梯度提升树模型复杂性的关键机制，然后使用 sklearn 实现说明模型调整。
 - en: How to train and tune GBM models
+  id: totrans-72
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何训练和调整 GBM 模型
 - en: 'Boosting has often demonstrated **remarkable resilience to overfitting**, despite
     significant growth of the ensemble and, thus, the complexity of the model. The
     combination of very low and decreasing training error with non-increasing validation
@@ -416,113 +573,151 @@
     continues to grow the ensemble with the goal of improving predictions for the
     most challenging cases, it adjusts the decision boundary to maximize the distance,
     or margin, of the data points.'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管集合增长显著，模型复杂性也增加，但提升通常表现出**令人瞩目的抗过拟合性**。非常低且不增加的验证错误通常与增强对预测的信心相关联：随着提升继续增加集合，以改善最具挑战性情况的预测为目标，它调整决策边界以最大化数据点的距离或间隔。
 - en: However, overfitting certainly happens, and the **two key drivers of gradient
     boosting performance** are the size of the ensemble and the complexity of its
     constituent decision trees.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，过拟合确实会发生，梯度提升性能的**两个关键驱动因素**是集合大小和其组成决策树的复杂性。
 - en: 'The control of the **complexity of decision trees** aims to avoid learning
     highly specific rules that typically imply a very small number of samples in leaf
     nodes. We covered the most effective constraints used to limit the ability of
     a decision tree to overfit to the training data in the previous chapter. They
     include minimum thresholds for:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 控制**决策树复杂性**的目的是避免学习高度具体的规则，这些规则通常意味着叶节点中的样本数量很少。我们在上一章中介绍了用于限制决策树过拟合训练数据能力的最有效约束。它们包括最小阈值：
 - en: The number of samples to either split a node or accept it as a terminal node.
+  id: totrans-76
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分裂节点或接受其作为终端节点所需的样本数量。
 - en: The improvement in node quality, as measured by the purity or entropy for classification,
     or mean-squared error for regression, to further grow the tree.
+  id: totrans-77
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 节点质量的改善，通常由分类的纯度或熵，或回归的均方误差衡量，以进一步增长树。
 - en: In addition to directly controlling the size of the ensemble, there are various
     regularization techniques, such as **shrinkage**, that we encountered in the context
     of the ridge and lasso linear regression models in *Chapter 7*, *Linear Models
     – From Risk Factors to Return Forecasts*. Furthermore, the randomization techniques
     used in the context of random forests are also commonly applied to gradient boosting
     machines.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了直接控制集合大小外，还有各种正则化技术，例如我们在*第7章*中遇到的**缩减**，用于岭回归模型和套索线性回归模型的上下文。此外，用于随机森林上下文中的随机化技术也经常应用于梯度提升机。
 - en: Ensemble size and early stopping
+  id: totrans-79
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 集合大小和早停
 - en: Each boosting iteration aims to reduce the training loss, increasing the risk
     of overfitting for a large ensemble. Cross-validation is the best approach to
     find the optimal ensemble size that minimizes the generalization error.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个提升迭代旨在减少训练损失，增加了对大型集合过拟合的风险。交叉验证是寻找最优集合大小以最小化泛化误差的最佳方法。
 - en: Since the ensemble size needs to be specified before training, it is useful
     to monitor the performance on the validation set and abort the training process
     when, for a given number of iterations, the validation error no longer decreases.
     This technique is called **early stopping** and is frequently used for models
     that require a large number of iterations and are prone to overfitting, including
     deep neural networks.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于需要在训练之前指定集合大小，因此监视验证集上的性能并在给定迭代次数时，当验证错误不再减少时中止训练过程是很有用的。这种技术称为**早停**，经常用于需要大量迭代且容易过拟合的模型，包括深度神经网络。
 - en: Keep in mind that using early stopping with the same validation set for a large
     number of trials will also lead to overfitting, but just for the particular validation
     set rather than the training set. It is best to avoid running a large number of
     experiments when developing a trading strategy as the risk of **false discoveries**
     increases significantly. In any case, keep a **hold-out test set** to obtain an
     unbiased estimate of the generalization error.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 请记住，在使用相同验证集进行大量试验时，使用早停也会导致过拟合，但只会针对特定的验证集而不是训练集。在开发交易策略时最好避免运行大量实验，因为**误发现**的风险显著增加。无论如何，保留一个**留存测试集**以获得对泛化错误的无偏估计是最好的。
 - en: Shrinkage and learning rate
+  id: totrans-83
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 缩减和学习率
 - en: Shrinkage techniques apply a penalty for increased model complexity to the model's
     loss function. For boosting ensembles, shrinkage can be applied by **scaling the
     contribution of each new ensemble member down** by a factor between 0 and 1\.
     This factor is called the **learning rate** of the boosting ensemble. Reducing
     the learning rate increases shrinkage because it lowers the contribution of each
     new decision tree to the ensemble.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 收缩技术对模型的复杂性增加施加惩罚，将收缩应用到模型的损失函数中。对于提升集成，收缩可以通过**缩小每个新集成成员的贡献**的因子在0和1之间进行。这个因子称为提升集成的**学习速率**。降低学习速率增加收缩，因为它降低了每个新决策树对集成的贡献。
 - en: The learning rate has the opposite effect of the ensemble size, which tends
     to increase for lower learning rates. Lower learning rates coupled with larger
     ensembles have been found to reduce the test error, in particular for regression
     and probability estimation. Large numbers of iterations are computationally more
     expensive but often feasible with fast, state-of-the-art implementations as long
     as the individual trees remain shallow.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 学习速率与集成大小产生相反的影响，学习速率降低时集成大小趋于增加。已发现较低的学习速率结合较大的集成可以减少测试误差，特别是对于回归和概率估计。大量迭代在计算上更昂贵，但是只要个别树保持浅层，快速的、最新的实现通常是可行的。
 - en: Depending on the implementation, you can also use **adaptive learning rates**
     that adjust to the number of iterations, typically lowering the impact of trees
     added later in the process. We will see some examples later in this chapter.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据实现的不同，您还可以使用**自适应学习率**，它会根据迭代次数调整，通常降低后期添加的树的影响。我们将在本章后面看到一些示例。
 - en: Subsampling and stochastic gradient boosting
+  id: totrans-87
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 子采样和随机梯度提升
 - en: As discussed in detail in the previous chapter, bootstrap averaging (bagging)
     improves the performance of an otherwise noisy classifier.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前一章节详细讨论的那样，自举平均（Bagging）改善了否则嘈杂分类器的性能。
 - en: Stochastic gradient boosting samples the training data without replacement at
     each iteration to grow the next tree (whereas bagging uses sampling with replacement).
     The benefit is lower computational effort due to the smaller sample and often
     better accuracy, but subsampling should be combined with shrinkage.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 随机梯度提升在每次迭代中对训练数据进行无替换采样以生成下一棵树（而Bagging使用替换采样）。优点是由于较小的样本和通常更好的准确性，计算工作量较小，但是子采样应与收缩结合使用。
 - en: As you can see, the number of hyperparameters keeps increasing, which drives
     up the number of potential combinations. As a result, the risk of false positives
     increases when choosing the best model from a large number of trials based on
     a limited amount of training data. The best approach is to proceed sequentially
     and select parameter values individually or use combinations of subsets of low
     cardinality.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到，超参数的数量不断增加，这导致潜在组合的数量增加。因此，在基于有限的训练数据进行大量试验并从中选择最佳模型时，假阳性的风险增加。最佳方法是按顺序进行，并逐个选择参数值，或者使用低基数子集的组合。
 - en: How to use gradient boosting with sklearn
+  id: totrans-91
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何使用sklearn进行梯度提升
 - en: The ensemble module of sklearn contains an implementation of gradient boosting
     trees for regression and classification, both binary and multiclass. The following
     `GradientBoostingClassifier` initialization code illustrates the key tuning parameters.
@@ -530,92 +725,133 @@
     More recently (version 0.21), scikit-learn introduced a much faster, yet still
     experimental, `HistGradientBoostingClassifier` inspired by the implementations
     in the following section.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: sklearn的集成模块包含了梯度提升树的实现，用于回归和分类，二元和多类别都有。下面的`GradientBoostingClassifier`初始化代码说明了关键的调整参数。笔记本`sklearn_gbm_tuning`包含了本节的代码示例。最近（版本0.21），scikit-learn引入了一个更快的、但仍然是实验性的`HistGradientBoostingClassifier`，灵感来自以下章节中的实现。
 - en: 'The available loss functions include the exponential loss that leads to the
     AdaBoost algorithm and the deviance that corresponds to the logistic regression
     for probabilistic outputs. The `friedman_mse` node quality measure is a variation
     on the mean-squared error, which includes an improvement score (see the scikit-learn
     documentation linked on GitHub), as shown in the following code:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 可用的损失函数包括导致AdaBoost算法的指数损失和对应于概率输出的逻辑回归的偏差。`friedman_mse`节点质量度量是均方误差的一种变体，其中包含一个改进分数（请参阅GitHub上链接的scikit-learn文档），如下所示的代码所示：
 - en: '[PRE3]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Similar to `AdaBoostClassifier`, this model cannot handle missing values. We''ll
     again use 12-fold cross-validation to obtain errors for classifying the directional
     return for rolling 1-month holding periods, as shown in the following code:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于`AdaBoostClassifier`，这个模型无法处理缺失值。我们将再次使用12折交叉验证来获取对滚动1个月持有期方向性回报进行分类的错误，如下所示的代码：
 - en: '[PRE4]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'We parse and plot the result to find a slight improvement—using default parameter
     values—over both `AdaBoostClassifier` and the random forest as the test AUC increases
     to 0.537\. *Figure 12.3* shows boxplots for the various loss metrics we are tracking:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们解析并绘制结果，发现与`AdaBoostClassifier`和随机森林相比略有改善，使用默认参数值，测试AUC提高到0.537。*图12.3*显示了我们正在跟踪的各种损失指标的箱线图：
 - en: '![](img/B15439_12_03.png)'
+  id: totrans-98
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_03.png)'
 - en: 'Figure 12.3: Cross-validation performance of the scikit-learn gradient boosting
     classifier'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.3：scikit-learn梯度提升分类器的交叉验证性能
 - en: How to tune parameters with GridSearchCV
+  id: totrans-100
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何使用GridSearchCV调整参数
 - en: 'The `GridSearchCV` class in the `model_selection` module facilitates the systematic
     evaluation of all combinations of the hyperparameter values that we would like
     to test. In the following code, we will illustrate this functionality for seven
     tuning parameters, which, when defined, will result in a total of ![](img/B15439_12_012.png)
     different model configurations:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: '`model_selection`模块中的`GridSearchCV`类便于对我们想要测试的所有超参数值的组合进行系统评估。在下面的代码中，我们将为七个调整参数说明这个功能，一旦定义，就会导致总共![](img/B15439_12_012.png)个不同的模型配置：'
 - en: '[PRE5]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'The `.fit()` method executes the cross-validation using the custom `OneStepTimeSeriesSplit`
     and the `roc_auc` score to evaluate the 12 folds. Sklearn lets us persist the
     result, as it would for any other model, using the `joblib` pickle implementation,
     as shown in the following code:'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.fit()`方法使用自定义的`OneStepTimeSeriesSplit`和`roc_auc`分数执行12折交叉验证。Sklearn让我们使用`joblib`
+    pickle实现持久化结果，就像对任何其他模型一样，如下所示的代码：'
 - en: '[PRE6]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'The `GridSearchCV` object has several additional attributes, after completion,
     that we can access after loading the pickled result. We can use them to learn
     which hyperparameter combination performed best and its average cross-validation
     AUC score, which results in a modest improvement over the default values. This
     is shown in the following code:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: '`GridSearchCV`对象在完成后具有几个附加属性，我们可以在加载拾取的结果后访问它们。我们可以使用它们来了解哪种超参数组合表现最佳及其平均交叉验证AUC分数，这导致与默认值相比略有改善。如下代码所示：'
 - en: '[PRE7]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Parameter impact on test scores
+  id: totrans-107
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 参数对测试分数的影响
 - en: The `GridSearchCV` result stores the average cross-validation scores so that
     we can analyze how different hyperparameter settings affect the outcome.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: '`GridSearchCV`结果存储了平均交叉验证分数，以便我们可以分析不同超参数设置如何影响结果。'
 - en: 'The six seaborn swarm plots in the right panel of *Figure 12.4* show the distribution
     of AUC test scores for all hyperparameter values. In this case, the highest AUC
     test scores required a low `learning_rate` and a large value for `max_features`.
     Some parameter settings, such as a low `learning_rate`, produce a wide range of
     outcomes that depend on the complementary settings of other parameters:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 右侧面板中的六个seaborn swarm图展示了所有超参数值的AUC测试分数分布。在这种情况下，最高的AUC测试分数需要低`learning_rate`和大的`max_features`值。一些参数设置，比如低`learning_rate`，会产生一系列取决于其他参数的互补设置的结果：
 - en: '![](img/B15439_12_04.png)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_04.png)'
 - en: 'Figure 12.4: Hyperparameter impact for the scikit-learn gradient boosting model'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.4：scikit-learn梯度提升模型的超参数影响
 - en: 'We will now explore how hyperparameter settings jointly affect the cross-validation
     performance. To gain insight into how parameter settings interact, we can train
     a `DecisionTreeRegressor` with the mean CV AUC as the outcome and the parameter
@@ -623,109 +859,152 @@
     tree structure highlights that using all features (`max_features=1`), a low `learning_rate`,
     and a `max_depth` above three led to the best results, as shown in the following
     diagram:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在将探讨超参数设置如何共同影响交叉验证性能。为了深入了解参数设置如何相互作用，我们可以训练一个`DecisionTreeRegressor`，以平均CV
+    AUC作为结果，以及参数设置，以一位热编码或虚拟格式编码（详情请参见笔记本）。树结构突出显示，使用所有特征（`max_features=1`）、低`learning_rate`和`max_depth`大于三导致了最佳结果，如下图所示：
 - en: '![](img/B15439_12_05.png)'
+  id: totrans-113
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_05.png)'
 - en: 'Figure 12.5: Impact of the gradient boosting model hyperparameter settings
     on test performance'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.5：梯度提升模型超参数设置对测试性能的影响
 - en: The bar chart in the left panel of *Figure 12.4* displays the influence of the
     hyperparameter settings in producing different outcomes, measured by their feature
     importance for a decision tree that has grown to its maximum depth. Naturally,
     the features that appear near the top of the tree also accumulate the highest
     importance scores.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图12.4*左侧面板的条形图显示了超参数设置对产生不同结果的影响，通过它们对已经达到最大深度的决策树的特征重要性来衡量。自然地，出现在树顶部附近的特征也累积了最高的重要性分数。'
 - en: How to test on the holdout set
+  id: totrans-116
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何在留存集上进行测试
 - en: Finally, we would like to evaluate the best model's performance on the holdout
     set that we excluded from the `GridSearchCV` exercise. It contains the last 7
     months of the sample period (through February 2018; see the notebook for details).
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们想要评估我们从`GridSearchCV`练习中排除的留存集上最佳模型的性能。它包含样本期的最后7个月（截至2018年2月；详情请参阅笔记本）。
 - en: 'We obtain a generalization performance estimate based on the AUC score of 0.5381
     for the first month of the hold-out period using the following code example:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们根据留存期的第一个月的AUC得分（为0.5381）获得了一般化性能估计，使用以下代码示例：
 - en: '[PRE8]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: The downside of the sklearn gradient boosting implementation is the **limited
     training speed**, which makes it difficult to try out different hyperparameter
     settings quickly. In the next section, we will see that several optimized implementations
     have emerged over the last few years that significantly reduce the time required
     to train even large-scale models, and have greatly contributed to a broader scope
     for applications of this highly effective algorithm.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: sklearn梯度提升实现的缺点是**有限的训练速度**，这使得快速尝试不同的超参数设置变得困难。在下一节中，我们将看到，在过去几年中出现了几个优化实现，这些实现显着减少了训练大规模模型所需的时间，并且极大地扩展了这种高效算法的应用范围。
 - en: Using XGBoost, LightGBM, and CatBoost
+  id: totrans-121
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用XGBoost、LightGBM和CatBoost
 - en: 'Over the last few years, several new gradient boosting implementations have
     used various innovations that accelerate training, improve resource efficiency,
     and allow the algorithm to scale to very large datasets. The new implementations
     and their sources are as follows:'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 在过去几年中，出现了几个新的梯度提升实现，利用了各种创新加速训练，提高资源效率，并允许算法扩展到非常大的数据集。新实现及其来源如下：
 - en: '**XGBoost**: Started in 2014 by T. Chen during his Ph.D. (T. Chen and Guestrin
     2016)'
+  id: totrans-123
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**XGBoost**：由T. Chen在他的博士期间于2014年启动（T. Chen和Guestrin 2016）'
 - en: '**LightGBM**: Released in January 2017 by Microsoft (Ke et al. 2017)'
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**LightGBM**：由微软于2017年1月发布（Ke等人2017）'
 - en: '**CatBoost**: Released in April 2017 by Yandex (Prokhorenkova et al. 2019)'
+  id: totrans-125
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**CatBoost**：由Yandex于2017年4月发布（Prokhorenkova等人2019）'
 - en: 'These innovations address specific challenges of training a gradient boosting
     model (see this chapter''s `README` file on GitHub for links to the documentation).
     The XGBoost implementation was the first new implementation to gain popularity:
     among the 29 winning solutions published by Kaggle in 2015, 17 solutions used
     XGBoost. Eight of these solely relied on XGBoost, while the others combined XGBoost
     with neural networks.'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些创新解决了训练梯度提升模型的特定挑战（请参阅本章的GitHub上的`README`文件，以获取文档链接）。XGBoost实现是第一个获得流行的新实现：在Kaggle于2015年发布的29个获奖解决方案中，有17个解决方案使用了XGBoost。其中有8个仅依赖于XGBoost，而其他解决方案将XGBoost与神经网络结合使用。
 - en: We will first introduce the key innovations that have emerged over time and
     subsequently converged (so that most features are available for all implementations),
     before illustrating their implementation.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将首先介绍随时间发展并最终趋同的关键创新（以便大多数功能对于所有实现都是可用的），然后说明它们的实现。
 - en: How algorithmic innovations boost performance
+  id: totrans-128
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 算法创新如何提升性能
 - en: Random forests can be trained in parallel by growing individual trees on independent
     bootstrap samples. The **sequential approach of gradient boosting**, in contrast,
     slows down training, which, in turn, complicates experimentation with the large
     number of hyperparameters that need to be adapted to the nature of the task and
     the dataset.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 随机森林可以通过在独立的自助样本上生长个体树来并行训练。相反，梯度提升的顺序方法会减慢训练速度，从而使得需要调整的大量超参数的实验变得复杂，这些超参数需要适应任务和数据集的特性。
 - en: To add a tree to the ensemble, the algorithm minimizes the prediction error
     with respect to the negative gradient of the loss function, similar to a conventional
     gradient descent optimizer. The **computational cost during training is thus proportional
     to the time it takes to evaluate potential split points** for each feature.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 要向集成中添加一棵树，该算法最小化与损失函数的负梯度相关的预测误差，类似于传统的梯度下降优化器。因此，**训练期间的计算成本与评估每个特征的潜在分割点的时间成正比**。
 - en: Second-order loss function approximation
+  id: totrans-131
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 二阶损失函数近似
 - en: The most important algorithmic innovations lower the cost of evaluating the
     loss function by using an approximation that relies on second-order derivatives,
     resembling Newton's method to find stationary points. As a result, scoring potential
     splits becomes much faster.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 最重要的算法创新通过使用依赖于二阶导数的近似来降低评估损失函数的成本，类似于牛顿法来寻找稳定点。因此，评分潜在分割变得更快。
 - en: 'As discussed, a gradient boosting ensemble *H*[M] is trained incrementally
     to minimize the sum of the prediction error and the regularization penalty. Denoting
     the prediction of the outcome *y*[i] by the ensemble after step *m* as ![](img/B15439_12_013.png),
@@ -733,39 +1012,55 @@
     the outcome and the prediction, and ![](img/B15439_12_014.png) as a penalty that
     increases with the complexity of the ensemble *H*[M]. The incremental hypothesis
     *h*[m] aims to minimize the following objective *L*:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前所述，梯度提升集成*H*[M]是逐步训练的，以最小化预测误差和正则化惩罚的总和。将步骤*m*后的集成对结果*y*[i]的预测表示为![](img/B15439_12_013.png)，作为可微的凸损失函数，衡量结果与预测之间的差异，![](img/B15439_12_014.png)作为随着集成*H*[M]的复杂性增加而增加的惩罚。增量假设*h*[m]旨在最小化以下目标*L*：
 - en: '![](img/B15439_12_015.png)'
+  id: totrans-134
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_015.png)'
 - en: 'The regularization penalty helps to avoid overfitting by favoring a model that
     uses simple yet predictive regression trees. In the case of XGBoost, for example,
     the penalty for a regression tree *h* depends on the number of leaves per tree
     *T*, the regression tree scores for each terminal node *w*, and the hyperparameters
     ![](img/B15439_12_016.png) and ![](img/B15439_12_017.png). This is summarized
     in the following formula:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 正则化惩罚有助于通过偏爱使用简单但具有预测性的回归树的模型来避免过拟合。例如，在XGBoost的情况下，回归树*h*的惩罚取决于每棵树的叶子数*T*、每个终端节点的回归树分数*w*以及超参数![](img/B15439_12_016.png)和![](img/B15439_12_017.png)。这在下面的公式中总结如下：
 - en: '![](img/B15439_12_018.png)'
+  id: totrans-136
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_018.png)'
 - en: 'Therefore, at each step, the algorithm greedily adds the hypothesis *h*[m]
     that most improves the regularized objective. The second-order approximation of
     a loss function, based on a Taylor expansion, speeds up the evaluation of the
     objective, as summarized in the following formula:'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，在每一步中，该算法贪婪地添加最能改善正则化目标的假设*h*[m]。基于泰勒展开的损失函数的二阶近似加速了目标的评估，如下面的公式所总结的那样：
 - en: '![](img/B15439_12_019.png)'
+  id: totrans-138
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_019.png)'
 - en: 'Here, *g*[i] is the first-order gradient of the loss function before adding
     the new learner for a given feature value, and *h*[i] is the corresponding second-order
     gradient (or Hessian) value, as shown in the following formulas:'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，*g*[i]是在给定特征值的情况下添加新学习器之前的损失函数的一阶梯度，*h*[i]是相应的二阶梯度（或Hessian）值，如下面的公式所示：
 - en: '![](img/B15439_12_020.png)![](img/B15439_12_021.png)'
+  id: totrans-140
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_020.png)![](img/B15439_12_021.png)'
 - en: The XGBoost algorithm was the first open source algorithm to leverage this approximation
     of the loss function to compute the optimal leaf scores for a given tree structure
     and the corresponding value of the loss function. The score consists of the ratio
@@ -773,20 +1068,26 @@
     uses this value to score the information gain that would result from a split,
     similar to the node impurity measures we saw in the previous chapter, but applicable
     to arbitrary loss functions. See Chen and Guestrin (2016) for the detailed derivation.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: XGBoost算法是第一个利用损失函数的这种近似来计算给定树结构的最优叶子分数和损失函数对应值的开源算法。得分由终端节点中样本的梯度和Hessian总和的比率组成。它使用此值对信息增益进行评分，该信息增益是结果章节中看到的节点不纯度度量的一个类似版本，但适用于任意损失函数。有关详细推导，请参见Chen和Guestrin（2016）。
 - en: Simplified split-finding algorithms
+  id: totrans-142
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 简化的分割查找算法
 - en: The original gradient boosting implementation by sklearn finds the optimal split
     that enumerates all options for continuous features. This **exact greedy algorithm**
     is computationally very demanding due to the potentially very large number of
     split options for each feature. This approach faces additional challenges when
     the data does not fit in memory or when training in a distributed setting on multiple
     machines.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: sklearn的原始梯度提升实现找到枚举连续特征的所有选项的最佳分裂。这个**精确贪婪算法**由于每个特征可能的分裂选项数量可能非常大，计算上是非常耗费资源的。当数据不适合内存或在多台机器上的分布式设置中进行训练时，这种方法面临额外的挑战。
 - en: An **approximate split-finding** algorithm reduces the number of split points
     by assigning feature values to a user-determined set of bins, which can also greatly
     reduce the memory requirements during training. This is because only a single
@@ -796,25 +1097,33 @@
     caused by missing values, frequent zero-gradient statistics, and one-hot encoding,
     and can learn an optimal default direction for a given split. As a result, the
     algorithm only needs to evaluate non-missing values.
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个**近似分裂查找**算法通过将特征值分配给用户确定的一组箱中的特征值来减少分裂点的数量，这也可以在训练期间极大地减少内存需求。这是因为每个箱只需要存储一个值。XGBoost引入了一个**分位数草图**算法，将加权训练样本分成百分位数箱，以实现均匀分布。XGBoost还引入了处理稀疏数据的能力，原因是缺失值、频繁的零梯度统计和独热编码，并且可以学习给定分裂的最佳默认方向。因此，该算法只需要评估非缺失值。
 - en: In contrast, LightGBM uses **gradient-based one-side sampling** (**GOSS**) to
     exclude a significant proportion of samples with small gradients, and only uses
     the remainder to estimate the information gain and select a split value accordingly.
     Samples with larger gradients require more training and tend to contribute more
     to the information gain.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 相反，LightGBM使用**基于梯度的单边采样**（**GOSS**）来排除具有小梯度的大部分样本，并仅使用其余部分来估计信息增益并相应地选择分裂值。具有较大梯度的样本需要更多的训练，并且往往对信息增益贡献更多。
 - en: LightGBM also uses exclusive feature bundling to combine features that are mutually
     exclusive, in that they rarely take nonzero values simultaneously, to reduce the
     number of features. As a result, LightGBM was the fastest implementation when
     released and still often performs best.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: LightGBM还使用独占特征捆绑来组合彼此互斥的特征，即它们很少同时取非零值，以减少特征数量。因此，LightGBM是发布时最快的实现，并且通常仍然表现最佳。
 - en: Depth-wise versus leaf-wise growth
+  id: totrans-147
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 深度优先与叶子节点优先增长
 - en: 'LightGBM differs from XGBoost and CatBoost in how it prioritizes which nodes
     to split. LightGBM decides on splits leaf-wise, that is, it splits the leaf node
     that maximizes the information gain, even when this leads to unbalanced trees.
@@ -822,14 +1131,20 @@
     all nodes at a given level of depth, before adding more levels. The two approaches
     expand nodes in a different order and will produce different results except for
     complete trees. The following diagram illustrates these two approaches:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: LightGBM与XGBoost和CatBoost的不同之处在于它如何确定要分裂哪些节点的优先级。LightGBM决定按叶子节点进行分裂，即，它分裂最大化信息增益的叶子节点，即使这会导致树不平衡。相反，XGBoost和CatBoost按深度扩展所有节点，并首先在给定深度级别上分裂所有节点，然后再添加更多级别。这两种方法以不同的顺序扩展节点，并且除了完全树外，将产生不同的结果。以下图示了这两种方法：
 - en: '![](img/B15439_12_06.png)'
+  id: totrans-149
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_06.png)'
 - en: 'Figure 12.6: Depth-wise vs leaf-wise growth'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.6：深度优先 vs 叶子节点优先增长
 - en: LightGBM's leaf-wise splits tend to increase model complexity and may speed
     up convergence, but also increase the risk of overfitting. A tree grown depth-wise
     with *n* levels has up to 2^n terminal nodes, whereas a leaf-wise tree with 2^n
@@ -837,36 +1152,49 @@
     in some leaves. Hence, tuning LightGBM's `num_leaves` setting requires extra caution,
     and the library allows us to control `max_depth` at the same time to avoid undue
     node imbalance. More recent versions of LightGBM also offer depth-wise tree growth.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: LightGBM的叶子节点优先分裂倾向于增加模型的复杂性，并可能加快收敛速度，但也增加了过拟合的风险。一个深度为*n*级别的树有最多2^n个终端节点，而具有2^n个叶子节点的叶子优先树可能有更多级别，并且在某些叶子中包含相应地更少的样本。因此，调整LightGBM的`num_leaves`设置需要额外的小心，该库同时允许我们控制`max_depth`以避免不必要的节点不平衡。LightGBM的更高版本也提供了深度优先树增长。
 - en: GPU-based training
+  id: totrans-152
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 基于GPU的训练
 - en: All new implementations support training and prediction on one or more GPUs
     to achieve significant speedups. They are compatible with current CUDA-enabled
     GPUs. Installation requirements vary and are evolving quickly. The XGBoost and
     CatBoost implementations work for several current versions, but LightGBM may require
     local compilation (see GitHub for links to the documentation).
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有新的实现都支持在一个或多个 GPU 上进行训练和预测，以实现显著的加速。它们与当前支持 CUDA 的 GPU 兼容。安装要求因版本而异，而且正在迅速发展。XGBoost
+    和 CatBoost 实现适用于几个当前版本，但是 LightGBM 可能需要本地编译（请参阅 GitHub 获取文档链接）。
 - en: The speedups depend on the library and the type of the data, and they range
     from low, single-digit multiples to factors of several dozen. Activation of the
     GPU only requires the change of a task parameter and no other hyperparameter modifications.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 加速取决于库和数据类型，范围从低位、个位数的倍数到数十倍因子。只需更改任务参数即可激活 GPU，并且不需要进行其他超参数修改。
 - en: DART – dropout for additive regression trees
+  id: totrans-155
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: DART – 增加回归树的辍学
 - en: 'Rashmi and Gilad-Bachrach (2015) proposed a new model to train gradient boosting
     trees to address a problem they labeled **over-specialization**: trees added during
     later iterations tend only to affect the prediction of a few instances, while
     making a minor contribution to the remaining instances. However, the model''s
     out-of-sample performance can suffer, and it may become over-sensitive to the
     contributions of a small number of trees.'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: Rashmi 和 Gilad-Bachrach（2015）提出了一个新模型，用于训练梯度提升树以解决他们称之为**过度专业化**的问题：在后续迭代中添加的树往往只影响少数实例的预测，同时对其余实例的贡献较小。然而，该模型的样本外表现可能会受到影响，并且可能会对少数树的贡献过度敏感。
 - en: The new algorithms employ dropouts that have been successfully used for learning
     more accurate deep neural networks, where they mute a random fraction of the neural
     connections during training. As a result, nodes in higher layers cannot rely on
@@ -874,24 +1202,33 @@
     has made a significant contribution to the success of deep neural networks for
     many tasks and has also been used with other learning techniques, such as logistic
     regression.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 新算法采用了辍学，在学习更准确的深度神经网络时已被成功使用，其中在训练期间会静音一部分神经连接。因此，更高层次的节点无法依赖于少数连接传递预测所需的信息。这种方法对于许多任务的深度神经网络的成功做出了重要贡献，还与其他学习技术（如逻辑回归）一起使用。
 - en: '**DART**, or **dropout for additive regression trees**, operates at the level
     of trees and mutes complete trees as opposed to individual features. The goal
     is for trees in the ensemble generated using DART to contribute more evenly toward
     the final prediction. In some cases, this has been shown to produce more accurate
     predictions for ranking, regression, and classification tasks. The approach was
     first implemented in LightGBM and is also available for XGBoost.'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: '**DART**，或者称为**增加回归树的辍学**，在树的层面上操作，而不是在单个特征上进行操作。其目标是使使用 DART 生成的整体树对最终预测贡献更加均匀。在某些情况下，这已被证明对排名、回归和分类任务产生更准确的预测。该方法首次在
+    LightGBM 中实现，并且也适用于 XGBoost。'
 - en: Treatment of categorical features
+  id: totrans-159
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 对分类特征的处理
 - en: The CatBoost and LightGBM implementations handle categorical variables directly
     without the need for dummy encoding.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: CatBoost 和 LightGBM 实现可直接处理分类变量，无需进行虚拟编码。
 - en: The CatBoost implementation (which is named for its treatment of categorical
     features) includes several options to handle such features, in addition to automatic
     one-hot encoding. It assigns either the categories of individual features or combinations
@@ -903,67 +1240,89 @@
     positive class, computed cumulatively over the sample, based on a prior, and with
     a smoothing factor. See the CatBoost documentation for more detailed numerical
     examples.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: CatBoost实现（因其对分类特征的处理而命名）包括几种处理此类特征的选项，除了自动独热编码外。它将单个特征的类别或几个特征的组合分配给数值。换句话说，CatBoost可以从现有特征的组合创建新的分类特征。与单个特征或特征组合的类别级别相关的数值取决于它们与结果值的关系。在分类情况下，这与在样本上基于先验和平滑因子计算的观察到正类的概率相关。有关更详细的数值示例，请参阅CatBoost文档。
 - en: The LightGBM implementation groups the levels of the categorical features to
     maximize homogeneity (or minimize variance) within groups with respect to the
     outcome values. The XGBoost implementation does not handle categorical features
     directly and requires one-hot (or dummy) encoding.
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: LightGBM实现将分类特征的级别分组，以最大化组内相对于结果值的同质性（或最小化方差）。XGBoost实现不直接处理分类特征，需要独热（或虚拟）编码。
 - en: Additional features and optimizations
+  id: totrans-163
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 附加功能和优化
 - en: XGBoost optimizes computation in several respects to enable multithreading.
     Most importantly, it keeps data in memory in compressed column blocks, where each
     column is sorted by the corresponding feature value. It computes this input data
     layout once before training and reuses it throughout to amortize the up-front
     cost. As a result, the search for split statistics over columns becomes a linear
     scan of quantiles that can be done in parallel and supports column subsampling.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: XGBoost在几个方面优化计算以实现多线程。最重要的是，它将数据保留在压缩的列块中，其中每列按相应特征值排序。它在训练之前计算此输入数据布局一次，并在整个过程中重复使用以分摊前期成本。因此，对列上的分割统计的搜索变成了可以并行进行的分位数的线性扫描，并支持列子抽样
 - en: The subsequently released LightGBM and CatBoost libraries built on these innovations,
     and LightGBM further accelerated training through optimized threading and reduced
     memory usage. Because of their open source nature, libraries have tended to converge
     over time.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 随后发布的LightGBM和CatBoost库基于这些创新，而LightGBM通过优化线程和减少内存使用量进一步加速了训练。由于它们的开源性质，库往往随着时间的推移而趋于融合。
 - en: XGBoost also supports **monotonicity constraints**. These constraints ensure
     that the values for a given feature are only positively or negatively related
     to the outcome over its entire range. They are useful to incorporate external
     assumptions about the model that are known to be true.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: XGBoost还支持**单调性约束**。这些约束确保给定特征的值在其整个范围内与结果呈正相关或负相关。它们有助于将关于模型的外部假设纳入其中，这些假设已知为真。
 - en: A long-short trading strategy with boosting
+  id: totrans-167
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 带增强的多空交易策略
 - en: In this section, we'll design, implement, and evaluate a trading strategy for
     US equities driven by daily return forecasts produced by gradient boosting models.
     We'll use the Quandl Wiki data to engineer a few simple features (see the notebook
     `preparing_the_model_data` for details), select a model while using 2015/16 as
     validation period, and run an out-of-sample test for 2017.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将设计、实现和评估一个由梯度提升模型产生的每日收益预测驱动的美国股票交易策略。我们将使用Quandl Wiki数据来设计一些简单的特征（详见笔记本`preparing_the_model_data`），在使用2015/16作为验证期间选择模型，并在2017年进行样本外测试。
 - en: As in the previous examples, we'll lay out a framework and build a specific
     example that you can adapt to run your own experiments. There are numerous aspects
     that you can vary, from the asset class and investment universe to more granular
     aspects like the features, holding period, or trading rules. See, for example,
     the Alpha Factor Library in the *Appendix* for numerous additional features.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 与之前的示例一样，我们将提供一个框架并构建一个具体的示例，您可以根据自己的实验进行调整。您可以变化的方面有很多，从资产类别和投资范围到更精细的方面，如特征、持有期或交易规则。例如，查看*附录*中的Alpha因子库以获取更多的附加功能。
 - en: We'll keep the trading strategy simple and only use a single ML signal; a real-life
     application will likely use multiple signals from different sources, such as complementary
     ML models trained on different datasets or with different lookahead or lookback
     periods. It would also use sophisticated risk management, from simple stop-loss
     to value-at-risk analysis.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将保持交易策略简单，只使用单个ML信号；实际应用可能会使用来自不同来源的多个信号，例如在不同数据集上训练的互补ML模型，或者具有不同前瞻或回溯期的模型。它还将使用复杂的风险管理，从简单的止损到价值风险分析。
 - en: Generating signals with LightGBM and CatBoost
+  id: totrans-171
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用LightGBM和CatBoost生成信号
 - en: XGBoost, LightGBM, and CatBoost offer interfaces for multiple languages, including
     Python, and have both a scikit-learn interface that is compatible with other scikit-learn
     features, such as `GridSearchCV` and their own methods to train and predict gradient
@@ -973,169 +1332,244 @@
     libraries. It does so by training boosting models to predict monthly US equity
     returns for the 2001-2018 range with the features we created in *Chapter 4*, *Financial
     Feature Engineering – How to Research Alpha Factors*.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: XGBoost、LightGBM和CatBoost提供了多种语言的接口，包括Python，并且具有与其他scikit-learn功能兼容的scikit-learn接口，如`GridSearchCV`，以及用于训练和预测梯度提升模型的自己的方法。我们在本章的前两节中使用的笔记本`boosting_baseline.ipynb`说明了每个库的scikit-learn接口。该笔记本比较了各种库的预测性能和运行时间。它通过使用我们在*第四章*，*金融特征工程-如何研究Alpha因子*中创建的特征，来训练提升模型以预测2001-2018年间的美国股票月回报。
 - en: 'The left panel of the following image displays the predictive accuracy of the
     forecasts of 1-month stock price movements using default settings for all implementations,
     measured in terms of the mean AUC resulting from 12-fold cross-validation:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图左侧显示了使用所有实现的默认设置预测1个月股票价格波动的准确性，以12倍交叉验证产生的平均AUC为指标：
 - en: '![](img/B15439_12_07.png)'
+  id: totrans-174
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_07.png)'
 - en: 'Figure 12.7: Predictive performance and runtimes of the various gradient boosting
     models'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.7：各种梯度提升模型的预测性能和运行时间
 - en: The **predictive performance** varies from 0.525 to 0.541\. This may look like
     a small range but with the random benchmark AUC at 0.5, the worst-performing model
     improves on the benchmark by 5 percent while the best does so by 8 percent, which,
     in turn, is a relative rise of 60 percent. CatBoost with GPUs and LightGBM (using
     integer-encoded categorical variables) perform best, underlining the benefits
     of converting categorical into numerical variables outlined previously.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '**预测性能**的范围从0.525到0.541不等。这看起来可能是一个小范围，但随机基准AUC为0.5，最差的模型将基准提高了5个百分点，而最佳模型则提高了8个百分点，这相当于相对增长了60个百分点。使用GPU的CatBoost和使用整数编码的分类变量的LightGBM表现最佳，突显了将分类变量转换为数值变量的之前概述的好处。'
 - en: The **running time** for the experiment varies much more significantly than
     the predictive performance. LightGBM is 10x faster on this dataset than either
     XGBoost or CatBoost (using GPU) while delivering very similar predictive performance.
     Due to this large speed advantage and because GPU is not available to everyone,
     we'll focus on LightGBM but also illustrate how to use CatBoost; XGBoost works
     very similarly to both.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 实验的**运行时间**变化显著大于预测性能。在此数据集上，LightGBM比XGBoost或CatBoost（使用GPU）快10倍，而预测性能非常相似。由于这种巨大的速度优势，并且因为GPU并不是每个人都可以使用的，我们将专注于LightGBM，但也会说明如何使用CatBoost；XGBoost与两者非常相似。
 - en: 'Working with LightGBM and CatBoost models entails:'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用LightGBM和CatBoost模型需要：
 - en: Creating library-specific binary data formats
+  id: totrans-179
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建特定于库的二进制数据格式
 - en: Configuring and tuning various hyperparameters
+  id: totrans-180
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 配置和调整各种超参数
 - en: Evaluating the results
+  id: totrans-181
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评估结果
 - en: We will describe these steps in the following sections. The notebook `trading_signals_with_lightgbm_and_catboost`
     contains the code examples for this subsection, unless otherwise noted.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在接下来的章节中描述这些步骤。笔记本`trading_signals_with_lightgbm_and_catboost`包含了本小节的代码示例，除非另有说明。
 - en: From Python to C++ – creating binary data formats
+  id: totrans-183
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 从Python到C++——创建二进制数据格式
 - en: LightGBM and CatBoost are written in C++ and translate Python objects, like
     a pandas DataFrame, into binary data formats before precomputing feature statistics
     to accelerate the search for split points, as described in the previous section.
     The result can be persisted to accelerate the start of subsequent training.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: LightGBM 和 CatBoost 都是用 C++ 编写的，并在预先计算特征统计信息之前将 Python 对象（如 pandas DataFrame）转换为二进制数据格式，以加速搜索分割点，如前一节所述。结果可以持久化以加速后续训练的启动。
 - en: We'll subset the dataset mentioned in the preceding section through the end
     of 2016 to cross-validate several model configurations for various lookback and
     lookahead windows, as well as different roll-forward periods and hyperparameters.
     Our approach to model selection will be similar to the one we used in the previous
     chapter and uses the custom `MultipleTimeSeriesCV` introduced in *Chapter 7*,
     *Linear Models – From Risk Factors to Return Forecasts*.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在前一节提到的数据集子集上进行交叉验证，直到 2016 年底，以验证多种模型配置的效果，包括不同的回溯和前瞻窗口，以及不同的向前期和超参数。我们的模型选择方法将类似于我们在上一章中使用的方法，并使用在*第
+    7 章*介绍的自定义 `MultipleTimeSeriesCV`。
 - en: 'We select the train and validation sets, identify labels and features, and
     integer-encode categorical variables with values starting at zero, as expected
     by LightGBM (not necessary as long as the category codes have values less than
     2^(32), but avoids a warning):'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们选择训练和验证集，识别标签和特征，并对值从零开始的分类变量进行整数编码，这是 LightGBM 预期的（只要类别代码的值小于 2^(32) 即可，但可以避免警告）：
 - en: '[PRE9]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: The notebook example iterates over many configurations, optionally using random
     samples to speed up model selection using a diverse subset. The goal is to identify
     the most impactful parameters without trying every possible combination.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 笔记本示例遍历许多配置，可选择使用随机样本来加快使用多样化子集进行模型选择的速度。目标是在不尝试每种可能的组合的情况下识别最具影响力的参数。
 - en: 'To do so, we create the binary `Dataset` objects. For LightGBM, this looks
     as follows:'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，我们创建二进制 `Dataset` 对象。对于 LightGBM，这看起来如下所示：
 - en: '[PRE10]'
+  id: totrans-190
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The CatBoost data structure is called `Pool` and works similarly:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: CatBoost 数据结构称为 `Pool`，工作原理类似：
 - en: '[PRE11]'
+  id: totrans-192
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: For both libraries, we identify the categorical variables for conversion into
     numerical variables based on outcome information, as described in the previous
     section. The CatBoost implementation needs feature columns to be identified using
     indices rather than labels.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于这两个库，我们根据结果信息确定要转换为数值变量的分类变量。CatBoost 实现需要使用索引而不是标签来识别特征列。
 - en: 'We can simply slice the binary datasets using the train and validation set
     indices provided by `MultipleTimeSeriesCV` during cross-validation as follows,
     combining both examples into one snippet:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以简单地使用 `MultipleTimeSeriesCV` 提供的训练和验证集索引来切片二进制数据集，如下所示，在交叉验证期间进行，将两个示例合并为一个片段：
 - en: '[PRE12]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: How to tune hyperparameters
+  id: totrans-196
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何调整超参数
 - en: 'LightGBM and CatBoost implementations come with numerous hyperparameters that
     permit fine-grained control. Each library has parameter settings to:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: LightGBM 和 CatBoost 实现带有许多允许精细控制的超参数。每个库都有参数设置来：
 - en: Specify the task objective and learning algorithm
+  id: totrans-198
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 指定任务目标和学习算法
 - en: Design the base learners
+  id: totrans-199
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 设计基础学习者
 - en: Apply various regularization techniques
+  id: totrans-200
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 应用各种正则化技术
 - en: Handle early stopping during training
+  id: totrans-201
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在训练期间处理提前停止
 - en: Enable the use of GPU or parallelization on CPU
+  id: totrans-202
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 启用 GPU 或 CPU 并行化
 - en: The documentation for each library details the various parameters. Since they
     implement variations of the same algorithms, parameters may refer to the same
     concept but have different names across libraries. The GitHub repository lists
     resources that clarify which XGBoost and LightGBM parameters have a comparable
     effect.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个库的文档详细介绍了各种参数。由于它们实现了相同算法的变体，参数可能指的是相同的概念，但跨库具有不同的名称。GitHub 仓库列出了澄清 XGBoost
+    和 LightGBM 参数具有相似效果的资源。
 - en: Objectives and loss functions
+  id: totrans-204
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 目标和损失函数
 - en: The libraries support several boosting algorithms, including gradient boosting
     for trees and linear base learners, as well as DART for LightGBM and XGBoost.
     LightGBM also supports the GOSS algorithm, which we described previously, as well
     as random forests.
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些库支持几种提升算法，包括树和线性基础学习者的梯度提升，以及 LightGBM 和 XGBoost 的 DART。LightGBM 还支持我们之前描述的
+    GOSS 算法，以及随机森林。
 - en: The appeal of gradient boosting consists of the efficient support of arbitrary
     differentiable loss functions, and each library offers various options for regression,
     classification, and ranking tasks. In addition to the chosen loss function, additional
     evaluation metrics can be used to monitor performance during training and cross-validation.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 梯度提升的吸引力在于对任意可微损失函数的有效支持，每个库都提供了各种选项用于回归、分类和排名任务。除了选择的损失函数外，还可以使用其他评估指标来监控训练和交叉验证期间的性能。
 - en: Learning parameters
+  id: totrans-207
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 学习参数
 - en: Gradient boosting models typically use decision trees to capture feature interaction,
     and the size of individual trees is the most important tuning parameter. XGBoost
     and CatBoost set the `max_depth` default to 6\. In contrast, LightGBM uses a default
@@ -1144,32 +1578,42 @@
     should be lower than 2^(max_depth). For example, for a well-performing `max_depth`
     value of 7, you would set `num_leaves` to 70–80 rather than 2⁷=128, or directly
     constrain `max_depth`.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 梯度提升模型通常使用决策树来捕捉特征交互，并且个体树的大小是最重要的调整参数。XGBoost和CatBoost将`max_depth`默认设置为6。相反，LightGBM使用默认的`num_leaves`值为31，这对应于平衡树的五个级别，但不对级别数量施加任何限制。为了避免过拟合，`num_leaves`应该小于2^(max_depth)。例如，对于表现良好的`max_depth`值为7，您应该将`num_leaves`设置为70-80，而不是2^7=128，或者直接约束`max_depth`。
 - en: The number of trees or boosting iterations defines the overall size of the ensemble.
     All libraries support `early_stopping` to abort training once the loss functions
     register no further improvements during a given number of iterations. As a result,
     it is often most efficient to set a large number of iterations and stop training
     based on the predictive performance on a validation set. However, keep in mind
     that the validation error will be biased upward due to the implied lookahead bias.
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 树的数量或提升迭代次数定义了整体集合的大小。所有库都支持`early_stopping`来在给定的迭代次数内一旦损失函数不再注册进一步改进就中止训练。因此，通常最有效的方法是设置大量迭代并根据验证集上的预测性能停止训练。但是，请注意，由于暗示的前瞻偏差，验证误差会被偏高。
 - en: The libraries also permit the use of custom loss metrics to track train and
     validation performance and execute `early_stopping`. The notebook illustrates
     how to code the **information coefficient** (**IC**) for LightGBM and CatBoost.
     However, we will not rely on `early_stopping` for our experiments to avoid said
     bias.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些库还允许使用自定义损失指标来跟踪训练和验证性能并执行`early_stopping`。笔记本演示了如何为LightGBM和CatBoost编写**信息系数**（**IC**）。但是，为了避免偏差，我们不会依赖`early_stopping`进行实验。
 - en: Regularization
+  id: totrans-211
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 正则化
 - en: All libraries implement the regularization strategies for base learners, such
     as minimum values for the number of samples or the minimum information gain required
     for splits and leaf nodes.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有的库都实现了对基础学习器的正则化策略，例如对样本数量的最小值或对拆分和叶节点所需的最小信息增益的限制。
 - en: They also support regularization at the ensemble level using shrinkage, which
     is implemented via a learning rate that constrains the contribution of new trees.
     It is also possible to implement an adaptive learning rate via callback functions
@@ -1178,151 +1622,206 @@
     function can be constrained using L1 or L2 regularization, similar to the ridge
     and lasso regression models, for example, by increasing the penalty for adding
     more trees.
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 它们还支持在整体集成层面上使用收缩来进行正则化，这通过限制新树的贡献来实现学习率。也可以通过回调函数实现自适应学习率，随着训练的进行降低学习率，例如在神经网络的背景下已成功使用。此外，梯度提升损失函数可以使用L1或L2正则化进行约束，类似于岭回归和套索回归模型，例如，通过增加添加更多树的惩罚来约束梯度提升损失函数。
 - en: The libraries also allow for the use of bagging or column subsampling to randomize
     tree growth for random forests and decorrelate prediction errors to reduce overall
     variance. The quantization of features for approximate split finding adds larger
     bins as an additional option to protect against overfitting.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些库还允许使用装袋或列抽样来随机化树的生长，用于随机森林，以及去相关化预测错误以减少总体方差。对于近似拆分查找，特征量化添加了更大的箱作为另一个选项，以防止过拟合。
 - en: Randomized grid search
+  id: totrans-215
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 随机网格搜索
 - en: To explore the hyperparameter space, we specify values for key parameters that
     we would like to test in combination. The sklearn library supports `RandomizedSearchCV`
     to cross-validate a subset of parameter combinations that are sampled randomly
     from specified distributions. We will implement a custom version that allows us
     to monitor performance so we can abort the search process once we're satisfied
     with the result, rather than specifying a set number of iterations beforehand.
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了探索超参数空间，我们指定了我们想要测试的关键参数的值的组合。sklearn库支持`RandomizedSearchCV`来交叉验证从指定分布中随机抽样的一部分参数组合。我们将实现一个自定义版本，允许我们监控性能，以便一旦满意结果就可以中止搜索过程，而不是事先指定一组迭代次数。
 - en: To this end, we specify options for the relevant hyperparameters of each library,
     generate all combinations using the Cartesian product generator provided by the
     itertools library, and shuffle the result.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，我们为每个库的相关超参数指定了选项，使用itertools库提供的笛卡尔积生成器生成所有组合，并对结果进行了洗牌。
 - en: 'In the case of LightGBM, we focus on the learning rate, the maximum size of
     the trees, the randomization of the feature space during training, and the minimum
     number of data points required for a split. This results in the following code,
     where we randomly select half of the configurations:'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 就LightGBM而言，我们关注学习率、树的最大大小、训练期间特征空间的随机化以及需要拆分的数据点的最小数量。这导致以下代码，其中我们随机选择了一半的配置：
 - en: '[PRE13]'
+  id: totrans-219
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Now, we are mostly good to go: during each iteration, we create a `MultipleTimeSeriesCV`
     instance based on the `lookahead`, `train_period_length`, and `test_period_length`
     parameters, and cross-validate the selected hyperparameters accordingly over a
     2-year period.'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们基本上已经准备就绪：在每次迭代期间，我们根据`lookahead`、`train_period_length`和`test_period_length`参数创建一个`MultipleTimeSeriesCV`实例，并相应地在一个2年的时间段内交叉验证所选的超参数。
 - en: 'Note that we generate validation predictions for a range of ensemble sizes
     so that we can infer the optimal number of iterations:'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们生成了一系列的合奏大小的验证预测，以便我们可以推断出最佳迭代次数：
 - en: '[PRE14]'
+  id: totrans-222
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Please see the notebook `trading_signals_with_lightgbm_and_catboost` for additional
     details, including how to log results and compute and capture various metrics
     that we need for the evaluation of the results, to which we'll turn to next.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 请查看笔记本`trading_signals_with_lightgbm_and_catboost`以获取更多细节，包括如何记录结果、计算和捕获我们需要评估结果的各种指标，接下来我们将转向这一点。
 - en: How to evaluate the results
+  id: totrans-224
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何评估结果
 - en: Now that cross-validation of numerous configurations has produced a large number
     of results, we need to evaluate the predictive performance to identify the model
     that generates the most reliable and profitable signals for our prospective trading
     strategy. The notebook `evaluate_trading_signals` contains the code examples for
     this section.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，交叉验证了大量配置，我们需要评估预测性能，以确定为我们未来的交易策略生成最可靠和最有利可图的信号的模型。笔记本`evaluate_trading_signals`包含了本节的代码示例。
 - en: We produced a larger number of LightGBM models because it runs an order of magnitude
     faster than CatBoost and will demonstrate some evaluation strategies accordingly.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们生成了更多的LightGBM模型，因为它的运行速度比CatBoost快一个数量级，因此将相应地展示一些评估策略。
 - en: Cross-validation results – LightGBM versus CatBoost
+  id: totrans-227
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 交叉验证结果 – LightGBM 对比 CatBoost
 - en: First, we compare the predictive performance of the models produced by the two
     libraries across all configurations in terms of their validation IC, both across
     the entire validation period and averaged over daily forecasts.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们比较了两个库生成的模型在所有配置方面的预测性能，包括它们的验证IC，既跨整个验证期间又在日预测上平均。
 - en: 'The following image shows that that LightGBM performs (slightly) better than
     CatBoost, especially for longer horizons. This is not an entirely fair comparison
     because we ran more configurations for LightGBM, which also, unsurprisingly, shows
     a wider dispersion of outcomes:'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图显示，LightGBM的表现（略微）优于CatBoost，特别是对于更长的预测期。这并不是完全公平的比较，因为我们对LightGBM运行了更多的配置，这也不出所料地显示了更广泛的结果分散：
 - en: '![](img/B15439_12_08.png)'
+  id: totrans-230
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_08.png)'
 - en: 'Figure 12.8: Overall and daily IC for the LightGBM and CatBoost models over
     three prediction horizons'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.8：LightGBM和CatBoost模型在三个预测期内的总体和日IC
 - en: Regardless, we will focus on LightGBM results; see the notebooks `trading_signals_with_lightgbm_and_catboost`
     and `evaluate_trading_signals` for more details on CatBoost or to run your own
     experiments.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
 - en: In view of the substantial dispersion across model results, let's take a closer
     look at the best-performing parameter settings.
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: Best-performing parameter settings
+  id: totrans-234
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'The top-performing LightGBM models uses the following parameters for the three
     different prediction horizons (see the notebook for details):'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
 - en: '| Lookahead | Learning Rate | # Leaves | Feature Fraction | Min. Data in Leaf
     | Daily Average | Overall |'
+  id: totrans-236
   prefs: []
   type: TYPE_TB
 - en: '| IC | # Rounds | IC | # Rounds |'
+  id: totrans-237
   prefs: []
   type: TYPE_TB
 - en: '| 1 | 0.3 | 4 | 95% | 1,000 | 1.70 | 75 | 4.41 | 50 |'
+  id: totrans-238
   prefs: []
   type: TYPE_TB
 - en: '| 1 | 0.3 | 4 | 95% | 250 | 1.34 | 250 | 4.36 | 25 |'
+  id: totrans-239
   prefs: []
   type: TYPE_TB
 - en: '| 1 | 0.3 | 4 | 95% | 1,000 | 1.70 | 75 | 4.30 | 75 |'
+  id: totrans-240
   prefs: []
   type: TYPE_TB
 - en: '| 5 | 0.1 | 8 | 95% | 1,000 | 3.95 | 300 | 10.46 | 300 |'
+  id: totrans-241
   prefs: []
   type: TYPE_TB
 - en: '| 5 | 0.3 | 4 | 95% | 1,000 | 3.43 | 150 | 10.32 | 50 |'
+  id: totrans-242
   prefs: []
   type: TYPE_TB
 - en: '| 5 | 0.3 | 4 | 95% | 1,000 | 3.43 | 150 | 10.24 | 150 |'
+  id: totrans-243
   prefs: []
   type: TYPE_TB
 - en: '| 21 | 0.1 | 8 | 60% | 500 | 5.84 | 25 | 13.97 | 10 |'
+  id: totrans-244
   prefs: []
   type: TYPE_TB
 - en: '| 21 | 0.1 | 32 | 60% | 250 | 5.89 | 50 | 11.59 | 10 |'
+  id: totrans-245
   prefs: []
   type: TYPE_TB
 - en: '| 21 | 0.1 | 4 | 60% | 250 | 7.33 | 75 | 11.40 | 10 |'
+  id: totrans-246
   prefs: []
   type: TYPE_TB
 - en: Note that shallow trees produce the best overall IC across the three prediction
     horizons. Longer training over 4.5 years also produced better results.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: Hyperparameter impact – linear regression
+  id: totrans-248
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1330,6 +1829,7 @@
     between the hyperparameters and the outcomes across daily predictions. To this
     end, we will run a linear regression using the various LightGBM hyperparameter
     settings as dummy variables and the daily validation IC as the outcome.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: 'The chart in *Figure 12.9* shows the coefficient estimates and their confidence
@@ -1339,219 +1839,309 @@
     shorter trees do better, but the lookback period is not significant. A higher
     feature sampling rate also helps. In both cases, a larger ensemble does better.
     Note that these results apply to this specific example only.'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_09.png)'
+  id: totrans-251
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.9: Coefficient estimates and their confidence intervals for different
     forecast horizons'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: Use IC instead of information coefficient
+  id: totrans-253
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'We average the top five models and provide the corresponding prices to Alphalens,
     in order to compute the mean period-wise return earned on an equal-weighted portfolio
     invested in the daily factor quintiles for various holding periods:'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
 - en: '| Metric | Holding Period |'
+  id: totrans-255
   prefs: []
   type: TYPE_TB
 - en: '| 1D | 5D | 10D | 21D |'
+  id: totrans-256
   prefs: []
   type: TYPE_TB
 - en: '| Mean Period Wise Spread (bps) | 12.1654 | 6.9514 | 4.9465 | 4.4079 |'
+  id: totrans-257
   prefs: []
   type: TYPE_TB
 - en: '| Ann. alpha | 0.1759 | 0.0776 | 0.0446 | 0.0374 |'
+  id: totrans-258
   prefs: []
   type: TYPE_TB
 - en: '| beta | 0.0891 | 0.1516 | 0.1919 | 0.1983 |'
+  id: totrans-259
   prefs: []
   type: TYPE_TB
 - en: 'We find a 12 bps spread between the top and the bottom quintile, which implies
     an annual alpha of 0.176 while the beta is low at 0.089 (see *Figure 12.10*):'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_10.png)'
+  id: totrans-261
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.10: Average and cumulative returns by factor quantile'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.10：因子分位数的平均和累积回报
 - en: 'The following charts show the quarterly rolling IC for the 1-day and the 21-day
     forecasts over the 2-year validation period for the best-performing models:'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图表显示了在最佳表现模型的2年验证期内，1天和21天预测的季度滚动IC：
 - en: '![](img/B15439_12_11.png)'
+  id: totrans-264
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_11.png)'
 - en: 'Figure 12.11: Rolling IC for 1-day and 21-day return forecasts'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.11：1天和21天回报预测的滚动IC
 - en: The average IC is 2.35 and 8.52 for the shorter and the longer horizon models,
     respectively, and remain positive for the large majority of days in the sample.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 短期和长期模型的平均IC分别为2.35和8.52，在样本中大多数天数保持正值。
 - en: We'll now take a look at how to gain additional insight into how the model works
     before we select our models, generate predictions, define a trading strategy,
     and evaluate their performance.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在将看看如何在选择模型、生成预测、定义交易策略和评估其性能之前，获得有关模型工作方式的额外见解。
 - en: Inside the black box – interpreting GBM results
+  id: totrans-268
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在黑匣子内——解释GBM结果
 - en: Understanding why a model predicts a certain outcome is very important for several
     reasons, including trust, actionability, accountability, and debugging. Insights
     into the nonlinear relationship between features and the outcome uncovered by
     the model, as well as interactions among features, are also of value when the
     goal is to learn more about the underlying drivers of the phenomenon under study.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 了解为什么模型会预测特定结果对于多种原因非常重要，包括信任、可操作性、问责制和调试。当目标是更多地了解研究对象的基本驱动因素时，模型揭示的特征与结果之间的非线性关系以及特征之间的相互作用也具有价值。
 - en: A common approach to gaining insights into the predictions made by tree ensemble
     methods, such as gradient boosting or random forest models, is to attribute feature
     importance values to each input variable. These feature importance values can
     be computed on an individual basis for a single prediction or globally for an
     entire dataset (that is, for all samples) to gain a higher-level perspective of
     how the model makes predictions.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 获取树集成方法（如梯度提升或随机森林模型）预测见解的一种常见方法是将特征重要性值归因于每个输入变量。这些特征重要性值可以针对单个预测或全局计算整个数据集（即所有样本），以获得模型如何进行预测的更高层次的视角。
 - en: The code examples for this section are in the notebook `model_interpretation`.
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节的代码示例位于笔记本`model_interpretation`中。
 - en: Feature importance
+  id: totrans-272
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 特征重要性
 - en: 'There are three primary ways to compute global feature importance values:'
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 有三种主要方法来计算全局特征重要性值：
 - en: '**Gain**: This classic approach, introduced by Leo Breiman in 1984, uses the
     total reduction of loss or impurity contributed by all splits for a given feature.
     The motivation is largely heuristic, but it is a commonly used method to select
     features.'
+  id: totrans-274
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**增益**：这是一种经典方法，由Leo Breiman于1984年引入，它使用给定特征所有拆分贡献的损失或不纯度的总减少。动机在很大程度上是启发式的，但这是一种常用的特征选择方法。'
 - en: '**Split count**: This is an alternative approach that counts how often a feature
     is used to make a split decision, based on the selection of features for this
     purpose based on the resultant information gain.'
+  id: totrans-275
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**分割计数**：这是一种替代方法，根据所选特征的选择基于产生的信息增益来计算特征用于做出分割决策的频率。'
 - en: '**Permutation**: This approach randomly permutes the feature values in a test
     set and measures how much the model''s error changes, assuming that an important
     feature should create a large increase in the prediction error. Different permutation
     choices lead to alternative implementations of this basic approach.'
+  id: totrans-276
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**排列**：这种方法随机排列测试集中的特征值，并测量模型误差的变化程度，假设一个重要特征应该会导致预测误差大幅增加。不同的排列选择会导致此基本方法的替代实现。'
 - en: Individualized feature importance values that compute the relevance of features
     for a single prediction are less common. This is because available model-agnostic
     explanation methods are much slower than tree-specific methods.
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算单个预测的个性化特征重要性值，计算特征对单个预测的相关性较少见。这是因为可用的模型不可知解释方法比树特定方法慢得多。
 - en: 'All gradient boosting implementations provide feature-importance scores after
     training as a model attribute. The LightGBM library provides two versions, as
     shown in the following list:'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有梯度提升实现在训练后都会提供特征重要性得分作为模型属性。LightGBM库提供了两个版本，如下列表所示：
 - en: '**gain**: Contribution of a feature to reducing the loss'
+  id: totrans-279
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**增益**：特征对减少损失的贡献'
 - en: '**split**: The number of times the feature was used'
+  id: totrans-280
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**split**：该特征被使用的次数'
 - en: 'These values are available using the trained model''s `.feature_importance()`
     method with the corresponding `importance_type` parameter. For the best-performing
     LightGBM model, the results for the 20 most important features are as shown in
     *Figure 12.12*:'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些值可通过训练模型的 `.feature_importance()` 方法和相应的 `importance_type` 参数获得。对于表现最佳的LightGBM模型，20个最重要特征的结果如
+    *图12.12* 所示：
 - en: '![](img/B15439_12_12.png)'
+  id: totrans-282
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_12.png)'
 - en: 'Figure 12.12: LightGBM feature importance'
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.12：LightGBM特征重要性
 - en: The time period indicators dominate, followed by the latest returns, the normalized
     ATR, the sector dummy, and the momentum indicator (see the notebook for implementation
     details).
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间周期指标占主导地位，其次是最新的回报、标准化ATR、部门虚拟变量和动量指标（有关实施细节，请参见笔记本）。
 - en: Partial dependence plots
+  id: totrans-285
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 部分依赖性图
 - en: In addition to the summary contribution of individual features to the model's
     prediction, partial dependence plots visualize the relationship between the target
     variable and a set of features. The nonlinear nature of gradient boosting trees
     causes this relationship to depend on the values of all other features. Hence,
     we will marginalize these features out. By doing so, we can interpret the partial
     dependence as the expected target response.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了总结单个特征对模型预测的贡献之外，部分依赖性图还可视化目标变量与一组特征之间的关系。梯度提升树的非线性性质导致这种关系取决于所有其他特征的值。因此，我们将对这些特征进行边际化。通过这样做，我们可以将部分依赖性解释为预期的目标响应。
 - en: 'We can visualize partial dependence only for individual features or feature
     pairs. The latter results in contour plots that show how combinations of feature
     values produce different predicted probabilities, as shown in the following code:'
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们只能为单个特征或特征对可视化部分依赖性。后者会产生等高线图，显示出不同预测概率的特征值组合如何产生不同的组合，如下面的代码所示：
 - en: '[PRE15]'
+  id: totrans-288
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'After some additional formatting (see the companion notebook), we obtain the
     results shown in *Figure 12.13*:'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: 经过一些额外的格式化（请参见配套笔记本），我们得到了如 *图12.13* 所示的结果：
 - en: '![](img/B15439_12_13.png)'
+  id: totrans-290
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_13.png)'
 - en: 'Figure 12.13: Partial dependence plots for scikit-learn GradientBoostingClassifier'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.13：scikit-learn GradientBoostingClassifier的部分依赖性图
 - en: 'The lower-right plot shows the dependence of the probability of a positive
     return over the next month, given the range of values for lagged 12-month and
     6-month returns, after eliminating outliers at the [1%, 99%] percentiles. The
     `month_9` variable is a dummy variable, hence the step-function-like plot. We
     can also visualize the dependency in 3D, as shown in the following code:'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 右下图显示了在消除[1%，99%]分位数的异常值后，对于滞后的12个月和6个月回报值范围内的下个月正回报概率的依赖性。 `month_9` 变量是一个虚拟变量，因此图形类似于阶梯函数。我们还可以按照以下代码将依赖性可视化为3D：
 - en: '[PRE16]'
+  id: totrans-293
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'This produces the following 3D plot of the partial dependence of the 1-month
     return direction on lagged 6-month and 12-months returns:'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 这产生了关于滞后6个月和12个月回报的部分依赖性的1个月回报方向的以下3D图：
 - en: '![](img/B15439_12_14.png)'
+  id: totrans-295
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_14.png)'
 - en: 'Figure 12.14: Partial dependence as a 3D plot'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 图12.14：部分依赖性的3D图
 - en: SHapley Additive exPlanations
+  id: totrans-297
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: SHapley Additive exPlanations
 - en: At the 2017 NIPS conference, Scott Lundberg and Su-In Lee, from the University
     of Washington, presented a new and more accurate approach to explaining the contribution
     of individual features to the output of tree ensemble models called **SHapley
     Additive exPlanations**, or **SHAP** values.
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 在2017年NIPS会议上，华盛顿大学的Scott Lundberg和Su-In Lee提出了一种解释树集成模型输出中单个特征贡献的新方法，称为**SHapley
+    Additive exPlanations**，或**SHAP**值。
 - en: This new algorithm departs from the observation that feature-attribution methods
     for tree ensembles, such as the ones we looked at earlier, are inconsistent—that
     is, a change in a model that increases the impact of a feature on the output can
     lower the importance values for this feature (see the references on GitHub for
     detailed illustrations of this).
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种新算法与观察到的树集成的特征归因方法不一致，如我们之前所看到的那样，即，增加模型中特征对输出的影响的变化可能降低该特征的重要性值（有关详细说明，请参见GitHub上的参考资料）。
 - en: SHAP values unify ideas from collaborative game theory and local explanations,
     and have been shown to be theoretically optimal, consistent, and locally accurate
     based on expectations. Most importantly, Lundberg and Lee have developed an algorithm
@@ -1563,8 +2153,12 @@
     of trees and features in a fraction of a second. An open source implementation
     became available in late 2017 and is compatible with XGBoost, LightGBM, CatBoost,
     and sklearn tree models.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: SHAP 值统一了协作博弈理论和局部解释的思想，并根据期望表明在理论上是最优的、一致的和局部准确的。最重要的是，Lundberg 和 Lee 开发了一种算法，成功地将这些与模型无关的、可加性的特征归因方法的复杂性从
+    *O*(*TLDM*) 降低到 *O*(*TLD*²)，其中 *T* 和 *M* 分别是树和特征的数量，*D* 和 *L* 是树中的最大深度和叶子数。这一重要的创新使得可以在几秒钟内解释以前难以处理的具有数千棵树和特征的模型的预测。一个开源实现在
+    2017 年末可用，并兼容 XGBoost、LightGBM、CatBoost 和 sklearn 树模型。
 - en: Shapley values originated in game theory as a technique for assigning a value
     to each player in a collaborative game that reflects their contribution to the
     team's success. SHAP values are an adaptation of the game theory concept to tree-based
@@ -1573,12 +2167,17 @@
     SHAP values provide differentiated insights into how the impact of a feature varies
     across samples, which is important, given the role of interaction effects in these
     nonlinear models.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 夏普利值起源于博弈论，作为一种为合作博弈中的每个玩家分配价值的技术，反映了他们对团队成功的贡献。SHAP 值是对博弈论概念在基于树的模型中的一种改编，并计算每个特征和每个样本的
+    SHAP 值。它们衡量了一个特征对给定观察的模型输出的贡献。因此，SHAP 值提供了不同的见解，说明了特征的影响如何随着样本的变化而变化，这在这些非线性模型中的交互效应的作用中至关重要。
 - en: How to summarize SHAP values by feature
+  id: totrans-302
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 如何按特征总结 SHAP 值
 - en: 'To get a high-level overview of the feature importance across a number of samples,
     there are two ways to plot the SHAP values: a simple average across all samples
     that resembles the global feature-importance measures computed previously (as
@@ -1586,49 +2185,68 @@
     impact of every feature for every sample (as shown in the right-hand panel of
     the figure). They are very straightforward to produce using a trained model from
     a compatible library and matching input data, as shown in the following code:'
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 要对多个样本的特征重要性进行高层次概述，有两种绘制 SHAP 值的方法：一种是对所有样本进行简单平均，类似于之前计算的全局特征重要性度量（如 *图 12.15*
+    左侧面板所示），或者绘制散点图以显示每个特征对每个样本的影响（如图的右侧面板所示）。使用兼容库中的训练模型和匹配输入数据，它们非常容易产生，如下面的代码所示：
 - en: '[PRE17]'
+  id: totrans-304
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'The scatterplot sorts features by their total SHAP values across all samples
     and then shows how each feature impacts the model output, as measured by the SHAP
     value, as a function of the feature''s value, represented by its color, where
     red represents high values and blue represents low values relative to the feature''s
     range:'
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 散点图根据其在所有样本中的总 SHAP 值对特征进行排序，然后显示每个特征对模型输出的影响，由 SHAP 值来衡量，作为特征值的函数，其颜色表示特征值，红色表示相对于特征范围的高值，蓝色表示低值：
 - en: '![](img/B15439_12_15.png)'
+  id: totrans-306
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_12_15.png)'
 - en: 'Figure 12.15: SHAP summary plots'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 12.15：SHAP 概要图
 - en: There are some interesting differences compared to the conventional feature
     importance shown in *Figure 12.12*; namely, the MACD indicator turns out more
     important, as well as the relative return measures.
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: 与传统特征重要性相比，*图 12.12* 显示的有一些有趣的差异；即 MACD 指标更为重要，以及相对收益指标。
 - en: How to use force plots to explain a prediction
+  id: totrans-309
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 如何使用力量图来解释一个预测
 - en: The force plot in the following image shows the **cumulative impact of various
     features and their values** on the model output, which in this case was 0.6, quite
     a bit higher than the base value of 0.13 (the average model output over the provided
     dataset). Features highlighted in red with arrows pointing to the right increase
     the output. The month being October is the most important feature and increases
     the output from 0.338 to 0.537, whereas the year being 2017 reduces the output.
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
 - en: 'Hence, we obtain a detailed breakdown of how the model arrived at a specific
     prediction, as shown in the following plot:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_16.png)'
+  id: totrans-312
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.16: SHAP force plot'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: We can also compute **force plots for multiple data points** or predictions
@@ -1636,47 +2254,61 @@
     certain influence patterns are across the dataset. The following plot shows the
     force plots for the first 1,000 observations rotated by 90 degrees, stacked horizontally,
     and ordered by the impact of different features on the outcome for the given observation.
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: 'The implementation uses hierarchical agglomerative clustering of data points
     on the feature SHAP values to identify these patterns, and displays the result
     interactively for exploratory analysis (see the notebook), as shown in the following
     code:'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-316
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'This produces the following output:'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_17.png)'
+  id: totrans-318
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.17: SHAP clustered force plot'
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
 - en: How to analyze feature interaction
+  id: totrans-320
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'Lastly, SHAP values allow us to gain additional insights into the interaction
     effects between different features by separating these interactions from the main
     effects. `shap.dependence_plot` can be defined as follows:'
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-322
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'It displays how different values for 1-month returns (on the x-axis) affect
     the outcome (SHAP value on the y-axis), differentiated by 3-month returns (see
     the following plot):'
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_18.png)'
+  id: totrans-324
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.18: SHAP interaction plot'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: SHAP values provide granular feature attribution at the level of each individual
@@ -1686,14 +2318,17 @@
     bar chart. Force plots of individual clustered predictions allow more detailed
     analysis, while SHAP dependence plots capture interaction effects and, as a result,
     provide more accurate and detailed results than partial dependence plots.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: The limitations of SHAP values, as with any current feature-importance measure,
     concern the attribution of the influence of variables that are highly correlated
     because their similar impact can be broken down in arbitrary ways.
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: Backtesting a strategy based on a boosting ensemble
+  id: totrans-328
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1701,6 +2336,7 @@
     strategy that enters 25 long and 25 short positions based on a daily return forecast
     signal. To this end, we'll select the best-performing models, generate forecasts,
     and design trading rules that act on these predictions.
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: Based on our evaluation of the cross-validation results, we'll select one or
@@ -1708,6 +2344,7 @@
     we'll combine predictions for the best 10 LightGBM models to reduce variance for
     the 1-day forecast horizon based on its solid mean quantile spread computed by
     Alphalens.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: We just need to obtain the parameter settings for the best-performing models
@@ -1715,18 +2352,23 @@
     the requisite code. Model training uses the hyperparameter settings of the best-performing
     models and data for the test period, but otherwise follows the logic used during
     cross-validation very closely, so we'll omit the details here.
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: 'In the notebook `backtesting_with_zipline`, we''ve combined the predictions
     of the top 10 models for the validation and test periods, as follows:'
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-333
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: We'll use the custom ML factor that we introduced in *Chapter 8*, *The ML4T
     Workflow – From Model to Strategy Backtesting*, to import the predictions and
     make it accessible in a pipeline.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: 'We''ll execute `Pipeline` from the beginning of the validation period to the
@@ -1734,81 +2376,106 @@
     performance with annual returns of 27.3 percent, compared to 8.0 percent out-of-sample.
     The right panel of the image shows the cumulative returns relative to the S&P
     500:'
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: '| Metric | All | In-sample | Out-of-sample |'
+  id: totrans-336
   prefs: []
   type: TYPE_TB
 - en: '| Annual return | 20.60% | 27.30% | 8.00% |'
+  id: totrans-337
   prefs: []
   type: TYPE_TB
 - en: '| Cumulative returns | 75.00% | 62.20% | 7.90% |'
+  id: totrans-338
   prefs: []
   type: TYPE_TB
 - en: '| Annual volatility | 19.40% | 21.40% | 14.40% |'
+  id: totrans-339
   prefs: []
   type: TYPE_TB
 - en: '| Sharpe ratio | 1.06 | 1.24 | 0.61 |'
+  id: totrans-340
   prefs: []
   type: TYPE_TB
 - en: '| Max drawdown | -17.60% | -17.60% | -9.80% |'
+  id: totrans-341
   prefs: []
   type: TYPE_TB
 - en: '| Sortino ratio | 1.69 | 2.01 | 0.87 |'
+  id: totrans-342
   prefs: []
   type: TYPE_TB
 - en: '| Skew | 0.86 | 0.95 | -0.16 |'
+  id: totrans-343
   prefs: []
   type: TYPE_TB
 - en: '| Kurtosis | 8.61 | 7.94 | 3.07 |'
+  id: totrans-344
   prefs: []
   type: TYPE_TB
 - en: '| Daily value at risk | -2.40% | -2.60% | -1.80% |'
+  id: totrans-345
   prefs: []
   type: TYPE_TB
 - en: '| Daily turnover | 115.10% | 108.60% | 127.30% |'
+  id: totrans-346
   prefs: []
   type: TYPE_TB
 - en: '| Alpha | 0.18 | 0.25 | 0.05 |'
+  id: totrans-347
   prefs: []
   type: TYPE_TB
 - en: '| Beta | 0.24 | 0.24 | 0.22 |'
+  id: totrans-348
   prefs: []
   type: TYPE_TB
 - en: 'The Sharpe ratio is 1.24 in-sample and 0.61 out-of-sample; the right panel
     shows the quarterly rolling value. Alpha is 0.25 in-sample versus 0.05 out-of-sample,
     with beta values of 0.24 and 0.22, respectively. The worst drawdown leads to losses
     of 17.59 percent in the second half of 2015:'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_19.png)'
+  id: totrans-350
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.19: Strategy performance—cumulative returns and rolling Sharpe ratio'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: 'Long trades are slightly more profitable than short trades, which lose on average:'
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: '| Summary stats | All trades | Short trades | Long trades |'
+  id: totrans-353
   prefs: []
   type: TYPE_TB
 - en: '| Total number of round_trips | 22,352 | 11,631 | 10,721 |'
+  id: totrans-354
   prefs: []
   type: TYPE_TB
 - en: '| Percent profitable | 50.0% | 48.0% | 51.0% |'
+  id: totrans-355
   prefs: []
   type: TYPE_TB
 - en: '| Winning round_trips | 11,131 | 5,616 | 5,515 |'
+  id: totrans-356
   prefs: []
   type: TYPE_TB
 - en: '| Losing round_trips | 11,023 | 5,935 | 5,088 |'
+  id: totrans-357
   prefs: []
   type: TYPE_TB
 - en: '| Even round_trips | 198 | 80 | 118 |'
+  id: totrans-358
   prefs: []
   type: TYPE_TB
 - en: Lessons learned and next steps
+  id: totrans-359
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1817,41 +2484,50 @@
     better than random guesses. Clearly, profits are anything but guaranteed, not
     least since we made very generous assumptions regarding transaction costs (note
     the high turnover).
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: 'However, there are several ways to improve on this basic framework, that is,
     by varying parameters from more general and strategic to more specific and tactical
     aspects, such as:'
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: Try a different investment universe (for example, fewer liquid stocks or other
     assets).
+  id: totrans-362
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Be creative about adding complementary data sources.
+  id: totrans-363
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Engineer more sophisticated features.
+  id: totrans-364
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Vary the experiment setup using, for example, longer or shorter holding and
     lookback periods.
+  id: totrans-365
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Come up with more interesting trading rules and use several rather than a single
     ML signal.
+  id: totrans-366
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Hopefully, these suggestions inspire you to build on the template we laid out
     and come up with an effective ML-driven trading strategy!
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
 - en: Boosting for an intraday strategy
+  id: totrans-368
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -1868,12 +2544,14 @@
     to demonstrate how it details every order placed, every execution, and every cancelation,
     and thus permits the reconstruction of the full limit order book, at least for
     equities and except for certain hidden orders.
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: The application of ML to HFT includes the optimization of trade execution both
     on official exchanges and in dark pools. ML can also be used to generate trading
     signals, as we will show in this section; see also Kearns and Nevmyvaka (2013)
     for additional details and examples of how ML can add value in the HFT context.
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: This section uses the **AlgoSeek NASDAQ 100 dataset** from the Consolidated
@@ -1884,14 +2562,17 @@
     at the tick level (see *Chapter 2*, *Market and Fundamental Data – Sources and
     Techniques*, for additional background and the download and preprocessing instructions
     in the data directory in the GitHub repository).
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: We'll first describe how we can engineer features for this dataset, then train
     a gradient boosting model to predict the volume-weighted average price for the
     next minute, and then evaluate the quality of the resulting trading signals.
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
 - en: Engineering features for high-frequency data
+  id: totrans-373
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1902,68 +2583,86 @@
     to 4:00 p.m. to somewhat restrict the size of the data, as well as to avoid having
     to deal with periods of irregular trading activity. See the notebook `intraday_features`
     for the code examples in this section.
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: 'We''ll select 12 variables with over 51 million observations as raw material
     to create features for an ML model. This will aim predict the 1-min forward return
     for the volume-weighted average price:'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-376
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Due to the large memory footprint of the data, we only create 20 simple features,
     namely:'
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
 - en: The lagged returns for each of the last 10 minutes.
+  id: totrans-378
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The number of shares traded with upticks and downticks during a bar, divided
     by the total number of shares.
+  id: totrans-379
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The number of shares traded where the trade price is the same (repeated) following
     and upticks or downticks during a bar, divided by the total number of shares.
+  id: totrans-380
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The difference between the number of shares traded at the ask versus the bid
     price, divided by total volume during the bar.
+  id: totrans-381
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Several technical indicators, including the Balance of Power, the Commodity
     Channel Index, and the Stochastic RSI (see the *Appendix*, *Alpha Factor Library*,
     for details).
+  id: totrans-382
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'We''ll make sure that we shift the data to avoid lookahead bias, as exemplified
     by the computation of the Money Flow Index, which uses the TA-Lib implementation:'
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-384
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'The following graph shows a standalone evaluation of the individual features''
     predictive content using their rank correlation with the 1-minute forward returns.
     It reveals that the recent lagged returns are presumably the most informative
     variables:'
+  id: totrans-385
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_20.png)'
+  id: totrans-386
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.20: Information coefficient for high-frequency features'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: We can now proceed to train a gradient boosting model using these features.
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
 - en: Minute-frequency signals with LightGBM
+  id: totrans-389
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1972,115 +2671,150 @@
     of minute data during training the model and generates out-of-sample forecasts
     for the subsequent 21 trading days. We'll repeat this for 24 train-test splits
     to cover the last 2 years of our 5-year sample.
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
 - en: The training process follows the preceding LightGBM example closely; see the
     notebook `intraday_model` for the implementation details.
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: 'One key difference is the adaptation of the custom `MultipleTimeSeriesCV` to
     minute frequency; we''ll be referencing the `date_time` level of `MultiIndex`
     (see notebook for implementation). We compute the lengths of the train and test
     periods based on 390 observations per ticker and day as follows:'
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-393
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: The large data size significantly drives up training time, so we use default
     settings but set the number to trees per ensemble to 250\. We track the IC on
     the test set using the following `ic_lgbm()` custom metric definition that we
     pass to the model's `.train()` method.
+  id: totrans-394
   prefs: []
   type: TYPE_NORMAL
 - en: 'The custom metric receives the model prediction and the binary training dataset,
     which we can use to compute any metric of interest; note that we set `is_higher_better`
     to `True` since the model minimizes loss functions by default (see the LightGBM
     documentation for additional information):'
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-396
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: At 250 iterations, the validation IC is still improving for most folds, so our
     results are not optimal, but training already takes several hours this way. Let's
     now take a look at the predictive content of the signals generated by our model.
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
 - en: Evaluating the trading signal quality
+  id: totrans-398
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Now, we would like to know how accurate the model's out-of-sample predictions
     are, and whether they could be the basis for a profitable trading strategy.
+  id: totrans-399
   prefs: []
   type: TYPE_NORMAL
 - en: 'First, we compute the IC, both for all predictions and on a daily basis, as
     follows:'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-401
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: For the 2 years of rolling out-of-sample tests, we obtain a statistically significant,
     positive 1.90\. On a daily basis, the mean IC is 1.98 and the median IC equals
     1.91.
+  id: totrans-402
   prefs: []
   type: TYPE_NORMAL
 - en: These results clearly suggest that the predictions contain meaningful information
     about the direction and size of short-term price movements that we could use for
     a trading strategy.
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
 - en: 'Next, we calculate the average and cumulative forward returns for each decile
     of the predictions:'
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-405
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '*Figure 12.21* displays the results. The left panel shows the average 1-min
     return per decile and indicates an average spread of 0.5 basis points per minute.
     The right panel shows the cumulative return of an equal-weighted portfolio invested
     in each decile, suggesting that—before transaction costs—a long-short strategy
     appears attractive:'
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_12_21.png)'
+  id: totrans-407
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 12.21: Average 1-min returns and cumulative returns by decile'
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
 - en: The backtest with minute data is quite time-consuming, so we've omitted this
     step; however, feel free to experiment with Zipline or backtrader to evaluate
     this strategy under more realistic assumptions regarding transaction costs or
     using proper risk controls.
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用分钟级数据进行回测非常耗时，因此我们省略了这一步；但是，可以随意尝试使用 Zipline 或 backtrader 在更现实的交易成本假设下评估这个策略，或者使用适当的风险控制。
 - en: Summary
+  id: totrans-410
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we explored the gradient boosting algorithm, which is used
     to build ensembles in a sequential manner, adding a shallow decision tree that
     only uses a very small number of features to improve on the predictions that have
     been made. We saw how gradient boosting trees can be very flexibly applied to
     a broad range of loss functions, as well as offer many opportunities to tune the
     model to a given dataset and learning task.
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们探讨了梯度提升算法，它用于以顺序方式构建集成模型，逐步添加浅层决策树来改善已做出的预测，这些决策树仅使用极少量的特征。我们看到了梯度提升树可以非常灵活地应用于广泛的损失函数，以及提供了许多机会来调整模型以适应给定数据集和学习任务。
 - en: Recent implementations have greatly facilitated the use of gradient boosting.
     They've done this by accelerating the training process and offering more consistent
     and detailed insights into the importance of features and the drivers of individual
     predictions.
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近的实现大大地促进了梯度提升的使用。他们通过加速训练过程并提供更一致和详细的洞察力，以了解特征的重要性和个别预测的驱动因素。
 - en: Finally, we developed a simple trading strategy driven by an ensemble of gradient
     boosting models that was actually profitable, at least before significant trading
     costs. We also saw how to use gradient boosting with high-frequency data.
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们开发了一个简单的交易策略，由一组梯度提升模型驱动，至少在交易成本显著之前是有盈利的。我们还看到了如何使用梯度提升处理高频数据。
 - en: In the next chapter, we will turn to Bayesian approaches to machine learning.
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将转向贝叶斯方法来进行机器学习。
