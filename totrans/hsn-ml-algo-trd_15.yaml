@@ -3,6 +3,7 @@
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 词嵌入
 - en: In the two previous chapters, we applied the bag-of-words model to convert text
     data into a numerical format. The results were sparse, fixed-length vectors that
     represent documents in a high-dimensional word space. This allows evaluating the
@@ -13,6 +14,7 @@
   id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前两章中，我们应用了词袋模型将文本数据转换为数值格式。结果是稀疏的、固定长度的向量，表示文档在高维词空间中的位置。这允许评估文档的相似性，并创建特征来训练机器学习算法，分类文档的内容或评估其中表达的情感。然而，这些向量忽略了术语使用的上下文，因此，例如，包含相同单词的不同句子将被编码为相同的向量。
 - en: In this chapter, we will introduce an alternative class of algorithms that use
     neural networks to learn a vector representation of individual semantic units such
     as a word or a paragraph. These vectors are dense rather than sparse, and have
@@ -22,6 +24,7 @@
   id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将介绍一种替代类别的算法，它使用神经网络来学习个别语义单元（如单词或段落）的向量表示。这些向量是密集的，而不是稀疏的，而且有几百个实值，而不是几万个二进制或离散条目。它们被称为**嵌入**，因为它们将每个语义单元分配到连续向量空间中的位置。
 - en: Embeddings result from training a model to relate tokens to their context with
     the benefit that similar usage implies a similar vector. Moreover, we will see
     how the embeddings encode semantic aspects, such as relationships among words
@@ -30,50 +33,60 @@
   id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 嵌入是通过训练模型将标记与其上下文关联起来而产生的，这样做的好处是类似的用法意味着类似的向量。此外，我们将看到嵌入如何通过它们的相对位置来编码语义方面的关系，例如词之间的关系。因此，它们是我们将在后面的章节中介绍的深度学习模型中强大的特征。
 - en: 'More specifically, in this chapter, we will cover the following topics:'
   id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 具体来说，在本章中，我们将涵盖以下主题：
 - en: What word embeddings are and how they work and capture semantic information
   id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 词嵌入是什么，以及它们如何工作和捕捉语义信息
 - en: How to use trained word vectors
   id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用训练好的词向量
 - en: Which network architectures are useful to train Word2vec models
   id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 哪些网络架构对训练Word2vec模型有用
 - en: How to train a Word2vec model using Keras, gensim, and TensorFlow
   id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用Keras、gensim和TensorFlow训练Word2vec模型
 - en: How to visualize and evaluate the quality of word vectors
   id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何可视化和评估词向量的质量
 - en: How to train a Word2vec model using SEC filings
   id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用SEC文件训练Word2vec模型
 - en: How `Doc2vec` extends Word2vec
   id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何扩展Word2vec的`Doc2vec`
 - en: How word embeddings encode semantics
   id: totrans-12
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 词嵌入如何编码语义
 - en: The bag-of-words model represents documents as vectors that reflect the tokens
     they contain. Word embeddings represent tokens as lower dimensional vectors so
     that their relative location reflects their relationship in terms of how they
@@ -82,6 +95,7 @@
   id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 词袋模型将文档表示为反映其所包含标记的向量。词嵌入将标记表示为较低维度的向量，使得它们的相对位置反映了它们在上下文中的使用方式的关系。它们体现了语言学中的分布假设，即单词最好通过它们的搭配来定义。
 - en: Word vectors are capable of capturing numerous semantic aspects; not only are
     synonyms close to each other, but words can have multiple degrees of similarity,
     for example, the word driver could be similar to motorist or to cause. Furthermore,
@@ -91,6 +105,7 @@
   id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 词向量能够捕捉许多语义方面；不仅是近义词彼此靠近，而且单词之间可以有多个相似度程度，例如，单词“驾驶员”可能与“汽车司机”或“导致”的相似。此外，嵌入反映了单词对之间的关系，例如类比（东京对日本就像巴黎对法国，或者went对go就像saw对see），我们将在本节稍后进行说明。
 - en: Embeddings result from training a machine learning model to predict words from
     their context or vice versa. In the following section, we will introduce how these
     neural language models work and present successful approaches including Word2vec,
@@ -98,6 +113,7 @@
   id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 嵌入是通过训练机器学习模型来预测单词与它们的上下文或反之。在下一节中，我们将介绍这些神经语言模型的工作原理，并介绍成功的方法，包括Word2vec、`Doc2vec`和fastText。
 - en: How neural language models learn usage in context
   id: totrans-16
   prefs:
@@ -206,10 +222,12 @@
   id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: Word2vec模型旨在预测一个单词，而这个单词可能是非常大的词汇表中的一个。神经网络通常使用softmax函数，该函数将任意数量的实值映射到相等数量的概率，以实现相应的多类目标，其中*h*指嵌入，*v*指输入向量，*c*是单词*w*的上下文：
 - en: '![](img/35620ce6-e09a-4043-a8ff-b5f2b6630334.png)'
   id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/35620ce6-e09a-4043-a8ff-b5f2b6630334.png)'
 - en: 'However, the softmax complexity scales with the number of classes, as the denominator
     requires the computation of the dot product for all words in the vocabulary to
     standardize the probabilities. Word2vec models gain efficiency by using a simplified
@@ -217,6 +235,7 @@
   id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，softmax的复杂性随着类别数量的增加而增加，因为分母需要计算词汇表中所有单词的点积以标准化概率。Word2vec模型通过使用softmax的简化版本或基于采样的方法（详见参考资料）来提高效率：
 - en: The **hierarchical softmax** organizes the vocabulary as a binary tree with
     words as leaf nodes. The unique path to each node can be used to compute the word
     probability.
@@ -224,6 +243,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**分层softmax** 将词汇表组织为具有词作为叶节点的二叉树。到每个节点的唯一路径可用于计算单词概率。'
 - en: '**Noise-contrastive estimation** (**NCE**) samples out-of-context "noise words"
     and approximates the multiclass task by a binary classification problem. The NCE
     derivative approaches the softmax gradient as the number of samples increases,
@@ -233,6 +253,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**噪声对比估计** (**NCE**) 对上下文外的“噪声词”进行采样，并将多类任务近似为二元分类问题。随着样本数量的增加，NCE的导数接近softmax梯度，但只要25个样本就能产生与softmax相似的收敛速度，速度快45倍。'
 - en: '**Negative sampling** (**NEG**) omits the noise word samples to approximate
     NCE and directly maximizes the probability of the target word. Hence, NEG optimizes
     the semantic quality of embedding vectors (similar vectors for similar usage)
@@ -242,11 +263,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**负采样** (**NEG**)省略了噪声词样本，以逼近NCE并直接最大化目标词的概率。因此，NEG优化了嵌入向量的语义质量（相似用法的相似向量），而不是测试集上的准确性。然而，它可能对频率较低的单词产生比分层softmax目标更差的表示。'
 - en: Automatic phrase detection
   id: totrans-35
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 自动短语检测
 - en: Preprocessing typically involves phrase detection, that is, the identification
     of tokens that are commonly used together and should receive a single vector representation
     (for example, New York City, see the discussion of n-grams in [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml),
@@ -254,6 +277,7 @@
   id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 预处理通常涉及短语检测，即识别常用在一起的标记，并应该接收单一向量表示（例如，纽约市，请参阅[第13章](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml)中关于n-gram的讨论，*处理文本数据*）。
 - en: 'The original Word2vec authors use a simple lift scoring method that identifies
     two words *w[i]*, *w[j]* as a bigram if their joint occurrence exceeds a given
     threshold relative to each word''s individual appearance, corrected by a discount
@@ -261,29 +285,35 @@
   id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 原始的Word2vec作者使用了一种简单的提升评分方法，该方法将两个词*w[i]*、*w[j]*标识为一个二元组，如果它们的联合出现相对于每个词的单独出现超过了给定阈值，通过一个修正因子*δ*校正：
 - en: '![](img/21e54b2d-361b-4c00-9c9f-5f06a332317c.png)'
   id: totrans-38
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/21e54b2d-361b-4c00-9c9f-5f06a332317c.png)'
 - en: The scorer can be applied repeatedly to identify successively longer phrases.
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 评分器可以重复应用以识别连续更长的短语。
 - en: 'An alternative is the normalized point-wise mutual information score that is
     more accurate, but also more costly to compute. It uses the relative word frequency
     *P(w)* and varies between +1 and -1:'
   id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种选择是归一化的点间互信息分数，这种方法更准确，但计算成本更高。它使用了相对词频*P(w)*，并在+1和-1之间变化：
 - en: '![](img/84b9a2c6-2ef4-4777-9dc3-1891145ae39c.png)'
   id: totrans-41
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/84b9a2c6-2ef4-4777-9dc3-1891145ae39c.png)'
 - en: How to evaluate embeddings – vector arithmetic and analogies
   id: totrans-42
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何评估嵌入向量 - 向量运算和类比
 - en: The bag-of-words model creates document vectors that reflect the presence and
     relevance of tokens to the document. **Latent semantic analysis** reduces the
     dimensionality of these vectors and identifies what can be interpreted as latent
@@ -398,11 +428,13 @@
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 预训练词嵌入的几个来源。流行选项包括斯坦福的 GloVE 和 spaCy 的内置向量（有关详细信息，请参见笔记本 `using_trained_vectors`）。
 - en: GloVe – global vectors for word representation
   id: totrans-59
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: GloVe - 用于词表示的全球向量
 - en: 'GloVe is an unsupervised algorithm developed at the Stanford NLP lab that learns
     vector representations for words from aggregated global word-word co-occurrence
     statistics (see references). Vectors pretrained on the following web-scale sources
@@ -410,26 +442,31 @@
   id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: GloVe 是在斯坦福 NLP 实验室开发的无监督算法，它从聚合的全局词-词共现统计中学习单词的向量表示（请参阅参考文献）。可用于以下网络规模来源的预训练向量：
 - en: Common Crawl with 42B or 840B tokens and a vocabulary or 1.9M or 2.2M tokens
   id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Common Crawl 共有 420 亿或 840 亿令牌和词汇表或 190 万或 220 万令牌。
 - en: Wikipedia 2014 + Gigaword 5 with 6B tokens and a vocabulary of 400K tokens
   id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Wikipedia 2014 + Gigaword 5，共有 60 亿令牌和 40 万令牌的词汇表。
 - en: Twitter using 2B tweets, 27B tokens and a vocabulary of 1.2M tokens
   id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 推特使用了 20 亿条推文，27 亿令牌和 120 万令牌的词汇表
 - en: 'We can use gensim to convert and load the vector text files into the `KeyedVector`
     object:'
   id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用 gensim 将矢量文本文件转换并加载到 `KeyedVector` 对象中：
 - en: '[PRE0]'
   id: totrans-65
   prefs: []
@@ -440,55 +477,67 @@
   id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: Word2vec 作者提供了包含超过 24,000 个类比测试的文本文件，gensim 用于评估词向量。
 - en: 'The word vectors trained on the Wikipedia corpus cover all analogies and achieve
     an overall accuracy of 75.5% with some variation across categories:'
   id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 在维基百科语料库上训练的词向量涵盖了所有类比，并在各个类别中达到了 75.5% 的总体准确率：
 - en: '| **Category** | **Samples** | **Accuracy** | **Category** | **Samples** |
     **Accuracy** |'
   id: totrans-68
   prefs: []
   type: TYPE_TB
+  zh: '| **类别** | **样本** | **准确率** | **类别** | **样本** | **准确率** |'
 - en: '| capital-common-countries | 506 | 94.86% | comparative | 1,332 | 88.21% |'
   id: totrans-69
   prefs: []
   type: TYPE_TB
+  zh: '| 首都-普通国家 | 506 | 94.86% | 比较级 | 1,332 | 88.21% |'
 - en: '| capital-world | 8,372 | 96.46% | superlative | 1,056 | 74.62% |'
   id: totrans-70
   prefs: []
   type: TYPE_TB
+  zh: '| 首都-世界 | 8,372 | 96.46% | 最高级 | 1,056 | 74.62% |'
 - en: '| city-in-state | 4,242 | 60.00% | present-participle | 1,056 | 69.98% |'
   id: totrans-71
   prefs: []
   type: TYPE_TB
+  zh: '| 城市-州 | 4,242 | 60.00% | 现在分词 | 1,056 | 69.98% |'
 - en: '| currency | 752 | 17.42% | nationality-adjective | 1,640 | 92.50% |'
   id: totrans-72
   prefs: []
   type: TYPE_TB
+  zh: '| 货币 | 752 | 17.42% | 国籍形容词 | 1,640 | 92.50% |'
 - en: '| family | 506 | 88.14% | past-tense | 1,560 | 61.15% |'
   id: totrans-73
   prefs: []
   type: TYPE_TB
+  zh: '| 家庭 | 506 | 88.14% | 过去时 | 1,560 | 61.15% |'
 - en: '| adjective-to-adverb | 992 | 22.58% | plural | 1,332 | 78.08% |'
   id: totrans-74
   prefs: []
   type: TYPE_TB
+  zh: '| 形容词到副词 | 992 | 22.58% | 复数 | 1,332 | 78.08% |'
 - en: '| opposite | 756 | 28.57% | plural-verbs | 870 | 58.51% |'
   id: totrans-75
   prefs: []
   type: TYPE_TB
+  zh: '| 反义词 | 756 | 28.57% | 复数动词 | 870 | 58.51% |'
 - en: The Common Crawl vectors for the 100,000 most common tokens cover about 80%
     of the analogies and achieve slightly higher accuracy at 78%, whereas the Twitter
     vectors cover only 25% with 62% accuracy.
   id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 常见爬网词嵌入的 10 万个最常见标记覆盖了约 80% 的类比，并以 78% 的略高准确率，而 Twitter 的词嵌入则仅覆盖了 25%，准确率为 62%。
 - en: How to train your own word vector embeddings
   id: totrans-77
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何训练自己的单词向量嵌入
 - en: Many tasks require embeddings or domain-specific vocabulary that pretrained
     models based on a generic corpus may not represent well or at all. Standard Word2vec
     models are not able to assign vectors to out-of-vocabulary words and instead use
@@ -496,6 +545,7 @@
   id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多任务需要嵌入或特定领域的词汇，而基于通用语料库的预训练模型可能无法很好地或根本无法表示。标准 Word2vec 模型无法为词汇表中不存在的单词分配向量，而是使用降低其预测价值的默认向量。
 - en: For example, when working with industry-specific documents, the vocabulary or
     its usage may change over time as new technologies or products emerge. As a result,
     the embeddings need to evolve as well. In addition, corporate earnings releases
@@ -504,6 +554,8 @@
   id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，在处理行业特定文件时，词汇表或其使用可能随着时间推移而变化，因为新技术或产品出现。因此，嵌入也需要相应地发展。此外，企业盈利发布使用的语言不完全反映在基于维基百科文章预训练的
+    GloVe 向量中。
 - en: We will illustrate the Word2vec architecture using the Keras library that we
     will introduce in more detail in the next chapter and the more performant gensim
     adaptation of the code provided by the Word2vec authors. The notebook Word2vec
@@ -512,11 +564,14 @@
   id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用 Keras 库来说明 Word2vec 架构，我们将在下一章中更详细地介绍，并使用 Word2vec 作者提供的代码的 gensim 适配更高效的代码。Word2vec
+    笔记本包含额外的实现细节，包括 TensorFlow 实现的参考。
 - en: The Skip-Gram architecture in Keras
   id: totrans-81
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Keras 中的 Skip-Gram 架构
 - en: To illustrate the Word2vec network architecture, we use the TED Talk dataset
     with aligned English and Spanish subtitles that we first introduced in [Chapter
     13](https://cdp.packtpub.com/hands_on_machine_learning_for_algorithmic_trading/wp-admin/post.php?post=682&action=edit#post_584), *Working
