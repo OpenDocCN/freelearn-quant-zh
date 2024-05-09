@@ -1520,17 +1520,20 @@
   id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 噪声在数据科学、金融和其他领域中也类似使用，这意味着原始数据包含有用信息，例如，以交易信号的形式，需要从不相关的、无关的信息中提取和分离出来。显然，我们不知道真实信号的事实有时会使这种分离变得相当具有挑战性。
 - en: We will first review how the Kalman filter works and which assumptions it makes
     to achieve its objectives. Then, we will demonstrate how to apply it to financial
     data using the pykalman library.
   id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将首先回顾卡尔曼滤波器的工作原理以及它做出的假设，然后我们将演示如何使用*pykalman*库将其应用于金融数据。
 - en: How does the Kalman filter work?
   id: totrans-199
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器是如何工作的？
 - en: The Kalman filter is a dynamic linear model of sequential data like a time series
     that adapts to new information as it arrives. Rather than using a fixed-size window
     like a moving average or a given set of weights like an exponential moving average,
@@ -1539,6 +1542,7 @@
   id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器是一种动态线性模型，用于适应顺序数据，如时间序列，随着新信息的到来而适应。与使用固定大小窗口（如移动平均值）或给定一组权重（如指数移动平均值）不同，它根据概率模型将新数据合并到其对时间序列当前值的估计中。
 - en: 'More specifically, the Kalman filter is a probabilistic model of a sequence
     of observations *z*[1], *z*[2], …, *z*[T] and a corresponding sequence of hidden
     states *x*[1], *x*[2], …, *x*[T] (with the notation used by the pykalman library
@@ -1546,14 +1550,17 @@
   id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，卡尔曼滤波器是一种关于一系列观测*z*[1]，*z*[2]，…，*z*[T]和相应隐藏状态*x*[1]，*x*[2]，…，*x*[T]的概率模型（使用我们将在此处演示的*pykalman*库使用的符号）。这可以通过以下图表示：
 - en: '![](img/B15439_04_05.png)'
   id: totrans-202
   prefs: []
   type: TYPE_IMG
+  zh: '![图 4.5：卡尔曼滤波器作为图形模型](img/B15439_04_05.png)'
 - en: 'Figure 4.5: Kalman filter as a graphical model'
   id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4.5：卡尔曼滤波器作为图形模型
 - en: Technically speaking, the Kalman filter takes a Bayesian approach that propagates
     the posterior distribution of the state variables *x* given their measurements
     *z* over time (see *Chapter 10*, *Bayesian ML – Dynamic Sharpe Ratios and Pairs
@@ -1565,22 +1572,27 @@
   id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 从技术上讲，卡尔曼滤波器采用贝叶斯方法，随着时间的推移传播状态变量*x*的后验分布，给定它们的测量*z*（有关贝叶斯推断的更多详细信息，请参见*第10章*，*贝叶斯ML
+    - 动态夏普比率和配对交易*）。我们还可以将其视为一种无监督算法，用于跟踪连续状态空间中的单个对象，在这里，我们将对象视为，例如，安全性的价值或回报，或一个alpha因子（有关*第13章*，*使用无监督学习的数据驱动风险因子和资产配置*）。
 - en: 'To recover the hidden states from a sequence of observations that may become
     available in real time, the algorithm iterates between two steps:'
   id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了从可能实时可用的一系列观测中恢复隐藏状态，该算法在两个步骤之间迭代：
 - en: '**Prediction step**: Estimate the current state of the process.'
   id: totrans-206
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**预测步骤**：估计过程的当前状态。'
 - en: '**Measurement step**: Use noisy observations to update its estimate by averaging
     the information from both steps in a way that weighs more certain estimates higher.'
   id: totrans-207
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**测量步骤**：使用嘈杂的观测来通过以更加确定的估计更高的权重平均两个步骤的信息来更新其估计。'
 - en: 'The basic idea behind the algorithm is as follows: certain assumptions about
     a dynamic system and a history of corresponding measurements will allow us to
     estimate the system''s state in a way that maximizes the probability of the previous
@@ -1588,27 +1600,32 @@
   id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 该算法背后的基本思想是：对动态系统和相应测量历史做出一些假设将使我们能够估计系统的状态，以一种最大化以前测量概率的方式。
 - en: 'To achieve its objective of recovering the hidden state, the Kalman filter
     makes the following assumptions:'
   id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现其恢复隐藏状态的目标，卡尔曼滤波器做出以下假设：
 - en: The system that we are modeling behaves in a linear fashion.
   id: totrans-210
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们正在建模的系统以线性方式行为。
 - en: The hidden state process is a Markov chain so that the current hidden state
     *x*[t] depends only on the most recent prior hidden state *x*[t-1].
   id: totrans-211
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 隐藏状态过程是一个马尔可夫链，因此当前隐藏状态*x*[t]仅取决于最近的先前隐藏状态*x*[t-1]。
 - en: Measurements are subject to Gaussian, uncorrelated noise with constant covariance.
   id: totrans-212
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 测量受高斯、不相关噪声的影响，具有恒定的协方差。
 - en: As a result, the Kalman filter is similar to a hidden Markov model, except that
     the state space of the latent variables is continuous, and both hidden and observed
     variables have normal distributions, denoted as ![](img/B15439_04_004.png) with
@@ -1616,11 +1633,14 @@
   id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果上，卡尔曼滤波器类似于隐藏的马尔可夫模型，只是潜变量的状态空间是连续的，并且隐藏和观测变量都具有正态分布，表示为 ![](img/B15439_04_004.png)
+    具有均值 ![](img/B15439_04_005.png) 和标准差
 - en: 'In mathematical terms, the key components of the model (and corresponding parameters
     in the pykalman implementation) are:'
   id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 在数学术语中，该模型的关键组成部分（以及在 pykalman 实现中对应的参数）是：
 - en: 'The initial hidden state has a normal distribution: ![](img/B15439_04_007.png)
     with `initial_state_mean`, ![](img/B15439_04_005.png) and `initial_state_covariance`,
     ![](img/B15439_04_009.png).'
@@ -1628,6 +1648,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 初始隐藏状态具有正态分布：![](img/B15439_04_007.png) 具有 `initial_state_mean`，![](img/B15439_04_005.png)
+    和 `initial_state_covariance`，![](img/B15439_04_009.png)。
 - en: 'The hidden state *x*[t+1] is an affine transformation of *x*[t] with `transition_matrix`
     *A*, `transition_offset` *b*, and added Gaussian noise with `transition_covariance`
     *Q*: ![](img/B15439_04_010.png).'
@@ -1635,6 +1657,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 隐藏状态 *x*[t+1] 是 *x*[t] 的仿射变换，其中 `transition_matrix` *A*，`transition_offset`
+    *b*，并且添加了带有 `transition_covariance` *Q* 的高斯噪声：![](img/B15439_04_010.png)。
 - en: 'The observation *z*[t] is an affine transformation of the hidden state *x*[t]
     with `observation_matrix` *C*, `observation_offset` *d*, and added Gaussian noise
     with `observation_covariance` *R*: ![](img/B15439_04_011.png).'
@@ -1642,6 +1666,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 观察 *z*[t] 是隐藏状态 *x*[t] 的仿射变换，其中 `observation_matrix` *C*，`observation_offset`
+    *d*，并且添加了带有 `observation_covariance` *R* 的高斯噪声：![](img/B15439_04_011.png)。
 - en: Among the advantages of a Kalman filter is that it flexibly adapts to non-stationary
     data with changing distributional characteristics (see *Chapter 9*, *Time-Series
     Models for Volatility Forecasts and Statistical Arbitrage*, for more details on
@@ -1649,6 +1675,7 @@
   id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器的优点之一是，它能够灵活适应具有不断变化分布特征的非平稳数据（有关平稳性的更多细节，请参见*第9章*，*用于波动率预测和统计套利的时间序列模型*）。
 - en: Key disadvantages are the assumptions of linearity and Gaussian noise that financial
     data often violate. To address these shortcomings, the Kalman filter has been
     extended to systems with nonlinear dynamics in the form of the extended and the
@@ -1657,11 +1684,13 @@
   id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 主要缺点是线性假设和高斯噪声的假设，而金融数据通常违反这些假设。为了解决这些缺点，卡尔曼滤波器已经扩展到具有非线性动态的系统，形式为扩展卡尔曼滤波器和无迹卡尔曼滤波器。粒子滤波器是一种使用基于采样的蒙特卡洛方法来估计非正态分布的替代方法。
 - en: How to apply a Kalman filter using pykalman
   id: totrans-220
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何使用 pykalman 应用卡尔曼滤波器
 - en: The Kalman filter is particularly useful for rolling estimates of data values
     or model parameters that change over time. This is because it adapts its estimates
     at every time step based on new observations and tends to weigh recent observations
@@ -1669,6 +1698,7 @@
   id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器特别适用于随时间变化的数据值或模型参数的滚动估计。这是因为它根据新观察在每个时间步骤调整其估计，并且倾向于更加重视最近的观察。
 - en: Except for conventional moving averages, the Kalman filter does not require
     us to specify the length of a window used for the estimate. Rather, we start out
     with our estimate of the mean and covariance of the hidden state and let the Kalman
@@ -1677,11 +1707,14 @@
   id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: '除了传统的移动平均外，卡尔曼滤波器不要求我们指定用于估计的窗口长度。相反，我们从潜在状态的均值和协方差的估计开始，并让卡尔曼滤波器根据周期性观察来纠正我们的估计。本节的代码示例在笔记本
+    `kalman_filter_and_wavelets.ipynb` 中。 '
 - en: 'The following code example shows how to apply the Kalman filter to smoothen
     the S&P 500 stock price series for the 2008-09 period:'
   id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码示例显示了如何将卡尔曼滤波器应用于平滑2008-09年期间的标准普尔500股价系列：
 - en: '[PRE14]'
   id: totrans-224
   prefs: []
@@ -1693,6 +1726,7 @@
   id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用单位协方差矩阵和零均值初始化 `KalmanFilter`（有关如何处理选择适当初始值的挑战的建议，请参阅 pykalman 文档）：
 - en: '[PRE15]'
   id: totrans-226
   prefs: []
@@ -1703,6 +1737,7 @@
   id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们运行 `filter` 方法来触发前向算法，该算法迭代地估计隐藏状态，即时间序列的均值：
 - en: '[PRE16]'
   id: totrans-228
   prefs: []
@@ -1712,6 +1747,7 @@
   id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们添加移动平均以进行比较并绘制结果：
 - en: '[PRE17]'
   id: totrans-230
   prefs: []
@@ -1723,19 +1759,23 @@
   id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图4.6*中的结果图表显示，卡尔曼滤波器的表现与1个月移动平均值相似，但对时间序列行为的变化更敏感：'
 - en: '![](img/B15439_04_06.png)'
   id: totrans-232
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_04_06.png)'
 - en: 'Figure 4.6: Kalman filter versus moving average'
   id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4.6：卡尔曼滤波器与移动平均值
 - en: How to preprocess your noisy signals using wavelets
   id: totrans-234
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何使用小波预处理嘈杂的信号
 - en: Wavelets are related to Fourier analysis, which combines sine and cosine waves
     at different frequencies to approximate noisy signals. While Fourier analysis
     is particularly useful to translate signals from the time to the frequency domain,
@@ -1744,6 +1784,7 @@
   id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 小波与傅立叶分析相关联，后者将不同频率的正弦和余弦波组合起来以逼近嘈杂的信号。虽然傅立叶分析特别适用于将信号从时间域转换为频率域，但小波可用于过滤可能出现在不同尺度上的特定模式，这反过来可能对应于一定的频率范围。
 - en: Wavelets are functions or wave-like patterns that decompose a discrete or continuous-time
     signal into components of different scales. A wavelet transform, in turn, represents
     a function using wavelets as scaled and translated copies of a finite-length waveform.
@@ -1752,12 +1793,14 @@
   id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 小波是将离散或连续时间信号分解为不同尺度分量的函数或类似波形。小波变换则利用小波作为缩放和平移的有限长度波形的扩展和平移副本来表示函数。对于具有不连续性和尖峰的函数以及近似非周期性或非平稳信号，该变换优于傅立叶变换。
 - en: To denoise a signal, you can use wavelet shrinkage and thresholding methods.
     First, you choose a specific wavelet pattern to decompose a dataset. The wavelet
     transform yields coefficients that correspond to details in the dataset.
   id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 要去噪信号，可以使用小波收缩和阈值方法。首先，选择特定的小波模式来分解数据集。小波变换产生与数据集中的细节相对应的系数。
 - en: The idea of thresholding is simply to omit all coefficients below a particular
     cutoff, assuming that they represent minor details that are not necessary to represent
     the true signal. These remaining coefficients are then used in an inverse wavelet
@@ -1765,6 +1808,7 @@
   id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 阈值法的理念很简单，就是省略所有低于特定截止值的系数，假设它们代表不必要表示真实信号的细节。然后，这些剩余系数被用于反向小波变换以重构（去噪）数据集。
 - en: We'll now use the pywavelets library to apply wavelets to noisy stock data.
     The following code example illustrates how to denoise the S&P 500 returns using
     a forward and inverse wavelet transform with a Daubechies 6 wavelet and different
@@ -1772,10 +1816,12 @@
   id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将使用pywavelets库将小波应用于嘈杂的股票数据。以下代码示例说明了如何使用Daubechies 6小波和不同阈值值进行前向和反向小波变换去噪标普500指数收益率。
 - en: 'First, we generate daily S&P 500 returns for the 2008-09 period:'
   id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们为2008-09期间生成每日标普500指数收益率：
 - en: '[PRE18]'
   id: totrans-241
   prefs: []
@@ -1786,6 +1832,7 @@
   id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们从众多内置小波函数中选择了一个Daubechies小波：
 - en: '[PRE19]'
   id: totrans-243
   prefs: []
@@ -1798,14 +1845,18 @@
   id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: Daubechies 6小波由缩放函数 ![](img/B15439_04_012.png) 和小波函数 ![](img/B15439_04_013.png)
+    定义（有关详细信息，请参阅PyWavelet文档和附带的笔记本`kalman_filter_and_wavelets.ipynb`中的所有内置小波函数的图表）：
 - en: '![](img/B15439_04_07.png)'
   id: totrans-245
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_04_07.png)'
 - en: 'Figure 4.7: Daubechies wavelets'
   id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4.7：Daubechies小波
 - en: 'Given a wavelet function, we first decompose the return signal using the `.wavedec`
     function, which yields the coefficients for the wavelet transform. Next, we filter
     out all coefficients above a given threshold and then reconstruct the signal using
@@ -1813,6 +1864,7 @@
   id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 给定小波函数，我们首先使用`.wavedec`函数分解返回信号，该函数产生小波变换的系数。接下来，我们过滤掉所有高于给定阈值的系数，然后使用仅这些系数的逆变换`.waverec`来重构信号：
 - en: '[PRE20]'
   id: totrans-248
   prefs: []
@@ -1824,19 +1876,23 @@
   id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 笔记本展示了如何使用不同的阈值应用这种去噪技术，所得到的图表，在*图4.8*中清楚地显示出更高的阈值值产生了显著更平滑的系列：
 - en: '![](img/B15439_04_08.png)'
   id: totrans-250
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_04_08.png)'
 - en: 'Figure 4.8: Wavelet denoising with different thresholds'
   id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 4.8：不同阈值的小波去噪
 - en: From signals to trades – Zipline for backtests
   id: totrans-252
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 从信号到交易 - Zipline 用于回测
 - en: The open source library Zipline is an event-driven backtesting system. It generates
     market events to simulate the reactions of an algorithmic trading strategy and
     tracks its performance. A particularly important feature is that it provides the
@@ -1844,23 +1900,27 @@
   id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 开源库 Zipline 是一个事件驱动的回测系统。它生成市场事件来模拟算法交易策略的反应，并跟踪其表现。一个特别重要的特性是，它为算法提供了避免前瞻性偏差的历史时点数据。
 - en: The library has been popularized by the crowd-sourced quantitative investment
     fund Quantopian, which uses it in production to facilitate algorithm development
     and live-trading.
   id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 该库由众包的量化投资基金 Quantopian 推广，Quantopian 在生产中使用它来促进算法开发和实时交易。
 - en: In this section, we'll provide a brief demonstration of its basic functionality.
     *Chapter 8*, *The ML4T Workflow – From Model to Strategy Backtesting*, contains
     a more detailed introduction to prepare us for more complex use cases.
   id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将简要演示其基本功能。*第 8 章*，*ML4T 工作流程 - 从模型到策略回测*，包含了更详细的介绍，以准备我们进行更复杂的用例。
 - en: How to backtest a single-factor strategy
   id: totrans-256
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何回测单因子策略
 - en: You can use Zipline offline in conjunction with data bundles to research and
     evaluate alpha factors. When using it on the Quantopian platform, you will get
     access to a wider set of fundamental and alternative data. We will also demonstrate
@@ -1871,6 +1931,9 @@
   id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以与数据包一起离线使用 Zipline 进行 alpha 因子的研究和评估。在 Quantopian 平台上使用时，您将获得更广泛的基本和替代数据。我们还将在本章中演示
+    Quantopian 研究环境，并在下一章中演示回测 IDE。本节的代码位于本章的GitHub存储库文件夹的`01_factor_research_evaluation`子目录中，其中包括安装说明和适用于
+    Zipline 依赖项的环境。
 - en: For installation, please see the instructions in this chapter's `README` on
     GitHub. After installation and before executing the first algorithm, you need
     to ingest a data bundle that, by default, consists of Quandl's community-maintained
@@ -1878,11 +1941,13 @@
   id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 安装请参阅本章的GitHub上的`README`中的说明。安装后，在执行第一个算法之前，您需要摄取一个数据包，默认情况下包含Quandl社区维护的3000家美国上市公司的股价、股息和拆股数据。
 - en: 'You need a Quandl API key to run the following code, which stores the data
     in your `home` folder under `~/.zipline/data/<bundle>`:'
   id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行以下代码需要 Quandl API 密钥，该代码将数据存储在您的`home`文件夹下的`~/.zipline/data/<bundle>`目录中：
 - en: '[PRE21]'
   id: totrans-260
   prefs: []
@@ -1893,6 +1958,7 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 市场数据的单个 alpha 因子
 - en: We are first going to illustrate the Zipline alpha factor research workflow
     in an offline environment. In particular, we will develop and test a simple mean-reversion
     factor that measures how much recent performance has deviated from the historical
@@ -1900,6 +1966,7 @@
   id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先将在离线环境中说明 Zipline alpha 因子研究工作流程。特别是，我们将开发和测试一个简单的均值回归因子，该因子衡量了最近表现与历史平均值的偏离程度。
 - en: Short-term reversal is a common strategy that takes advantage of the weakly
     predictive pattern that stock prices are likely to revert back to a rolling mean
     over horizons from less than 1 minute to 1 month. See the notebook `single_factor_zipline.ipynb`
@@ -1907,6 +1974,7 @@
   id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 短期反转是一种常见策略，利用了股票价格很可能在不到 1 分钟到 1 个月的时间内恢复到滚动平均值的弱预测模式。详情请参阅笔记本`single_factor_zipline.ipynb`。
 - en: To this end, the factor computes the *z*-score for the last monthly return relative
     to the rolling monthly returns over the last year. At this point, we will not
     place any orders to simply illustrate the implementation of a `CustomFactor` and
@@ -1914,6 +1982,7 @@
   id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，该因子计算了最后一个月回报相对于过去一年内滚动月回报的*z*值。此时，我们不会下任何订单，只是为了说明`CustomFactor`的实现并在模拟过程中记录结果。
 - en: Zipline includes numerous built-in factors for many common operations (see the
     *Quantopian* documentation linked on GitHub for details). While this is often
     convenient and sufficient, in other cases, we want to transform our available
@@ -2025,11 +2094,13 @@
   id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，市销率可作为Morningstar基本面数据集的一部分获得。它可以作为将在我们介绍Zipline库时进一步描述的管道的一部分使用。
 - en: Combining factors from diverse data sources
   id: totrans-279
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结合来自多种数据源的因子
 - en: The Quantopian research environment is tailored to the rapid testing of predictive
     alpha factors. The process is very similar because it builds on Zipline but offers
     much richer access to data sources. The following code sample illustrates how
@@ -2039,6 +2110,7 @@
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: Quantopian研究环境专为快速测试预测性α因子而设计。该过程非常类似，因为它建立在Zipline之上，但提供了更丰富的数据源访问。下面的代码示例说明了如何计算α因子，不仅来自市场数据，如以前所做的那样，还来自基本数据和替代数据。有关详细信息，请参阅笔记本`multiple_factors_quantopian_research.ipynb`。
 - en: 'Quantopian provides several hundred Morningstar fundamental variables for free
     and also includes Stocktwits signals as an example of an alternative data source.
     There are also custom universe definitions such as `QTradableStocksUS`, which
@@ -2047,6 +2119,7 @@
   id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: Quantopian免费提供了数百个Morningstar基本面变量，并将Stocktwits信号作为替代数据源的示例。还有一些自定义的宇宙定义，比如`QTradableStocksUS`，它应用了几个过滤器来限制回测宇宙，使其仅包括在现实市场条件下可能可交易的股票：
 - en: '[PRE25]'
   id: totrans-282
   prefs: []
@@ -2060,6 +2133,7 @@
   id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用自定义的`AggregateFundamentals`类来使用最后报告的基本数据点。这旨在解决基本面数据每季度报告一次的事实，而Quantopian目前没有提供一种轻松的方法来聚合历史数据，比如说，在滚动基础上获取过去四个季度的总和：
 - en: '[PRE26]'
   id: totrans-284
   prefs: []
@@ -2071,6 +2145,7 @@
   id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将再次使用前面代码中的自定义`MeanReversion`因子。我们还将使用`rank()`方法的`mask`参数来计算给定宇宙定义的几个其他因子的排名：
 - en: '[PRE27]'
   id: totrans-286
   prefs: []
@@ -2084,6 +2159,7 @@
   id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 此算法简单地将每个资产的六个个别因子的排名平均起来，以结合它们的信息。这是一种相当简单的方法，它并未考虑到每个因子在预测未来收益时可能提供的相对重要性和增量信息。下一章的机器学习算法将使我们能够使用相同的回测框架来做到这一点。
 - en: Execution also relies on `run_algorithm()`, but the `return` DataFrame on the
     Quantopian platform only contains the factor values created by the `Pipeline`.
     This is convenient because this data format can be used as input for Alphalens,
@@ -2092,10 +2168,12 @@
   id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行还依赖于`run_algorithm()`，但Quantopian平台上的`return`DataFrame仅包含由`Pipeline`创建的因子值。这很方便，因为这种数据格式可以用作Alphalens的输入，该库用于评估α因子的预测性能。
 - en: '**Using TA-Lib with Zipline**'
   id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '**使用TA-Lib与Zipline**'
 - en: The TA-Lib library includes numerous technical factors. A Python implementation
     is available for local use, for example, with Zipline and Alphalens, and it is
     also available on the Quantopian platform. The notebook also illustrates several
@@ -2103,11 +2181,13 @@
   id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: TA-Lib库包含众多技术因素。Python实现可供本地使用，例如，与Zipline和Alphalens一起使用，它还可在Quantopian平台上使用。该笔记本还说明了使用TA-Lib可用的几个技术指标。
 - en: Separating signal from noise with Alphalens
   id: totrans-291
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用Alphalens分离信号与噪声
 - en: Quantopian has open sourced the Python Alphalens library for the performance
     analysis of predictive stock factors. It integrates well with the Zipline backtesting
     library and the portfolio performance and risk analysis library pyfolio, which
@@ -2115,72 +2195,86 @@
   id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: Quantopian已经开源了用于预测性股票因子的性能分析的Python Alphalens库。它与Zipline回测库以及投资组合性能和风险分析库pyfolio很好地集成在一起，我们将在下一章中探讨。
 - en: 'Alphalens facilitates the analysis of the predictive power of alpha factors
     concerning the:'
   id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: Alphalens 便于分析 alpha 因子的预测能力，涉及：
 - en: Correlation of the signals with subsequent returns
   id: totrans-294
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 信号与随后收益的相关性
 - en: Profitability of an equal or factor-weighted portfolio based on a (subset of)
     the signals
   id: totrans-295
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于（子集的）信号的等权或因子加权组合的盈利能力
 - en: Turnover of factors to indicate the potential trading costs
   id: totrans-296
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 因子的周转率，以指示潜在的交易成本
 - en: Factor performance during specific events
   id: totrans-297
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 特定事件期间的因子表现
 - en: Breakdowns of the preceding by sector
   id: totrans-298
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 前面的按行业细分
 - en: The analysis can be conducted using tearsheets or individual computations and
     plots. The tearsheets are illustrated in the online repository to save some space.
   id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 分析可以使用纸质文档或个别计算和绘图进行。纸质文档在在线存储库中有图示，以节省一些空间。
 - en: Creating forward returns and factor quantiles
   id: totrans-300
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 创建前向收益和因子分位数
 - en: 'To utilize Alphalens, we need to provide two inputs:'
   id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用 Alphalens，我们需要提供两个输入：
 - en: Signals for a universe of assets, like those returned by the ranks of the `MeanReversion`
     factor
   id: totrans-302
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 资产组合的信号，例如`MeanReversion`因子的排名返回的那些信号
 - en: The forward returns that we would earn by investing in an asset for a given
     holding period
   id: totrans-303
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们投资于某一资产的给定持有期将获得的前向收益
 - en: See the notebook `06_performance_eval_alphalens.ipynb` for details.
   id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关详细信息，请参阅笔记本 `06_performance_eval_alphalens.ipynb`。
 - en: 'We will recover the prices from the `single_factor.pickle` file as follows
     (and proceed in the same way for `factor_data`; see the notebook):'
   id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将从 `single_factor.pickle` 文件中恢复价格如下（并对`factor_data` 以同样方式进行处理；参见笔记本）：
 - en: '[PRE28]'
   id: totrans-306
   prefs: []
@@ -2193,6 +2287,8 @@
   id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用 `get_clean_factor_and_forward_returns` 实用函数，从 Zipline 输出中生成所需格式的 Alphalens
+    输入数据，即先前描述的因子信号和前向收益。该函数返回给定持有期的信号五分位和前向收益：
 - en: '[PRE29]'
   id: totrans-308
   prefs: []
@@ -2205,30 +2301,38 @@
   id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: '`alphalens_data` DataFrame 包含给定日期投资于指定资产的收益和所示持有期的因子值，即该资产的 `MeanReversion`
+    在该日期的排名和相应的分位数值：'
 - en: '| date | asset | 5D | 10D | 21D | 42D | factor | factor_quantile |'
   id: totrans-310
   prefs: []
   type: TYPE_TB
+  zh: '| date | asset | 5D | 10D | 21D | 42D | factor | factor_quantile |'
 - en: '| 1/2/2015 | A | -1.87% | -1.11% | -4.61% | 5.28% | 2618 | 4 |'
   id: totrans-311
   prefs: []
   type: TYPE_TB
+  zh: '| 1/2/2015 | A | -1.87% | -1.11% | -4.61% | 5.28% | 2618 | 4 |'
 - en: '| AAL | -0.06% | -8.03% | -9.63% | -10.39% | 1088 | 2 |'
   id: totrans-312
   prefs: []
   type: TYPE_TB
+  zh: '| AAL | -0.06% | -8.03% | -9.63% | -10.39% | 1088 | 2 |'
 - en: '| AAP | -1.32% | 0.23% | -1.63% | -2.39% | 791 | 1 |'
   id: totrans-313
   prefs: []
   type: TYPE_TB
+  zh: '| AAP | -1.32% | 0.23% | -1.63% | -2.39% | 791 | 1 |'
 - en: '| AAPL | -2.82% | -0.07% | 8.51% | 18.07% | 2917 | 5 |'
   id: totrans-314
   prefs: []
   type: TYPE_TB
+  zh: '| AAPL | -2.82% | -0.07% | 8.51% | 18.07% | 2917 | 5 |'
 - en: '| ABBV | -1.88% | -0.20% | -7.88% | -8.24% | 2952 | 5 |'
   id: totrans-315
   prefs: []
   type: TYPE_TB
+  zh: '| ABBV | -1.88% | -0.20% | -7.88% | -8.24% | 2952 | 5 |'
 - en: The forward returns and the signal quantiles are the basis for evaluating the
     predictive power of the signal. Typically, a factor should deliver markedly different
     returns for distinct quantiles, such as negative returns for the bottom quintile
@@ -2236,17 +2340,21 @@
   id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 前向收益和信号分位数是评估信号预测能力的基础。通常，因子应该为不同的分位数提供明显不同的回报，例如因子值底部五分位的负回报和顶部分位数的正回报。
 - en: Predictive performance by factor quantiles
   id: totrans-317
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 因子分位数的预测性能
 - en: 'As a first step, we would like to visualize the average period return by factor
     quantile. We can use the built-in function `mean_return_by_quantile` from the
     performance module and `plot_quantile_returns_bar` from the plotting module:'
   id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为第一步，我们想要可视化因子分位数的平均期回报。我们可以使用性能模块中的内置函数 `mean_return_by_quantile` 和绘图模块中的
+    `plot_quantile_returns_bar`：
 - en: '[PRE30]'
   id: totrans-319
   prefs: []
@@ -2257,19 +2365,23 @@
   id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是一个条形图，根据因子信号的五分位将四个不同持有期的前向收益的平均值进行了拆分。
 - en: 'As you can see in *Figure 4.9*, the bottom quintiles yielded markedly more
     negative results than the top quintiles, except for the longest holding period:'
   id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如您在 *图4.9* 中所见，除了最长持有期外，底部五分位的收益远远低于顶部五分位：
 - en: '![](img/B15439_04_09.png)'
   id: totrans-322
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_04_09.png)'
 - en: 'Figure 4.9: Mean period return by factor quantile'
   id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4.9：因子分位数的平均期回报
 - en: The **10D** holding period provides slightly better results for the first and
     fourth quartiles on average across the trading period.
   id: totrans-324
@@ -2393,12 +2505,14 @@
   id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 这导致了**信息比率**（**IR**），它通过将alpha除以跟踪风险来衡量单位风险的平均超额收益。当基准是无风险利率时，IR对应于著名的夏普比率，我们将强调在典型情况下，即收益不符合正态分布时出现的关键统计测量问题。我们还将解释主动管理的基本法则，该法则将IR分解为预测技能的组合以及策略有效利用这些预测技能的能力。
 - en: The goal of alpha factors is the accurate directional prediction of future returns.
     Hence, a natural performance measure is the correlation between an alpha factor's
     predictions and the forward returns of the target assets.
   id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: Alpha因子的目标是准确预测未来收益的方向。因此，一个自然的绩效度量是alpha因子预测与目标资产未来收益之间的相关性。
 - en: It is better to use the non-parametric Spearman rank correlation coefficient,
     which measures how well the relationship between two variables can be described
     using a monotonic function, as opposed to the Pearson correlation, which measures
@@ -2406,6 +2520,7 @@
   id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: 最好使用非参数的Spearman秩相关系数，它衡量了两个变量之间的关系如何能够使用单调函数描述，而不是Pearson相关系数，后者衡量线性关系的强度。
 - en: 'We can obtain the **information coefficient** (**IC**) using Alphalens, which
     relies on `scipy.stats.spearmanr` under the hood (see the repo for an example
     of how to use `scipy` directly to obtain *p*-values). The `factor_information_coefficient`
@@ -2414,6 +2529,7 @@
   id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用Alphalens获取**信息系数**（**IC**），它依赖于底层的`scipy.stats.spearmanr`（请参阅存储库以了解如何直接使用`scipy`获取*p*-values的示例）。`factor_information_coefficient`函数计算周期相关性，`plot_ic_ts`创建带有1个月移动平均线的时间序列图：
 - en: '[PRE33]'
   id: totrans-345
   prefs: []
@@ -2426,19 +2542,23 @@
   id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图4.12*中的时间序列图显示了具有显著正移动平均IC的延长时期。如果有足够的机会应用这种预测技能，IC为0.05甚至0.1可以实现显著的超额收益，正如主动管理的基本法则所说明的那样：'
 - en: '![](img/B15439_04_12.png)'
   id: totrans-347
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_04_12.png)'
 - en: 'Figure 4.12: Moving average of the IC for 5-day horizon'
   id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4.12：5天视野的IC移动平均值
 - en: 'A plot of the annual mean IC highlights how the factor''s performance was historically
     uneven:'
   id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: 年均IC的图表突出显示了该因子的历史表现不均匀：
 - en: '[PRE34]'
   id: totrans-350
   prefs: []
@@ -2448,14 +2568,17 @@
   id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 这产生了图表*图4.13*：
 - en: '![](img/B15439_04_13.png)'
   id: totrans-352
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_04_13.png)'
 - en: 'Figure 4.13: IC by year'
   id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 图4.13：按年份划分的IC
 - en: An information coefficient below 0.05, as in this case, is low but significant
     and can produce positive residual returns relative to a benchmark, as we will
     see in the next section. The command `create_summary_tear_sheet(alphalens_data)`
@@ -2463,49 +2586,60 @@
   id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 如本例中所示，信息系数低于0.05，但显著，并且相对于基准可以产生正的残差收益，我们将在下一节中看到。命令`create_summary_tear_sheet(alphalens_data)`创建IC摘要统计。
 - en: 'The risk-adjusted IC results from dividing the mean IC by the standard deviation
     of the IC, which is also subjected to a two-sided *t*-test with the null hypothesis
     *IC = 0* using `scipy.stats.ttest_1samp`:'
   id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 风险调整IC的结果是通过将IC均值除以IC的标准差来得到的，还要经受双边*t*检验，零假设为*IC = 0*，使用`scipy.stats.ttest_1samp`：
 - en: '|  | 5D | 10D | 21D | 42D |'
   id: totrans-356
   prefs: []
   type: TYPE_TB
+  zh: '|  | 5天 | 10天 | 21天 | 42天 |'
 - en: '| IC mean | 0.021 | 0.025 | 0.015 | 0.001 |'
   id: totrans-357
   prefs: []
   type: TYPE_TB
+  zh: '| IC均值 | 0.021 | 0.025 | 0.015 | 0.001 |'
 - en: '| IC std. | 0.144 | 0.13 | 0.12 | 0.12 |'
   id: totrans-358
   prefs: []
   type: TYPE_TB
+  zh: '| IC标准差 | 0.144 | 0.13 | 0.12 | 0.12 |'
 - en: '| Risk-adjusted IC | 0.145 | 0.191 | 0.127 | 0.01 |'
   id: totrans-359
   prefs: []
   type: TYPE_TB
+  zh: '| 风险调整IC | 0.145 | 0.191 | 0.127 | 0.01 |'
 - en: '| t-stat (IC) | 3.861 | 5.107 | 3.396 | 0.266 |'
   id: totrans-360
   prefs: []
   type: TYPE_TB
+  zh: '| t值（IC） | 3.861 | 5.107 | 3.396 | 0.266 |'
 - en: '| p-value (IC) | 0 | 0 | 0.001 | 0.79 |'
   id: totrans-361
   prefs: []
   type: TYPE_TB
+  zh: '| p值（IC） | 0 | 0 | 0.001 | 0.79 |'
 - en: '| IC skew | 0.384 | 0.251 | 0.115 | 0.134 |'
   id: totrans-362
   prefs: []
   type: TYPE_TB
+  zh: '| IC偏度 | 0.384 | 0.251 | 0.115 | 0.134 |'
 - en: '| IC kurtosis | 0.019 | -0.584 | -0.353 | -0.494 |'
   id: totrans-363
   prefs: []
   type: TYPE_TB
+  zh: '| IC峰度 | 0.019 | -0.584 | -0.353 | -0.494 |'
 - en: Factor turnover
   id: totrans-364
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 因子周转率
 - en: '**Factor turnover** measures how frequently the assets associated with a given
     quantile change, that is, how many trades are required to adjust a portfolio to
     the sequence of signals. More specifically, it measures the share of assets currently
@@ -2514,6 +2648,7 @@
   id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: '**因子周转率**衡量了与特定分位数关联的资产频繁变动的频率，即调整投资组合以适应信号序列所需的交易次数。更具体地说，它衡量了当前处于因子分位数中的资产份额，而上一期不在该分位数中的资产份额。以下表格由此命令生成：'
 - en: '[PRE35]'
   id: totrans-366
   prefs: []
@@ -2525,52 +2660,64 @@
   id: totrans-367
   prefs: []
   type: TYPE_NORMAL
+  zh: 加入基于五分位数的投资组合的资产份额相当高，这表明交易成本对于收获预测性能的好处构成了一项挑战：
 - en: '| Mean turnover | 5D | 10D | 21D | 42D |'
   id: totrans-368
   prefs: []
   type: TYPE_TB
+  zh: '| 平均周转率 | 5D | 10D | 21D | 42D |'
 - en: '| Quantile 1 | 0.587 | 0.826 | 0.828 | 0.41 |'
   id: totrans-369
   prefs: []
   type: TYPE_TB
+  zh: '| 四分位数 1 | 0.587 | 0.826 | 0.828 | 0.41 |'
 - en: '| Quantile 2 | 0.737 | 0.801 | 0.81 | 0.644 |'
   id: totrans-370
   prefs: []
   type: TYPE_TB
+  zh: '| 四分位数 2 | 0.737 | 0.801 | 0.81 | 0.644 |'
 - en: '| Quantile 3 | 0.764 | 0.803 | 0.808 | 0.679 |'
   id: totrans-371
   prefs: []
   type: TYPE_TB
+  zh: '| 四分位数 3 | 0.764 | 0.803 | 0.808 | 0.679 |'
 - en: '| Quantile 4 | 0.737 | 0.803 | 0.808 | 0.641 |'
   id: totrans-372
   prefs: []
   type: TYPE_TB
+  zh: '| 四分位数 4 | 0.737 | 0.803 | 0.808 | 0.641 |'
 - en: '| Quantile 5 | 0.565 | 0.802 | 0.809 | 0.393 |'
   id: totrans-373
   prefs: []
   type: TYPE_TB
+  zh: '| 四分位数 5 | 0.565 | 0.802 | 0.809 | 0.393 |'
 - en: 'An alternative view on factor turnover is the correlation of the asset rank
     due to the factor over various holding periods, also part of the tear sheet:'
   id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 因子周转的另一个视角是由于因子的资产排名在不同持有期间的相关性，也是撕裂表的一部分：
 - en: '|  | 5D | 10D | 21D | 42D |'
   id: totrans-375
   prefs: []
   type: TYPE_TB
+  zh: '|  | 5D | 10D | 21D | 42D |'
 - en: '| Mean factor rank autocorrelation | 0.713 | 0.454 | -0.011 | -0.016 |'
   id: totrans-376
   prefs: []
   type: TYPE_TB
+  zh: '| 平均因子等级自相关性 | 0.713 | 0.454 | -0.011 | -0.016 |'
 - en: Generally, more stability is preferable to keep trading costs manageable.
   id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，更多的稳定性更可取，以保持交易成本可控。
 - en: Alpha factor resources
   id: totrans-378
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Alpha因子资源
 - en: The research process requires designing and selecting alpha factors with respect
     to the predictive power of their signals. An algorithmic trading strategy will
     typically build on multiple alpha factors that send signals for each asset. These
@@ -2580,33 +2727,39 @@
   id: totrans-379
   prefs: []
   type: TYPE_NORMAL
+  zh: 研究过程需要根据其信号的预测能力设计和选择Alpha因子。算法交易策略通常会基于多个为每个资产发送信号的Alpha因子构建。这些因子可以使用ML模型聚合，以优化各种信号如何转化为关于个别仓位的时间和大小决策，正如我们将在后续章节中看到的那样。
 - en: Alternative algorithmic trading libraries
   id: totrans-380
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 替代算法交易库
 - en: 'Additional open source Python libraries for algorithmic trading and data collection
     include the following (see GitHub for links):'
   id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于算法交易和数据收集的其他开源Python库包括以下内容（请参阅GitHub链接）：
 - en: '**QuantConnect** is a competitor to Quantopian.'
   id: totrans-382
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**QuantConnect**是Quantopian的竞争对手。'
 - en: '**WorldQuant** offers online competition and recruits community contributors
     to a crowd-sourced hedge fund.'
   id: totrans-383
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**WorldQuant**提供在线竞赛，并招募社区贡献者参与众包式对冲基金。'
 - en: '**Alpha Trading Labs** offers an s high-frequency focused testing infrastructure
     with a business model similar to Quantopian.'
   id: totrans-384
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Alpha Trading Labs**提供了一个与Quantopian类似的高频率测试基础设施，并采用了相似的商业模式。'
 - en: The **Python Algorithmic Trading Library** (**PyAlgoTrade**) focuses on backtesting
     and offers support for paper trading and live trading. It allows you to evaluate
     an idea for a trading strategy with historical data and aims to do so with minimal effort.
@@ -2614,34 +2767,40 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Python算法交易库**（**PyAlgoTrade**）专注于回测，并支持模拟交易和实时交易。它允许您使用历史数据评估交易策略的想法，并旨在以最小的努力实现这一目标。'
 - en: '**pybacktest** is a vectorized backtesting framework that uses pandas and aims
     to be compact, simple, and fast. (The project is currently on hold.)'
   id: totrans-386
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**pybacktest**是一个矢量化的回测框架，使用pandas，并旨在紧凑、简单且快速。（该项目目前暂停。）'
 - en: '**ultrafinance** is an older project that combines real-time financial data
     collection and the analysis and backtesting of trading strategies.'
   id: totrans-387
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**ultrafinance**是一个较老的项目，结合了实时财务数据收集和交易策略的分析和回测。'
 - en: '**Trading with Python** offers courses and a collection of functions and classes
     for quantitative trading.'
   id: totrans-388
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**用Python进行交易**提供了课程和一套用于量化交易的函数和类。'
 - en: '**Interactive Brokers** offers a Python API for live trading on their platform.'
   id: totrans-389
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**互动经纪商**提供了一个用于在其平台上进行实时交易的Python API。'
 - en: Summary
   id: totrans-390
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we introduced a range of alpha factors that have been used
     by professional investors to design and evaluate strategies for decades. We laid
     out how they work and illustrated some of the economic mechanisms believed to
