@@ -1,19 +1,25 @@
 - en: Topic Modeling
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 主题建模
 - en: In the last chapter, we converted unstructured text data into a numerical format
     using the bag-of-words model. This model abstracts from word order and represents
     documents as word vectors, where each entry represents the relevance of a token
     to the document.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章中，我们使用词袋模型将非结构化文本数据转换为数值格式。 此模型抽象出了单词顺序，并将文档表示为单词向量，其中每个条目表示单词对文档的相关性。
 - en: The resulting **document-term matrix** (**DTM**), (you may also come across
     the transposed term-document matrix) is useful to compare documents to each other
     or to a query vector based on their token content, and quickly find a needle in
     a haystack or classify documents accordingly.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 产生的**文档-术语矩阵**（**DTM**）（您可能还会遇到转置的术语-文档矩阵）可用于基于其标记内容将文档与其他文档或查询向量进行比较，并快速找到草堆中的一根针或相应地对文档进行分类。
 - en: However, this document model is both high-dimensional and very sparse. As a
     result, it does little to summarize the content or get closer to understanding
     what it is about. In this chapter, we will use unsupervised machine learning in
@@ -21,8 +27,11 @@
     can produce detailed insights into a large body of documents in an automated way.
     They are very useful to understand the haystack itself and permit the concise
     tagging of documents because using the degree of association of topics and documents.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，这个文档模型既是高维的又是非常稀疏的。 因此，它几乎不能总结内容或更接近理解它是关于什么的。 在本章中，我们将使用无监督的机器学习形式的主题建模来从文档中提取隐藏的主题。
+    这些主题可以以自动化方式为大量文档提供详细的见解。 它们非常有用，可以了解草堆本身，并允许以主题和文档的关联程度进行简明的文档标记。
 - en: Topic models permit the extraction of sophisticated, interpretable text features
     that can be used in various ways to extract trading signals from large collections
     of documents. They speed up the review of documents, help identify and cluster
@@ -30,130 +39,184 @@
     include the identification of key themes in company disclosures, or earnings call
     transcripts, customer reviews or contracts, annotated using, for example, sentiment
     analysis or direct labeling with subsequent asset returns.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题模型允许提取复杂的可解释文本特征，可以以各种方式用于从大量文档中提取交易信号。 它们加速了文档的审阅，帮助识别和聚类相似的文档，并且可以被注释为预测建模的基础。
+    应用包括在公司披露、收入电话成绩单、客户评论或合同中识别关键主题，使用例如情感分析或直接标记与随后的资产回报相关联。
 - en: 'More specifically, in this chapter, we will cover these topics:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，在这一章中，我们将涵盖以下主题：
 - en: What topic modeling achieves, why it matters, and how it has evolved
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 主题建模实现了什么，为什么重要，以及它如何发展
 - en: How **Latent Semantic Indexing** (**LSI**) reduces the dimensionality of the
     DTM
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**潜在语义索引**（**LSI**）如何降低DTM的维度'
 - en: How **probabilistic Latent Semantic Analysis** (**pLSA**) uses a generative
     model to extract topics
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**概率隐含语义分析**（**pLSA**）如何使用生成模型提取主题'
 - en: How **Latent Dirichlet Allocation** (**LDA**) refines pLSA and why it is the
     most popular topic model
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**潜在狄利克雷分配**（**LDA**）如何改进pLSA以及为什么它是最流行的主题模型'
 - en: How to visualize and evaluate topic modeling results
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何可视化和评估主题建模结果
 - en: How to implement LDA using sklearn and gensim
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用sklearn和gensim实现LDA
 - en: How to apply topic modeling to collections of earnings calls and Yelp business
     reviews
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何将主题建模应用于收入电话和Yelp商业评论的集合
 - en: The code samples for the following sections are in the directory of the GitHub
     repository for this chapter, and references are listed in the main README file.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一节的代码示例位于GitHub存储库的目录中，主README文件中列出了参考资料。
 - en: 'Learning latent topics: goals and approaches'
+  id: totrans-14
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 学习潜在主题：目标和方法
 - en: Topic modeling aims to discover hidden topics or themes across documents that
     capture semantic information beyond individual words. It aims to address a key
     challenge in building a machine learning algorithm that learns from text data
     by going beyond the lexical level of what has been written to the semantic level
     of what was intended. The resulting topics can be used to annotate documents based
     on their association with various topics.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题建模旨在发现跨文档的隐藏主题或主题，捕获超越个别单词的语义信息。 它旨在解决从文本数据中学习的机器学习算法的一个关键挑战，即超越已被写成的词汇水平，到预期的语义水平。
+    生成的主题可以用于根据它们与各种主题的关联来注释文档。
 - en: In other words, topic modeling aims to automatically summarize large collections
     of documents to facilitate organization and management, as well as search and
     recommendations. At the same time, it can enable the understanding of documents
     to the extent that humans can interpret the descriptions of topics.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 换句话说，主题建模旨在自动总结大量文档以促进组织和管理，以及搜索和推荐。同时，它可以使得人类能够理解文档的程度，以至于可以解释主题的描述。
 - en: Topic models aim to address the curse of dimensionality that can plague the
     bag-of-words model. The document representation based on high-dimensional sparse
     vectors can make similarity measures noisy, leading to inaccurate distance measurement
     and overfitting of text classification models.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题模型旨在解决可能困扰词袋模型的维度诅咒。基于高维稀疏向量的文档表示可以使相似性度量变得嘈杂，导致不准确的距离测量和文本分类模型的过拟合。
 - en: Moreover, the bag of words model ignores word order and loses context as well
     as semantic information because it is not able to capture synonymy (several words
     have the same meaning) and polysemy (one word has several meanings). As a result,
     document retrieval or similarity search may miss the point when the documents
     are not indexed by the terms used to search or compare.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，词袋模型忽略了词序并且丢失了语境以及语义信息，因为它无法捕捉同义词（几个词具有相同的含义）和多义词（一个词具有多个含义）。因此，当文档没有按照用于搜索或比较的术语进行索引时，文档检索或相似性搜索可能会错过要点。
 - en: 'These shortcoming prompt this question: how do we model and learn meaning topics
     that facilitate a more productive interaction with text data?'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些缺陷引发了这个问题：我们如何对促进与文本数据更有生产性的交互的含义主题进行建模和学习？
 - en: From linear algebra to hierarchical probabilistic models
+  id: totrans-20
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 从线性代数到分层概率模型
 - en: Initial attempts by topic models to improve on the vector space model (developed
     in the mid-1970s) applied linear algebra to reduce the dimensionality of the document-term
     matrix. This approach is similar to the algorithm we discussed as principal component
     analysis in [Chapter 12](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml), *Unsupervised
     Learning*, on unsupervised learning. While effective, it is difficult to evaluate
     the results of these models absent a benchmark model.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题模型最初尝试改进矢量空间模型（在1970年代中期开发）的努力应用线性代数来降低文档-术语矩阵的维度。这种方法类似于我们在《[第12章](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml)》中讨论的主成分分析算法，*无监督学习*，关于无监督学习。虽然有效，但在缺乏基准模型的情况下评估这些模型的结果是困难的。
 - en: In response, probabilistic models emerged that assume an explicit document generation
     process and provide algorithms to reverse engineer this process and recover the
     underlying topics.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为回应，出现了概率模型，假设有一个明确的文档生成过程，并提供算法来反向工程这个过程，并恢复潜在主题。
 - en: 'This table highlights key milestones in the model evolution that we will address
     in more detail in the following sections:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 此表突出显示了我们将在接下来的章节中更详细讨论的模型演变的关键里程碑：
 - en: '| **Model** | **Year** | **Description** |'
+  id: totrans-24
   prefs: []
   type: TYPE_TB
+  zh: '| **模型** | **年份** | **描述** |'
 - en: '| **Latent Semantic Indexing** (**LSI**) | 1988 | Reduces the word space dimensionality
     to capture semantic document-term relationships by  |'
+  id: totrans-25
   prefs: []
   type: TYPE_TB
+  zh: '| **潜在语义索引** (**LSI**) | 1988 | 通过将单词空间的维度降低以捕捉语义文档-术语关系来减少 |'
 - en: '| **Probabilistic Latent Semantic Analysis** (**pLSA**) | 1999 | Reverse-engineers
     a process that assumes words generate a topic and documents are a mix of topics
     |'
+  id: totrans-26
   prefs: []
   type: TYPE_TB
+  zh: '| **概率潜在语义分析** (**pLSA**) | 1999 | 反向工程一个假设单词生成主题并且文档是主题的混合的过程 |'
 - en: '| **Latent Dirichlet Allocation** (**LDA**) | 2003 | Adds a generative process
     for documents: a three-level hierarchical Bayesian model |'
+  id: totrans-27
   prefs: []
   type: TYPE_TB
+  zh: '| **潜在狄利克雷分配** (**LDA**) | 2003 | 为文档添加了一个生成过程：一个三层次的层次贝叶斯模型 |'
 - en: Latent semantic indexing
+  id: totrans-28
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 潜在语义索引
 - en: Latent Semantic Indexing (LSI, also called Latent Semantic Analysis) sets out
     to improve the results of queries that omitted relevant documents containing synonyms
     of query terms. It aims to model the relationships between documents and terms
     to be able to predict that a term should be associated with a document, even though,
     because of variability in word use, no such association was observed.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 潜在语义索引（LSI，也称为潜在语义分析）旨在改进省略了包含查询词的同义词的相关文档的查询结果。它旨在建模文档和术语之间的关系，以便能够预测一个术语应该与文档相关联，即使由于单词使用的变异性，没有观察到这样的关联。
 - en: LSI uses linear algebra to find a given number, *k*, of latent topics by decomposing
     the DTM. More specifically, it uses **Singular Value Decomposition** (**SVD**)
     to find the best lower-rank DTM approximation using k singular values and vectors.
@@ -163,13 +226,17 @@
     with Text Data*. The authors experimented with hierarchical clustering but found
     it too restrictive to explicitly model the document-topic and topic-term relationships,
     or capture associations of documents or terms with several topics.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: LSI使用线性代数来通过分解DTM找到给定数量*k*个潜在主题。更具体地说，它使用**奇异值分解**（**SVD**）来找到使用k个奇异值和向量的最佳低秩DTM近似。换句话说，LSI是我们在[第12章](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml)中遇到的无监督学习技术的应用，*无监督学习*，用于我们在[第13章](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml)中介绍的文本表示，*处理文本数据*。作者尝试了分层聚类，但发现这对于明确地建模文档-主题和主题-词关系，或者捕获文档或术语与几个主题的关联太过于限制性。
 - en: In this context, SVD serves the purpose of identifying a set of uncorrelated
     indexing variables or factors that permit us to represent each term and document
     by its vector of factor values.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，SVD的目的是识别一组不相关的索引变量或因子，使我们能够通过其因子值向量表示每个术语和文档。
 - en: The following figure illustrates how SVD decomposes the DTM into three matrices,
     two containing orthogonal singular vectors and a diagonal matrix with singular
     values that serve as scaling factors. Assuming some correlation in the original
@@ -177,236 +244,337 @@
     values produces a lower-dimensional approximation of the original DTM that loses
     relatively little information. Hence, in the reduced version the rows or columns
     that had *N* items only have *T<N* entries.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图示了SVD如何将DTM分解为三个矩阵，其中两个包含正交奇异向量，以及一个带有奇异值的对角矩阵，用作缩放因子。假设原始数据中存在一些相关性，奇异值会衰减，因此仅选择最大的*T*个奇异值会产生原始DTM的低维近似，且信息损失相对较小。因此，在简化版本中，原先有*N*个项目的行或列只有*T<N*个条目。
 - en: 'This reduced decomposition can be interpreted as illustrated next, where the
     first *M x T* matrix represents the relationships between documents and topics,
     the diagonal matrix scales the topics by their corpus strength, and the third
     matrix models the term-topic relationship:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种简化的分解可以解释如下，其中第一个*M x T*矩阵表示文档与主题之间的关系，对角矩阵按其语料库强度缩放主题，并且第三个矩阵模拟了词-主题关系：
 - en: '![](img/4db67058-1bed-4104-8f63-b7d8e3b16fbe.png)'
+  id: totrans-34
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/4db67058-1bed-4104-8f63-b7d8e3b16fbe.png)'
 - en: The rows of the matrix that results from the product of the first two matrices, *U[T]Σ[T]*[,]corresponds
     to the locations of the original documents projected into the latent topic space.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 从第一个两个矩阵的乘积得到的矩阵的行，*U[T]Σ[T]*[,]对应于在潜在主题空间中投影到原始文档的位置。
 - en: How to implement LSI using sklearn
+  id: totrans-36
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何使用sklearn实现LSI
 - en: 'We will illustrate the application of LSI using the BBC article data that we
     introduced in the last chapter because it is small enough to permit quick training
     and allow us to compare topic assignments to category labels. See the `latent_semantic_indexing` notebook for
     additional implementation details:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用我们在上一章介绍的BBC文章数据来说明LSI的应用，因为它足够小，可以快速训练，并且允许我们将主题分配与类别标签进行比较。请参阅`latent_semantic_indexing`笔记本以获取其他实施细节：
 - en: We begin by loading the documents and creating a train and (stratified) test
     set with 50 articles.
+  id: totrans-38
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们首先加载文档并创建一个包含50篇文章的训练集和（分层）测试集。
 - en: 'Then, we vectorize the data using `TfidfVectorizer` to obtain weighted DTM
     counts and filter out words that appear in less than 1% or more than 25% of the
     documents, as well as generic stopwords, to obtain a vocabulary of around 2,900
     words:'
+  id: totrans-39
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后，我们使用`TfidfVectorizer`对数据进行向量化，以获得加权DTM计数，并过滤掉在不到1%或超过25%的文档中出现的单词，以及通用停用词，以获得约2,900个单词的词汇表：
 - en: '[PRE0]'
+  id: totrans-40
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: We use `sklearn`'s `TruncatedSVD` class, which only computes the *k* largest
     singular values to reduce the dimensionality of the document-term matrix. The
     deterministic arpack algorithm delivers an exact solution, but the default randomized
     implementation is more efficient for large matrices.
+  id: totrans-41
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们使用`sklearn`的`TruncatedSVD`类，它只计算* k *个最大的奇异值，以降低文档-术语矩阵的维度。确定性arpack算法提供了精确的解决方案，但默认的随机实现对于大矩阵更有效。
 - en: 'We compute five topics to match the five categories, which explain only 5.4%
     of the total DTM variance so higher values would be reasonable:'
+  id: totrans-42
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们计算五个主题以匹配五个类别，这仅解释了总DTM方差的5.4%，因此更高的值是合理的：
 - en: '[PRE1]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: LSI identifies a new orthogonal basis for the document-term matrix that reduces
     the rank to the number of desired topics.
+  id: totrans-44
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: LSI为文档-术语矩阵确定了一个新的正交基，将秩降低到所需主题的数量。
 - en: 'The `.transform()` method of the trained `svd` object projects the documents
     into the new topic space that is the result of reducing the dimensionality of
     the document vectors and corresponds to the *U[T]Σ[T]* transformation illustrated
     before:'
+  id: totrans-45
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 训练好的`svd`对象的`.transform()`方法将文档投影到新的主题空间，这是通过降低文档向量的维度得到的结果，并对应于之前说明的*U[T]Σ[T]*变换：
 - en: '[PRE2]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'We can sample an article to view its location in the topic space. We draw a
     `Politics` article that is most (positively) associated with topics 1 and 2:'
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们可以对一篇文章进行采样，查看其在主题空间中的位置。我们选择了一个与主题1和2最（正相关）关联的`Politics`文章：
 - en: '[PRE3]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: The topic assignments for this sample align with the average topic weights for
     each category illustrated next (`Politics` is the leftmost). They illustrate how
     LSI expresses the k topics as directions in a k-dimensional space (the notebook
     includes a projection of the average topic assignments per category into two-dimensional
     space).
+  id: totrans-49
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 此示例的主题分配与每个类别的平均主题权重相一致（`Politics`是最左边的）。它们说明了LSI如何将k个主题表达为k维空间中的方向（笔记本包括每个类别的平均主题分配在二维空间中的投影）。
 - en: 'Each category is clearly defined, and the test assignments match with train
     assignments. However, the weights are both positive and negative, making it more
     difficult to interpret the topics:'
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 每个类别都有明确定义，测试任务与训练任务相匹配。然而，权重既有正数又有负数，这使得解释主题更加困难：
 - en: '![](img/7cf3ba3c-4536-43d5-b1cd-c06c097c0fd3.png)'
+  id: totrans-51
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/7cf3ba3c-4536-43d5-b1cd-c06c097c0fd3.png)'
 - en: 'We can also display the words that are most closely associated with each topic
     (in absolute terms). The topics appear to capture some semantic information but
     are not differentiated:'
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们还可以显示与每个主题最密切相关的单词（绝对值）。主题似乎捕捉了一些语义信息，但没有区分开来：
 - en: '![](img/e4d2bd25-5950-44fa-ba6c-6e3d6f7a45d0.png)'
+  id: totrans-53
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/e4d2bd25-5950-44fa-ba6c-6e3d6f7a45d0.png)'
 - en: Pros and cons
+  id: totrans-54
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 优缺点
 - en: The benefits of LSI include the removal of noise and mitigation of the curse
     of dimensionality, while also capturing some semantics and  clustering both documents
     and terms.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: LSI的优点包括去除噪声、减轻维度灾难，同时捕捉一些语义信息，并将文档和术语进行聚类。
 - en: However, the results of LSI are difficult to interpret because topics are word
     vectors with both positive and negative entries. There is also no underlying model
     that would permit the evaluation of fit and provide guidance when selecting the
     number of dimensions or topics.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，LSI的结果很难解释，因为主题是具有正负条目的词向量。此外，没有基础模型可供评估拟合度，并在选择维度或主题数量时提供指导。
 - en: Probabilistic latent semantic analysis
+  id: totrans-57
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 概率潜在语义分析
 - en: '**Probabilistic Latent Semantic Analysis (pLSA)** takes a statistical perspective
     on LSA and creates a generative model to address the lack of theoretical underpinnings
     of LSA.'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '**概率潜在语义分析（pLSA）**从统计的角度看待LSA，并创建了一个生成模型来解决LSA缺乏理论基础的问题。'
 - en: pLSA explicitly models the probability each co-occurrence of documents *d* and
     words *w* described by the DTM as a mixture of conditionally independent multinomial
     distributions that involve topics *t*.
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: pLSA明确地对LSA采取了统计视角，并创建了一个生成模型，以解决LSA缺乏理论基础的问题。
 - en: 'The symmetric formulation of this generative process of word-document co-occurrences
     assumes both words and documents are generated by the latent topic class, whereas
     the asymmetric model assumes the topics are selected given the document, and words
     result from a second step given the topic:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 此生成过程的对称形式假定单词-文档共现的隐含主题类别生成了单词和文档，而非对称模型假定给定文档后选择了主题，并且单词是在给定主题后进行的第二步生成：
 - en: '![](img/cfcdc229-8283-4358-b14a-6f50e483799c.png)'
+  id: totrans-61
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/cfcdc229-8283-4358-b14a-6f50e483799c.png)'
 - en: The number of topics is a hyperparameter chosen before training and is not learned
     from the data.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题数是在训练之前选择的超参数，不是从数据中学习得到的。
 - en: 'Probabilistic models often use the following plate notation to express dependencies.
     The following figure encodes the relationships just describe for the asymmetric
     model. Each rectangle represents multiple items, such as M Documents for the outer
     and N Words for each document for the inner block. We only observe the documents
     and their content, and the model infers the hidden or latent topic distribution:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 概率模型通常使用以下板块符号来表示依赖关系。下图编码了刚刚描述的非对称模型的关系。每个矩形代表多个项，比如外部的 M 个文档和内部块的每个文档的 N 个单词。我们只观察文档及其内容，模型推断隐藏或潜在的主题分布：
 - en: '![](img/f1ce787d-33f0-4353-9732-b47427cca98e.png)'
+  id: totrans-64
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/f1ce787d-33f0-4353-9732-b47427cca98e.png)'
 - en: The benefit of using a probability model is that we can now compare models by
     evaluating the probability they assign to new documents given the parameters learned
     during training.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用概率模型的好处是，我们现在可以通过评估它们在训练期间学到的参数对新文档分配的概率来比较模型。
 - en: How to implement pLSA using sklearn
+  id: totrans-66
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何使用 sklearn 实现 pLSA
 - en: pLSA is equivalent to non-negative matrix factorization using a Kullback-Leibler
     Divergence objective (see references on GitHub [https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading](https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading)).
     Hence, we can use the `sklearn.decomposition.NM` class to implement this model,
     following the LSA example.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: pLSA 等价于使用 Kullback-Leibler 散度目标的非负矩阵分解（请参见 GitHub 上的参考资料 [https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading](https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading)）。因此，我们可以使用
+    `sklearn.decomposition.NM` 类来实现这个模型，遵循 LSA 示例。
 - en: 'Using the same train-test split of the DTM produced by the `TfidfVectorizer`,
     we fit pLSA as follows:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用由 `TfidfVectorizer` 生成的 DTM 的相同的训练-测试拆分，我们按如下方式拟合 pLSA：
 - en: '[PRE4]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'We get a measure of the reconstruction error, which is a substitute for the
     explained variance measure from before:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到一个重建误差的度量，这是以前解释的方差度量的替代品：
 - en: '[PRE5]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Due to its probabilistic nature, pLSA produces only positive topic weights
     that result in more straightforward topic-category relationships for the test
     and training sets:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于其概率性质，pLSA 只产生正主题权重，从而使测试集和训练集的主题-类别关系更加直观：
 - en: '![](img/a505d985-d9a8-407c-be17-56937de08105.png)'
+  id: totrans-73
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/a505d985-d9a8-407c-be17-56937de08105.png)'
 - en: 'We can also see that the word lists that describe each topic begin to make
     more sense; for example, the Entertainment category is most directly associated
     with Topic 4, which includes the words film, start, and so on:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以看到描述每个主题的词列表开始变得更有意义；例如，娱乐类别与主题 4 最直接相关，其中包括电影、明星等词语：
 - en: '![](img/e6c6fb32-72be-4dba-b9c1-522ad7f38eab.png)'
+  id: totrans-75
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/e6c6fb32-72be-4dba-b9c1-522ad7f38eab.png)'
 - en: Latent Dirichlet allocation
+  id: totrans-76
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 潜在狄利克雷分配
 - en: '**Latent Dirichlet allocation** (**LDA**) extends pLSA by adding a generative
     process for topics.'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: '**潜在狄利克雷分配**（**LDA**）通过为主题添加生成过程来扩展 pLSA。'
 - en: It is the most popular topic model because it tends to produce meaningful topics
     that humans can relate to, can assign topics to new documents, and is extensible.
     Variants of LDA models can include metadata such as authors, or image data, or
     learn hierarchical topics.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 它是最受欢迎的主题模型，因为它倾向于产生人类能够相关的有意义的主题，可以为新文档分配主题，并且是可扩展的。LDA 模型的变体可以包括元数据，如作者，或图像数据，或学习分层主题。
 - en: How LDA works
+  id: totrans-79
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: LDA 的工作原理
 - en: LDA is a hierarchical Bayesian model that assumes topics are probability distributions
     over words, and documents are distributions over topics. More specifically, the
     model assumes that topics follow a sparse Dirichlet distribution, which implies
     that documents cover only a small set of topics, and topics use only a small set
     of words frequently.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: LDA 是一个分层贝叶斯模型，假设主题是词的概率分布，而文档是主题的分布。更具体地说，该模型假设主题遵循稀疏狄利克雷分布，这意味着文档只涵盖了一个小部分主题，并且主题仅使用了一小部分词频繁地。
 - en: The Dirichlet distribution
+  id: totrans-81
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 狄利克雷分布
 - en: 'The Dirichlet distribution produces probability vectors that can be used with
     discrete distributions. That is, it randomly generates a given number of values
     that are positive and sum to one as expected for probabilities. It has a parameter
@@ -415,177 +583,263 @@
     most probability mass. The following screenshot illustrates three draws of size
     10 for α *= 0.1* (the `dirichlet_distribution` notebook contains a simulation
     so you can experiment with different parameter values):'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: '**狄利克雷分布**（Dirichlet distribution）生成可以与离散分布一起使用的概率向量。也就是说，它随机生成一定数量的值，这些值为正且总和为一，符合概率的期望。它有一个正实数参数，用于控制概率的集中程度。接近零的值意味着只有少数值会为正，并且获得大部分概率质量。下面的屏幕截图展示了对于
+    α *= 0.1* 进行了三次大小为 10 的抽样（`dirichlet_distribution` 笔记本中包含一个模拟，您可以尝试不同的参数值）：'
 - en: '![](img/a3806199-b3dc-4b20-83a0-aac2e412bbf8.png)'
+  id: totrans-83
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/a3806199-b3dc-4b20-83a0-aac2e412bbf8.png)'
 - en: Dirichlet allocation
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 狄利克雷分配
 - en: The generative model
+  id: totrans-85
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 生成模型
 - en: 'The Dirichlet distribution figures prominently in the LDA topic model, which
     assumes the following generative process when an author adds an article to a body
     of documents:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 狄利克雷分布在 LDA 主题模型中占据重要地位，该模型假设当作者将文章添加到一系列文档中时，存在以下生成过程：
 - en: Randomly mix a small subset of shared topics *K* according to the topic probabilities
+  id: totrans-87
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据主题概率随机混合一小部分共享主题 *K*
 - en: For each word, select one of the topics according to the document-topic probabilities
+  id: totrans-88
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对于每个词语，根据文档-主题概率选择其中一个主题
 - en: Select a word from the topic's word list according to the topic-word probabilities
+  id: totrans-89
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 根据主题-词语概率从主题的词语列表中选择一个词语
 - en: As a result, the article content depends on the weights of each topic and on
     the terms that make up each topic. The Dirichlet distribution governs the selection
     of topics for documents and words for topics and encodes the idea that a document
     only covers a few topics, while each topic uses only a small number of words frequently.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，文章内容取决于每个主题的权重和构成每个主题的术语。狄利克雷分布控制着为文档选择主题以及为主题选择词语，并编码了这样一个观点：文档仅涵盖少数主题，而每个主题仅使用少量词语频繁出现。
 - en: 'The plate notation for the LDA model summarizes these relationships:'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: LDA 模型的板符号总结了这些关系：
 - en: '![](img/4e8db5eb-6a61-4ea6-9223-43cffa093e01.png)'
+  id: totrans-92
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/4e8db5eb-6a61-4ea6-9223-43cffa093e01.png)'
 - en: Reverse-engineering the process
+  id: totrans-93
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 反向工程过程
 - en: 'The generative process is fictional but turns out to be useful because it permits
     the recovery of the various distributions. The LDA algorithm reverse-engineers
     the work of the imaginary author and arrives at a summary of the document-topic-word
     relationships that concisely describes the following:'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成过程是虚构的，但事实证明它是有用的，因为它允许恢复各种分布。LDA 算法对虚构作者的工作进行了反向工程，并得出了对文档-主题-词语关系进行简洁描述的摘要，该描述包括以下内容：
 - en: The percentage contribution of each topic to a document
+  id: totrans-95
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每个主题对文档的贡献百分比
 - en: The probabilistic association of each word with a topic
+  id: totrans-96
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每个词语与主题的概率关联
 - en: LDA solves the Bayesian inference problem of recovering the distributions from
     the body of documents and the words they contain by reverse-engineering the assumed
     content generation process. The original paper uses **variational Bayes** (**VB**)
     to approximate the posterior distribution. Alternatives include Gibbs sampling
     and expectation propagation. Later, we will illustrate implementations using the
     sklearn and gensim libraries.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: LDA 通过对假设的内容生成过程进行反向工程来解决从文档集合及其包含的词语中恢复分布的贝叶斯推理问题。原始论文使用**变分贝叶斯**（**VB**）来近似后验分布。其他选择包括吉布斯抽样和期望传播。稍后，我们将演示使用
+    sklearn 和 gensim 库的实现。
 - en: How to evaluate LDA topics
+  id: totrans-98
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何评估 LDA 主题
 - en: Unsupervised topic models do not provide a guarantee that the result will be
     meaningful or interpretable, and there is no objective metric to assess the result
     as in supervised learning. Human topic evaluation is considered the gold standard
     but is potentially expensive and not readily available at scale.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 无监督主题模型不能保证结果具有意义或可解释性，并且没有客观的度量标准来评估结果，就像监督学习中那样。人类主题评估被认为是金标准，但可能成本高昂，并且不易规模化。
 - en: Two options to evaluate results more objectively include perplexity, which evaluates
     the model on unseen documents, and topic coherence metrics, which aim to evaluate
     the semantic quality of the uncovered patterns.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 两种更客观评估结果的选择包括困惑度，它评估模型对未见文档的表现，以及主题连贯性度量，它旨在评估发现的模式的语义质量。
 - en: Perplexity
+  id: totrans-101
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 困惑度
 - en: 'Perplexity, when applied to LDA, measures how well the topic-word probability
     distribution recovered by the model predicts a sample, for example, unseen text
     documents. It is based on the entropy *H*(*p*) of this distribution *p* and computed
     with respect to the set of tokens *w*:'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 当应用于 LDA 时，困惑度衡量模型恢复的主题 - 单词概率分布对样本的预测能力，例如，未见过的文本文档。 它基于此分布 *p* 的熵 *H*(*p*)
+    并针对标记集 *w* 计算：
 - en: '![](img/16cbf178-55bd-47de-a8ac-120a74c5c3c0.png)'
+  id: totrans-103
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/16cbf178-55bd-47de-a8ac-120a74c5c3c0.png)'
 - en: Measures closer to zero imply the distribution is better at predicting the sample.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 接近零的度量意味着分布更能够预测样本。
 - en: Topic coherence
+  id: totrans-105
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 主题连贯性
 - en: Topic coherence measures the semantic consistency of the topic model results,
     that is, whether humans would perceive the words and their probabilities associated
     with topics as meaningful.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题连贯性衡量主题模型结果的语义一致性，即人类是否会认为与主题相关的单词及其概率是有意义的。
 - en: To this end, it scores each topic by measuring the degree of semantic similarity
     between the words most relevant to the topic. More specifically, coherence measures
     are based on the probability of observing the set of words *W* that define a topic
     together.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，它通过衡量与主题最相关的单词之间的语义相似度来评分每个主题。 更具体地说，连贯性度量基于定义主题的单词集合 *W* 的观察概率。
 - en: We use two measures of coherence that have been designed for LDA and shown to
     align with human judgment of topic quality, namely the UMass and the UCI measures.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用两个为 LDA 设计且已经显示与人类对主题质量的判断相吻合的连贯性度量，即 UMass 和 UCI 度量。
 - en: 'The UCI metric defines a word pair''s score to be the sum of the **Pointwise
     Mutual Information** (**PMI**) between two distinct pairs of (top) topic words
     *w[i]*, *w[j]* ∈ *w* and a smoothing factor *ε*:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: UCI 指标定义了一个词对的分数，该分数是两个不同对（顶部）主题词 *w[i]*，*w[j]* ∈ *w* 的**点间互信息**（**PMI**）之和和一个平滑因子
+    *ε*：
 - en: '![](img/f78a1a8b-6bca-421f-af56-c95b4da9ed1c.png)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/f78a1a8b-6bca-421f-af56-c95b4da9ed1c.png)'
 - en: The probabilities are computed from word co-occurrence frequencies in a sliding
     window over an external corpus such as Wikipedia, so that this metric can be thought
     of as an external comparison to a semantic ground truth.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 概率是从一个外部语料库（如维基百科）上的单词共现频率中计算的，因此这个度量可以被认为是与语义基准的外部比较。
 - en: 'In contrast, the UMass metric uses the co-occurrences in a number of documents
     *D* from the training corpus to compute a coherence score:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 相比之下，UMass 指标使用训练语料库中的一些文档 *D* 中的共现来计算一致性分数：
 - en: '![](img/4bedbe9e-42a9-4077-ade1-8045d9f952dd.png)'
+  id: totrans-113
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/4bedbe9e-42a9-4077-ade1-8045d9f952dd.png)'
 - en: Rather than a comparison to an extrinsic ground truth, this measure reflects
     intrinsic coherence. Both measures have been evaluated to align well with human
     judgment. In both cases, values closer to zero imply that a topic is more coherent.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 与外部基准的比较不同，这个度量反映了内在的连贯性。 这两个度量都经过评估，与人类判断相吻合。 在这两种情况下，值越接近零意味着主题更连贯。
 - en: How to implement LDA using sklearn
+  id: totrans-115
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何使用 sklearn 实现 LDA
 - en: 'Using the BBC data as before, we use `sklearn.decomposition.LatentDirichletAllocation`
     to train an LDA model with five topics (see the sklearn documentation for detail
     on parameters, and the notebook `lda_with_sklearn` for implementation details):'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 与之前使用 BBC 数据不同，我们使用 `sklearn.decomposition.LatentDirichletAllocation` 来训练一个具有五个主题的
+    LDA 模型（有关参数的详细信息，请参阅 sklearn 文档，有关实现细节，请参阅笔记本 `lda_with_sklearn`）：
 - en: '[PRE6]'
+  id: totrans-117
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'The model tracks the in-sample perplexity during training and stops iterating
     once this measure stops improving. We can persist and load the result as usual
     with sklearn objects:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型在训练期间跟踪样本内困惑度，并一旦该度量停止改善，就停止迭代。 我们可以像往常一样保存和加载 sklearn 对象的结果：
 - en: '[PRE7]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: How to visualize LDA results using pyLDAvis
+  id: totrans-120
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何使用 pyLDAvis 可视化 LDA 结果
 - en: Topic visualization facilitates the evaluation of topic quality using human
     judgment. pyLDAvis is a Python port of LDAvis, developed in R and `D3.js`. We
     will introduce the key concepts; each LDA implementation notebook contains examples.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题可视化利用人类判断方便评估主题质量。 pyLDAvis 是 LDAvis 的 Python 版本，是在 R 和 `D3.js` 中开发的。我们将介绍关键概念；每个
+    LDA 实现笔记本都包含示例。
 - en: pyLDAvis displays the global relationships between topics while also facilitating
     their semantic evaluation by inspecting the terms most closely associated with
     each topic and, inversely, the topics associated with each term. It also addresses
@@ -593,255 +847,384 @@
     distribution over words that define a topic. LDAVis introduces the relevance *r*
     of the term *w* to topic *t*, to produce a flexible ranking of key terms using
     a weight parameter *0<=ƛ<=1*.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: pyLDAvis显示了话题之间的全局关系，同时通过检查与每个话题最相关的术语以及与每个术语相关的话题来促进它们的语义评估。它还解决了语料库中频繁出现的术语倾向于主导定义话题的词的多项分布的挑战。LDAVis引入了术语*w*对话题*t*的相关性*r*，以使用权重参数*0<=ƛ<=1*生成关键术语的灵活排名。
 - en: 'With ![](img/18742117-194f-4e46-b674-441e4a9fc60d.png) as the model''s probability
     estimate of observing the term w for topic *t*, and as the marginal probability
     of w in the corpus:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 以![](img/18742117-194f-4e46-b674-441e4a9fc60d.png)作为模型对观察到的术语*w*在话题*t*中的概率估计，并作为语料库中术语*w*的边际概率：
 - en: '![](img/81bc1770-6ae9-40a9-a3ca-e2b982fb5a6c.png)'
+  id: totrans-124
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/81bc1770-6ae9-40a9-a3ca-e2b982fb5a6c.png)'
 - en: The first term measures the degree of association of term *t* with topic *w*,
     and the second term measures the lift or saliency, that is, how much more likely
     the term is for the topic than in the corpus.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一个术语衡量了术语*t*与话题*w*的关联程度，第二个术语衡量了提升或显著性，即术语在话题中出现的可能性相对于语料库中的可能性有多少。
 - en: '![](img/4be55e09-a229-4e9c-bb13-9fc5197a20ef.png)'
+  id: totrans-126
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/4be55e09-a229-4e9c-bb13-9fc5197a20ef.png)'
 - en: Topic 14
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 话题 14
 - en: The tool allows the user to interactively change *ƛ* to adjust the relevance,
     which updates the ranking of terms. User studies have found that *ƛ=0.6* produces
     the most plausible results.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 该工具允许用户交互地更改*ƛ*以调整相关性，从而更新术语的排名。用户研究发现*ƛ=0.6*产生了最合理的结果。
 - en: How to implement LDA using gensim
+  id: totrans-129
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何使用gensim实现LDA
 - en: '`gensim` is a specialized NLP library with a fast LDA implementation and many
     additional features. We will also use it in the next chapter on word vectors (see
     the `latent_dirichlet_allocation_gensim` notebook for details).'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: '`gensim`是一个专门的NLP库，具有快速的LDA实现和许多附加功能。我们还将在下一章中使用它来处理单词向量（有关详细信息，请参见`latent_dirichlet_allocation_gensim`笔记本）。'
 - en: 'It facilitates the conversion of DTM produced by sklearn into gensim data structures
     as follows:'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 它促进了将sklearn生成的DTM转换为gensim数据结构，如下所示：
 - en: '[PRE8]'
+  id: totrans-132
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Gensim LDA algorithm includes numerous settings, which are as follows:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: Gensim LDA算法包括许多设置，如下所示：
 - en: '[PRE9]'
+  id: totrans-134
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: Gensim also provides an `LdaMulticore` model for parallel training that may
     speed up training using Python's multiprocessing features for parallel computation.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: Gensim还提供了一个用于并行训练的`LdaMulticore`模型，可以使用Python的多进程特性加速训练。
 - en: 'Model training just requires instantiating the `LdaModel` object as follows:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型训练只需要实例化`LdaModel`对象，如下所示：
 - en: '[PRE10]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: Topic coherence measures whether the words in a topic tend to co-occur together.
     It adds up a score for each distinct pair of top-ranked words. The score is the
     log of the probability that a document containing at least one instance of the
     higher-ranked word also contains at least one instance of the lower-ranked word.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 话题连贯性（Topic coherence）衡量话题中的单词是否倾向于一起出现。它为每对排名靠前的单词添加一个分数。该分数是包含至少一个较高排名单词实例的文档也包含至少一个较低排名单词实例的概率的对数。
 - en: 'Large negative values indicate words that don''t co-occur often; values closer
     to zero indicate that words tend to co-occur more often. `gensim` permits topic
     coherence evaluation that produces the topic coherence and shows the most important
     words per topic:'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 大的负值表示不经常共现的单词；接近零的值表示单词倾向于更经常共现。`gensim`允许进行话题连贯性评估，产生话题连贯性并显示每个话题的最重要单词：
 - en: '[PRE11]'
+  id: totrans-140
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'We can display the results as follows:'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以如下显示结果：
 - en: '[PRE12]'
+  id: totrans-142
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'This shows the following top words for each topic:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 这显示了每个话题的以下顶级单词：
 - en: '| **Topic 1** |  | **Topic 2** |  | **Topic 3** |  | **Topic 4** |  | **Topic
     5** |  |'
+  id: totrans-144
   prefs: []
   type: TYPE_TB
+  zh: '| **话题 1** |  | **话题 2** |  | **话题 3** |  | **话题 4** |  | **话题 5** |  |'
 - en: '| Probability | Term | Probability | Term | Probability | Term | Probability
     | Term | Probability | Term |'
+  id: totrans-145
   prefs: []
   type: TYPE_TB
+  zh: '| 概率 | 术语 | 概率 | 术语 | 概率 | 术语 | 概率 | 术语 | 概率 | 术语 |'
 - en: '| 0.55% | online | 0.90% | best | 1.04% | mobile | 0.64% | market | 0.94% |
     labour |'
+  id: totrans-146
   prefs: []
   type: TYPE_TB
+  zh: '| 0.55% | 在线 | 0.90% | 最佳 | 1.04% | 移动 | 0.64% | 市场 | 0.94% | 劳动力 |'
 - en: '| 0.51% | site | 0.87% | game | 0.98% | phone | 0.53% | growth | 0.72% | blair
     |'
+  id: totrans-147
   prefs: []
   type: TYPE_TB
+  zh: '| 0.51% | 网站 | 0.87% | 游戏 | 0.98% | 手机 | 0.53% | 增长 | 0.72% | 布莱尔 |'
 - en: '| 0.46% | game | 0.62% | play | 0.51% | music | 0.52% | sales | 0.72% | brown
     |'
+  id: totrans-148
   prefs: []
   type: TYPE_TB
+  zh: '| 0.46% | 游戏 | 0.62% | 玩 | 0.51% | 音乐 | 0.52% | 销售 | 0.72% | 褐色 |'
 - en: '| 0.45% | net | 0.61% | won | 0.48% | film | 0.49% | economy | 0.65% | election 
     |'
+  id: totrans-149
   prefs: []
   type: TYPE_TB
+  zh: '| 0.45% | 净 | 0.61% | 赢 | 0.48% | 影片 | 0.49% | 经济 | 0.65% | 选举 |'
 - en: '| 0.44% | used | 0.56% | win | 0.48% | use | 0.45% | prices | 0.57% | united
     |'
+  id: totrans-150
   prefs: []
   type: TYPE_TB
+  zh: '| 0.44% | 用 | 0.56% | 赢 | 0.48% | 使用 | 0.45% | 价格 | 0.57% | 联合 |'
 - en: 'And the corresponding coherence scores, which highlight the decay of topic
     quality (at least in part due to the relatively small dataset):'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 以及相应的一致性分数，突出了主题质量的衰减（至少部分原因是由于相对较小的数据集）：
 - en: '![](img/0605996a-535f-454f-89f1-03720b976200.png)'
+  id: totrans-152
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/0605996a-535f-454f-89f1-03720b976200.png)'
 - en: Decay of topic quality
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题质量的衰减
 - en: Topic modeling for earnings calls
+  id: totrans-154
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 收益电话的主题建模
 - en: In [Chapter 3](a7cec22f-095e-49c0-a2bb-e179f6e824a8.xhtml), *Alternative Data
     for Finance*, we learned how to scrape earnings call data from the SeekingAlpha
     site. In this section, we will illustrate topic modeling using this source. I'm
     using a sample of some 500 earnings call transcripts from the second half of 2018\.
     For a practical application, a larger dataset would be highly desirable. The `earnings_calls` directory contains
     several files, with examples mentioned later.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 [第 3 章](a7cec22f-095e-49c0-a2bb-e179f6e824a8.xhtml) 中，*金融的替代数据*，我们学习了如何从 SeekingAlpha
+    网站上抓取收益电话数据。在本节中，我们将使用此来源说明主题建模。我使用了 2018 年下半年的约 500 个收益电话转录样本。对于实际应用，更大的数据集将非常理想。
+    `earnings_calls` 目录 包含了几个文件，后面提到了一些示例。
 - en: See the `lda_earnings_calls` notebook for details on loading, exploring, and
     preprocessing the data, as well as training and evaluating individual models,
     and the `run_experiments.py` file for the experiments described here.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关加载、探索和预处理数据的详细信息，以及训练和评估各个模型的详细信息，请参阅 `lda_earnings_calls` 笔记本，以及描述这里的实验的
+    `run_experiments.py` 文件。
 - en: Data preprocessing
+  id: totrans-157
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 数据预处理
 - en: 'The transcripts consist of individual statements by a company representative,
     an operator, and usually a question and answer session with analysts. We will
     treat each of these statements as separate documents, ignoring operator statements,
     to obtain 22,766 items with mean and median word counts of 144 and 64, respectively:'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 收益电话的转录由公司代表、运营商和通常与分析师进行的问答环节组成。我们将每个声明视为单独的文档，忽略运营商的声明，以获取 22,766 个项目，平均词数为
+    144 个，中位数为 64 个：
 - en: '[PRE13]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: We use `spaCy` to preprocess these documents as illustrated in [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml), *Working
     with Text Data* (see the notebook) and store the cleaned and lemmatized text as
     a new text file.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用 `spaCy` 对这些文档进行预处理，如 [第 13 章](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml)
+    所示，*处理文本数据*（参见笔记本），并将清理和词形还原的文本存储为新的文本文件。
 - en: Data exploration reveals domain-specific stopwords such as year and quarter
     that we remove in a second step, where we also filter out statements with fewer
     than ten words so that some 16,150 remain.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据探索揭示了领域特定的停用词，例如年份和季度，我们在第二步中移除这些停用词，我们还过滤掉少于十个单词的语句，以便剩下约 16,150 个语句。
 - en: Model training and evaluation
+  id: totrans-162
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 模型训练和评估
 - en: For illustration, we will create a document-term matrix containing terms appearing
     in between 0.5% and 50% of documents for around 1,560 features. Training a 15-topic
     model using 25 passes over the corpus takes a bit over two minutes on a four-core
     i7.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明，我们将创建一个包含在大约 1560 个特征中出现在 0.5% 到 50% 文档之间的术语的文档-术语矩阵。在四核 i7 上对语料库进行 25
+    次训练 15 个主题模型需要花费两分钟多一点的时间。
 - en: 'The top 10 words per topic identify several distinct themes that range from
     obvious financial information to clinical trials (topic 4) and supply chain issues
     (12):'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个主题的前 10 个单词确定了几个不同的主题，从明显的财务信息到临床试验（主题 4）和供应链问题（12）：
 - en: '![](img/150ee53e-4193-4353-904e-90552426dbaf.png)'
+  id: totrans-165
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/150ee53e-4193-4353-904e-90552426dbaf.png)'
 - en: 'Using pyLDAvis'' relevance metric with a 0.6 weighting of unconditional frequency
     relative to lift, topic definitions become more intuitive, as illustrated for
     topic 14 about sales performance:'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 pyLDAvis 的相关度指标，将无条件频率相对于提升的 0.6 加权，主题定义变得更直观，如主题 14 关于销售业绩的示例所示：
 - en: '![](img/464ea186-b942-464d-ab11-682ac5225cd4.png)'
+  id: totrans-167
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/464ea186-b942-464d-ab11-682ac5225cd4.png)'
 - en: Sales performance for Topic 14
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 主题 14 的销售业绩
 - en: The notebook also illustrates how to look up documents by their topic association.
     In this case, an analyst can review relevant statements for nuances, use sentiment
     analysis to further process the topic-specific text data, or assign labels derived
     from market prices.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 笔记本还说明了如何根据其主题关联查找文档。在这种情况下，分析师可以审查相关声明以获取细微差别，使用情感分析进一步处理特定主题的文本数据，或者分配从市场价格中导出的标签。
 - en: Running experiments
+  id: totrans-170
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 运行实验
 - en: To illustrate the impact of different parameter settings, we ran a few hundred
     experiments for different DTM constraints and model parameters. More specifically,
     we let the `min_df` and `max_df` parameters range from 50-500 words and 10% to
     100% of documents, respectively using alternatively binary and absolute counts.
     We then trained LDA models with 3 to 50 topics, using 1 and 25 passes over the
     corpus.
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明不同参数设置的影响，我们对不同 DTM 约束和模型参数进行了几百次实验。更具体地说，我们让 `min_df` 和 `max_df` 参数从 50
+    到 500 个词和 10% 到 100% 的文档，分别使用二进制和绝对计数。然后，我们使用 3 到 50 个主题训练了 LDA 模型，在语料库上进行了 1
+    到 25 次训练。
 - en: 'The following chart illustrates the results in terms of topic coherence (higher
     is better), and perplexity (lower is better). Coherence drops after 25-30 topics
     and perplexity similarly increases:'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图表说明了主题一致性（越高越好）和困惑度（越低越好）的结果。一致性在 25-30 个主题后下降，困惑度同样增加：
 - en: '![](img/87e28cac-ffb8-4e2e-8401-a0b466fe4841.png)'
+  id: totrans-173
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/87e28cac-ffb8-4e2e-8401-a0b466fe4841.png)'
 - en: The notebook includes regression results that quantify the relationships between
     parameters and outcomes. We generally get better results using absolute counts
     and a smaller vocabulary.
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 该笔记本包含了回归结果，量化了参数和结果之间的关系。通常使用绝对计数和较小的词汇量可以获得更好的结果。
 - en: Topic modeling for Yelp business reviews
+  id: totrans-175
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Yelp 商业评论的主题建模
 - en: The `lda_yelp_reviews` notebook contains an example of LDA applied to six million
     business review on Yelp. Reviews are more uniform in length than the statements
     extracted from the earnings call transcripts. After cleaning as before, the 10^(th)
     and 90^(th) percentiles range from 14 to 90 tokens.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: '`lda_yelp_reviews` 笔记本包含了将 LDA 应用于 Yelp 上的六百万商业评论的示例。评论的长度比从盈利电话会议抄录中提取的语句更加一致。在清理后，第
+    10 和第 90 百分位数的范围从 14 到 90 个词元。'
 - en: 'We show results for one model using a vocabulary of 3,800 tokens based on *min_df=0.1%*
     and *max_df=25%* with a single pass to avoid a lengthy training time for 20 topics.
     We can use the `pyldavis topic_info` attribute to compute relevance values for
     *lambda=0.6* that produce the following word list (see the notebook for details):'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们展示了一个模型的结果，该模型使用了基于 *min_df=0.1%* 和 *max_df=25%* 的 3,800 个词元的词汇表，使用单一传递以避免对
+    20 个主题进行漫长的训练时间。我们可以使用 `pyldavis topic_info` 属性来计算 *lambda=0.6* 的相关性值，从而生成以下单词列表（详细信息请参见笔记本）：
 - en: '![](img/47ff32ac-676d-40bf-84e2-e429dff10d9b.png)'
+  id: totrans-178
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/47ff32ac-676d-40bf-84e2-e429dff10d9b.png)'
 - en: Gensim provides a `LdaMultiCore` implementation that allows for parallel training
     using Python's multiprocessing module and improves performance by 50% when using
     four workers. More workers do not further reduce training time though, due to
     I/O bottlenecks.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: Gensim 提供了 `LdaMultiCore` 实现，允许使用 Python 的 multiprocessing 模块进行并行训练，并且当使用四个工作进程时，性能提高了
+    50%。然而，更多的工作进程并不会进一步减少训练时间，因为存在 I/O 瓶颈。
 - en: Summary
+  id: totrans-180
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we explored the use of topic modeling to gain insights into
     the content of a large collection of documents. We covered Latent Semantic Analysis,
     which uses dimensionality reduction of the DTM to project documents into a latent
@@ -853,10 +1236,15 @@
     of extracting plausible topics that allow us to gain a high-level understanding
     of large amounts of text in an automated way, while also identifying relevant
     documents in a targeted way.
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们探讨了使用主题建模来洞察大量文档内容的用途。我们涵盖了潜在语义分析，它使用 DTM 的降维来将文档投影到潜在主题空间中。虽然在处理由高维词向量引起的维度诅咒方面有效，但它并不捕捉太多语义信息。概率模型对文档、主题和词之间的相互作用做出了明确的假设，这些假设允许算法反向工程文档生成过程，并评估新文档的模型适应度。我们看到
+    LDA 能够提取出合理的主题，使我们能够以自动化的方式对大量文本进行高层次理解，同时以有针对性的方式识别相关文档。
 - en: In the next chapter, we will learn how to train neural networks that embed individual
     words in a high-dimensional vector space that captures important semantic information
     and allows us to use the resulting word vectors as high-quality text features.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将学习如何训练神经网络，将个别单词嵌入到一个捕捉重要语义信息的高维向量空间中，并且可以使用生成的词向量作为高质量的文本特征。
