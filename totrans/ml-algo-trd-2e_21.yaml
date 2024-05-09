@@ -1,18 +1,24 @@
 - en: '21'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '21'
 - en: Generative Adversarial Networks for Synthetic Time-Series Data
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 用于合成时间序列数据的生成对抗网络
 - en: 'Following the coverage of autoencoders in the previous chapter, this chapter
     introduces a second unsupervised deep learning technique: **generative adversarial
     networks** (**GANs**). As with autoencoders, GANs complement the methods for dimensionality
     reduction and clustering introduced in *Chapter 13*, *Data-Driven Risk Factors
     and Asset Allocation with Unsupervised Learning*.'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章关于自编码器的介绍之后，本章将介绍第二个无监督深度学习技术：**生成对抗网络**（**GANs**）。与自编码器一样，GANs 补充了第13章介绍的降维和聚类方法，即*《基于数据的风险因素和无监督学习的资产配置》*。
 - en: '**GANs** were invented by Goodfellow et al. in 2014\. Yann LeCun has called
     GANs the "most exciting idea in AI in the last ten years." A **GAN** trains two
     neural networks, called the **generator** and **discriminator**, in a competitive
@@ -20,8 +26,11 @@
     to distinguish from a given class of training data. The result is a generative
     model capable of producing synthetic samples representative of a certain target distribution
     but artificially and, thus, inexpensively created.'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '**GANs** 是由 Goodfellow 等人于 2014 年发明的。Yann LeCun 称 GANs 是“过去十年中人工智能中最激动人心的想法。”
+    一个 **GAN** 在竞争环境中训练两个神经网络，称为**生成器**和**判别器**。生成器旨在生成使判别器无法与给定类别的训练数据区分的样本。其结果是一种生成模型，能够产生代表某个特定目标分布的合成样本，但是这些样本是人工生成的，因此成本较低。'
 - en: GANs have produced an avalanche of research and successful applications in many
     domains. While originally applied to images, Esteban, Hyland, and Rätsch (2017)
     applied GANs to the medical domain to generate **synthetic time-series data**.
@@ -31,69 +40,98 @@
     or reinforcement algorithms, or to backtest trading strategies. We will replicate
     the Time-Series GAN presented at the 2019 NeurIPS by Yoon, Jarrett, and van der
     Schaar (2019) to illustrate the approach and demonstrate the results.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: GANs 在许多领域产生了大量的研究和成功的应用。虽然最初应用于图像，但 Esteban、Hyland 和 Rätsch（2017）将 GANs 应用于医学领域以生成**合成时间序列数据**。随后进行了与金融数据的实验（Koshiyama、Firoozye
+    和 Treleaven 2019；Wiese 等人 2019；Zhou 等人 2018；Fu 等人 2019），以探索 GANs 是否能够生成模拟替代资产价格轨迹的数据，以训练监督或强化算法，或进行交易策略的回测。我们将复制
+    2019 年 NeurIPS 由 Yoon、Jarrett 和 van der Schaar（2019）提出的时间序列 GAN，以说明该方法并展示结果。
 - en: 'More specifically, in this chapter you will learn about the following:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 具体来说，在本章中，您将学习以下内容：
 - en: How GANs work, why they are useful, and how they can be applied to trading
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: GANs 的工作原理、其用处以及如何应用于交易
 - en: Designing and training GANs using TensorFlow 2
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用 TensorFlow 2 设计和训练 GANs
 - en: Generating synthetic financial data to expand the inputs available for training
     ML models and backtesting
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成合成金融数据以扩展用于训练 ML 模型和回测的输入
 - en: You can find the code samples for this chapter and links to additional resources
     in the corresponding directory of the GitHub repository. The notebooks include
     color versions of the images.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以在 GitHub 仓库的相应目录中找到本章的代码示例和额外资源的链接。笔记本包括图像的彩色版本。
 - en: Creating synthetic data with GANs
+  id: totrans-10
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 GANs 创建合成数据
 - en: This book mostly focuses on supervised learning algorithms that receive input
     data and predict an outcome, which we can compare to the ground truth to evaluate
     their performance. Such algorithms are also called **discriminative models** because
     they learn to differentiate between different output values.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 本书主要关注接收输入数据并预测结果的监督学习算法，我们可以将其与基本事实进行比较以评估其性能。这样的算法也称为**判别模型**，因为它们学会区分不同的输出值。
 - en: GANs are an instance of **generative models** like the variational autoencoder
     we encountered in the previous chapter. As described there, a generative model
     takes a training set with samples drawn from some distribution *p*[data] and learns
     to represent an estimate *p*[model] of that data-generating distribution.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: GANs 是像我们在上一章遇到的变分自编码器那样的**生成模型**的一个实例。如前所述，生成模型使用从某个分布 *p*[data] 中抽取的样本的训练集，并学习表示该数据生成分布的估计
+    *p*[model]。
 - en: As mentioned in the introduction, GANs are considered one of the most exciting
     recent machine learning innovations because they appear capable of generating
     high-quality samples that faithfully mimic a range of input data. This is very
     attractive given the absence or high cost of labeled data required for supervised
     learning.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如介绍中提到的，GAN被认为是最近最激动人心的机器学习创新之一，因为它们似乎能够生成高质量的样本，忠实地模仿一系列输入数据。这在需要监督学习所需的标记数据缺失或成本过高的情况下非常具有吸引力。
 - en: GANs have triggered a wave of research that initially focused on the generation
     of surprisingly realistic images. More recently, GAN instances have emerged that
     produce synthetic time series with significant potential for trading since the
     limited availability of historical market data is a key driver of the risk of
     backtest overfitting.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: GAN（生成对抗网络）引发了一波研究热潮，最初集中于生成惊人逼真的图像。最近，出现了产生合成时间序列的GAN实例，这对于交易具有重要潜力，因为历史市场数据的有限可用性是回测过拟合风险的主要驱动因素。
 - en: In this section, we explain in more detail how generative models and adversarial
     training work and review various GAN architectures. In the next section, we will
     demonstrate how to design and train a GAN using TensorFlow 2\. In the last section,
     we will describe how to adapt a GAN so that it creates synthetic time-series data.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将更详细地解释生成模型和对抗训练的工作原理，并审查各种GAN架构。在下一节中，我们将演示如何使用TensorFlow 2设计和训练GAN。在最后一节中，我们将描述如何调整GAN，使其生成合成时间序列数据。
 - en: Comparing generative and discriminative models
+  id: totrans-16
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 比较生成模型和判别模型
 - en: 'Discriminative models learn how to differentiate among outcomes *y*, given
     input data *X*. In other words, they learn the probability of the outcome given
     the data: *p*(*y* | *X*). Generative models, on the other hand, learn the joint
@@ -103,8 +141,11 @@
     Trading*), it often seems preferable to solve the prediction problem directly
     rather than by solving the more general generative challenge first (Ng and Jordan
     2002).'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 判别模型学习如何区分在给定输入数据*X*的情况下的不同结果*y*。换句话说，它们学习给定数据的结果的概率：*p*(*y* | *X*)。另一方面，生成模型学习输入和结果的联合分布*p*(*y*,
+    *X*)。虽然生成模型可以使用贝叶斯定理作为判别模型来计算哪个类别最有可能（参见*第10章*，*贝叶斯机器学习 - 动态夏普比率和对冲交易*），但通常似乎更可取地直接解决预测问题，而不是先解决更一般的生成挑战（Ng和Jordan，2002）。
 - en: 'GANs have a generative objective: they produce complex outputs, such as realistic
     images, given simple inputs that can even be random numbers. They achieve this
     by modeling a probability distribution over the possible outputs. This probability
@@ -112,13 +153,17 @@
     each character or token in a document, or each value in a time series. As a result,
     the model can generate outputs that are very likely representative of the class
     of outputs.'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: GAN具有生成目标：它们生成复杂的输出，例如逼真的图像，给定甚至可以是随机数的简单输入。它们通过对可能输出的概率分布进行建模来实现这一点。这个概率分布可以有很多维度，例如图像中的每个像素，文档中的每个字符或标记，或者时间序列中的每个值。因此，模型可以生成很可能代表输出类别的输出。
 - en: Richard Feynman's quote "**What I cannot create, I do not understand**" emphasizes
     that modeling generative distributions is an important step towards more general
     AI and resembles human learning, which succeeds using much fewer samples.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 理查德·费曼的引述“**我无法创建的，我就无法理解**”强调了对建模生成分布的重要性，这是迈向更一般人工智能的重要一步，类似于人类学习，后者使用更少的样本就能成功。
 - en: Generative models have several **use cases** beyond their ability to generate
     additional samples from a given distribution. For example, they can be incorporated
     into model-based **reinforcement learning** (**RL**) algorithms (see the next
@@ -128,15 +173,18 @@
     algorithms. Other use cases include semi-supervised learning where GANs facilitate
     feature matching to assign missing labels with much fewer training samples than
     current approaches.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
 - en: Adversarial training – a zero-sum game of trickery
+  id: totrans-21
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: The key innovation of GANs is a new way of learning the data-generating probability
     distribution. The algorithm sets up a competitive, or adversarial game between
     two neural networks called the **generator** and the **discriminator**.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
 - en: The generator's goal is to convert random noise input into fake instances of
@@ -147,6 +195,7 @@
     so that the generator produces outputs that a machine can no longer distinguish
     from the originals (at which point we don't need the discriminator, which is no
     longer necessary, and can discard it).
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
 - en: '*Figure 21.1* illustrates adversarial training using a generic GAN architecture
@@ -160,25 +209,31 @@
     predicts the probability that the input is *real*, as opposed to *fake*. Learning
     takes place by backpropagating the gradients of the discriminator and generator
     losses to the respective network''s parameters:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_21_01.png)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 21.1: GAN architecture'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
 - en: The recent GAN Lab is a great interactive tool inspired by TensorFlow Playground,
     which allows the user to design GANs and visualize various aspects of the learning
     process and performance over time (see resource links on GitHub).
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
 - en: The rapid evolution of the GAN architecture zoo
+  id: totrans-28
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Since the publication of the paper by Goodfellow et al. in 2014, GANs have attracted
     an enormous amount of interest and triggered a corresponding flurry of research.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: The bulk of this work has refined the original architecture to adapt it to different
@@ -187,17 +242,23 @@
     for the challenging training process, which requires achieving a stable game-theoretic
     equilibrium between two networks, each of which can be tricky to train on its
     own.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 大部分工作是将原始架构进行细化，以适应不同的领域和任务，并扩展以包含额外的信息并创建条件生成对抗网络。额外的研究集中在改进这个具有挑战性的训练过程的方法上，该过程需要在两个网络之间实现稳定的博弈均衡，而每个网络都可能很难单独训练。
 - en: The GAN landscape has become more diverse than we can cover here; see Creswell
     et al. (2018) and Pan et al. (2019) for recent surveys, and Odena (2019) for a
     list of open questions.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成对抗网络的应用领域已经变得更加多样化，超出了我们在这里可以覆盖的范围；请参阅Creswell等人（2018年）和Pan等人（2019年）的最新调查，以及Odena（2019年）的未解问题清单。
 - en: Deep convolutional GANs for representation learning
+  id: totrans-32
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 深度卷积生成对抗网络用于表示学习
 - en: '**Deep convolutional GANs** (**DCGANs**) were motivated by the successful application
     of CNNs to supervised learning for grid-like data (Radford, Metz, and Chintala
     2016). The architecture pioneered the use of GANs for unsupervised learning by
@@ -205,85 +266,111 @@
     to train and generates higher-quality images. It is now considered a baseline
     implementation, with numerous open source examples available (see references on
     GitHub).'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: '**深度卷积生成对抗网络**（**DCGANs**）受到了卷积神经网络成功应用于网格数据的监督学习的启发（Radford，Metz和Chintala，2016）。该架构通过开发基于对抗训练的特征提取器将生成对抗网络应用于无监督学习，更易于训练并生成质量更高的图像。现在被认为是基线实现，有大量的开源示例可用（请参阅GitHub上的参考资料）。'
 - en: A DCGAN network takes uniformly distributed random numbers as input and outputs
     a color image with a resolution of 64×64 pixels. As the input changes incrementally,
     so do the generated images. The network consists of standard CNN components, including
     deconvolutional layers that reverse convolutional layers as in the convolutional
     autoencoder example in the previous chapter, or fully connected layers.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个DCGAN网络以均匀分布的随机数作为输入，并输出分辨率为64×64像素的彩色图像。随着输入的逐渐变化，生成的图像也会随之变化。该网络由标准的卷积神经网络组件组成，包括反卷积层，这些层与上一章节中的卷积自编码器示例中的卷积层相反，或者全连接层。
 - en: The authors experimented exhaustively and made several recommendations, such
     as the use of batch normalization and ReLU activations in both networks. We will
     explore a TensorFlow implementation later in this chapter.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 作者进行了详尽的实验，并提出了一些建议，例如在两个网络中都使用批标准化和ReLU激活。我们将在本章后面探讨TensorFlow的实现。
 - en: Conditional GANs for image-to-image translation
+  id: totrans-36
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 用于图像到图像转换的条件生成对抗网络
 - en: '**Conditional GANs** (**cGANs**) introduce additional label information into
     the training process, resulting in better quality and some control over the output.'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '**条件生成对抗网络**（**cGANs**）将附加的标签信息引入训练过程中，从而提高了输出的质量，并且能对输出进行一定程度的控制。'
 - en: cGANs alter the baseline architecture displayed previously in *Figure 21.1*
     by adding a third input to the discriminator that contains class labels. These
     labels, for example, could convey gender or hair color information when generating
     images.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: cGANs通过向鉴别器添加第三个输入改变了之前显示的基线架构，该输入包含类别标签。例如，这些标签在生成图像时可以传达性别或头发颜色信息。
 - en: Extensions include the **generative adversarial what-where network** (**GAWWN**;
     Reed et al. 2016), which uses bounding box information not only to generate synthetic
     images but also to place objects at a given location.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 扩展包括**生成对抗性的何处网络**（**GAWWN**；Reed等，2016），它不仅使用边界框信息生成合成图像，还将物体放置在给定位置。
 - en: GAN applications to images and time-series data
+  id: totrans-40
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 生成对抗网络应用于图像和时间序列数据
 - en: Alongside a large variety of extensions and modifications of the original architecture,
     numerous applications to images, as well as sequential data like speech and music,
     have emerged. Image applications are particularly diverse, ranging from image
     blending and super-resolution to video generation and human pose identification.
     Furthermore, GANs have been used to improve supervised learning performance.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了对原始架构进行大量的扩展和修改之外，还出现了许多应用于图像以及序列数据（如语音和音乐）的应用。图像应用特别多样，从图像混合和超分辨率到视频生成和人体姿势识别等。此外，生成对抗网络已被用于提高监督学习的性能。
 - en: We will look at a few salient examples and then take a closer look at applications
     to time-series data that may become particularly relevant to algorithmic trading
     and investment. See Alqahtani, Kavakli-Thorne, and Kumar (2019) for a recent survey
     and GitHub references for additional resources.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
 - en: CycleGAN – unpaired image-to-image translation
+  id: totrans-43
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Supervised image-to-image translation aims to learn a mapping between aligned
     input and output images. CycleGAN solves this task when paired images are not
     available and transforms images from one domain to match another.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
 - en: Popular examples include the synthetic "painting" of horses as zebras and vice
     versa. It also includes the transfer of styles, by generating a realistic sample
     of an impressionistic print from an arbitrary landscape photo (Zhu et al. 2018).
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
 - en: StackGAN – text-to-photo image synthesis
+  id: totrans-46
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: One of the earlier applications of GANs to domain-transfer is the generation
     of images based on text. **Stacked GAN**, often shortened to **StackGAN**, uses
     a sentence as input and generates multiple images that match the description.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
 - en: The architecture operates in two stages, where the first stage yields a low-resolution
     sketch of shape and colors, and the second stage enhances the result to a high-resolution
     image with photorealistic details (Zhang et al. 2017).
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
 - en: SRGAN – photorealistic single image super-resolution
+  id: totrans-49
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -293,9 +380,11 @@
     *Chapter 18*, *CNNs for Financial Time Series and Satellite Images*) to produce
     impressive results that are already finding commercial applications (Ledig et
     al. 2017).
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
 - en: Synthetic time series with recurrent conditional GANs
+  id: totrans-51
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -304,11 +393,13 @@
     time series (Esteban, Hyland, and Rätsch 2017). The authors target applications
     in the medical domain, but the approach could be highly valuable to overcome the
     limitations of historical market data.'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
 - en: RGANs rely on **recurrent neural networks** (**RNNs**) for the generator and
     the discriminator. RCGANs add auxiliary information in the spirit of cGANs (see
     the previous *Conditional GANs for image-to-image translation* section).
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
 - en: The authors succeed in generating visually and quantitatively compelling realistic
@@ -320,9 +411,11 @@
     that RCGANs are capable of generating time-series data useful for supervised training.
     We will apply this approach to financial market data this chapter in the *TimeGAN
     – adversarial training for synthetic financial data* section.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
 - en: How to build a GAN using TensorFlow 2
+  id: totrans-55
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -330,13 +423,16 @@
     example discussed earlier in this section to synthesize images from the Fashion-MNIST
     dataset that we first encountered in *Chapter 13*, *Data-Driven Risk Factors and
     Asset Allocation with Unsupervised Learning*.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
 - en: See the notebook `deep_convolutional_generative_adversarial_network` for implementation
     details and references.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
 - en: Building the generator network
+  id: totrans-58
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -344,65 +440,83 @@
     illustrated in *Figure 20.1*, but with fewer layers. The generator uses a fully
     connected input layer, followed by three convolutional layers, as defined in the
     following `build_generator()` function, which returns a Keras model instance:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE0]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: The generator accepts 100 one-dimensional random values as input, and it produces
     images that are 28 pixels wide and high and, thus, contain 784 data points.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
 - en: A call to the `.summary()` method of the model returned by this function shows
     that this network has over 2.3 million parameters (see the notebook for details,
     including a visualization of the generator output prior to training).
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
 - en: Creating the discriminator network
+  id: totrans-63
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'The discriminator network uses two convolutional layers that translate the
     input received from the generator into a single output value. The model has around
     212,000 parameters:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE1]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: '*Figure 21.2* depicts how the random input flows from the generator to the
     discriminator, as well as the input and output shapes of the various network components:'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_21_02.png)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 21.2: DCGAN TensorFlow 2 model architecture'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: Setting up the adversarial training process
+  id: totrans-69
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'Now that we have built the generator and the discriminator models, we will
     design and execute the adversarial training process. To this end, we will define
     the following:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
 - en: The loss functions for both models that reflect their competitive interaction
+  id: totrans-71
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: A single training step that runs the backpropagation algorithm
+  id: totrans-72
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The training loop that repeats the training step until the model performance
     meets our expectations
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Defining the generator and discriminator loss functions
+  id: totrans-74
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -410,67 +524,88 @@
     input. It will be low if the discriminator mistakes an image produced by the generator
     for a real image, and high otherwise; we will define the interaction between both
     models when we create the training step.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
 - en: 'The generator loss is measured by the binary cross-entropy loss function as
     follows:'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE2]'
+  id: totrans-77
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'The discriminator receives both real and fake images as input. It computes
     a loss for each and attempts to minimize the sum with the goal of accurately recognizing
     both types of inputs:'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-79
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'To train both models, we assign each an Adam optimizer with a learning rate
     lower than the default:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: The core – designing the training step
+  id: totrans-82
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Each training step implements one round of stochastic gradient descent using
     the Adam optimizer. It consists of five steps:'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
 - en: Providing the minibatch inputs to each model
+  id: totrans-84
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Getting the models' outputs for the current weights
+  id: totrans-85
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Computing the loss given the models' objective and output
+  id: totrans-86
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Obtaining the gradients for the loss with respect to each model's weights
+  id: totrans-87
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Applying the gradients according to the optimizer's algorithm
+  id: totrans-88
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: 'The function `train_step()` carries out these five steps. We use the `@tf.function`
     decorator to speed up execution by compiling it to a TensorFlow operation rather
     than relying on eager execution (see the TensorFlow documentation for details):'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE5]'
+  id: totrans-90
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Putting it together – the training loop
+  id: totrans-91
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -478,40 +613,51 @@
     step properly defined. It consists of a simple `for` loop, and during each iteration,
     we pass a new batch of real images to the training step. We also will sample some
     synthetic images and occasionally save the model weights.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
 - en: 'Note that we track progress using the `tqdm` package, which shows the percentage
     complete during training:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE6]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Evaluating the results
+  id: totrans-95
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'After 100 epochs that only take a few minutes, the synthetic images created
     from random noise clearly begin to resemble the originals, as you can see in *Figure
     21.3* (see the notebook for the best visual quality):'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_21_03.png)'
+  id: totrans-97
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 21.3: A sample of synthetic Fashion-MNIST images'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
 - en: The notebook also creates a dynamic GIF image that visualizes how the quality
     of the synthetic images improves during training.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
 - en: Now that we understand how to build and train a GAN using TensorFlow 2, we will
     move on to a more complex example that produces synthetic time series from stock
     price data.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
 - en: TimeGAN for synthetic financial data
+  id: totrans-101
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -522,6 +668,7 @@
     dynamics that shape how one sequence of observations follows another. (Refer also
     to the discussion in *Chapter 9*, *Time-Series Models for Volatility Forecasts
     and Statistical Arbitrage*).
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
 - en: Very recent and promising research by Yoon, Jarrett, and van der Schaar, presented
@@ -533,29 +680,39 @@
     data during training. The authors test the model on various time series, including
     historical stock prices, and find that the quality of the synthetic data significantly
     outperforms that of available alternatives.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: Yoon、Jarrett 和 van der Schaar 在 2019 年 12 月的 NeurIPS 上提出的非常新颖且有前景的研究，引入了一种新型的**时间序列生成对抗网络**（**TimeGAN**）框架，旨在通过结合监督和无监督训练来解释时间相关性。该模型在优化监督和对抗目标的同时学习时间序列嵌入空间，这些目标鼓励模型在训练期间从历史数据中采样时遵循观察到的动态。作者对各种时间序列（包括历史股票价格）进行了模型测试，并发现合成数据的质量明显优于现有替代品。
 - en: In this section, we will outline how this sophisticated model works, highlight
     key implementation steps that build on the previous DCGAN example, and show how
     to evaluate the quality of the resulting time series. Please see the paper for
     additional information.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将概述这个复杂模型的工作原理，重点介绍建立在以前 DCGAN 示例基础上的关键实现步骤，并展示如何评估生成时间序列的质量。更多信息请参阅论文。
 - en: Learning to generate data across features and time
+  id: totrans-105
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 学习跨特征和时间生成数据
 - en: A successful generative model for time-series data needs to capture both the
     cross-sectional distribution of features at each point in time and the longitudinal
     relationships among these features over time. Expressed in the image context we
     just discussed, the model needs to learn not only what a realistic image looks
     like, but also how one image evolves from the previous as in a video.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于时间序列数据的成功生成模型需要捕捉每个时间点上特征的横截面分布以及这些特征随时间的纵向关系。用我们刚讨论的图像上下文来表达，模型不仅需要学习一个真实图像是什么样子，还需要学习一个图像如何从前一个图像演变而来，就像视频一样。
 - en: Combining adversarial and supervised training
+  id: totrans-107
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 结合对抗和监督训练
 - en: As mentioned in the first section, prior attempts at generating time-series
     data, like RGANs and RCGANs, relied on RNNs (see *Chapter 19*, *RNNs for Multivariate
     Time Series and Sentiment Analysis*) in the roles of generator and discriminator.
@@ -565,8 +722,11 @@
     original data. The goal is to reward the model for learning the **distribution
     over transitions** from one point in time to the next that are present in the
     historical data.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如第一节中提到的那样，以前生成时间序列数据的尝试，如 RGAN 和 RCGAN，依赖于 RNN（请参阅*第19章*，*用于多变量时间序列和情感分析的
+    RNN*）充当生成器和判别器的角色。TimeGAN 通过将 DCGAN 示例中的**无监督对抗损失**应用于真实和合成序列，并与相对于原始数据的**逐步监督损失**结合，明确地结合了时间序列的自回归特性。其目标是奖励模型学习存在于历史数据中的从一个时间点到下一个时间点的**转换分布**。
 - en: Furthermore, TimeGAN includes an embedding network that maps the time-series
     features to a lower-dimensional latent space to reduce the complexity of the adversarial
     space. The motivation is to capture the drivers of temporal dynamics that often
@@ -574,8 +734,10 @@
     in *Chapter 13*, *Data-Driven Risk Factors and Asset Allocation with Unsupervised
     Learning* and nonlinear dimensionality reduction in *Chapter 20*, *Autoencoders
     for Conditional Risk Factors and Asset Pricing*).
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，TimeGAN 包括一个嵌入网络，将时间序列特征映射到较低维度的潜在空间，以降低对抗空间的复杂性。其动机是捕捉通常具有较低维度的时间动态的驱动因素。（还请参阅*第13章*中的流形学习讨论，*使用无监督学习的数据驱动风险因素和资产配置*，以及*第20章*中的非线性降维讨论，*用于条件风险因素和资产定价的自编码器*）。
 - en: A key element of the TimeGAN architecture is that both the generator and the
     embedding (or autoencoder) network are responsible for minimizing the supervised
     loss that measures how well the model learns the dynamic relationship. As a result,
@@ -583,24 +745,34 @@
     to faithfully reproduce the temporal relationships observed in the historical
     data. In addition to time-series data, the model can also process static data
     that does not change or changes less frequently over time.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: TimeGAN 架构的一个关键元素是，生成器和嵌入（或自动编码器）网络都负责最小化监督损失，这个损失度量模型学习动态关系的好坏。因此，模型学习了一个潜在空间，有助于生成器忠实地再现历史数据中观察到的时间关系。除了时间序列数据，模型还可以处理静态数据，即随时间不变或随时间变化较少的数据。
 - en: The four components of the TimeGAN architecture
+  id: totrans-111
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: TimeGAN 架构的四个组成部分
 - en: 'The TimeGAN architecture combines an adversarial network with an autoencoder
     and thus has four network components, as depicted in *Figure 21.4*:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: TimeGAN 架构将对抗网络与自动编码器结合在一起，因此有四个网络组件，如 *图 21.4* 所示：
 - en: '**Autoencoder**: embedding and recovery networks'
+  id: totrans-113
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**自动编码器**：嵌入和恢复网络'
 - en: '**Adversarial network**: sequence generator and sequence discriminator components'
+  id: totrans-114
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**对抗网络**：序列生成器和序列鉴别器组件'
 - en: The authors emphasize the **joint training** of the autoencoder and the adversarial
     networks by means of **three different loss functions**. The **reconstruction
     loss** optimizes the autoencoder, the **unsupervised loss** trains the adversarial
@@ -610,14 +782,21 @@
     creates the latent space, the adversarial network operates within this space,
     and supervised loss synchronizes the latent dynamics of both real and synthetic
     data.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 作者强调通过**三种不同的损失函数**来进行自动编码器和对抗网络的**联合训练**。**重建损失**优化自动编码器，**无监督损失**训练对抗网络，**监督损失**强制执行时间动态。由于这一关键见解，TimeGAN
+    同时学会了编码特征、生成表示和在时间上迭代。更具体地说，嵌入网络创建潜在空间，对抗网络在此空间内运作，监督损失同步了真实数据和合成数据的潜在动态。
 - en: '![](img/B15439_21_04.png)'
+  id: totrans-116
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_21_04.png)'
 - en: 'Figure 21.4: The components of the TimeGAN architecture'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 21.4：TimeGAN 架构的组件
 - en: The **embedding and recovery** components of the autoencoder map the feature
     space into the latent space and vice versa. This facilitates the learning of the
     temporal dynamics by the adversarial network, which learns in a lower-dimensional
@@ -625,27 +804,37 @@
     RNN and a feedforward network. However, these choices can be flexibly adapted
     to the task at hand as long as they are autoregressive and respect the temporal
     order of the data.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 自动编码器的**嵌入和恢复**组件将特征空间映射到潜在空间，反之亦然。这有助于对抗网络学习低维空间中的时间动态。作者使用堆叠 RNN 和前馈网络实现了嵌入和恢复网络。然而，只要它们是自回归的，并且尊重数据的时间顺序，这些选择可以灵活地适应手头的任务。
 - en: The **generator and the discriminator** elements of the adversarial network
     differ from the DCGAN not only because they operate on sequential data but also
     because the synthetic features are generated in the latent space that the model
     learns simultaneously. The authors chose an RNN as the generator and a bidirectional
     RNN with a feedforward output layer for the discriminator.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 对抗网络的**生成器和鉴别器**元素与 DCGAN 不同，不仅因为它们作用于序列数据，而且因为合成特征是在模型同时学习的潜在空间中生成的。作者选择了 RNN
+    作为生成器，选择了具有前向输出层的双向 RNN 作为鉴别器。
 - en: Joint training of an autoencoder and adversarial network
+  id: totrans-120
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 自动编码器和对抗网络的联合训练
 - en: 'The three loss functions displayed in *Figure 21.4* drive the joint optimization
     of the network elements just described while training on real and randomly generated
     time series. In more detail, they aim to accomplish the following:'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 21.4* 中显示的三个损失函数驱动了刚刚描述的网络元素的联合优化，同时在真实和随机生成的时间序列上训练。更详细地说，它们旨在实现以下目标：'
 - en: The **reconstruction loss** is familiar from our discussion of autoencoders
     in *Chapter 20*, *Autoencoders for Conditional Risk Factors and Asset Pricing*;
     it compares how well the reconstruction of the encoded data resembles the original.
+  id: totrans-122
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -654,28 +843,34 @@
     to minimize the probability that the discriminator classifies its output as fake,
     the discriminator aims to optimize the correct classification or real and fake
     inputs.
+  id: totrans-123
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The **supervised loss** captures how well the generator approximates the actual
     next time step in latent space when receiving encoded real data for the prior
     sequence.
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'Training takes place in **three phases**:'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: Training the autoencoder on real time series to optimize reconstruction
+  id: totrans-126
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Optimizing the supervised loss using real time series to capture the temporal
     dynamics of the historical data
+  id: totrans-127
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Jointly training the four components while minimizing all three loss functions
+  id: totrans-128
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -686,48 +881,59 @@
     and suggest that the embedding task serves to regularize adversarial learning
     because it reduces its dimensionality while the supervised loss constrains the
     stepwise dynamics of the generator.
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
 - en: We now turn to the TimeGAN implementation using TensorFlow 2; see the paper
     for an in-depth explanation of the math and methodology of the approach.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
 - en: Implementing TimeGAN using TensorFlow 2
+  id: totrans-131
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'In this section, we will implement the TimeGAN architecture just described.
     The authors provide sample code using TensorFlow 1 that we will port to TensorFlow
     2\. Building and training TimeGAN requires several steps:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: Selecting and preparing real and random time series inputs
+  id: totrans-133
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Creating the key TimeGAN model components
+  id: totrans-134
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Defining the various loss functions and training steps used during the three
     training phases
+  id: totrans-135
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Running the training loops and logging the results
+  id: totrans-136
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Generating synthetic time series and evaluating the results
+  id: totrans-137
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: We'll walk through the key items for each of these steps; please refer to the
     notebook `TimeGAN_TF2` for the code examples in this section (unless otherwise
     noted), as well as additional implementation details.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: Preparing the real and random input series
+  id: totrans-139
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -737,6 +943,7 @@
     use close to 20 years of adjusted close prices for six different tickers because
     it introduces somewhat higher variability. We will follow the original paper in
     targeting synthetic series with 24 time steps.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: Among the stocks with the longest history in the Quandl Wiki dataset are those
@@ -744,140 +951,211 @@
     retrieve the adjusted close from 2000-2017 and obtain over 4,000 observations.
     The correlation coefficient among the series ranges from 0.01 for GE and CAT to
     0.94 for DIS and KO.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 Quandl Wiki 数据集中历史最悠久的股票中，有一些是以归一化格式显示的，即从 1.0 开始，在 *图 21.5* 中显示。我们从 2000
+    年至 2017 年检索调整后的收盘价，并获得 4,000 多个观察结果。系列之间的相关系数从 GE 和 CAT 的 0.01 到 DIS 和 KO 的 0.94
+    不等。
 - en: '![](img/B15439_21_05.png)'
+  id: totrans-142
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_21_05.png)'
 - en: 'Figure 21.5: The TimeGAN input—six real stock prices series'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 21.5：TimeGAN 输入-六个真实股票价格系列
 - en: 'We scale each series to the range [0, 1] using scikit-learn''s `MinMaxScaler`
     class, which we will later use to rescale the synthetic data:'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用 scikit-learn 的 `MinMaxScaler` 类将每个系列缩放到范围 [0, 1]，稍后我们将使用它来重新缩放合成数据：
 - en: '[PRE7]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'In the next step, we create rolling windows containing overlapping sequences
     of 24 consecutive data points for the six series:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一步中，我们创建包含六个系列的 24 个连续数据点的重叠序列的滚动窗口：
 - en: '[PRE8]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'We then create a `tf.data.Dataset` instance from the list of `NumPy` arrays,
     ensure the data gets shuffled while training, and set a batch size of 128:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们从 `NumPy` 数组列表创建一个 `tf.data.Dataset` 实例，确保数据在训练时被洗牌，并设置批量大小为 128：
 - en: '[PRE9]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: We also need a random time-series generator that produces simulated data with
     24 observations on the six series for as long as the training continues.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还需要一个随机时间序列生成器，它会生成模拟数据，每个时间序列有 24 个观测值，直到训练结束。
 - en: 'To this end, we will create a generator that draws the requisite data uniform
     at random and feeds the result into a second `tf.data.Datase`t instance. We set
     this dataset to produce batches of the desired size and to repeat the process
     for as long as necessary:'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，我们将创建一个生成器，它随机均匀地抽取所需数据，并将结果输入到第二个 `tf.data.Datase`t 实例中。我们将设置此数据集以产生所需大小的批量，并为必要的时间重复该过程：
 - en: '[PRE10]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: We'll now proceed to define and instantiate the TimeGAN model components.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将继续定义并实例化 TimeGAN 模型组件。
 - en: Creating the TimeGAN model components
+  id: totrans-154
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 创建 TimeGAN 模型组件
 - en: We'll now create the two autoencoder components and the two adversarial network
     elements, as well as the supervisor that encourages the generator to learn the
     temporal dynamic of the historical price series.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在将创建两个自编码器组件和两个对抗网络元素，以及鼓励生成器学习历史价格系列的监督员。
 - en: 'We will follow the authors'' sample code in creating RNNs with three hidden
     layers, each with 24 GRU units, except for the supervisor, which uses only two
     hidden layers. The following `make_rnn` function automates the network creation:'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将按照作者的示例代码创建具有三个隐藏层的 RNN，每个隐藏层有 24 个 GRU 单元，除了监督员，它只使用两个隐藏层。以下的 `make_rnn`
+    函数自动创建网络：
 - en: '[PRE11]'
+  id: totrans-157
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'The `autoencoder` consists of the `embedder` and the recovery networks that
     we instantiate here:'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: '`自编码器` 由 `嵌入器` 和我们在这里实例化的恢复网络组成：'
 - en: '[PRE12]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'We then create the generator, the discriminator, and the supervisor like so:'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们像这样创建生成器、鉴别器和监督员：
 - en: '[PRE13]'
+  id: totrans-161
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'We also define two generic loss functions, namely `MeanSquaredError` and `BinaryCrossEntropy`,
     which we will use later to create the various specific loss functions during the
     three phases:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还定义了两个通用损失函数，即 `MeanSquaredError` 和 `BinaryCrossEntropy`，稍后我们将使用它们来创建三个阶段中的各种特定损失函数：
 - en: '[PRE14]'
+  id: totrans-163
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Now it's time to start the training process.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是时候开始训练过程了。
 - en: Training phase 1 – autoencoder with real data
+  id: totrans-165
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第 1 阶段训练 - 使用真实数据的自编码器
 - en: 'The autoencoder integrates the embedder and the recovery functions, as we saw
     in the previous chapter:'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 自编码器整合了嵌入器和恢复函数，就像我们在上一章中看到的那样：
 - en: '[PRE15]'
+  id: totrans-167
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'It has 21,054 parameters. We will now instantiate the optimizer for this training
     phase and define the training step. It follows the pattern introduced with the
     DCGAN example, using `tf.GradientTape` to record the operations that generate
     the reconstruction loss. This allows us to rely on the automatic differentiation
     engine to obtain the gradients with respect to the trainable embedder and recovery
     network weights that drive `backpropagation`:'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 它有 21,054 个参数。我们现在将为这个训练阶段实例化优化器并定义训练步骤。它遵循了与 DCGAN 示例引入的模式，使用 `tf.GradientTape`
+    来记录生成重构损失的操作。这允许我们依赖于自动微分引擎来获取相对于驱动 `反向传播` 的可训练嵌入器和恢复网络权重的梯度：
 - en: '[PRE16]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'The reconstruction loss simply compares the autoencoder outputs with its inputs.
     We train for 10,000 steps in a little over one minute using this training loop
     that records the step loss for monitoring with TensorBoard:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-171
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Training phase 2 – supervised learning with real data
+  id: totrans-172
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'We already created the supervisor model so we just need to instantiate the
     optimizer and define the train step as follows:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: In this case, the loss compares the output of the supervisor with the next timestep
     for the embedded sequence so that it learns the temporal dynamics of the historical
     price sequences; the training loop works similarly to the autoencoder example
     in the previous chapter.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
 - en: Training phase 3 – joint training with real and random data
+  id: totrans-176
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -885,56 +1163,75 @@
     It uses multiple loss functions and combinations of the base components to achieve
     the simultaneous learning of latent space embeddings, transition dynamics, and
     synthetic data generation.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
 - en: We will highlight a few salient examples; please see the notebook for the full
     implementation that includes some repetitive steps that we will omit here.
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: 'To ensure that the generator faithfully reproduces the time series, TimeGAN
     includes a moment loss that penalizes when the mean and variance of the synthetic
     data deviate from the real version:'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-180
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'The end-to-end model that produces synthetic data involves the generator, supervisor,
     and recovery components. It is defined as follows and has close to 30,000 trainable
     parameters:'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-182
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'The joint training involves three optimizers for the autoencoder, the generator,
     and the discriminator:'
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-184
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'The train step for the generator illustrates the use of four loss functions
     and corresponding combinations of network components to achieve the desired learning
     outlined at the beginning of this section:'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-186
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Finally, the joint training loop pulls the various training steps together
     and builds on the learning from phase 1 and 2 to train the TimeGAN components
     on both real and random data. We run the loop for 10,000 iterations in under 40
     minutes:'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-188
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Now we can finally generate synthetic time series!
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
 - en: Generating synthetic time series
+  id: totrans-190
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -943,65 +1240,84 @@
     in the preceding section. More specifically, we''ll create roughly as many artificial
     series with 24 observations on the six tickers as there are overlapping windows
     in the real dataset:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-192
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'The result is 35 batches containing 128 samples, each with the dimensions 24×6,
     that we stack like so:'
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-194
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'We can use the trained `MinMaxScaler` to revert the synthetic output to the
     scale of the input series:'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: '*Figure 21.6* displays samples of the six synthetic series and the corresponding
     real series. The synthetic data generally reflects a variation of behavior not
     unlike its real counterparts and, after rescaling, roughly (due to the random
     input) matches its range:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_21_06.png)'
+  id: totrans-198
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 21.6: TimeGAN output—six synthetic prices series and their real counterparts'
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
 - en: Now it's time to take a closer look at how to more thoroughly evaluate the quality
     of the synthetic data.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: Evaluating the quality of synthetic time-series data
+  id: totrans-201
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'The TimeGAN authors assess the quality of the generated data with respect to
     three practical criteria:'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
 - en: '**Diversity**: The distribution of the synthetic samples should roughly match
     that of the real data.'
+  id: totrans-203
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Fidelity**: The sample series should be indistinguishable from the real data.'
+  id: totrans-204
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Usefulness**: The synthetic data should be as useful as its real counterparts
     for solving a predictive task.'
+  id: totrans-205
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'They apply three methods to evaluate whether the synthetic data actually exhibits
     these characteristics:'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
 - en: '**Visualization**: For a qualitative diversity assessment of diversity, we
@@ -1009,6 +1325,7 @@
     (see *Chapter 13*, *Data-Driven Risk Factors and Asset Allocation with Unsupervised
     Learning*)—to visually inspect how closely the distribution of the synthetic samples
     resembles that of the original data.'
+  id: totrans-207
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1016,21 +1333,25 @@
     error of a time-series classifier, such as a two-layer LSTM (see *Chapter 18*,
     *CNNs for Financial Time Series and Satellite Images*), lets us evaluate whether
     real and synthetic time series can be differentiated or are, in fact, indistinguishable.'
+  id: totrans-208
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Predictive score**: For a quantitative measure of usefulness, we can compare
     the test errors of a sequence prediction model trained on, alternatively, real
     or synthetic data to predict the next time step for the real data.'
+  id: totrans-209
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: We'll apply and discuss the results of each method in the following sections.
     See the notebook `evaluating_synthetic_data` for the code samples and additional
     details.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
 - en: Assessing diversity – visualization using PCA and t-SNE
+  id: totrans-211
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1039,44 +1360,57 @@
     To this end, we will sample 250 normalized sequences with six features each and
     reshape them to obtain data with the dimensionality 1,500×24 (showing only the
     steps for real data; see the notebook for the synthetic data):'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE27]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'PCA is a linear method that identifies a new basis with mutually orthogonal
     vectors that, successively, capture the directions of maximum variance in the
     data. We will compute the first two components using the real data and then project
     both real and synthetic samples onto the new coordinate system:'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 't-SNE is a nonlinear manifold learning method for the visualization of high-dimensional
     data. It converts similarities between data points to joint probabilities and
     aims to minimize the Kullback-Leibler divergence between the joint probabilities
     of the low-dimensional embedding and the high-dimensional data (see *Chapter 13*,
     *Data-Driven Risk Factors and Asset Allocation with Unsupervised Learning*). We
     compute t-SNE for the combined real and synthetic data as follows:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-217
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: '*Figure 21.7* displays the PCA and t-SNE results for a qualitative assessment
     of the similarity of the real and synthetic data distributions. Both methods reveal
     strikingly similar patterns and significant overlap, suggesting that the synthetic
     data captures important aspects of the real data characteristics.'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_21_07.png)'
+  id: totrans-219
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 21.7: 250 samples of real and synthetic data in two dimensions'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
 - en: Assessing fidelity – time-series classification performance
+  id: totrans-221
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1084,55 +1418,73 @@
     assessment of the fidelity of the synthetic data, we will train a time-series
     classifier to distinguish between real and fake data and evaluate its performance
     on a held-out test set.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
 - en: 'More specifically, we will select the first 80 percent of the rolling sequences
     for training and the last 20 percent as a test set, as follows:'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-224
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Then we will create a simple RNN with six units that receives mini batches
     of real and synthetic series with the shape 24×6 and uses a sigmoid activation.
     We will optimize it using binary cross-entropy loss and the Adam optimizer, while
     tracking the AUC and accuracy metrics:'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-226
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'The model has 259 trainable parameters. We will train it for 250 epochs on
     batches of 128 randomly selected samples and track the validation performance:'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-228
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Once the training completes, evaluation of the test set yields a classification
     error of almost 56 percent on the balanced test set and a very low AUC of 0.15:'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-230
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: '*Figure 21.8* plots the accuracy and AUC performance metrics for both train
     and test data over the 250 training epochs:'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_21_08.png)'
+  id: totrans-232
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 21.8: Train and test performance of the time-series classifier over
     250 epochs'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
 - en: The plot shows that that model is not able to learn the difference between the
     real and synthetic data in a way that generalizes to the test set. This result
     suggests that the quality of the synthetic data meets the fidelity standard.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
 - en: Assessing usefulness – train on synthetic, test on real
+  id: totrans-235
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1140,63 +1492,90 @@
     a prediction problem. To this end, we will train a time-series prediction model
     alternatively on the synthetic and the real data to predict the next time step
     and compare the performance on a test set created from the real data.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
 - en: 'More specifically, we will select the first 23 time steps of each sequence
     as input, and the final time step as output. At the same time, we will split the
     real data into train and test sets using the same temporal split as in the previous
     classification example:'
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 具体来说，我们将选择每个序列的前23个时间步作为输入，最后一个时间步作为输出。与前面的分类示例相同，我们将使用相同的时间拆分将真实数据分为训练集和测试集：
 - en: '[PRE34]'
+  id: totrans-238
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'We will select the complete synthetic data for training since abundance is
     one of the reasons we generated it in the first place:'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将选择完整的合成数据进行训练，因为丰富性是我们首次生成它的原因之一：
 - en: '[PRE35]'
+  id: totrans-240
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'We will create a one-layer RNN with 12 GRU units that predicts the last time
     steps for the six stock price series and, thus, has six linear output units. The
     model uses the Adam optimizer to minimize the mean absolute error (MAE):'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将创建一个具有12个GRU单元的一层RNN，用于预测六个股价系列的最后时间步，并因此具有六个线性输出单元。该模型使用Adam优化器来最小化平均绝对误差（MAE）：
 - en: '[PRE36]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'We will train the model twice using the synthetic and real data for training,
     respectively, and the real test set to evaluate the out-of-sample performance.
     Training on synthetic data works as follows; training on real data works analogously
     (see the notebook):'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将分别使用合成和真实数据对模型进行两次训练，使用真实的测试集来评估样本外表现。合成数据的训练工作如下；真实数据的训练工作类似（请参见笔记本）：
 - en: '[PRE37]'
+  id: totrans-244
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: '*Figure 21.9* plots the MAE on the train and test sets (on a log scale so we
     can spot the differences) for both models. It turns out that the MAE is slightly
     lower after training on the synthetic dataset:'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图21.9* 绘制了两种模型在训练集和测试集上的MAE（以对数刻度绘制，以便我们可以发现差异）。结果表明，在合成数据集上训练后，MAE 稍微更低：'
 - en: '![](img/B15439_21_09.png)'
+  id: totrans-246
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_21_09.png)'
 - en: 'Figure 21.9: Train and test performance of the time-series prediction model
     over 100 epochs'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 图21.9：时间序列预测模型在100个时期内的训练和测试性能
 - en: The result shows that synthetic training data may indeed be useful. On the specific
     predictive task of predicting the next daily stock price for six tickers, a simple
     model trained on synthetic TimeGAN data delivers equal or better performance than
     training on real data.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果表明，合成训练数据确实可能是有用的。在预测六个股票的下一个日收盘价的特定预测任务中，一个简单的模型在合成TimeGAN数据上的训练效果与在真实数据上的训练效果相同或更好。
 - en: Lessons learned and next steps
+  id: totrans-249
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 得到的经验教训和下一步计划
 - en: 'The perennial problem of overfitting that we encountered throughout this book
     implies that the ability to generate useful synthetic data would be quite valuable.
     The TimeGAN example justifies cautious optimism in this regard. At the same time,
@@ -1205,34 +1584,47 @@
     much larger number of assets, possibly at a higher frequency. The **cross-sectional
     and temporal dynamics** will certainly become more complex and may require adjustments
     to the TimeGAN architecture and training process.'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在整本书中都遇到了过度拟合的永恒问题，这意味着生成有用的合成数据的能力可能会非常有价值。TimeGAN的例子在这方面证明了谨慎的乐观态度。与此同时，还有一些**警告**：我们为少数资产以日频率生成了价格数据。实际上，我们可能对更多资产的回报感兴趣，可能是以更高的频率。**横截面和时间动态**肯定会变得更加复杂，并且可能需要对TimeGAN的架构和训练过程进行调整。
 - en: 'These limitations of the experiment, however promising, imply natural next
     steps: we need to expand the scope to higher-dimensional time series containing
     information other than prices and also need to test their usefulness in the context
     of more complex models, including for feature engineering. These are very early
     days for synthetic training data, but this example should equip you to pursue
     your own research agenda towards more realistic solutions.'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，实验的这些限制，虽然有希望，但意味着自然的下一步：我们需要将范围扩展到包含除价格以外的其他信息的更高维时间序列，并且还需要在更复杂的模型环境中测试它们的有用性，包括特征工程。合成训练数据的这些都是非常早期的阶段，但这个例子应该能让您追求自己的研究议程，朝着更加现实的解决方案前进。
 - en: Summary
+  id: totrans-252
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we introduced GANs that learn a probability distribution over
     the input data and are thus capable of generating synthetic samples that are representative
     of the target data.
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们介绍了GAN，它们学习输入数据上的概率分布，因此能够生成代表目标数据的合成样本。
 - en: While there are many practical applications for this very recent innovation,
     they could be particularly valuable for algorithmic trading if the success in
     generating time-series training data in the medical domain can be transferred
     to financial market data. We learned how to set up adversarial training using
     TensorFlow. We also explored TimeGAN, a recent example of such a model, tailored
     to generating synthetic time-series data.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然这个非常新的创新有许多实际应用，但如果在医学领域生成时间序列训练数据的成功能够转移到金融市场数据上，那么它们可能对算法交易特别有价值。我们学习了如何使用
+    TensorFlow 设置对抗性训练。我们还探讨了 TimeGAN，这是一个最近的例子，专门用于生成合成时间序列数据。
 - en: In the next chapter, we focus on reinforcement learning where we will build
     agents that interactively learn from their (market) environment.
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将重点关注强化学习，在这里我们将构建与它们（市场）环境交互学习的代理。
