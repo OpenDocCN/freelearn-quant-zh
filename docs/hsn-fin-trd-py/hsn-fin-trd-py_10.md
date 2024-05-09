@@ -1,4 +1,4 @@
-# *第七章*：Python 中的金融市场数据访问
+# 第八章：*第七章*：Python 中的金融市场数据访问
 
 本章概述了几个关键的市场数据源，从免费到付费的数据源都有涵盖。可从[`github.com/wilsonfreitas/awesome-quant#data-sources`](https://github.com/wilsonfreitas/awesome-quant#data-sources)获得更完整的可用资源列表。
 

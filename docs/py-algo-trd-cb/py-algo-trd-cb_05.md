@@ -64,7 +64,7 @@
 
 本章的主要重点是演示如何计算和绘制最常用的技术指标。尽管每个技术指标在每个示例的开头都有介绍，但深入理解它们超出了本书的范围。如果您对此感兴趣，请参考杰克·施瓦格（Jack Schwager）、马丁·普林格（Martin Pring）、约翰·墨菲（John Murphy）、史蒂夫·尼森（Steve Nison）和托马斯·布尔科夫斯基（Thomas Bulkowski）等知名人士的作品。您也可以使用广泛接受的网络资源，例如 [`www.investopedia.com/`](https://www.investopedia.com/)。
 
-# 技术要求
+# 第六章：技术要求
 
 为了成功执行本章的示例，您将需要以下内容：
 

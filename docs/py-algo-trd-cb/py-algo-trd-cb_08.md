@@ -66,7 +66,7 @@ AlgoBulls 核心引擎是推动 AlgoBulls 平台的交易引擎。它负责读�
 
 +   MACD-Bracket-Order 策略 – 将策略上传到 AlgoBulls 交易平台
 
-# 技术要求
+# 第九章：技术要求
 
 您将需要以下内容来执行本章中的配方：
 
