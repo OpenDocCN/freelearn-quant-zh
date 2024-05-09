@@ -1,0 +1,1380 @@
+- en: Working with Text Data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This is the first of three chapters dedicated to extracting signals for algorithmic
+    trading strategies from text data using **natural language processing** (**NLP**)
+    and **machine learning** (**ML**).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Text data is very rich in content, yet unstructured in format, and hence requires
+    more preprocessing so that an ML algorithm can extract the potential signal. The
+    key challenge lies in converting text into a numerical format for use by an algorithm,
+    while simultaneously expressing the semantics or meaning of the content. We will
+    cover several techniques that capture nuances of language that are readily understandable
+    to humans so that they can become an input for ML algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we introduce fundamental feature extraction techniques that
+    focus on individual semantic units; that is, words or short groups of words called
+    **tokens**. We will show how to represent documents as vectors of token counts
+    by creating a document-term matrix that, in turn, serves as input for text classification
+    and sentiment analysis. We will also introduce the Naive Bayes algorithm, which
+    is popular for this purpose.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following two chapters, we build on these techniques and use ML algorithms
+    such as topic modeling and word-vector embedding to capture information contained
+    in a broader context.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In particular, in this chapter, we will cover the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What the fundamental NLP workflow looks like
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to build a multilingual feature extraction pipeline using `spaCy` and `TextBlob`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to perform NLP tasks such as **part-of-speech** (**POS**) tagging or named
+    entity recognition
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to convert tokens to numbers using the document-term matrix
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to classify text using the Naive Bayes model
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to perform sentiment analysis
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The code samples for the following sections are in the GitHub repository for
+    this chapter, and references are listed in the main `README` file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to extract features from text data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Text data can be extremely valuable given how much information humans communicate
+    and store using natural language—the diverse set of data sources relevant to investment
+    range from formal documents such as company statements, contracts, and patents,
+    to news, opinion, and analyst research, and even to commentary and various types
+    of social media posts and messages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numerous and diverse text data samples are available online to explore the use
+    of NLP algorithms, many of which are listed among the references for this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To guide our journey through the techniques and Python libraries that most effectively
+    support the realization of this goal, we will highlight NLP challenges, introduce
+    critical elements of the NLP workflow, and illustrate applications of ML from
+    text data to algorithmic trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Challenges of NLP
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The conversion of unstructured text into a machine-readable format requires
+    careful preprocessing to preserve valuable semantic aspects of the data. How humans
+    derive meaning from, and comprehend the content of language, is not fully understood
+    and improving language understanding by machines remains an area of very active
+    research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'NLP is challenging because the effective use of text data for ML requires an
+    understanding of the inner workings of language as well as knowledge about the
+    world to which it refers. Key challenges include the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ambiguity due to polysemy; that is, a word or phrase can have different meanings
+    depending on context (local high-school dropouts cut in half could be taken a
+    couple of ways, for instance).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Non-standard and evolving use of language, especially in social media.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The use of idioms, such as throw in the towel.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tricky entity names, Where is A Bug's Life playing?
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Knowledge of the world—Mary and Sue are sisters versus Mary and Sue are mothers.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The NLP workflow
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'A key goal in using ML from text data for algorithmic trading is to extract
+    signals from documents. A document is an individual sample from a relevant text
+    data source, such as a company report, a headline or news article, or a tweet.
+    A corpus, in turn, is a collection of documents (plural: *corpora*).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following diagram lays out the key steps to convert documents into a dataset
+    that can be used to train a supervised ML algorithm capable of making actionable
+    predictions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/5ff0e8a3-36b2-4867-b1c8-c1b2a3928d5f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Fundamental techniques** extract text features semantic units called **tokens**,
+    and use linguistic rules and dictionaries to enrich these tokens with linguistic
+    and semantic annotations. The **bag-of-words** (**BoW**) model uses token frequency
+    to model documents as token vectors, which leads to the document-term matrix that
+    is frequently used for text classification.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Advanced approaches** use ML to refine features extracted by these fundamental
+    techniques and produce more informative document models. These include topic models
+    that reflect the joint usage of tokens across documents and word-vector models
+    that capture the context of token usage.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will review key decisions made at each step and related trade-offs in more
+    detail before illustrating their implementation using the `spaCy` library in the
+    next section. The following table summarizes the key tasks of an NLP pipeline:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Feature** | **Description** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tokenization | Segments text into words, punctuation marks, and so on. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| POS tagging | Assigns word types to tokens, such as a verb or noun. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Dependency parsing | Labels syntactic token dependencies, such as subject
+    <=> object. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stemming and lemmatization | Assigns the base forms of words: was => be,
+    rats => rat. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sentence boundary detection | Finds and segments individual sentences. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Named entity recognition | Labels real-world objects, such as people, companies,
+    and locations. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Similarity | Evaluates the similarity of words, text spans, and documents.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Parsing and tokenizing text data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A token is an instance of a characters that appears in a given document and
+    should be considered a semantic unit for further processing. The vocabulary is
+    a set of tokens contained in a corpus deemed relevant for further processing.
+    A key trade-off in the following decisions is the accurate reflection of the text
+    source at the expense of a larger vocabulary that may translate into more features
+    and higher model complexity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Basic choices in this regard concern the treatment of punctuation and capitalization,
+    the use of spelling correction, and whether to exclude very frequent so-called
+    **stop words** (such as *and* or *the*) as meaningless noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An additional decision is about the inclusion of groups of *n* individual tokens
+    called **n-grams** as semantic units (an individual token is also called a **unigram**).
+    An example of a 2-gram (or bi-gram) is New York, whereas New York City is a 3-gram
+    (or tri-gram).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The goal is to create tokens that more accurately reflect the document's meaning.
+    The decision can rely on dictionaries or a comparison of the relative frequencies
+    of the individual and joint usage. Including n-grams will increase the number
+    of features because the number of unique n-grams tends to be much higher than
+    the number of unique unigrams and will likely add noise unless filtered for significance
+    by frequency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linguistic annotation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Linguistic annotations include the application of **syntactic and grammatical
+    rules** to identify the boundary of a sentence despite ambiguous punctuation,
+    and a token''s role in a sentence for POS tagging and dependency parsing. It also
+    permits the identification of common root forms for stemming and lemmatization
+    to group related words:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**POS annotations:** It helps disambiguate tokens based on their function (this
+    may be necessary when a verb and noun have the same form), which increases the
+    vocabulary but may result in better accuracy.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Dependency parsing**: It identifies hierarchical relationships among tokens,
+    is commonly used for translation, and is important for interactive applications
+    that require more advanced language understanding, such as chatbots.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Stemming**: It uses simple rules to remove common endings, such as *s*, *ly*,
+    *ing*, and *ed*, from a token and reduce it to its stem or root form.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Lemmatization**: It uses more sophisticated rules to derive the canonical
+    root (lemma) of a word. It can detect irregular roots, such as better and best,
+    and more effectively condenses vocabulary, but is slower than stemming. Both approaches
+    simplify vocabulary at the expense of semantic nuances.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Semantic annotation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Named entity recognition** (**NER**) aims to identify tokens that represent
+    objects of interest, such as people, countries, or companies. It can be further
+    developed into a **knowledge graph** that captures semantic and hierarchical relationships
+    among such entities. It is a critical ingredient for applications that, for example,
+    aim to predict the impact of news events or sentiment.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Labeling
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Many NLP applications learn to predict outcomes from meaningful information
+    extracted from text. Supervised learning requires labels to teach the algorithm
+    the true input-output relationship. With text data, establishing this relationship
+    may be challenging and may require explicit data modeling and collection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data modeling decisions include how to quantify sentiments implicit in a text
+    document like an email, a transcribed interview, or a tweet, or which aspects
+    of a research document or news report to assign to a specific outcome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use cases
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The use of ML with text data for algorithmic trading relies on the extraction
+    of meaningful information in the form of features that directly or indirectly
+    predict future price movements. Applications range from the exploitation of the
+    short-term market impact of news to the long-term fundamental analysis of the
+    drivers of asset valuation. Examples include the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The evaluation of product review sentiment to assess a company's competitive
+    position or industry trends
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The detection of anomalies in credit contracts to predict the probability or
+    impact of a default
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The prediction of news impact in terms of direction, magnitude, and affected
+    entities
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: JP Morgan, for instance, developed a predictive model based on 250,000 analyst
+    reports that outperformed several benchmark indices and produced uncorrelated
+    signals relative to sentiment factors formed from consensus EPS and recommendation
+    changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From text to tokens – the NLP pipeline
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we will demonstrate how to construct an NLP pipeline using
+    the open source Python library, `spaCy`. The `textacy` library builds on `spaCy`
+    and provides easy access to `spaCy` attributes and additional functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Refer to the `nlp_pipeline_with_spaCy` notebook for the following code samples,
+    installation instructions, and additional details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NLP pipeline with spaCy and textacy
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`spaCy` is a widely used Python library with a comprehensive feature set for
+    fast text processing in multiple languages. The usage of tokenization and annotation
+    engines requires the installation of language models. The features we will use
+    in this chapter only require small models; larger models also include word vectors
+    that we will cover in [Chapter 15](fde80847-fa0c-48b6-8975-fc4a34daafd2.xhtml),
+    *Word Embeddings*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once installed and linked, we can instantiate a `spaCy` language model and
+    then call it on a document. As a result, `spaCy` produces a `doc` object that
+    tokenizes the text and processes it according to configurable pipeline components
+    that, by default, consist of a tagger, a parser, and a named-entity recognizer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s illustrate the pipeline using a simple sentence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Parsing, tokenizing, and annotating a sentence
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Parsed document content is iterable, and each element has numerous attributes
+    produced by the processing pipeline. The following sample illustrates how to access
+    the following attributes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`.text`: Original word text'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.lemma_`: Word root'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.pos_`: Basic POS tag'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.tag_`: Detailed POS tag'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.dep_`: Syntactic relationship or dependency between tokens'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.shape_`: The shape of the word regarding capitalization, punctuation, or
+    digits'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.is alpha`: Check whether the token is alphanumeric'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '` .is stop`: Check whether the token is on a list of common words for the given
+    language'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We iterate over each token and assign its attributes to a `pd.DataFrame`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Which produces the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **text** | **lemma** | **pos** | **tag** | **dep** | **shape** | **is_alpha**
+    | **is_stop** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Apple | apple | PROPN | NNP | nsubj | Xxxxx | TRUE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| is | be | VERB | VBZ | aux | xx | TRUE | TRUE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| looking | look | VERB | VBG | ROOT | xxxx | TRUE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| at | at | ADP | IN | prep | xx | TRUE | TRUE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| buying | buy | VERB | VBG | pcomp | xxxx | TRUE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| U.K. | u.k. | PROPN | NNP | compound | X.X. | FALSE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| startup | startup | NOUN | NN | dobj | xxxx | TRUE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| for | for | ADP | IN | prep | xxx | TRUE | TRUE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| $ | $ | SYM | $ | quantmod | $ | FALSE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 1 | NUM | CD | compound | d | FALSE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| billion | billion | NUM | CD | pobj | xxxx | TRUE | FALSE |'
+  prefs: []
+  type: TYPE_TB
+- en: 'We can visualize syntactic dependency in a browser or notebook using the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result is a dependency tree:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/5384fdb2-e7ac-47f8-9f68-b4ca75794ced.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Dependency tree
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can get additional insights into the meaning of attributes using `spacy.explain()`,
+    as here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Batch-processing documents
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will now read a larger set of 2,225 BBC News articles (see GitHub for data
+    source details) that belong to five categories and are stored in individual text
+    files. We need to do the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Call the `.glob()` method of pathlib's `Path` object.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Iterate over the resulting list of paths.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Read all lines of the news article excluding the heading in the first line.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Append the cleaned result to a list:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sentence boundary detection
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will illustrate sentence detection by calling the NLP object on the first
+    of the articles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`spaCy` computes sentence boundaries from the syntactic parse tree so that
+    punctuation and capitalization play an important but not decisive role. As a result,
+    boundaries will coincide with clause boundaries, even for poorly punctuated text.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can access parsed sentences using the `.sents` attribute:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Named entity recognition
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`spaCy` enables named entity recognition using the `.ent_type_ attribute`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`textacy` facilitates access to the named entities that appear in the first
+    article:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: N-grams
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'N-grams combine *N* consecutive tokens. N-grams can be useful for the BoW model
+    because, depending on the textual context, treating something such as data scientist as
+    a single token may be more meaningful than treating it as two distinct tokens:
+    data and scientist.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`textacy` makes it easy to view the `ngrams` of a given length *n* occurring
+    with at least `min_freq` times:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: spaCy's streaming API
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To pass a larger number of documents through the processing pipeline, we can
+    use `spaCy`''s streaming API as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multi-language NLP
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`spaCy` includes trained language models for English, German, Spanish, Portuguese,
+    French, Italian, and Dutch, as well as a multi-language model for NER. Cross-language
+    usage is straightforward since the API does not change.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will illustrate the Spanish language model using a parallel corpus of TED
+    Talk subtitles (see the GitHub repo for data source references). For this purpose,
+    we instantiate both language models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We then read small corresponding text samples in each model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sentence boundary detection uses the same logic but finds a different breakdown:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'POS tagging also works in the same way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result is the side-by-side token annotations for the English and Spanish
+    documents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Token** | **POS Tag** | **Meaning** | **Token** | **POS Tag** | **Meaning**
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| There | ADV | adverb | Existe | VERB | verb |'
+  prefs: []
+  type: TYPE_TB
+- en: '| s | VERB | verb | una | DET | determiner |'
+  prefs: []
+  type: TYPE_TB
+- en: '| a | DET | determiner | estrecha | ADJ | adjective |'
+  prefs: []
+  type: TYPE_TB
+- en: '| tight | ADJ | adjective | y | CONJ | conjunction |'
+  prefs: []
+  type: TYPE_TB
+- en: '| and | CCONJ | coordinating conjunction | sorprendente | ADJ | adjective |'
+  prefs: []
+  type: TYPE_TB
+- en: The next section illustrates how to use parsed and annotated tokens to build
+    a document-term matrix that can be used for text classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: NLP with TextBlob
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`TextBlob` is a Python library that provides a simple API for common NLP tasks
+    and builds on the **Natural Language Toolkit** (**NLTK**) and the Pattern web
+    mining libraries. `TextBlob` facilitates POS tagging, noun phrase extraction,
+    sentiment analysis, classification, translation, and more.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To illustrate the use of `TextBlob`, we sample a BBC sports article with the
+    headline *Robinson ready for difficult task*. Similarly to `spaCy` and other libraries,
+    the first step is to pass the document through a pipeline represented by the `TextBlob`
+    object to assign annotations required for various tasks (see the `nlp_with_textblob`
+    notebook for this section):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Stemming
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To perform stemming, we instantiate `SnowballStemmer` from the `nltk` library,
+    call its `.stem()` method on each token and display modified tokens:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sentiment polarity and subjectivity
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`TextBlob` provides polarity and subjectivity estimates for parsed documents
+    using dictionaries provided by the Pattern library. These dictionaries map adjectives
+    frequently found in product reviews to sentiment polarity scores, ranging from
+    -1 to +1 (negative ↔ positive) and a similar subjectivity score (objective ↔ subjective).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `.sentiment` attribute provides the average for each over the relevant
+    tokens, whereas the `.sentiment_assessments` attribute lists the underlying values
+    for each token (see notebook):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: From tokens to numbers – the document-term matrix
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we first introduce how the BoW model converts text data into
+    a numeric vector space representation that permits the comparison of documents
+    using their distance. We then proceed to illustrate how to create a document-term
+    matrix using the sklearn library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The BoW model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The BoW model represents a document based on the frequency of the terms or tokens
+    it contains. Each document becomes a vector with one entry for each token in the
+    vocabulary that reflects the token's relevance to the document.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The document-term matrix is straightforward to compute given the vocabulary.
+    However, it is also a crude simplification because it abstracts from word order
+    and grammatical relationships. Nonetheless, it often achieves good results in
+    text classification quickly and, thus, is a very useful starting point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following diagram (the one on the right) illustrates how this document
+    model converts text data into a matrix with numerical entries, where each row
+    corresponds to a document and each column to a token in the vocabulary. The resulting
+    matrix is usually both very high-dimensional and sparse; that is, one that contains
+    many zero entries because most documents only contain a small fraction of the
+    overall vocabulary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/ba824dda-3f15-4595-a6a2-72778e0c6f43.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Resultant matrix
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are several ways to weigh a token's vector entry to capture its relevance
+    to the document. We will illustrate how to use sklearn to use binary flags, which
+    indicate presence or absence, counts, and weighted counts that account for differences
+    in term frequencies across all documents; that is, in the corpus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Measuring the similarity of documents
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The representation of documents as word vectors assigns to each document a location
+    in the vector space created by the vocabulary. Interpreting vector entries as
+    Cartesian coordinates in this space, we can use the angle between two vectors
+    to measure their similarity because vectors that point in the same direction contain
+    the same terms with the same frequency weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The preceding diagram (the one on the right) illustrates—simplified in two dimensions—the
+    calculation of the distance between a document represented by a vector *d[1]*
+    and a query vector (either a set of search terms or another document) represented
+    by the vector *q*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Cosine similarity** equals the cosine of the angle between the two vectors.
+    It translates the size of the angle into a number in the range [0, 1] since all
+    vector entries are non-negative token weights. A value of 1 implies that both
+    documents are identical concerning their token weighs, whereas a value of 0 implies
+    that two documents only contain distinct tokens.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As shown in the diagram, the cosine of the angle is equal to the dot product
+    of the vectors; that is, the sum product of their coordinates, divided by the
+    product of the lengths, measured by the Euclidean norms of each vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Document-term matrix with sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The scikit-learn preprocessing module offers two tools to create a document-term
+    matrix. `CountVectorizer` uses binary or absolute counts to measure the **term
+    frequency** *tf(d, t)* for each document *d* and token *t*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`TfidFVectorizer`, in contrast, weighs the (absolute) term frequency by the
+    **inverse document frequency** (**idf**). As a result, a term that appears in
+    more documents will receive a lower weight than a token with the same frequency
+    for a given document but lower frequency across all documents. More specifically,
+    using the default settings, *tf-idf(d, t)* entries for the document-term matrix
+    are computed as *tf-idf(d, t) = tf(d, t) x idf(t)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/cee1a57c-1d2c-4366-98a6-c62b5d4a8c4f.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here *n[d]* is the number of documents and *df(d, t)* the document frequency
+    of term *t*. The resulting tf-idf vectors for each document are normalized with
+    respect to their absolute or squared totals (see the `sklearn` documentation for
+    details). The tf-idf measure was originally used in information retrieval to rank
+    search engine results and has subsequently proven useful for text classification
+    or clustering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both tools use the same interface and perform tokenization and further optional
+    preprocessing of a list of documents before vectorizing the text by generating
+    token counts to populate the document-term matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Key parameters that affect the size of the vocabulary include the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`stop_words`: Use a built-in or provide a list of (frequent) words to exclude'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`ngram_range`: Include n-grams in a range for *n* defined by a tuple of (*n[min]*,
+    *n[max]*)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`lowercase`: Convert characters accordingly (default is `True`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`min_df` / `max_df`: Ignore words that appear in less / more (`int`) or a smaller/larger
+    share of documents (if `float` [0.0,1.0])'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`max_features`: Limit the number of tokens in a vocabulary accordingly'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`binary`: Set non-zero counts to 1 `True`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See the `document_term_matrix` notebook for the following code samples and additional
+    details. We are again using the 2,225 BBC News articles for illustration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using CountVectorizer
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The notebook contains an interactive visualization that explores the impact
+    of the `min_df` and `max_df` settings on the size of the vocabulary. We read the
+    articles into a DataFrame, set the `CountVectorizer` to produce binary flags and
+    use all tokens, and call its `.fit_transform()` method to produce a document-term
+    matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output is a `scipy.sparse` matrix in row format that efficiently stores
+    of the small share (<0.7%) of `445870` non-zero entries in the `2225` (document)
+    rows and `29275` (token) columns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Visualizing vocabulary distribution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The visualization shows that requiring tokens to appear in at least 1% and fewer
+    than 50% of documents restricts the vocabulary to around 10% of the almost 30,000
+    tokens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This leaves a mode of slightly over 100 unique tokens per document (left panel),
+    and the right panel shows the document frequency histogram for the remaining tokens:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d3d0db8b-16b6-4f89-afba-9ac839e39fab.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Documents/Term frequency distribution
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finding the most similar documents
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The `CountVectorizer` result lets us find the most similar documents using
+    the `pdist()` function for pairwise distances provided by the `scipy.spatial.distance`
+    module. It returns a condensed distance matrix with entries corresponding to the
+    upper triangle of a square matrix. We use `np.triu_indices()` to translate the
+    index that minimizes the distance to the row and column indices that in turn correspond
+    to the closest token vectors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Articles number `11` and `75` are closest by cosine similarity because they
+    share 58 tokens (see notebook):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Topic** | tech | tech |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Heading** | Software watching while you work | BT program to beat dialer
+    scams |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Body** | Software that can not only monitor every keystroke and action
+    performed at a PC but can also be used as legally binding evidence of wrong-doing
+    has been unveiled. Worries about cyber-crime and sabotage have prompted many employers
+    to consider monitoring employees. | BT is introducing two initiatives to help
+    beat rogue dialer scams, which can cost dial-up net users thousands. From May,
+    dial-up net users will be able to download free software to stop computers using
+    numbers not on a user''s pre-approved list. |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Both `CountVectorizer` and `TfidFVectorizer` can be used with `spaCy`; for
+    example, to perform lemmatization and exclude certain characters during tokenization,
+    we use the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: See the notebook for additional details and more examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TfidFTransformer and TfidFVectorizer
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`TfidfTransfomer` computes tf-idf weights from a document-term matrix of token
+    counts, such as the one produced by the `CountVectorizer`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`TfidfVectorizer` performs both computations in a single step. It adds a few
+    parameters to the `CountVectorizer` API that controls smoothing behavior.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'TFIDF computation works as follows for a small text sample:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We compute the term frequency as we just did:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Document frequency is the number of documents containing the token:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The tf-idf weights are the ratio of these values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The effect of smoothing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To avoid zero division, `TfidfVectorizer` uses smoothing for document and term
+    frequencies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`smooth_idf`: Add `1` to document frequency, as if an extra document contained
+    every token in the vocabulary, to prevent zero divisions'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sublinear_tf`: Apply sublinear `tf` scaling; in other words, replace `tf`
+    with `1 + log(tf)`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In combination with normed weights, the results differ slightly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: How to summarize news articles using TfidFVectorizer
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Due to their ability to assign meaningful token weights, TFIDF vectors are also
+    used to summarize text data. For instance, Reddit's `autotldr` function is based
+    on a similar algorithm. See the notebook for an example using the BBC articles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Text Preprocessing - review
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The large number of techniques to process natural language for its use in machine
+    learning models that we introduced in this section is necessary to address the
+    complex nature of this highly unstructured data source. The engineering of good
+    language features is both challenging and rewarding and is arguably the most important
+    step in unlocking the semantic value hidden in text data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, experience helps us select transformations that remove noise rather
+    than the signal, but it will likely remain necessary to cross-validate and compare
+    the performance of different combinations of preprocessing choices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Text classification and sentiment analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Once text data has been converted into numerical features using the NLP techniques
+    discussed in the previous sections, text classification works just like any other
+    classification task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will apply these preprocessing technique to news articles,
+    product reviews, and Twitter data and teach you about various classifiers to predict
+    discrete news categories, review scores, and sentiment polarity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we will introduce the Naive Bayes model, a probabilistic classification
+    algorithm that works well with the text features produced by a bag-of-words model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code samples for this section are in the `text_classification` notebook.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Naive Bayes classifier
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The Naive Bayes algorithm is very popular for text classification because low
+    computational cost and memory requirements facilitate training on very large,
+    high-dimensional datasets. Its predictive performance can compete with more complex
+    models, provides a good baseline, and is best known for successful spam detection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model relies on Bayes' theorem (see [Chapter 9](17b367a4-e525-41d4-8cec-0409f29b94c1.xhtml), *Bayesian
+    Machine Learning*) and the assumption that the various features are independent
+    of each other given the outcome class. In other words, for a given outcome, knowing
+    the value of one feature (such as the presence of a token in a document) does
+    not provide any information about the value of another feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bayes' theorem refresher
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Bayes'' theorem expresses the conditional probability of one event (for instance,
+    that an email is spam as opposed to benign ham) given another event (for example,
+    that the email contains certain words), as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d46c39f8-f5cf-4050-b62f-a2d37bf488e4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The **posterior** probability that an email is in fact spam, given it contains
+    certain words, depends on the interplay of three factors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **prior** probability that an email is spam
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **likelihood** of encountering these word in a spam email
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **evidence**; that is, the probability of seeing these words in an email
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To compute the posterior, we can ignore the evidence because it is the same
+    for all outcomes (spam versus ham), and the unconditional prior may be easy to
+    compute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the likelihood poses insurmountable challenges for a reasonably sized
+    vocabulary and a real-world corpus of emails. The reason is the combinatorial
+    explosion of words that did or did not appear jointly in different documents and
+    that prevent the evaluation required to compute a probability table and assign
+    a value to the likelihood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The conditional independence assumption
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The assumption that is making the model both tractable and justifiably calling
+    it Naive is that the features are independent conditional on the outcome. To illustrate,
+    let''s classify an email with the three words *Send money now* so that Bayes''
+    theorem becomes the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/6a3bc214-e117-481a-81f2-f64b4f1e37a8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Formally, the assumption that the three words are conditionally independent
+    means that the probability of observing *send* is not affected by the presence
+    of the other terms given the mail is spam; in other words, *P(send | money, now,
+    spam) = P(send | spam)*. As a result, we can simplify the likelihood function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/5c613f92-cb2c-42ba-9b80-83962e64d777.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Using the naive conditional independence assumption, each term in the numerator
+    is straightforward to compute as relative frequencies from the training data.
+    The denominator is constant across classes and can be ignored when posterior probabilities
+    need to be compared rather than calibrated. The prior probability becomes less
+    relevant as the number of factors—that is, features—increases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In summary, the advantages of the Naive Bayes model are fast training and prediction
+    because the number of parameters is linear in the number of features, and their
+    estimation has a closed-form solution (based on training data frequencies) rather
+    than expensive iterative optimization. It is also intuitive and somewhat interpretable,
+    does not require hyperparameter tuning, and is relatively robust to irrelevant
+    features given a sufficient signal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, when the independence assumption does not hold, and text classification
+    depends on combinations of features or features are correlated, the model will
+    perform poorly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: News article classification
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We start with an illustration of the Naive Bayes model for news article classification
+    using the BBC articles that we read as before to obtain a DataFrame with 2,225
+    articles from five categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training and evaluating multinomial Naive Bayes classifier
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We split the data into the default 75:25 train-test sets, ensuring that test
+    set classes closely mirror the train set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We proceed to learn the vocabulary from the training set and transform both
+    datasets using `CountVectorizer` with default settings to obtain almost 26,000
+    features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Training and prediction follow the standard `sklearn` fit/predict interface:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We evaluate multiclass predictions using `accuracy` and find that the default
+    classifier achieved almost 98%:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Sentiment analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Sentiment analysis is one of the most popular uses of NLP and machine learning
+    for trading because positive or negative perspectives on assets or other price
+    drivers are likely to impact returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generally, modeling approaches to sentiment analysis rely on dictionaries, such
+    as the `TextBlob` library, or models that are trained on outcomes for a specific
+    domain. The latter is preferable because it permits more targeted labeling; for
+    instance, by tying text features to subsequent price changes rather than indirect
+    sentiment scores.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will illustrate machine learning for sentiment analysis using a Twitter dataset
+    with binary polarity labels, and a large Yelp business review dataset with a five-point
+    outcome scale.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Twitter data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We use a dataset that contains 1.6 million training and 350 test tweets from
+    2009 with algorithmically assigned binary positive and negative sentiment scores
+    that are fairly evenly split (see the relevant notebook for more detailed data
+    exploration).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multinomial Naive Bayes
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We create a document-term matrix with 934 tokens as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We then train the `MultinomialNB` classifier as before and predict the test
+    set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result is over 77.5% accuracy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparison with TextBlob sentiment scores
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We also obtain `TextBlob` sentiment scores for tweets and note (see the following
+    left-hand diagram) that positive test tweets receive a significantly higher sentiment
+    estimate. We then use the `MultinomialNB` model and the `.predict_proba()` method
+    to compute predicted probabilities and compare both models using the respective
+    Area Under the Curve (see the following right-hand diagram):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/1b95ea44-c3b3-4c5b-8724-70553264a16b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: TextBlob sentiment scores
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Naive Bayes model outperforms `TextBlob` in this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Business reviews – the Yelp dataset challenge
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Finally, we apply sentiment analysis to the significantly larger Yelp business
+    review dataset with five outcome classes. The data consists of several files with
+    information on the business, the user, the review, and other aspects that Yelp
+    provides to encourage data science innovation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will use around six million reviews produced over the 2010-2018 period (see
+    the relevant notebook for details). The following diagrams show the number of
+    reviews and the average number of stars per year:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/bfd1bd36-9d24-4149-b84c-0bfdead612d1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Graphs representing number of reviews and the average number of stars per year
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to the text features resulting from the review texts, we will also
+    use other information submitted with the review or about the user.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will train various models on data through 2017 and use 2018 as the test set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Benchmark accuracy
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Using the most frequent number of stars (=5) to predict the test set, we achieve
+    an accuracy close to 52%:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multinomial Naive Bayes model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Next, we train a Naive Bayes classifier using a document-term matrix produced
+    by  `CountVectorizer` with default settings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The prediction produces 64.7% accuracy on the test set, a 24.4% improvement
+    over the benchmark:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: One-versus-all logistic regression
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We proceed to train a one-versus-all logistic regression that trains one model
+    per class, while treating the remaining classes as the negative class, and predicts
+    probabilities for each class using the different models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using only text features, we train and evaluate the model as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The model achieves significantly higher accuracy at 73.6%:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Combining text and numerical features
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The dataset contains various numerical features (see the relevant notebook for
+    implementation details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vectorizers produce `scipy.sparse` matrices. To combine vectorized text data
+    with other features, we need to first convert these to sparse matrices as well;
+    many sklearn objects and other libraries, such as LightGBM, can handle these very
+    memory-efficient data structures. Converting the sparse matrix to a dense NumPy
+    array risks memory overflow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most variables are categorical, so we use one-hot encoding since we have a fairly
+    large dataset to accommodate the increase in features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We convert the encoded numerical features and combine them with the document-term
+    matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multinomial logistic regression
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Logistic regression also provides a multinomial training option that is faster
+    and more accurate than the one-versus-all implementation. We use the `lbfgs` solver
+    (see the sklearn documentation linked on GitHub for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This model improves the performance to 74.6% accuracy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, tuning the regularization parameter `C` did not lead to very significant
+    improvements (see the notebook).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gradient-boosting machine
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'For illustration  purposes, we also train a LightGBM gradient-boosting tree
+    ensemble with default settings and the `multiclass` objective:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The basic settings do not improve on multinomial logistic regression, but further
+    parameter tuning remains an unused option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we explored numerous techniques and options to process unstructured
+    data with the goal of extracting semantically meaningful, numerical features for
+    use in machine learning models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We covered the basic tokenization and annotation pipeline and illustrated its
+    implementation for multiple languages using spaCy and TextBlob. We built on these
+    results to create a document model based on the bag-of-words model to represent
+    documents as numerical vectors. We learned how to refine the preprocessing pipeline
+    and then used vectorized text data for classification and sentiment analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the remaining two chapters on alternative text data, we will learn how to
+    summarize text using unsupervised learning to identify latent topics (in the next
+    chapter) and examine techniques to represent words as vectors that reflect the
+    context of word usage and have been used very successfully to proceed richer text
+    features for various classification tasks.
+  prefs: []
+  type: TYPE_NORMAL

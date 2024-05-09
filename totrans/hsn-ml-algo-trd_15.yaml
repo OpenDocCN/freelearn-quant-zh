@@ -1,0 +1,782 @@
+- en: Word Embeddings
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the two previous chapters, we applied the bag-of-words model to convert text
+    data into a numerical format. The results were sparse, fixed-length vectors that
+    represent documents in a high-dimensional word space. This allows evaluating the
+    similarity of documents and creates features to train a machine learning algorithm
+    and classify a document's content or rate the sentiment expressed in it. However,
+    these vectors ignore the context in which a term is used so that, for example,
+    a different sentence containing the same words would be encoded by the same vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we will introduce an alternative class of algorithms that use
+    neural networks to learn a vector representation of individual semantic units such
+    as a word or a paragraph. These vectors are dense rather than sparse, and have
+    a few hundred real-valued rather than tens of thousands of binary or discrete
+    entries. They are called **embeddings** because they assign each semantic unit
+    a location in a continuous vector space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Embeddings result from training a model to relate tokens to their context with
+    the benefit that similar usage implies a similar vector. Moreover, we will see
+    how the embeddings encode semantic aspects, such as relationships among words
+    by means of their relative location. As a result, they are powerful features for
+    use in the deep learning models that we will introduce in the following chapters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, in this chapter, we will cover the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What word embeddings are and how they work and capture semantic information
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use trained word vectors
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Which network architectures are useful to train Word2vec models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to train a Word2vec model using Keras, gensim, and TensorFlow
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to visualize and evaluate the quality of word vectors
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to train a Word2vec model using SEC filings
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How `Doc2vec` extends Word2vec
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How word embeddings encode semantics
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The bag-of-words model represents documents as vectors that reflect the tokens
+    they contain. Word embeddings represent tokens as lower dimensional vectors so
+    that their relative location reflects their relationship in terms of how they
+    are used in context. They embody the distributional hypothesis from linguistics
+    that claims words are best defined by the company they keep.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Word vectors are capable of capturing numerous semantic aspects; not only are
+    synonyms close to each other, but words can have multiple degrees of similarity,
+    for example, the word driver could be similar to motorist or to cause. Furthermore,
+    embeddings reflect relationships among pairs of words such as analogies (Tokyo
+    is to Japan what Paris is to France, or went is to go what saw is to see) as we
+    will illustrate later in this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Embeddings result from training a machine learning model to predict words from
+    their context or vice versa. In the following section, we will introduce how these
+    neural language models work and present successful approaches including Word2vec,
+    `Doc2vec`, and fastText.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How neural language models learn usage in context
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Word embeddings result from training a shallow neural network to predict a word
+    given its context. Whereas traditional language models define context as the words
+    preceding the target, word-embedding models use the words contained in a symmetric
+    window surrounding the target. In contrast, the bag-of-words model uses the entirety
+    of documents as context and uses (weighted) counts to capture the cooccurrence
+    of words rather than predictive vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Earlier neural language models that were used included nonlinear hidden layers
+    that increased the computational complexity. Word2vec and its extensions simplified
+    the architecture to enable training on large datasets (Wikipedia, for example,
+    contains over two billion tokens; see [Chapter 17](https://www.packtpub.com/sites/default/files/downloads/Deep_Learning.pdf),
+    *Deep Learning*, for additional details on feed-forward networks).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Word2vec model – learn embeddings at scale
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'A Word2vec model is a two-layer neural net that takes a text corpus as input
+    and outputs a set of embedding vectors for words in that corpus. There are two
+    different architectures to learn word vectors efficiently using shallow neural
+    networks depicted in the following figure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **Continuous-Bag-Of-Words** (**CBOW**) model predicts the target word using
+    the average of the context word vectors as input so that their order does not
+    matter. A CBOW model trains faster and tends to be slightly more accurate for
+    frequent terms, but pays less attention to infrequent words.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The **Skip-Gram** (**SG**) model, by contrast, uses the target word to predict
+    words sampled from the context. It works well with small datasets and finds good
+    representations even for rare words or phrases:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![](img/86b7aa9d-1435-458d-b352-da6d4097cea6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Hence, the Word2vec model receives an embedding vector as input and computes
+    the dot product with another embedding vector. Note that, assuming normed vectors,
+    the dot product is maximized (in absolute terms) when vectors are equal, and minimized
+    when they are orthogonal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It then uses backpropagation to adjust the embedding weights in response to
+    the loss computed by an objective function due to any classification errors. We
+    will see in the next section how Word2vec computes the loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training proceeds by sliding the context window over the documents, typically
+    segmented into sentences. Each complete iteration over the corpus is called an
+    **epoch**. Depending on the data, several dozen epochs may be necessary for vector
+    quality to converge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Technically, the SG model has been shown to factorize a word-context matrix
+    that contains the pointwise mutual information of the respective word and context
+    pairs implicitly (see references on GitHub).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model objective – simplifying the softmax
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Word2vec models aim to predict a single word out of the potentially very large
+    vocabulary. Neural networks often use the softmax function that maps any number
+    of real values to an equal number of probabilities to implement the corresponding
+    multiclass objective, where *h* refers to the embedding and *v* to the input vectors,
+    and *c* is the context of word *w*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/35620ce6-e09a-4043-a8ff-b5f2b6630334.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'However, the softmax complexity scales with the number of classes, as the denominator
+    requires the computation of the dot product for all words in the vocabulary to
+    standardize the probabilities. Word2vec models gain efficiency by using a simplified
+    version of the softmax or sampling-based approaches (see references for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **hierarchical softmax** organizes the vocabulary as a binary tree with
+    words as leaf nodes. The unique path to each node can be used to compute the word
+    probability.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Noise-contrastive estimation** (**NCE**) samples out-of-context "noise words"
+    and approximates the multiclass task by a binary classification problem. The NCE
+    derivative approaches the softmax gradient as the number of samples increases,
+    but as few as 25 samples can yield convergence similar to the softmax, at a rate
+    that is 45 times faster.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Negative sampling** (**NEG**) omits the noise word samples to approximate
+    NCE and directly maximizes the probability of the target word. Hence, NEG optimizes
+    the semantic quality of embedding vectors (similar vectors for similar usage)
+    rather than the accuracy on a test set. It may, however, produce poorer representations
+    for infrequent words than the hierarchical softmax objective.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Automatic phrase detection
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Preprocessing typically involves phrase detection, that is, the identification
+    of tokens that are commonly used together and should receive a single vector representation
+    (for example, New York City, see the discussion of n-grams in [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml),
+    *Working with Text Data*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The original Word2vec authors use a simple lift scoring method that identifies
+    two words *w[i]*, *w[j]* as a bigram if their joint occurrence exceeds a given
+    threshold relative to each word''s individual appearance, corrected by a discount
+    factor *δ*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/21e54b2d-361b-4c00-9c9f-5f06a332317c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The scorer can be applied repeatedly to identify successively longer phrases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An alternative is the normalized point-wise mutual information score that is
+    more accurate, but also more costly to compute. It uses the relative word frequency
+    *P(w)* and varies between +1 and -1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/84b9a2c6-2ef4-4777-9dc3-1891145ae39c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: How to evaluate embeddings – vector arithmetic and analogies
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The bag-of-words model creates document vectors that reflect the presence and
+    relevance of tokens to the document. **Latent semantic analysis** reduces the
+    dimensionality of these vectors and identifies what can be interpreted as latent
+    concepts in the process. **Latent Dirichlet allocation** represents both documents
+    and terms as vectors that contain the weights of latent topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The dimensions of the word and phrase vectors do not have an explicit meaning.
+    However, the embeddings encode similar usage as proximity in the latent space
+    in a way that carries over to semantic relationships. This results in the interesting
+    properties that analogies can be expressed by adding and subtracting word vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following figure shows how the vector connecting Paris and France (that
+    is, the difference of their embeddings) reflects the capital of relationship.
+    The analogous relationship, London: UK, corresponds to the same vector, that is,
+    the UK is very close to the location obtained by adding the capital of vector
+    to London:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/896d4b2a-33bd-4eeb-98eb-34b7653ae59e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Just as words can be used in different contexts, they can be related to other
+    words in different ways, and these relationships correspond to different directions
+    in the latent space. Accordingly, there are several types of analogies that the
+    embeddings should reflect if the training data permits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Word2vec authors provide a list of several thousand relationships spanning
+    aspects of geography, grammar and syntax, and family relationships to evaluate
+    the quality of embedding vectors. As illustrated above, the test validates that
+    the target word (UK) is closest to the result of adding the vector that represents
+    an analogous relationship (Paris: France) to the target''s complement (London).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following figure projects the 300-dimensional embeddings of the most closely
+    related analogies for a Word2vec model trained on the Wikipedia corpus, with over
+    2 billion tokens, into two dimensions using **principal component analysis** (**PCA**).
+    A test of over 24,400 analogies from the following categories achieved an accuracy
+    of over 73.5% (see notebook):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/2871a658-5c0d-4506-a052-876002c88b8a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Working with embedding models
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to other unsupervised learning techniques, the goal of learning embedding
+    vectors is to generate features for other tasks such as text classification or
+    sentiment analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several options to obtain embedding vectors for a given corpus of
+    documents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use embeddings learned from a generic large corpus such as Wikipedia or Google
+    News
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Train your own model using documents that reflect a domain of interest
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The less generic and more specialized the content of the subsequent text modeling
+    task is, the more preferable is the second approach. However, quality word embeddings
+    are data-hungry and require informative documents containing hundreds of millions
+    of words.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use pre-trained word vectors
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: There are several sources for pretrained word embeddings. Popular options include
+    Stanford's GloVE and spaCy's built-in vectors (see the notebook `using_trained_vectors`
+    for details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: GloVe – global vectors for word representation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'GloVe is an unsupervised algorithm developed at the Stanford NLP lab that learns
+    vector representations for words from aggregated global word-word co-occurrence
+    statistics (see references). Vectors pretrained on the following web-scale sources
+    are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Common Crawl with 42B or 840B tokens and a vocabulary or 1.9M or 2.2M tokens
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wikipedia 2014 + Gigaword 5 with 6B tokens and a vocabulary of 400K tokens
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Twitter using 2B tweets, 27B tokens and a vocabulary of 1.2M tokens
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We can use gensim to convert and load the vector text files into the `KeyedVector`
+    object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Word2vec authors provide text files containing over 24,000 analogy tests
+    that gensim uses to evaluate word vectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The word vectors trained on the Wikipedia corpus cover all analogies and achieve
+    an overall accuracy of 75.5% with some variation across categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Category** | **Samples** | **Accuracy** | **Category** | **Samples** |
+    **Accuracy** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| capital-common-countries | 506 | 94.86% | comparative | 1,332 | 88.21% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| capital-world | 8,372 | 96.46% | superlative | 1,056 | 74.62% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| city-in-state | 4,242 | 60.00% | present-participle | 1,056 | 69.98% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| currency | 752 | 17.42% | nationality-adjective | 1,640 | 92.50% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| family | 506 | 88.14% | past-tense | 1,560 | 61.15% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| adjective-to-adverb | 992 | 22.58% | plural | 1,332 | 78.08% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| opposite | 756 | 28.57% | plural-verbs | 870 | 58.51% |'
+  prefs: []
+  type: TYPE_TB
+- en: The Common Crawl vectors for the 100,000 most common tokens cover about 80%
+    of the analogies and achieve slightly higher accuracy at 78%, whereas the Twitter
+    vectors cover only 25% with 62% accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to train your own word vector embeddings
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Many tasks require embeddings or domain-specific vocabulary that pretrained
+    models based on a generic corpus may not represent well or at all. Standard Word2vec
+    models are not able to assign vectors to out-of-vocabulary words and instead use
+    a default vector that reduces their predictive value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, when working with industry-specific documents, the vocabulary or
+    its usage may change over time as new technologies or products emerge. As a result,
+    the embeddings need to evolve as well. In addition, corporate earnings releases
+    use nuanced language not fully reflected in GloVe vectors pretrained on Wikipedia
+    articles.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will illustrate the Word2vec architecture using the Keras library that we
+    will introduce in more detail in the next chapter and the more performant gensim
+    adaptation of the code provided by the Word2vec authors. The notebook Word2vec
+    contains additional implementation detail, including a reference of a TensorFlow
+    implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Skip-Gram architecture in Keras
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: To illustrate the Word2vec network architecture, we use the TED Talk dataset
+    with aligned English and Spanish subtitles that we first introduced in [Chapter
+    13](https://cdp.packtpub.com/hands_on_machine_learning_for_algorithmic_trading/wp-admin/post.php?post=682&action=edit#post_584), *Working
+    with Text Data*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The notebook contains the code to tokenize the documents and assign a unique
+    ID to each item in the vocabulary. We require at least five occurrences in the
+    corpus and keep a vocabulary of 31,300 tokens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Noise-contrastive estimation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Keras includes a `make_sampling_table` method that allows us to create a training
+    set as pairs of context and noise words with corresponding labels, sampled according
+    to their corpus frequencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The result is 27 million positive and negative examples of context and target
+    pairs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model components
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The *Skip-Gram* model contains a 200-dimensional embedding vector for each vocabulary
+    item, resulting in 31,300 x 200 trainable parameters, plus two for the sigmoid
+    output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In each iteration, the model computes the dot product of the context and the
+    target-embedding vectors, passes the result through the sigmoid to produce a probability
+    and adjusts the embedding based on the gradient of the loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Visualizing embeddings using TensorBoard
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: TensorBoard is a visualization tool that permits the projection of the embedding
+    vectors into three dimensions to explore the word and phrase locations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Word vectors from SEC filings using gensim
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we will learn word and phrase vectors from annual US **Securities
+    and Exchange Commission** (**SEC**) filings using gensim to illustrate the potential
+    value of word embeddings for algorithmic trading. In the following sections, we
+    will combine these vectors as features with price returns to train neural networks
+    to predict equity prices from the content of security filings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In particular, we use a dataset containing over 22,000 10-K annual reports from
+    the period 2013-2016 that are filed by listed companies and contain both financial
+    information and management commentary (see [Chapter 3](a7cec22f-095e-49c0-a2bb-e179f6e824a8.xhtml),
+    *Alternative Data for Finance*). For about half of the 11-K filings for companies,
+    we have stock prices to label the data for predictive modeling (see references
+    about data sources and the notebooks in the `sec-filings` folder for details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preprocessing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Each filing is a separate text file and a master index contains filing metadata.
+    We extract the most informative sections, namely, the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Items 1 and 1A**: Business and Risk Factors'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Items 7 and 7A**: Management''s Discussion and Disclosures about Market Risks'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The notebook preprocessing shows how to parse and tokenize the text using spaCy,
+    similar to the approach taken in [Chapter 14](beb6fa08-c790-47d5-82ef-f48a81dcf3d1.xhtml),
+    *Topic Modeling*. We do not lemmatize the tokens to preserve the nuances of word
+    usage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Automatic phrase detection
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We use `gensim` to detect phrases as previously introduced. The `Phrases` module
+    scores the tokens and the `Phraser` class transforms the text data accordingly.
+    The notebook shows how to repeat the process to create longer phrases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The most frequent bigrams include `common_stock`, `united_states`, `cash_flows`,
+    `real_estate`, and `interest_rates`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model training
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The `gensim.models.Word2vec` class implements the SG and CBOW architectures
+    introduced previously. The Word2vec notebook contains additional implementation
+    detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To facilitate memory-efficient text ingestion, the `LineSentence` class creates
+    a generator from individual sentences contained in the provided text file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `Word2vec` class offers the configuration options previously introduced:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The notebook shows how to persist and reload models to continue training, or
+    how to store the embedding vectors separately, for example, for use in ML models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model evaluation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Basic functionality includes identifying similar words:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also validate individual analogies using positive and negative contributions
+    accordingly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Performance impact of parameter settings
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We can use the analogies to evaluate the impact of different parameter settings.
+    The following results stand out (see detailed results in the `models` folder):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Negative sampling outperforms the hierarchical softmax, while also training
+    faster
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The Skip-Gram architecture outperforms CBOW given the objective function
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Different `min_count` settings have a smaller impact, with the midpoint of 50
+    performing best
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Further experiments with the best performing SG model, using negative sampling
+    and a `min_count` of 50, show the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Smaller context windows than five lower the performance
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A higher negative sampling rate improves performance at the expense of slower
+    training
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Larger vectors improve performance, with a size of 600 yielding the best accuracy
+    at 38.5%
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sentiment analysis with Doc2vec
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Text classification requires combining multiple word embeddings. A common approach
+    is to average the embedding vectors for each word in the document. This uses information
+    from all embeddings and effectively uses vector addition to arrive at a different
+    location point in the embedding space. However, relevant information about the
+    order of words is lost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By contrast, the state-of-the-art generation of embeddings for pieces of text
+    such as a paragraph or a product review is to use the document-embedding model
+    `Doc2vec`. This model was developed by the Word2vec authors shortly after publishing
+    their original contribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similar to Word2vec, there are also two flavors of `Doc2vec`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **distributed bag of words** (**DBOW**) model corresponds to the Word2vec
+    CBOW model. The document vectors result from training a network in the synthetic
+    task of predicting a target word based on both the context word vectors and the
+    document's doc vector.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **distributed memory** (**DM**) model corresponds to the Word2vec Skip-Gram
+    architecture. The doc vectors result from training a neural net to predict a target
+    word using the full document's doc vector.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Gensim's `Doc2vec` class implements this algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training Doc2vec on yelp sentiment data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We use a random sample of 500,000 Yelp (see [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml), *Working
+    with Text Data*) reviews with their associated star ratings (see notebook `yelp_sentiment`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We apply use simple pre-processing to remove stopwords and punctuation using
+    `NLTK`''s tokenizer and drop reviews with fewer than 10 tokens:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Create input data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The `gensim.models.doc2vec` class processes documents in the `TaggedDocument`
+    format that contains the tokenized documents alongside a unique tag that permits
+    accessing the document vectors after training:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The training interface works similar to `word2vec` with additional parameters
+    to specify the Doc2vec algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also use the `train()` method to continue the learning process and,
+    for example, iteratively reduce the learning rate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a result, we can access the document vectors as features to train a sentiment
+    classifier:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will train a `lightgbm` gradient boosting machine as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Create `lightgbm` `Dataset` objects from the train and test sets:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Define the training parameters for a multiclass model with five classes (using
+    defaults otherwise):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Train the model for 250 iterations and monitor the validation set error:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Lightgbm predicts probabilities for all five classes. We obtain class predictions
+    using `np.argmax()` to obtain the column index with the highest predicted probability:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We compute the accuracy score to evaluate the result and see an improvement
+    of more than 100% over the baseline of 20% for five balanced classes:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, we take a closer look at predictions for each class using the confusion
+    matrix:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And visualize the result as a `seaborn` heatmap:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](img/c99b5339-66b3-4736-87ac-9fdc6ece26d3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: In sum, the `doc2vec` method allowed us to achieve a very substantial improvement
+    in test accuracy over a naive benchmark without much tuning. If we only select
+    top and bottom reviews (with five and one stars, respectively) and train a binary
+    classifier, the AUC score achieves over 0.86 using 250,000 samples from each class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bonus – Word2vec for translation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The notebook translation demonstrates that the relationships encoded in one
+    language often correspond to similar relationships in another language.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It illustrates how word vectors can be used to translate words and phrases by
+    projecting word vectors from the embedding space of one language into the space
+    of another language using a translation matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter started with how word embeddings encode semantics for individual
+    tokens more effectively than the bag-of-words model that we used in [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml),
+    *Working with Text Data.* We also saw how to evaluated embedding by validating
+    if semantic relationships among words are properly represented using linear vector
+    arithmetic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To learn word embeddings, we use shallow neural networks that used to be slow
+    to train at the scale of web data containing billions of tokens. The `word2vec`
+    model combines several algorithmic innovations to dramatically speed up training
+    and has established a new standard for text feature generation. We saw how to
+    use pretrained word vectors using `spaCy` and `gensim`, and learned to train our
+    own word vector embeddings. We then applied a `word2vec` model to SEC filings.
+    Finally, we covered the `doc2vec` extension that learns vector representations
+    for documents in a similar fashion as word vectors and applied it to Yelp business
+    reviews.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, we will begin part 4 on deep learning (available online as mentioned in
+    the Preface), starting with an introduction to feed-forward networks, popular
+    deep learning frameworks and techniques for efficient training at scale.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1262 @@
+- en: Decision Trees and Random Forests
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will learn about two new classes of machine learning models:
+    decision trees and random forests. We will see how decision trees learn rules
+    from data that encodes non-linear relationships between the input and the output
+    variables. We will illustrate how to train a decision tree and use it for prediction for
+    regression and classification problems, visualize and interpret the rules learned
+    by the model, and tune the model''s hyperparameters to optimize the bias-variance
+    tradeoff and prevent overfitting. Decision trees are not only important standalone
+    models but are also frequently used as components in other models.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the second part of this chapter, we will introduce ensemble models that combine
+    multiple individual models to produce a single aggregate prediction with lower
+    prediction-error variance. We will illustrate bootstrap aggregation, often called
+    bagging, as one of several methods to randomize the construction of individual
+    models and reduce the correlation of the prediction errors made by an ensemble's
+    components.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Boosting is a very powerful alternative method that merits its own chapter to
+    address a range of recent developments. We will illustrate how bagging effectively
+    reduces the variance, and learn how to configure, train, and tune random forests. We
+    will see how random forests as an ensemble of a large number of decision trees,
+    can dramatically reduce prediction errors, at the expense of some loss in interpretation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In short, in this chapter, we will cover the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use decision trees for regression and classification
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to gain insights from decision trees and visualize the decision rules learned
+    from the data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Why ensemble models tend to deliver superior results
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How bootstrap aggregation addresses the overfitting challenges of decision trees
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to train, tune, and interpret random forests
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decision trees
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Decision trees are a machine learning algorithm that predicts the value of a
+    target variable based on decision rules learned from training data. The algorithm
+    can be applied to both regression and classification problems by changing the
+    objective function that governs how the tree learns the decision rules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will discuss how decision trees use rules to make predictions, how to train
+    them to predict (continuous) returns as well as (categorical) directions of price
+    movements, and how to interpret, visualize, and tune them effectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How trees learn and apply decision rules
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The linear models we studied in [Chapters 7](0cf85bb4-8b3f-4f83-b004-f980f348028b.xhtml),
+    *Linear Models* and [Chapter 8](4ea03bd9-a996-462b-803f-2a27365ff636.xhtml), *Time
+    Series Models*, learn a set of parameters to predict the outcome using a linear
+    combination of the input variables, possibly after transformation by an S-shaped
+    link function in the case of logistic regression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Decision trees take a different approach: they learn and sequentially apply
+    a set of rules that split data points into subsets and then make one prediction
+    for each subset. The predictions are based on the outcome values for the subset
+    of training samples that result from the application of a given sequence of rules.
+    As we will see in more detail further, classification trees predict a probability
+    estimated from the relative class frequencies or the value of the majority class
+    directly, whereas regression models compute prediction from the mean of the outcome
+    values for the available data points.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Each of these rules relies on one particular feature and uses a threshold to
+    split the samples into two groups with values either below or above the threshold
+    with respect to this feature. A binary tree naturally represents the logic of
+    the model: the root is the starting point for all samples, nodes represent the
+    application of the decision rules, and the data moves along the edges as it is
+    split into smaller subsets until arriving at a leaf node where the model makes
+    a prediction.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a linear model, the parameter values allow for an interpretation of the
+    impact of the input variables on the output and the model's prediction. In contrast,
+    for a decision tree, the path from the root to the leaves creates transparency
+    about how the features and their values lead to specific decisions by the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following figure highlights how the model learns a rule. During training,
+    the algorithm scans the features and, for each feature, seeks to find a cutoff
+    that splits the data to minimize the loss that results from predictions made using
+    the subsets that would result from the split, weighted by the number of samples
+    in each subset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/10fc5ab5-63f9-4998-8b42-c9bb256d839a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: To build an entire tree during training, the learning algorithm repeats this
+    process of dividing the feature space, that is, the set of possible values for
+    the *p* input variables, *X[1], X[2], ..., X[p]*, into mutually-exclusive and
+    collectively-exhaustive regions, each represented by a leaf node. Unfortunately,
+    the algorithm will not be able to evaluate every possible partition of the feature
+    space given the explosive number of possible combinations of sequences of features
+    and thresholds. Tree-based learning takes a top-down, greedy approach, known as
+    recursive binary splitting to overcome this computational limitation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This process is recursive because it uses subsets of data resulting from prior
+    splits. It is top-down because it begins at the root node of the tree, where all
+    observations still belong to a single region and then successively creates two
+    new branches of the tree by adding one more split to the predictor space. It is
+    greedy because the algorithm picks the best rule in the form of a feature-threshold
+    combination based on the immediate impact on the objective function rather than
+    looking ahead and evaluating the loss several steps ahead. We will return to the
+    splitting logic in the more specific context of regression and classification
+    trees because this represents the major difference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of training samples continues to shrink as recursive splits add new
+    nodes to the tree. If rules split the samples evenly, resulting in a perfectly
+    balanced tree with an equal number of children for every node, then there would
+    be 2^(n )nodes at level *n*, each containing a corresponding fraction of the total
+    number of observations. In practice, this is unlikely, so the number of samples
+    along some branches may diminish rapidly, and trees tend to grow to different
+    levels of depth along different paths.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To arrive at a prediction for a new observation, the model uses the rules that
+    it inferred during training to decide which leaf node the data point should be
+    assigned to, and then uses the mean (for regression) or the mode (for classification)
+    of the training observations in the corresponding region of the feature space.
+    A smaller number of training samples in a given region of the feature space, that
+    is, in a given leaf node, reduces the confidence in the prediction and may reflect
+    overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recursive splitting would continue until each leaf node contains only a single
+    sample and the training error has been reduced to zero. We will introduce several
+    criteria to limit splits and prevent this natural tendency of decision trees to produce
+    extreme overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use decision trees in practice
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we illustrate how to use tree-based models to gain insight
+    and make predictions. To demonstrate regression trees we predict returns, and
+    for the classification case, we return to the example of positive and negative
+    asset price moves. The code examples for this section are in the notebook `decision_trees`
+    unless stated otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to prepare the data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We use a simplified version of the data set constructed in [Cha](31520630-da72-4cf6-8d84-6a74b7f4f259.xhtml)[pter](31520630-da72-4cf6-8d84-6a74b7f4f259.xhtml)
+    *[4](31520630-da72-4cf6-8d84-6a74b7f4f259.xhtml),* *Alpha Factor Research*. It
+    consists of daily stock prices provided by Quandl for the 2010-2017 period and
+    various engineered features. The details can be found in the `data_prep` notebook
+    in the GitHub repo for this chapter. The decision tree models in this chapter
+    are not equipped to handle missing or categorical variables, so we will apply
+    dummy encoding to the latter after dropping any of the former.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to code a custom cross-validation class
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We also construct a custom cross-validation class tailored to the format of
+    the data just created, which has pandas MultiIndex with two levels, one for the
+    ticker and one for the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`OneStepTimeSeriesSplit` ensures a split of training and validation sets that
+    avoids a lookahead bias by training models using only data up to period *T-1* for
+    each stock when validating using data for month *T*. We will only use one-step-ahead
+    forecasts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build a regression tree
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Regression trees make predictions based on the mean outcome value for the training
+    samples assigned to a given node and typically rely on the mean-squared error to
+    select optimal rules during recursive binary splitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a training set, the algorithm iterates over the predictors, *X[1], X[2], ..., X[p]*,
+    and possible cutpoints, *s[1], s[1], ..., s[N]*, to find an optimal combination.
+    The optimal rule splits the feature space into two regions, *{X|X[i] < s[j]}*
+    and *{X|X[i] > s[j]**}*, with values for the *X[i]* feature either below or above
+    the *s[j]* threshold so that predictions based on the training subsets maximize
+    the reduction of the squared residuals relative to the current node.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s start with a simplified example to facilitate visualization and only
+    use two months of lagged returns to predict the following month, in the vein of
+    an AR(2) model from the last chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/c36793b6-ed96-4e4d-9baa-aec4d13bbe97.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Using `sklearn`, configuring and training a regression tree is very straightforward:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The OLS summary and a visualization of the first two levels of the decision
+    tree reveal the striking differences between the model. The OLS model provides
+    three parameters for the intercepts and the two features in line with the linear
+    assumption this model makes about the *f* function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In contrast, the regression tree chart displays, for each node of the first
+    two levels, the feature and threshold used to split the data (note that features
+    can be used repeatedly), as well as the current value of the **mean-squared error**
+    (**MSE**), the number of samples, and predicted value based on these training
+    samples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/ac90c600-e937-4ae5-9a6d-28f6e1cd50df.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The regression tree chart
+  prefs: []
+  type: TYPE_NORMAL
+- en: The tree chart also highlights the uneven distribution of samples across the
+    nodes as the numbers vary between 28,000 and 49,000 samples after only two splits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To further illustrate the different assumptions about the functional form of
+    the relationships between the input variables and the output, we can visualize
+    current return predictions as a function of the feature space, that is, as a function
+    of the range of values for the lagged returns. The following figure shows the
+    current period return as a function of returns one and two periods ago for linear
+    regression and the regression tree:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/73257312-4779-4370-944d-660c324c9d99.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The linear-regression model result on the right side underlines the linearity
+    of the relationship between lagged and current returns, whereas the regression
+    tree chart on the left illustrates the non-linear relationship encoded in the
+    recursive partitioning of the feature space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build a classification tree
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A classification tree works just like the regression version, except that categorical
+    nature of the outcome requires a different approach to making predictions and
+    measuring the loss. While a regression tree predicts the response for an observation
+    assigned to a leaf node using the mean outcome of the associated training samples,
+    a classification tree instead uses the mode, that is, the most common class among
+    the training samples in the relevant region. A classification tree can also generate
+    probabilistic predictions based on relative class frequencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to optimize for node purity
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: When growing a classification tree, we also use recursive binary splitting but,
+    instead of evaluating the quality of a decision rule using the reduction of the
+    mean-squared error, we can use the classification error rate, which is simply
+    the fraction of the training samples in a given (leave) node that do not belong
+    to the most common class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, the alternative measures, Gini Index or Cross-Entropy, are preferred
+    because they are more sensitive to node purity than the classification error rate.
+    Node purity refers to the extent of the preponderance of a single class in a node.
+    A node that only contains samples with outcomes belonging to a single class is
+    pure and imply successful classification for this particular region of the feature
+    space. They are calculated as follows for a classification outcome taking on *K*
+    values, *0,1,…,K-1*, for a given node, *m*, that represents a region, *R*[*m*, ]of
+    the feature space and where *p[mk]* is the proportion of outcomes of the *k* class
+    in the *m* node:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/5bd6d3fd-2e19-4cf1-ad78-a87aaf5f445c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](img/f207630b-8ef5-460d-a93c-a9324ca59ba5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Both the Gini Impurity and the Cross-Entropy measure take on smaller values
+    when the class proportions approach zero or one, that is, when the child nodes
+    become pure as a result of the split and are highest when the class proportions
+    are even or 0.5 in the binary case. The chart at the end of this section visualizes
+    the values assumed by these two measures and the misclassification error rates
+    across the [0, 1] interval of proportions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to train a classification tree
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will now train, visualize, and evaluate a classification tree with up to
+    5 consecutive splits using 80% of the samples for training to predict the remaining
+    20%. We are taking a shortcut here to simplify the illustration and use the built-in
+    `train_test_split`, which does not protect against lookahead bias, as our custom
+    iterator. The tree configuration implies up to 2⁵=32 leaf nodes that, on average
+    in the balanced case, would contain over 4,300 of the training samples. Take a
+    look at the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output after training the model displays all the `DecisionTreeClassifier`
+    parameters that we will address in more detail in the next section when we discuss
+    parameter-tuning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to visualize a decision tree
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'You can visualize the tree using the `graphviz` library (see GitHub for installation
+    instructions) because `sklearn` can output a description of the tree using the
+    `.dot` language used by that library. You can configure the output to include
+    feature and class labels and limit the number of levels to keep the chart readable,
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result shows that the model uses a variety of different features and indicates
+    the split rules for both continuous and categorical (dummy) variables. The chart
+    displays, under the label value, the number of samples from each class and, under
+    the label class, the most common class (there were more up months during the sample
+    period):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4f29972b-e427-42ee-8046-af32e27007f2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: How to evaluate decision tree predictions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To evaluate the predictive accuracy of our first classification tree, we will
+    use our test set to generate predicted class probabilities, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `.predict_proba()` method produces one probability for each class. In the
+    binary class, these probabilities are complementary and sum to 1, so we only need
+    the value for the positive class. To evaluate the generalization error, we will
+    use the area under the curve based on the receiver-operating characteristic that
+    we introduced in [Chapter 6](3efbd9df-a459-406a-a86e-1cb5512a9122.xhtml), *The
+    Machine Learning Process*. The result indicates a significant improvement above
+    and beyond the baseline value of 0.5 for a random prediction:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Feature importance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Decision trees can not only be visualized to inspect the decision path for a
+    given feature, but also provide a summary measure of the contribution of each
+    feature to the model fit to the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The feature importance captures how much the splits produced by the feature
+    helped to optimize the model's metric used to evaluate the split quality, which
+    in our case is the Gini Impurity index. A feature's importance is computed as
+    the (normalized) total reduction of this metric and takes into account the number
+    of samples affected by a split. Hence, features used earlier in the tree where
+    the nodes tend to contain more samples typically are considered of higher importance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following chart shows the feature importance for the top 15 features:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4184425b-a288-43ee-ae49-602e4c77c664.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Overfitting and regularization
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Decision trees have a strong tendency to overfit, especially when a dataset
+    has a large number of features relative to the number of samples. As discussed
+    in previous chapters, overfitting increases the prediction error because the model
+    does not only learn the signal contained in the training data, but also the noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several ways to address the risk of overfitting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Dimensionality reduction** ([Chapter 12](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml),
+    *Unsupervised Learning*) improves the feature-to-sample ratio by representing
+    the existing features with fewer, more informative, and less noisy features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Ensemble models**, such as random forests, combine multiple trees while randomizing
+    the tree construction, as we will see in the second part of this chapter.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decision trees provide several **regularization** hyperparameters to limit the
+    growth of a tree and the associated complexity. While every split increases the
+    number of nodes, it also reduces the number of samples available per node to support
+    a prediction. For each additional level, twice the number of samples is needed
+    to populate the new nodes with the same sample density.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Tree-pruning** is an additional tool to reduce the complexity of a tree by
+    eliminating nodes or entire parts of a tree that add little value but increase
+    the model''s variance. Cost-complexity-pruning, for instance, starts with a large
+    tree and recursively reduces its size by replacing nodes with leaves, essentially
+    running the tree construction in reverse. The various steps produce a sequence
+    of trees that can then be compared using cross-validation to select the ideal
+    size.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to regularize a decision tree
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The following table lists key parameters available for this purpose in the
+    sklearn decision tree implementation. After introducing the most important parameters,
+    we will illustrate how to use cross-validation to optimize the hyperparameter
+    settings with respect to the bias-variance tradeoff and lower prediction errors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: <tdDefault
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Parameter** | **Options** | **Description** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `**max_depth**` | None | int | Maximum number of levels: split nodes until
+    reaching `max_depth` or all leaves are pure or contain fewer than `min_samples_split`
+    samples. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `**max_features**` | None | None: all features; int float: fraction'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'auto, sqrt: sqrt(n_features)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'log2: log2(n_features) | Number of features to consider for a split. |'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| `**max_leaf_nodes**` | None | None: unlimited number of leaf nodes int |
+    Split nodes until creating this many leaves. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `**min_impurity_decrease**` | 0 | float | Split node if impurity decreases
+    by at least this value. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `**min_samples_leaf**` | 1 | int;float (as a percentage of N) | Minimum number
+    of samples to be at a leaf node. A split will only be considered if there are
+    at least `min_samples_leaf` training samples in each of the left and right branches.
+    May smoothen the model, especially for regression. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `**min_samples_split**` | 2 | int; float (percent of N) | The minimum number
+    of samples required to split an internal node: |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `**min_weight_fraction_leaf**` | 0 |   | The minimum weighted fraction of
+    the sum total of all sample weights needed at a leaf node. Samples have equal
+    weight unless `sample_weight` provided in fit method. |'
+  prefs: []
+  type: TYPE_TB
+- en: The `max_depth` parameter imposes a hard limit on the number of consecutive
+    splits and represents the most straightforward way to cap the growth of a tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `min_samples_split` and `min_samples_leaf` parameters are alternative, data-driven
+    ways to limit the growth of a tree. Rather than imposing a hard limit on the number
+    of consecutive splits, these parameters control the minimum number of samples
+    required to further split the data. The latter guarantees a certain number of
+    samples per leaf, while the former can create very small leaves if a split results
+    in a very uneven distribution. Small parameter values facilitate overfitting,
+    while a high number may prevent the tree from learning the signal in the data.
+    The default values are often quite low, and you should use cross-validation to
+    explore a range of potential values. You can also use a float to indicate a percentage
+    as opposed to an absolute number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sklearn documentation contains additional details about how to use the various
+    parameters for different use cases; see GitHub references.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Decision tree pruning
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Recursive binary-splitting will likely produce good predictions on the training
+    set but tends to overfit the data and produce poor generalization performance
+    because it leads to overly complex trees, reflected in a large number of leaf
+    nodes or partitioning of the feature space. Fewer splits and leaf nodes imply
+    an overall smaller tree and often lead to better predictive performance as well
+    as interpretability.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One approach to limit the number of leaf nodes is to avoid further splits unless
+    they yield significant improvements of the objective metric. The downside of this strategy,
+    however, is that sometimes splits that result in small improvements enable more
+    valuable splits later on as the composition of the samples keeps changing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tree-pruning, in contrast, starts by growing a very large tree before removing
+    or pruning nodes to reduce the large tree to a less complex and overfit subtree.
+    Cost-complexity-pruning generates a sequence of subtrees by adding a penalty for
+    adding leaf nodes to the tree model and a regularization parameter, similar to
+    the lasso and ridge linear-regression models, that modulates the impact of the
+    penalty. Applied to the large tree, an increasing penalty will automatically produce
+    a sequence of subtrees. Cross-validation of the regularization parameter can be
+    used to identify the optimal, pruned subtree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This method is not yet available in sklearn; see references on GitHub for further
+    details and ways to manually implement pruning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to tune the hyperparameters
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Decision trees offer an array of hyperparameters to control and tune the training
+    result. Cross-validation is the most important tool to obtain an unbiased estimate
+    of the generalization error, which in turn permits an informed choice among the
+    various configuration options. sklearn offers several tools to facilitate the
+    process of cross-validating numerous parameter settings, namely the `GridSearchCV`
+    convenience class that we will illustrate in the next section. Learning curves
+    also allow for diagnostics that evaluate potential benefits of collecting additional
+    data to reduce the generalization error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GridsearchCV for decision trees
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`sklearn` provides a method to define ranges of values for multiple hyperparameters.
+    It automates the process of cross-validating the various combinations of these
+    parameter values to identify the optimal configuration. Let''s walk through the
+    process of automatically tuning your model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first step is to instantiate a model object and define a dictionary where
+    the keywords name the hyperparameters, and the values list the parameter settings
+    to be tested:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then, instantiate the `GridSearchCV` object, providing the estimator object
+    and parameter grid, as well as a scoring method and cross-validation choice to
+    the initialization method. We'll use an object of our custom `OneStepTimeSeriesSplit`
+    class, initialized to use ten folds for the `cv` parameter, and set the scoring
+    to the `roc_auc` metric. We can parallelize the search using the `n_jobs` parameter
+    and automatically obtain a trained model that uses the optimal hyperparameters
+    by setting `refit=True`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With all settings in place, we can fit `GridSearchCV` just like any other model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: The training process produces some new attributes for our `GridSearchCV` object,
+    most importantly the information about the optimal settings and the best cross-validation
+    score (now using the proper setup that avoids lookahead bias).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Setting `max_depth` to `13`, `min_samples_leaf` to `500`, and randomly selecting
+    only a number corresponding to the square root of the total number of features
+    when deciding on a split, produces the best results, with an AUC of `0.5855`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The automation is quite convenient, but we also would like to inspect how the
+    performance evolves for different parameter values. Upon completion of this process,
+    the `GridSearchCV` object makes available detailed cross-validation results to
+    gain more insights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to inspect the tree structure
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The notebook also illustrates how to run cross-validation more manually to
+    obtain custom tree attributes, such as the total number of nodes or leaf nodes
+    associated with certain hyperparameter settings. The following function accesses
+    the internal `.tree_` attribute to retrieve information about the total node count,
+    and how many of these nodes are leaf nodes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can combine this information with the train and test scores to gain detailed
+    knowledge about the model behavior throughout the cross-validation process, as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result is shown on the left panel of the following chart. It highlights
+    the in- and out-of-sample performance across the range of `max_depth` settings,
+    alongside a confidence interval around the error metrics. It also shows the number
+    of leaf nodes on the right-hand log scale and indicates the best-performing setting
+    at 13 consecutive splits, as indicated by the vertical black line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning curves
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A learning curve is a useful tool that displays how the validation and training
+    score evolve as the number of training samples evolves.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The purpose of the learning curve is to find out whether and how much the model
+    would benefit from using more data during training. It is also useful to diagnose
+    whether the model's generalization error is more likely driven by bias or variance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If, for example, both the validation score and the training score converge to
+    a similarly low value despite an increasing training set size, the error is more
+    likely due to bias, and additional training data is unlikely to help.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Take a look at the following visualization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d5ae417a-2ab6-47c8-91d0-c9b787354234.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Strengths and weaknesses of decision trees
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Regression and classification trees take a very different approach to prediction
+    when compared to the linear models we have explored so far. How do you decide
+    which model is more suitable to the problem at hand? Consider the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the relationship between the outcome and the features is approximately linear
+    (or can be transformed accordingly), then linear regression will likely outperform
+    a more complex method, such as a decision tree that does not exploit this linear
+    structure.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the relationship appears highly non-linear and more complex, decision trees
+    will likely outperform the classical models.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Several advantages have made decision trees very popular:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: They are fairly straightforward to understand and to interpret, not least because
+    they can be easily visualized and are thus more accessible to a non-technical
+    audience. Decision trees are also referred to as white-box models given the high
+    degree of transparency about how they arrive at a prediction. Black-box models,
+    such as ensembles and neural networks may deliver better prediction accuracy but
+    the decision logic is often much more challenging to understand and interpret.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decision trees require less data preparation than models that make stronger
+    assumptions about the data or are more sensitive to outliers and require data
+    standardization (such as regularized regression).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Some decision tree implementations handle categorical input, do not require
+    the creation of dummy variables (improving memory efficiency), and can work with
+    missing values, as we will see in [Chapter 11](2fbfa6b5-87f3-49c3-b13a-5ead63471370.xhtml),
+    *Gradient Boosting Machines*, but this is not the case for sklearn.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Prediction is fast because it is logarithmic in the number of leaf nodes (unless
+    the tree becomes extremely unbalanced).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It is possible to validate the model using statistical tests and account for
+    its reliability (see GitHub references).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Decision trees also have several key disadvantages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Decision trees have a built-in tendency to overfit to the training set and produce
+    a high generalization error. Key steps to address this weakness are pruning (not
+    yet supported by sklearn) as well as regularization using the various early-stopping
+    criteria outlined in the previous section.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Closely related is the high variance of decision trees that results from their
+    ability to closely adapt to a training set so that minor variations in the data
+    can produce wide swings in the structure of the decision trees and, consequently,
+    the predictions the model generates. The key mechanism to address the high variance
+    of decision trees is the use of an ensemble of randomized decision trees that
+    have low bias and produce uncorrelated prediction errors.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The greedy approach to decision-tree learning optimizes based on local criteria,
+    that is, to reduce the prediction error at the current node and does not guarantee
+    a globally optimal outcome. Again, ensembles consisting of randomized trees help
+    to mitigate this problem.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decision trees are also sensitive to unbalanced class weights and may produce
+    biased trees. One option is to oversample the underrepresented or under-sample
+    the more frequent class. It is typically better, though, to use class weights
+    and directly adjust the objective function.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Random forests
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Decision trees are not only useful for their transparency and interpretability
+    but are also fundamental building blocks for much more powerful ensemble models
+    that combine many individual trees with strategies to randomly vary their design
+    to address the overfitting and high variance problems discussed in the preceding
+    section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensemble models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Ensemble learning involves combining several machine learning models into a
+    single new model that aims to make better predictions than any individual model. More
+    specifically, an ensemble integrates the predictions of several base estimators
+    trained using one or more given learning algorithms to reduce the generalization
+    error that these models may produce on their own.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For ensemble learning to achieve this goal, the individual models must be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Accurate:** They outperform a naive baseline (such as the sample mean or
+    class proportions)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Independent:** Their predictions are generated differently to produce different
+    errors'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ensemble methods are among the most successful machine learning algorithms,
+    in particular for standard numerical data. Large ensembles are very successful
+    in machine learning competitions and may consist of many distinct individual models
+    that have been combined by hand or using another machine learning algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are several disadvantages to combining predictions made by different models.
+    These include reduced interpretability, and higher complexity and cost of training,
+    prediction, and model maintenance. As a result, in practice (outside of competitions),
+    the small gains in accuracy from large-scale ensembling may not be worth the added
+    costs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two groups of ensemble methods that are typically distinguished depending
+    on how they optimize the constituent models and then integrate the results for
+    a single ensemble prediction:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Averaging methods **train several base estimators independently and then
+    average their predictions. If the base models are not biased and make different
+    prediction errors that are not highly correlated, then the combined prediction
+    may have lower variance and can be more reliable. This resembles the construction
+    of a portfolio from assets with uncorrelated returns to reduce the volatility
+    without sacrificing the return.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Boosting methods**, in contrast, train base estimators sequentially with
+    the specific goal to reduce the bias of the combined estimator. The motivation
+    is to combine several weak models into a powerful ensemble.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will focus on automatic averaging methods in the remainder of this chapter,
+    and boosting methods in [Chapter 11](2fbfa6b5-87f3-49c3-b13a-5ead63471370.xhtml),
+    *Gradient Boosting Machines*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How bagging lowers model variance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We saw that decision trees are likely to make poor predictions due to high variance,
+    which implies that the tree structure is quite sensitive to the composition of
+    the training sample. We have also seen that a model with low variance, such as
+    linear regression, produces similar estimates despite different training samples
+    as long as there are sufficient samples given the number of features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a given a set of independent observations, each with a variance of *σ²*,
+    the standard error of the sample mean is given by *σ/n*. In other words, averaging
+    over a larger set of observations reduces the variance. A natural way to reduce
+    the variance of a model and its generalization error would thus be to collect
+    many training sets from the population, train a different model on each dataset,
+    and average the resulting predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, we do not typically have the luxury of many different training
+    sets. This is where bagging, short for bootstrap aggregation, comes in. Bagging is
+    a general-purpose method to reduce the variance of a machine learning model, which
+    is particularly useful and popular when applied to decision trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bagging refers to the aggregation of bootstrap samples, which are random samples
+    with replacement. Such a random sample has the same number of observations as
+    the original dataset but may contain duplicates due to replacement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bagging increases predictive accuracy but decreases model interpretability because
+    it's no longer possible to visualize the tree to understand the importance of
+    each feature. As an ensemble algorithm, bagging methods train a given number of
+    base estimators on these bootstrapped samples and then aggregate their predictions
+    into a final ensemble prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bagging reduces the variance of the base estimators by randomizing how, for
+    example, each tree is grown and then averages the predictions to reduce their
+    generalization error. It is often a straightforward approach to improve on a given
+    model without the need to change the underlying algorithm. It works best with
+    complex models that have low bias and high variance, such as deep decision trees,
+    because its goal is to limit overfitting. Boosting methods, in contrast, work
+    best with weak models, such as shallow decision trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several bagging methods that differ by the random sampling process
+    they apply to the training set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pasting draws random samples from the training data without replacement, whereas
+    bagging samples with replacement
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Random subspaces randomly sample from the features (that is, the columns) without
+    replacement
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Random patches train base estimators by randomly sampling both observations
+    and features
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bagged decision trees
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: To apply bagging to decision trees, we create bootstrap samples from our training
+    data by repeatedly sampling with replacement, then train one decision tree on
+    each of these samples, and create an ensemble prediction by averaging over the
+    predictions of the different trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bagged decision trees are usually grown large, that is, have many levels and
+    leaf nodes and are not pruned so that each tree has low bias but high variance.
+    The effect of averaging their predictions then aims to reduce their variance.
+    Bagging has been shown to substantially improve predictive performance by constructing
+    ensembles that combine hundreds or even thousands of trees trained on bootstrap
+    samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To illustrate the effect of bagging on the variance of a regression tree, we
+    can use the `BaggingRegressor` meta-estimator provided by `sklearn`. It trains a
+    user-defined base estimator based on parameters that specify the sampling strategy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`max_samples` and `max_features` control the size of the subsets drawn from
+    the rows and the columns, respectively'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bootstrap` and `bootstrap_features` determine whether each of these samples
+    is drawn with or without replacement'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The following example uses an exponential function to generate training samples
+    for a single `DecisionTreeRegressor` and a `BaggingRegressor` ensemble that consists
+    of ten trees, each grown ten levels deep. Both models are trained on the random
+    samples and predict outcomes for the actual function with added noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since we know the true function, we can decompose the mean-squared error into
+    bias, variance, and noise, and compare the relative size of these components for
+    both models according to the following breakdown:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/ef67ad78-69ec-4c98-93d2-4e16e807c697.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For 100 repeated random training and test samples of 250 and 500 observations
+    each, we find that the variance of the predictions of the individual decision
+    tree is almost twice as high as that for the small ensemble of `10` bagged trees
+    based on bootstrapped samples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For each model, the following plot shows the mean prediction and a band of
+    two standard deviations around the mean for both models in the upper panel, and
+    the bias-variance-noise breakdown based on the values for the true function in
+    the bottom panel:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/bcadab8d-75ec-463c-a2e9-dabf9e995e71.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: See the notebook `random_forest`  for implementation details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build a random forest
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The random forest algorithm expands on the randomization introduced by the bootstrap
+    samples generated by bagging to reduce variance further and improve predictive
+    performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to training each ensemble member on bootstrapped training data,
+    random forests also randomly sample from the features used in the model (without
+    replacement). Depending on the implementation, the random samples can be drawn
+    for each tree or each split. As a result, the algorithm faces different options
+    when learning new rules, either at the level of a tree or for each split.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The sizes of the feature samples differ for regression and classification trees:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For **classification**, the sample size is typically the square root of the
+    number of features.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For **regression**, it can be anywhere from one-third to all features and should
+    be selected based on cross-validation.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following diagram illustrates how random forests randomize the training
+    of individual trees and then aggregate their predictions into an ensemble prediction:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/18ee1d20-03cb-45eb-adf8-65b5059a5952.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The goal of randomizing the features in addition to the training observations
+    is to further de-correlate the prediction errors of the individual trees. All
+    features are not created equal, and a small number of highly relevant features
+    will be selected much more frequently and earlier in the tree-construction process,
+    making decision trees more alike across the ensemble. However, the less the generalization
+    errors of individual trees correlate, the more the overall variance will be reduced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to train and tune a random forest
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The key configuration parameters include the various hyperparameters for the
+    individual decision trees introduced in the section *How to tune the hyperparameters*. The
+    following tables lists additional options for the two `RandomForest` classes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Keyword** | **Default** | **Description** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `bootstrap` | `True` | Bootstrap samples during training. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `n_estimators` | `10` | Number of trees in the forest. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `oob_score` | `False` | Uses out-of-bag samples to estimate the R² on unseen
+    data. |'
+  prefs: []
+  type: TYPE_TB
+- en: The `bootstrap` parameter activates in the preceding bagging algorithm outline,
+    which in turn enables the computation of the out-of-bag score (`oob_score`) that
+    estimates the generalization accuracy using samples not included in the bootstrap
+    sample used to train a given tree (see next section for detail).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `n_estimators` parameter defines the number of trees to be grown as part
+    of the forest. Larger forests perform better, but also take more time to build.
+    It is important to monitor the cross-validation error as a function of the number
+    of base learners to identify when the marginal reduction of the prediction error
+    declines and the cost of additional training begins to outweigh the benefits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `max_features` parameter controls the size of the randomly selected feature
+    subsets available when learning a new decision rule and split a node. A lower
+    value reduces the correlation of the trees and, thus, the ensemble's variance,
+    but may also increase the bias. Good starting values are `n_features` (the number
+    of training features) for regression problems and `sqrt(n_features)` for classification
+    problems, but will depend on the relationships among features and should be optimized
+    using cross-validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random forests are designed to contain deep fully-grown trees, which can be
+    created using `max_depth=None` and `min_samples_split=2`. However, these values
+    are not necessarily optimal, especially for high-dimensional data with many samples
+    and, consequently, potentially very deep trees that can become very computationally-,
+    and memory-, intensive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `RandomForest` class provided by `sklearn` support parallel training and
+    prediction by setting the `n_jobs` parameter to the `k` number of jobs to run
+    on different cores. The `-1` value uses all available cores. The overhead of interprocess
+    communication may limit the speedup from being linear so that *k* jobs may take
+    more than *1/k* the time of a single job. Nonetheless, the speedup is often quite
+    significant for large forests or deep individual trees that may take a meaningful
+    amount of time to train when the data is large, and split evaluation becomes costly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As always, the best parameter configuration should be identified using cross-validation.
+    The following steps illustrate the process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will use `GridSearchCV` to identify an optimal set of parameters for an
+    ensemble of classification trees:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will use 10-fold custom cross-validation and populate the parameter grid
+    with values for the key configuration settings:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Configure `GridSearchCV` using the preceding input:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Train the multiple ensemble models defined by the parameter grid:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Obtain the best parameters as follows:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The best score is a small but significant improvement over the single-tree
+    baseline:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Feature importance for random forests
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A random forest ensemble may contain hundreds of individual trees, but it is
+    still possible to obtain an overall summary measure of feature importance from
+    bagged models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a given feature, the importance score is the total reduction in the objective
+    function's value, which results from splits based on this feature, averaged over
+    all trees. Since the objective function takes into account how many features are
+    affected by a split, this measure is implicitly a weighted average so that features
+    used near the top of a tree will get higher scores due to the larger number of
+    observations contained in the much smaller number of available nodes. By averaging
+    over many trees grown in a randomized fashion, the feature importance estimate
+    loses some variance and becomes more accurate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The computation differs for classification and regression trees based on the
+    different objectives used to learn the decision rules and is measured in terms
+    of the mean square error for regression trees and the Gini index or entropy for
+    classification trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`sklearn` further normalizes the feature-importance measure so that it sums
+    up to `1`. Feature importance thus computed is also used for feature selection
+    as an alternative to the mutual information measures we saw in [Chapter 6](3efbd9df-a459-406a-a86e-1cb5512a9122.xhtml),
+    *T**he Machine Learning Process* (see `SelectFromModel` in the `sklearn.feature_selection` module).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In our example, the importance values for the top-20 features are as shown
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/22539933-6f9f-4069-8529-7cefdf1ba137.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Feature-importance values
+  prefs: []
+  type: TYPE_NORMAL
+- en: Out-of-bag testing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Random forests offer the benefit of built-in cross-validation because individual
+    trees are trained on bootstrapped versions of the training data. As a result,
+    each tree uses on average only two-thirds of the available observations. To see
+    why, consider that a bootstrap sample has the same size, *n*, as the original
+    sample, and each observation has the same probability, *1/n*, to be drawn. Hence,
+    the probability of not entering a bootstrap sample at all is *(1-1/n)**^n*, which
+    converges (quickly) to *1/e*, or roughly one-third.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This remaining one-third of the observations that are not included in the training
+    set used to grow a bagged tree is called **out-of-bag** (**OOB**) observations
+    and can serve as a validation set. Just as with cross-validation, we predict the
+    response for an OOB sample for each tree built without this observation, and then
+    average the predicted responses (if regression is the goal) or take a majority
+    vote or predicted probability (if classification is the goal) for a single ensemble
+    prediction for each OOB sample. These predictions produce an unbiased estimate
+    of the generalization error, conveniently computed during training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The resulting OOB error is a valid estimate of the generalization error for
+    this observation because the prediction is produced using decision rules learned
+    in the absence of this observation. Once the random forest is sufficiently large,
+    the OOB error closely approximates the leave-one-out cross-validation error. The
+    OOB approach to estimate the test error is very efficient for large datasets where
+    cross-validation can be computationally costly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pros and cons of random forests
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Bagged ensemble models have both advantages and disadvantages. The advantages
+    of random forests include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The predictive performance can compete with the best supervised learning algorithms
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: They provide a reliable feature importance estimate
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: They offer efficient estimates of the test error without incurring the cost
+    of repeated model training associated with cross-validation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'On the other hand, random forests also have a few disadvantages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An ensemble model is inherently less interpretable than an individual decision
+    tree
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Training a large number of deep trees can have high computational costs (but
+    can be parallelized) and use a lot of memory
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Predictions are slower, which may create challenges for applications that require low
+    latency
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we learned about a new class of models capable of capturing
+    a non-linear relationship, in contrast to the classical linear models we had explored
+    so far. We saw how decision trees learn rules to partition the feature space into
+    regions that yield predictions and thus segment the input data into specific regions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Decision trees are very useful because they provide unique insights into the
+    relationships between features and target variables, and we saw how to visualize
+    the sequence of decision rules encoded in the tree structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unfortunately, a decision tree is prone to overfitting. We learned that ensemble
+    models and the bootstrap aggregation method manages to overcome some of the shortcomings
+    of decision trees and render them useful, as components of much more powerful
+    composite models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will explore another ensemble model, which has come
+    to be considered one of the most important machine learning algorithms.
+  prefs: []
+  type: TYPE_NORMAL

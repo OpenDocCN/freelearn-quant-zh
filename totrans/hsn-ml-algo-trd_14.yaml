@@ -1,0 +1,862 @@
+- en: Topic Modeling
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the last chapter, we converted unstructured text data into a numerical format
+    using the bag-of-words model. This model abstracts from word order and represents
+    documents as word vectors, where each entry represents the relevance of a token
+    to the document.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The resulting **document-term matrix** (**DTM**), (you may also come across
+    the transposed term-document matrix) is useful to compare documents to each other
+    or to a query vector based on their token content, and quickly find a needle in
+    a haystack or classify documents accordingly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, this document model is both high-dimensional and very sparse. As a
+    result, it does little to summarize the content or get closer to understanding
+    what it is about. In this chapter, we will use unsupervised machine learning in
+    the form of topic modeling to extract hidden themes from documents. These themes
+    can produce detailed insights into a large body of documents in an automated way.
+    They are very useful to understand the haystack itself and permit the concise
+    tagging of documents because using the degree of association of topics and documents.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Topic models permit the extraction of sophisticated, interpretable text features
+    that can be used in various ways to extract trading signals from large collections
+    of documents. They speed up the review of documents, help identify and cluster
+    similar documents, and can be annotated as a basis for predictive modeling. Applications
+    include the identification of key themes in company disclosures, or earnings call
+    transcripts, customer reviews or contracts, annotated using, for example, sentiment
+    analysis or direct labeling with subsequent asset returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, in this chapter, we will cover these topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What topic modeling achieves, why it matters, and how it has evolved
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How **Latent Semantic Indexing** (**LSI**) reduces the dimensionality of the
+    DTM
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How **probabilistic Latent Semantic Analysis** (**pLSA**) uses a generative
+    model to extract topics
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How **Latent Dirichlet Allocation** (**LDA**) refines pLSA and why it is the
+    most popular topic model
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to visualize and evaluate topic modeling results
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to implement LDA using sklearn and gensim
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to apply topic modeling to collections of earnings calls and Yelp business
+    reviews
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The code samples for the following sections are in the directory of the GitHub
+    repository for this chapter, and references are listed in the main README file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Learning latent topics: goals and approaches'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Topic modeling aims to discover hidden topics or themes across documents that
+    capture semantic information beyond individual words. It aims to address a key
+    challenge in building a machine learning algorithm that learns from text data
+    by going beyond the lexical level of what has been written to the semantic level
+    of what was intended. The resulting topics can be used to annotate documents based
+    on their association with various topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other words, topic modeling aims to automatically summarize large collections
+    of documents to facilitate organization and management, as well as search and
+    recommendations. At the same time, it can enable the understanding of documents
+    to the extent that humans can interpret the descriptions of topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Topic models aim to address the curse of dimensionality that can plague the
+    bag-of-words model. The document representation based on high-dimensional sparse
+    vectors can make similarity measures noisy, leading to inaccurate distance measurement
+    and overfitting of text classification models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Moreover, the bag of words model ignores word order and loses context as well
+    as semantic information because it is not able to capture synonymy (several words
+    have the same meaning) and polysemy (one word has several meanings). As a result,
+    document retrieval or similarity search may miss the point when the documents
+    are not indexed by the terms used to search or compare.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These shortcoming prompt this question: how do we model and learn meaning topics
+    that facilitate a more productive interaction with text data?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: From linear algebra to hierarchical probabilistic models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Initial attempts by topic models to improve on the vector space model (developed
+    in the mid-1970s) applied linear algebra to reduce the dimensionality of the document-term
+    matrix. This approach is similar to the algorithm we discussed as principal component
+    analysis in [Chapter 12](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml), *Unsupervised
+    Learning*, on unsupervised learning. While effective, it is difficult to evaluate
+    the results of these models absent a benchmark model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In response, probabilistic models emerged that assume an explicit document generation
+    process and provide algorithms to reverse engineer this process and recover the
+    underlying topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This table highlights key milestones in the model evolution that we will address
+    in more detail in the following sections:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Model** | **Year** | **Description** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Latent Semantic Indexing** (**LSI**) | 1988 | Reduces the word space dimensionality
+    to capture semantic document-term relationships by  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Probabilistic Latent Semantic Analysis** (**pLSA**) | 1999 | Reverse-engineers
+    a process that assumes words generate a topic and documents are a mix of topics
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Latent Dirichlet Allocation** (**LDA**) | 2003 | Adds a generative process
+    for documents: a three-level hierarchical Bayesian model |'
+  prefs: []
+  type: TYPE_TB
+- en: Latent semantic indexing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Latent Semantic Indexing (LSI, also called Latent Semantic Analysis) sets out
+    to improve the results of queries that omitted relevant documents containing synonyms
+    of query terms. It aims to model the relationships between documents and terms
+    to be able to predict that a term should be associated with a document, even though,
+    because of variability in word use, no such association was observed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: LSI uses linear algebra to find a given number, *k*, of latent topics by decomposing
+    the DTM. More specifically, it uses **Singular Value Decomposition** (**SVD**)
+    to find the best lower-rank DTM approximation using k singular values and vectors.
+    In other words, LSI is an application of the unsupervised learning techniques
+    of dimensionality reduction we encountered in [Chapter 12](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml), *Unsupervised
+    Learning* to the text representation that we covered in [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml), *Working
+    with Text Data*. The authors experimented with hierarchical clustering but found
+    it too restrictive to explicitly model the document-topic and topic-term relationships,
+    or capture associations of documents or terms with several topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this context, SVD serves the purpose of identifying a set of uncorrelated
+    indexing variables or factors that permit us to represent each term and document
+    by its vector of factor values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following figure illustrates how SVD decomposes the DTM into three matrices,
+    two containing orthogonal singular vectors and a diagonal matrix with singular
+    values that serve as scaling factors. Assuming some correlation in the original
+    data, singular values decay in value so that selecting only the largest *T* singular
+    values produces a lower-dimensional approximation of the original DTM that loses
+    relatively little information. Hence, in the reduced version the rows or columns
+    that had *N* items only have *T<N* entries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This reduced decomposition can be interpreted as illustrated next, where the
+    first *M x T* matrix represents the relationships between documents and topics,
+    the diagonal matrix scales the topics by their corpus strength, and the third
+    matrix models the term-topic relationship:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4db67058-1bed-4104-8f63-b7d8e3b16fbe.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The rows of the matrix that results from the product of the first two matrices, *U[T]Σ[T]*[,]corresponds
+    to the locations of the original documents projected into the latent topic space.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to implement LSI using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will illustrate the application of LSI using the BBC article data that we
+    introduced in the last chapter because it is small enough to permit quick training
+    and allow us to compare topic assignments to category labels. See the `latent_semantic_indexing` notebook for
+    additional implementation details:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We begin by loading the documents and creating a train and (stratified) test
+    set with 50 articles.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Then, we vectorize the data using `TfidfVectorizer` to obtain weighted DTM
+    counts and filter out words that appear in less than 1% or more than 25% of the
+    documents, as well as generic stopwords, to obtain a vocabulary of around 2,900
+    words:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: We use `sklearn`'s `TruncatedSVD` class, which only computes the *k* largest
+    singular values to reduce the dimensionality of the document-term matrix. The
+    deterministic arpack algorithm delivers an exact solution, but the default randomized
+    implementation is more efficient for large matrices.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'We compute five topics to match the five categories, which explain only 5.4%
+    of the total DTM variance so higher values would be reasonable:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: LSI identifies a new orthogonal basis for the document-term matrix that reduces
+    the rank to the number of desired topics.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The `.transform()` method of the trained `svd` object projects the documents
+    into the new topic space that is the result of reducing the dimensionality of
+    the document vectors and corresponds to the *U[T]Σ[T]* transformation illustrated
+    before:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can sample an article to view its location in the topic space. We draw a
+    `Politics` article that is most (positively) associated with topics 1 and 2:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The topic assignments for this sample align with the average topic weights for
+    each category illustrated next (`Politics` is the leftmost). They illustrate how
+    LSI expresses the k topics as directions in a k-dimensional space (the notebook
+    includes a projection of the average topic assignments per category into two-dimensional
+    space).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Each category is clearly defined, and the test assignments match with train
+    assignments. However, the weights are both positive and negative, making it more
+    difficult to interpret the topics:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![](img/7cf3ba3c-4536-43d5-b1cd-c06c097c0fd3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can also display the words that are most closely associated with each topic
+    (in absolute terms). The topics appear to capture some semantic information but
+    are not differentiated:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![](img/e4d2bd25-5950-44fa-ba6c-6e3d6f7a45d0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Pros and cons
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The benefits of LSI include the removal of noise and mitigation of the curse
+    of dimensionality, while also capturing some semantics and  clustering both documents
+    and terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the results of LSI are difficult to interpret because topics are word
+    vectors with both positive and negative entries. There is also no underlying model
+    that would permit the evaluation of fit and provide guidance when selecting the
+    number of dimensions or topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Probabilistic latent semantic analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Probabilistic Latent Semantic Analysis (pLSA)** takes a statistical perspective
+    on LSA and creates a generative model to address the lack of theoretical underpinnings
+    of LSA.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: pLSA explicitly models the probability each co-occurrence of documents *d* and
+    words *w* described by the DTM as a mixture of conditionally independent multinomial
+    distributions that involve topics *t*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The symmetric formulation of this generative process of word-document co-occurrences
+    assumes both words and documents are generated by the latent topic class, whereas
+    the asymmetric model assumes the topics are selected given the document, and words
+    result from a second step given the topic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/cfcdc229-8283-4358-b14a-6f50e483799c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The number of topics is a hyperparameter chosen before training and is not learned
+    from the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Probabilistic models often use the following plate notation to express dependencies.
+    The following figure encodes the relationships just describe for the asymmetric
+    model. Each rectangle represents multiple items, such as M Documents for the outer
+    and N Words for each document for the inner block. We only observe the documents
+    and their content, and the model infers the hidden or latent topic distribution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/f1ce787d-33f0-4353-9732-b47427cca98e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The benefit of using a probability model is that we can now compare models by
+    evaluating the probability they assign to new documents given the parameters learned
+    during training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to implement pLSA using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: pLSA is equivalent to non-negative matrix factorization using a Kullback-Leibler
+    Divergence objective (see references on GitHub [https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading](https://github.com/PacktPublishing/Hands-On-Machine-Learning-for-Algorithmic-Trading)).
+    Hence, we can use the `sklearn.decomposition.NM` class to implement this model,
+    following the LSA example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using the same train-test split of the DTM produced by the `TfidfVectorizer`,
+    we fit pLSA as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get a measure of the reconstruction error, which is a substitute for the
+    explained variance measure from before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Due to its probabilistic nature, pLSA produces only positive topic weights
+    that result in more straightforward topic-category relationships for the test
+    and training sets:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/a505d985-d9a8-407c-be17-56937de08105.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can also see that the word lists that describe each topic begin to make
+    more sense; for example, the Entertainment category is most directly associated
+    with Topic 4, which includes the words film, start, and so on:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/e6c6fb32-72be-4dba-b9c1-522ad7f38eab.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Latent Dirichlet allocation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Latent Dirichlet allocation** (**LDA**) extends pLSA by adding a generative
+    process for topics.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is the most popular topic model because it tends to produce meaningful topics
+    that humans can relate to, can assign topics to new documents, and is extensible.
+    Variants of LDA models can include metadata such as authors, or image data, or
+    learn hierarchical topics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How LDA works
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: LDA is a hierarchical Bayesian model that assumes topics are probability distributions
+    over words, and documents are distributions over topics. More specifically, the
+    model assumes that topics follow a sparse Dirichlet distribution, which implies
+    that documents cover only a small set of topics, and topics use only a small set
+    of words frequently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Dirichlet distribution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The Dirichlet distribution produces probability vectors that can be used with
+    discrete distributions. That is, it randomly generates a given number of values
+    that are positive and sum to one as expected for probabilities. It has a parameter
+    of positive, real value that controls the concentration of the probabilities.
+    Values closer to zero mean that only a few values will be positive and receive
+    most probability mass. The following screenshot illustrates three draws of size
+    10 for α *= 0.1* (the `dirichlet_distribution` notebook contains a simulation
+    so you can experiment with different parameter values):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/a3806199-b3dc-4b20-83a0-aac2e412bbf8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Dirichlet allocation
+  prefs: []
+  type: TYPE_NORMAL
+- en: The generative model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The Dirichlet distribution figures prominently in the LDA topic model, which
+    assumes the following generative process when an author adds an article to a body
+    of documents:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Randomly mix a small subset of shared topics *K* according to the topic probabilities
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For each word, select one of the topics according to the document-topic probabilities
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Select a word from the topic's word list according to the topic-word probabilities
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As a result, the article content depends on the weights of each topic and on
+    the terms that make up each topic. The Dirichlet distribution governs the selection
+    of topics for documents and words for topics and encodes the idea that a document
+    only covers a few topics, while each topic uses only a small number of words frequently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The plate notation for the LDA model summarizes these relationships:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4e8db5eb-6a61-4ea6-9223-43cffa093e01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Reverse-engineering the process
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The generative process is fictional but turns out to be useful because it permits
+    the recovery of the various distributions. The LDA algorithm reverse-engineers
+    the work of the imaginary author and arrives at a summary of the document-topic-word
+    relationships that concisely describes the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The percentage contribution of each topic to a document
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The probabilistic association of each word with a topic
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LDA solves the Bayesian inference problem of recovering the distributions from
+    the body of documents and the words they contain by reverse-engineering the assumed
+    content generation process. The original paper uses **variational Bayes** (**VB**)
+    to approximate the posterior distribution. Alternatives include Gibbs sampling
+    and expectation propagation. Later, we will illustrate implementations using the
+    sklearn and gensim libraries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to evaluate LDA topics
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Unsupervised topic models do not provide a guarantee that the result will be
+    meaningful or interpretable, and there is no objective metric to assess the result
+    as in supervised learning. Human topic evaluation is considered the gold standard
+    but is potentially expensive and not readily available at scale.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Two options to evaluate results more objectively include perplexity, which evaluates
+    the model on unseen documents, and topic coherence metrics, which aim to evaluate
+    the semantic quality of the uncovered patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Perplexity
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Perplexity, when applied to LDA, measures how well the topic-word probability
+    distribution recovered by the model predicts a sample, for example, unseen text
+    documents. It is based on the entropy *H*(*p*) of this distribution *p* and computed
+    with respect to the set of tokens *w*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/16cbf178-55bd-47de-a8ac-120a74c5c3c0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Measures closer to zero imply the distribution is better at predicting the sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Topic coherence
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Topic coherence measures the semantic consistency of the topic model results,
+    that is, whether humans would perceive the words and their probabilities associated
+    with topics as meaningful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To this end, it scores each topic by measuring the degree of semantic similarity
+    between the words most relevant to the topic. More specifically, coherence measures
+    are based on the probability of observing the set of words *W* that define a topic
+    together.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We use two measures of coherence that have been designed for LDA and shown to
+    align with human judgment of topic quality, namely the UMass and the UCI measures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The UCI metric defines a word pair''s score to be the sum of the **Pointwise
+    Mutual Information** (**PMI**) between two distinct pairs of (top) topic words
+    *w[i]*, *w[j]* ∈ *w* and a smoothing factor *ε*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/f78a1a8b-6bca-421f-af56-c95b4da9ed1c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The probabilities are computed from word co-occurrence frequencies in a sliding
+    window over an external corpus such as Wikipedia, so that this metric can be thought
+    of as an external comparison to a semantic ground truth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In contrast, the UMass metric uses the co-occurrences in a number of documents
+    *D* from the training corpus to compute a coherence score:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4bedbe9e-42a9-4077-ade1-8045d9f952dd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Rather than a comparison to an extrinsic ground truth, this measure reflects
+    intrinsic coherence. Both measures have been evaluated to align well with human
+    judgment. In both cases, values closer to zero imply that a topic is more coherent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to implement LDA using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Using the BBC data as before, we use `sklearn.decomposition.LatentDirichletAllocation`
+    to train an LDA model with five topics (see the sklearn documentation for detail
+    on parameters, and the notebook `lda_with_sklearn` for implementation details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The model tracks the in-sample perplexity during training and stops iterating
+    once this measure stops improving. We can persist and load the result as usual
+    with sklearn objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: How to visualize LDA results using pyLDAvis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Topic visualization facilitates the evaluation of topic quality using human
+    judgment. pyLDAvis is a Python port of LDAvis, developed in R and `D3.js`. We
+    will introduce the key concepts; each LDA implementation notebook contains examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: pyLDAvis displays the global relationships between topics while also facilitating
+    their semantic evaluation by inspecting the terms most closely associated with
+    each topic and, inversely, the topics associated with each term. It also addresses
+    the challenge that terms that are frequent in a corpus tend to dominate the multinomial
+    distribution over words that define a topic. LDAVis introduces the relevance *r*
+    of the term *w* to topic *t*, to produce a flexible ranking of key terms using
+    a weight parameter *0<=ƛ<=1*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With ![](img/18742117-194f-4e46-b674-441e4a9fc60d.png) as the model''s probability
+    estimate of observing the term w for topic *t*, and as the marginal probability
+    of w in the corpus:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/81bc1770-6ae9-40a9-a3ca-e2b982fb5a6c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The first term measures the degree of association of term *t* with topic *w*,
+    and the second term measures the lift or saliency, that is, how much more likely
+    the term is for the topic than in the corpus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4be55e09-a229-4e9c-bb13-9fc5197a20ef.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Topic 14
+  prefs: []
+  type: TYPE_NORMAL
+- en: The tool allows the user to interactively change *ƛ* to adjust the relevance,
+    which updates the ranking of terms. User studies have found that *ƛ=0.6* produces
+    the most plausible results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to implement LDA using gensim
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '`gensim` is a specialized NLP library with a fast LDA implementation and many
+    additional features. We will also use it in the next chapter on word vectors (see
+    the `latent_dirichlet_allocation_gensim` notebook for details).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It facilitates the conversion of DTM produced by sklearn into gensim data structures
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Gensim LDA algorithm includes numerous settings, which are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Gensim also provides an `LdaMulticore` model for parallel training that may
+    speed up training using Python's multiprocessing features for parallel computation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Model training just requires instantiating the `LdaModel` object as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Topic coherence measures whether the words in a topic tend to co-occur together.
+    It adds up a score for each distinct pair of top-ranked words. The score is the
+    log of the probability that a document containing at least one instance of the
+    higher-ranked word also contains at least one instance of the lower-ranked word.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Large negative values indicate words that don''t co-occur often; values closer
+    to zero indicate that words tend to co-occur more often. `gensim` permits topic
+    coherence evaluation that produces the topic coherence and shows the most important
+    words per topic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can display the results as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This shows the following top words for each topic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Topic 1** |  | **Topic 2** |  | **Topic 3** |  | **Topic 4** |  | **Topic
+    5** |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Probability | Term | Probability | Term | Probability | Term | Probability
+    | Term | Probability | Term |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.55% | online | 0.90% | best | 1.04% | mobile | 0.64% | market | 0.94% |
+    labour |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.51% | site | 0.87% | game | 0.98% | phone | 0.53% | growth | 0.72% | blair
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.46% | game | 0.62% | play | 0.51% | music | 0.52% | sales | 0.72% | brown
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.45% | net | 0.61% | won | 0.48% | film | 0.49% | economy | 0.65% | election 
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0.44% | used | 0.56% | win | 0.48% | use | 0.45% | prices | 0.57% | united
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'And the corresponding coherence scores, which highlight the decay of topic
+    quality (at least in part due to the relatively small dataset):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/0605996a-535f-454f-89f1-03720b976200.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Decay of topic quality
+  prefs: []
+  type: TYPE_NORMAL
+- en: Topic modeling for earnings calls
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In [Chapter 3](a7cec22f-095e-49c0-a2bb-e179f6e824a8.xhtml), *Alternative Data
+    for Finance*, we learned how to scrape earnings call data from the SeekingAlpha
+    site. In this section, we will illustrate topic modeling using this source. I'm
+    using a sample of some 500 earnings call transcripts from the second half of 2018\.
+    For a practical application, a larger dataset would be highly desirable. The `earnings_calls` directory contains
+    several files, with examples mentioned later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the `lda_earnings_calls` notebook for details on loading, exploring, and
+    preprocessing the data, as well as training and evaluating individual models,
+    and the `run_experiments.py` file for the experiments described here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data preprocessing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The transcripts consist of individual statements by a company representative,
+    an operator, and usually a question and answer session with analysts. We will
+    treat each of these statements as separate documents, ignoring operator statements,
+    to obtain 22,766 items with mean and median word counts of 144 and 64, respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: We use `spaCy` to preprocess these documents as illustrated in [Chapter 13](461c4d2b-9349-4b77-baf9-7b4e60926c93.xhtml), *Working
+    with Text Data* (see the notebook) and store the cleaned and lemmatized text as
+    a new text file.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data exploration reveals domain-specific stopwords such as year and quarter
+    that we remove in a second step, where we also filter out statements with fewer
+    than ten words so that some 16,150 remain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model training and evaluation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: For illustration, we will create a document-term matrix containing terms appearing
+    in between 0.5% and 50% of documents for around 1,560 features. Training a 15-topic
+    model using 25 passes over the corpus takes a bit over two minutes on a four-core
+    i7.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The top 10 words per topic identify several distinct themes that range from
+    obvious financial information to clinical trials (topic 4) and supply chain issues
+    (12):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/150ee53e-4193-4353-904e-90552426dbaf.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Using pyLDAvis'' relevance metric with a 0.6 weighting of unconditional frequency
+    relative to lift, topic definitions become more intuitive, as illustrated for
+    topic 14 about sales performance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/464ea186-b942-464d-ab11-682ac5225cd4.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Sales performance for Topic 14
+  prefs: []
+  type: TYPE_NORMAL
+- en: The notebook also illustrates how to look up documents by their topic association.
+    In this case, an analyst can review relevant statements for nuances, use sentiment
+    analysis to further process the topic-specific text data, or assign labels derived
+    from market prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running experiments
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: To illustrate the impact of different parameter settings, we ran a few hundred
+    experiments for different DTM constraints and model parameters. More specifically,
+    we let the `min_df` and `max_df` parameters range from 50-500 words and 10% to
+    100% of documents, respectively using alternatively binary and absolute counts.
+    We then trained LDA models with 3 to 50 topics, using 1 and 25 passes over the
+    corpus.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following chart illustrates the results in terms of topic coherence (higher
+    is better), and perplexity (lower is better). Coherence drops after 25-30 topics
+    and perplexity similarly increases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/87e28cac-ffb8-4e2e-8401-a0b466fe4841.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The notebook includes regression results that quantify the relationships between
+    parameters and outcomes. We generally get better results using absolute counts
+    and a smaller vocabulary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Topic modeling for Yelp business reviews
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The `lda_yelp_reviews` notebook contains an example of LDA applied to six million
+    business review on Yelp. Reviews are more uniform in length than the statements
+    extracted from the earnings call transcripts. After cleaning as before, the 10^(th)
+    and 90^(th) percentiles range from 14 to 90 tokens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We show results for one model using a vocabulary of 3,800 tokens based on *min_df=0.1%*
+    and *max_df=25%* with a single pass to avoid a lengthy training time for 20 topics.
+    We can use the `pyldavis topic_info` attribute to compute relevance values for
+    *lambda=0.6* that produce the following word list (see the notebook for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/47ff32ac-676d-40bf-84e2-e429dff10d9b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Gensim provides a `LdaMultiCore` implementation that allows for parallel training
+    using Python's multiprocessing module and improves performance by 50% when using
+    four workers. More workers do not further reduce training time though, due to
+    I/O bottlenecks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we explored the use of topic modeling to gain insights into
+    the content of a large collection of documents. We covered Latent Semantic Analysis,
+    which uses dimensionality reduction of the DTM to project documents into a latent
+    topic space. While effective in addressing the curse of dimensionality caused
+    by high-dimensional word vectors, it does not capture much semantic information.
+    Probabilistic models make explicit assumptions about the interplay of documents,
+    topics, and words that allow algorithms to reverse engineer the document generation
+    process and evaluate the model fit on new documents. We saw that LDA is capable
+    of extracting plausible topics that allow us to gain a high-level understanding
+    of large amounts of text in an automated way, while also identifying relevant
+    documents in a targeted way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will learn how to train neural networks that embed individual
+    words in a high-dimensional vector space that captures important semantic information
+    and allows us to use the resulting word vectors as high-quality text features.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1457 @@
+- en: Gradient Boosting Machines
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the previous chapter, we learned about how random forests improve the predictions
+    made by individual decision trees by combining them into an ensemble that reduces
+    the high variance of individual trees. Random forests use bagging, which is short
+    for bootstrap aggregation, to introduce random elements into the process of growing
+    individual trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More specifically, bagging draws samples from the data with replacement so that
+    each tree is trained on a different but equal-sized random subset of the data
+    (with some observations repeating). Random forests also randomly select a subset
+    of the features so that both the rows and the columns of the data that are used
+    to train each tree are random versions of the original data. The ensemble then
+    generates predictions by averaging over the outputs of the individual trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Individual trees are usually grown deep to ensure low bias while relying on
+    the randomized training process to produce different, uncorrelated prediction
+    errors that have a lower variance when aggregated than individual tree predictions.
+    In other words, the randomized training aims to decorrelate or diversify the errors
+    made by the individual trees so that the ensemble is much less susceptible to
+    overfitting, has lower variance, and generalizes better to new data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we will explore boosting, an alternative **machine learning**
+    (**ML**) algorithm for ensembles of decision trees that often produces even better
+    results. The key difference is that boosting modifies the data that is used to
+    train each tree based on the cumulative errors made by the model before adding
+    the new tree. In contrast to random forests which train many trees independently
+    from each other using different versions of the training set, boosting proceeds
+    sequentially using reweighted versions of the data. State-of-the-art boosting
+    implementations also adopt the randomization strategies of random forests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will see how boosting has evolved into one of the most
+    successful ML algorithms over the last three decades. At the time of writing,
+    it has come to dominate machine learning competitions for structured data (as
+    opposed to high-dimensional images or speech, for example, where the relationship
+    between the input and output is more complex, and deep learning excels at). More
+    specifically, in this chapter we will cover the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How boosting works, and how it compares to bagging
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How boosting has evolved from adaptive to gradient boosting
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use and tune AdaBoost and gradient boosting models with sklearn
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How state-of-the-art GBM implementations dramatically speed up computation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to prevent overfitting of gradient boosting models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to build, tune, and evaluate gradient boosting models on large datasets
+    using `xgboost`, `lightgbm`, and `catboost`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to interpret and gain insights from gradient boosting models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adaptive boosting
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Like bagging, boosting is an ensemble learning algorithm that combines base
+    learners (typically decision trees) into an ensemble. Boosting was initially developed
+    for classification problems, but can also be used for regression, and has been
+    called one of the most potent learning ideas introduced in the last 20 years (as
+    described in *Elements of Statistical Learning* by Trevor Hastie, et al.; see
+    GitHub for links to references). Like bagging, it is a general method or metamethod
+    that can be applied to many statistical learning models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The motivation for the development of boosting was to find a method to combine
+    the outputs of many *weak* models (a predictor is called weak when it performs
+    just slightly better than random guessing) into a more powerful, that is, boosted
+    joint prediction. In general, boosting learns an additive hypothesis, *H[M]*, of
+    a form similar to linear regression. However, now each of the *m= 1,..., M* elements
+    of the summation is a weak base learner, called *h[t]* that itself requires training. The
+    following formula summarizes the approach:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/0751f227-28f7-43f7-a472-99acd461c675.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: As discussed in the last chapter, bagging trains base learners on different
+    random samples of the training data. Boosting, in contrast, proceeds sequentially
+    by training the base learners on data that is repeatedly modified to reflect the
+    cumulative learning results. The goal is to ensure that the next base learner
+    compensates for the shortcomings of the current ensemble. We will see in this
+    chapter that boosting algorithms differ in how they define shortcomings. The ensemble
+    makes predictions using a weighted average of the predictions of the weak models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first boosting algorithm that came with a mathematical proof that it enhances
+    the performance of weak learners was developed by Robert Schapire and Yoav Freund
+    around 1990\. In 1997, a practical solution for classification problems emerged
+    in the form of the **adaptive boosting** (**AdaBoost**) algorithm, which won the
+    Göedel Prize in 2003\. About another five years later, this algorithm was extended
+    to arbitrary objective functions when Leo Breiman (who invented random forests)
+    connected the approach to gradient descent, and Jerome Friedman came up with gradient
+    boosting in 1999\. Numerous optimized implementations, such as XGBoost, LightGBM,
+    and CatBoost, have emerged in recent years and firmly established gradient boosting
+    as the go-to solution for structured data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following sections, we will briefly introduce AdaBoost and then focus
+    on the gradient boosting model, as well as several state-of-the-art implementations
+    of this very powerful and flexible algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The AdaBoost algorithm
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: AdaBoost was the first boosting algorithm to iteratively adapt to the cumulative
+    learning progress when fitting an additional ensemble member. In particular, AdaBoost changed
+    the weights on the training data to reflect the cumulative errors of the current
+    ensemble on the training set before fitting a new weak learner. AdaBoost was the
+    most accurate classification algorithm at the time, and Leo Breiman referred to
+    it as the best off-the-shelf classifier in the world at the 1996 NIPS conference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm had a very significant impact on ML because it provided theoretical
+    performance guarantees. These guarantees only require sufficient data and a weak
+    learner that reliably predicts just better than a random guess. As a result of
+    this adaptive method that learns in stages, the development of an accurate ML
+    model no longer required accurate performance over the entire feature space. Instead,
+    the design of a model could focus on finding weak learners that just outperformed
+    a coin flip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: AdaBoost is a significant departure from bagging, which builds ensembles on
+    very deep trees to reduce bias. AdaBoost, in contrast, grows shallow trees as
+    weak learners, often producing superior accuracy with stumps—that is, trees formed
+    by a single split. The algorithm starts with an equal-weighted training set and
+    then successively alters the sample distribution. After each iteration, AdaBoost
+    increases the weights of incorrectly classified observations and reduces the weights
+    of correctly predicted samples so that subsequent weak learners focus more on
+    particularly difficult cases. Once trained, the new decision tree is incorporated
+    into the ensemble with a weight that reflects its contribution to reducing the
+    training error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The AdaBoost algorithm for an ensemble of base learners, *h[m](x)*, *m=1, ...,
+    M*, that predict discrete classes, *y ∈ [-1, 1]*, and *N* training observations
+    can be summarized as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Initialize sample weights *w[i]=1/N* for observations *i=1, ..., N*.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'For each base classifier *h[m]*, *m=1, ..., M*, do the following:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Fit *h[m](x)* to the training data, weighted by *w[i]*.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the base learner's weighted error rate *ε*[*m* ]on the training set.
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Compute the base learner''s ensemble weight *α[m]* as a function of its error
+    rate, as shown in the following formula:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![](img/89d3eb5e-ac52-4d92-8d82-131a361a9c52.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Update the weights for misclassified samples according to *w[i ]* exp(α[m]**)*.
+  prefs:
+  - PREF_OL
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Predict the positive class when the weighted sum of the ensemble members is
+    positive, and negative otherwise, as shown in the following formula:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![](img/0f542da7-c4a9-4ad8-8fe4-fa5c75c14c8b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: AdaBoost has many practical advantages, including ease of implementation and
+    fast computation, and it can be combined with any method for identifying weak
+    learners. Apart from the size of the ensemble, there are no hyperparameters that
+    require tuning. AdaBoost is also useful for identifying outliers because the samples
+    that receive the highest weights are those that are consistently misclassified
+    and inherently ambiguous, which is also typical for outliers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, the performance of AdaBoost on a given dataset depends on
+    the ability of the weak learner to adequately capture the relationship between
+    features and outcome. As the theory suggests, boosting will not perform well when
+    there is insufficient data, or when the complexity of the ensemble members is
+    not a good match for the complexity of the data. It can also be susceptible to
+    noise in the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: AdaBoost with sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: As part of its ensemble module, sklearn provides an `AdaBoostClassifier` implementation
+    that supports two or more classes. The code examples for this section are in the
+    notebook `gbm_baseline` that compares the performance of various algorithms with
+    a dummy classifier that always predicts the most frequent class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We need to first define a `base_estimator` as a template for all ensemble members
+    and then configure the ensemble itself. We''ll use the default `DecisionTreeClassifier`
+    with `max_depth=1`—that is, a stump with a single split. The complexity of the
+    `base_estimator` is a key tuning parameter because it depends on the nature of
+    the data. As demonstrated in the previous chapter, changes to `max_depth` should
+    be combined with appropriate regularization constraints using adjustments to,
+    for example, `min_samples_split`, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the second step, we''ll design the ensemble. The `n_estimators` parameter controls
+    the number of weak learners and the `learning_rate` determines the contribution
+    of each weak learner, as shown in the following code. By default, weak learners
+    are decision tree stumps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The main tuning parameters that are responsible for good results are `n_estimators` and
+    the base estimator complexity because the depth of the tree controls the extent
+    of the interaction among the features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will cross-validate the AdaBoost ensemble using a custom 12-fold rolling
+    time-series split to predict 1 month ahead for the last 12 months in the sample,
+    using all available prior data for training, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result shows a weighted test accuracy of 0.62, a test AUC of 0.6665, and
+    a negative log loss of -0.6923, as well as a test F1 score of 0.5876, as shown
+    in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/7dfaa5e9-0dc5-446d-a654-d5beadb37d9a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: See the companion notebook for additional details on the code to cross-validate
+    and process the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gradient boosting machines
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'AdaBoost can also be interpreted as a stagewise forward approach to minimizing
+    an exponential loss function for a binary *y* ∈ [-1, 1] at each iteration *m*
+    to identify a new base learner *h[m]* with the corresponding weight *α[m]* to
+    be added to the ensemble, as shown in the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/48da6fef-cff2-47f5-9f7a-209a9d29cf19.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This interpretation of the AdaBoost algorithm was only discovered several years
+    after its publication. It views AdaBoost as a coordinate-based gradient descent
+    algorithm that minimizes a particular loss function, namely exponential loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gradient boosting leverages this insight and applies the boosting method to
+    a much wider range of loss functions. The method enables the design of machine
+    learning algorithms to solve any regression, classification, or ranking problem
+    as long as it can be formulated using a loss function that is differentiable and
+    thus has a gradient. The flexibility to customize this general method to many
+    specific prediction tasks is essential to boosting's popularity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main idea behind the resulting **Gradient Boosting Machines** (**GBM**)
+    algorithm is the training of the base learners to learn the negative gradient
+    of the current loss function of the ensemble. As a result, each addition to the
+    ensemble directly contributes to reducing the overall training error given the
+    errors made by prior ensemble members. Since each new member represents a new
+    function of the data, gradient boosting is also said to optimize over the functions
+    *h[m]* in an additive fashion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In short, the algorithm successively fits weak learners *h[m]*, such as decision
+    trees, to the negative gradient of the loss function that is evaluated for the
+    current ensemble, as shown in the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/43567de6-058e-4ab5-bc86-ba51981362d9.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: In other words, at a given iteration *m*, the algorithm computes the gradient
+    of the current loss for each observation and then fits a regression tree to these
+    pseudo-residuals. In a second step, it identifies an optimal constant prediction
+    for each terminal node that minimizes the incremental loss that results from adding
+    this new learner to the ensemble.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This differs from standalone decision trees and random forests, where the prediction
+    depends on the outcome values of the training samples present in the relevant
+    terminal or leaf node: their average, in the case of regression, or the frequency
+    of the positive class for binary classification. The focus on the gradient of
+    the loss function also implies that gradient boosting uses regression trees to
+    learn both regression and classification rules since the gradient is always a
+    continuous function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The final ensemble model makes predictions based on the weighted sum of the
+    predictions of the individual decision trees, each of which has been trained to
+    minimize the ensemble loss given the prior prediction for a given set of feature
+    values, as shown in the following diagram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/9aff1b85-dd69-4c79-bf6c-f453a808db13.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Gradient boosting trees have demonstrated state-of-the-art performance on many
+    classification, regression, and ranking benchmarks. They are probably the most
+    popular ensemble learning algorithm both as a standalone predictor in a diverse
+    set of machine learning competitions, as well as in real-world production pipelines,
+    for example, to predict click-through rates for online ads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The success of gradient boosting is based on its ability to learn complex functional
+    relationships in an incremental fashion. The flexibility of this algorithm requires
+    the careful management of the risk of overfitting by tuning hyperparameters that
+    constrain the model's inherent tendency to learn noise as opposed to the signal
+    in the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will introduce the key mechanisms to control the complexity of a gradient
+    boosting tree model, and then illustrate model tuning using the sklearn implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to train and tune GBM models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The two key drivers of gradient boosting performance are the size of the ensemble
+    and the complexity of its constituent decision trees.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The control of complexity for decision trees aims to avoid learning highly
+    specific rules that typically imply a very small number of samples in leaf nodes.
+    We covered the most effective constraints used to limit the ability of a decision
+    tree to overfit to the training data in the previous chapter. They include requiring:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A minimum number of samples to either split a node or accept it as a terminal
+    node, or
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A minimum improvement in node quality as measured by the purity or entropy or
+    mean square error, in the case of regression.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In addition to directly controlling the size of the ensemble, there are various
+    regularization techniques, such as shrinkage, that we encountered in the context
+    of the Ridge and Lasso linear regression models in [Chapter 7](0cf85bb4-8b3f-4f83-b004-f980f348028b.xhtml),
+    *Linear Models*. Furthermore, the randomization techniques used in the context
+    of random forests are also commonly applied to gradient boosting machines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ensemble size and early stopping
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Each boosting iteration aims to reduce the training loss so that for a large
+    ensemble, the training error can potentially become very small, increasing the
+    risk of overfitting and poor performance on unseen data. Cross-validation is the
+    best approach to find the optimal ensemble size that minimizes the generalization
+    error because it depends on the application and the available data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the ensemble size needs to be specified before training, it is useful
+    to monitor the performance on the validation set and abort the training process
+    when, for a given number of iterations, the validation error no longer decreases.
+    This technique is called early stopping and frequently used for models that require
+    a large number of iterations and are prone to overfitting, including deep neural
+    networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Keep in mind that using early stopping with the same validation set for a large
+    number of trials will also lead to overfitting, just to the particular validation
+    set rather than the training set. It is best to avoid running a large number of
+    experiments when developing a trading strategy as the risk of false discoveries
+    increases significantly. In any case, keep a hold-out set to obtain an unbiased
+    estimate of the generalization error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Shrinkage and learning rate
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Shrinkage techniques apply a penalty for increased model complexity to the model's
+    loss function. For boosting ensembles, shrinkage can be applied by scaling the
+    contribution of each new ensemble member down by a factor between 0 and 1\. This
+    factor is called the learning rate of the boosting ensemble. Reducing the learning
+    rate increases shrinkage because it lowers the contribution of each new decision
+    tree to the ensemble.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The learning rate has the opposite effect of the ensemble size, which tends
+    to increase for lower learning rates. Lower learning rates coupled with larger
+    ensembles have been found to reduce the test error, in particular for regression
+    and probability estimation. Large numbers of iterations are computationally more
+    expensive but often feasible with fast state-of-the-art implementations as long
+    as the individual trees remain shallow. Depending on the implementation, you can
+    also use adaptive learning rates that adjust to the number of iterations, typically
+    lowering the impact of trees added later in the process. We will see some examples
+    later in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Subsampling and stochastic gradient boosting
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: As discussed in detail in the previous chapter, bootstrap averaging (bagging)
+    improves the performance of an otherwise noisy classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stochastic gradient boosting uses sampling without replacement at each iteration to
+    grow the next tree on a subset of the training samples. The benefit is both lower
+    computational effort and often better accuracy, but subsampling should be combined
+    with shrinkage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, the number of hyperparameters keeps increasing, driving up the
+    number of potential combinations, which in turn increases the risk of false positives
+    when choosing the best model from a large number of parameter trials on a limited
+    amount of training data. The best approach is to proceed sequentially and select
+    parameter values individually or using combinations of subsets of low cardinality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use gradient boosting with sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The ensemble module of sklearn contains an implementation of gradient boosting
+    trees for regression and classification, both binary and multiclass. The following `GradientBoostingClassifier`
+    initialization code illustrates the key tuning parameters that we previously introduced,
+    in addition to those that we are familiar with from looking at standalone decision
+    tree models. The notebook `gbm_tuning_with_sklearn` contains the code examples
+    for this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The available loss functions include the exponential loss that leads to the
+    AdaBoost algorithm and the deviance that corresponds to the logistic regression
+    for probabilistic outputs. The `friedman_mse` node quality measure is a variation
+    on the mean squared error that includes an improvement score (see GitHub references
+    for links to original papers), as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Similar to `AdaBoostClassifier`, this model cannot handle missing values. We''ll
+    again use 12-fold cross-validation to obtain errors for classifying the directional
+    return for rolling 1 month holding periods, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will parse and plot the result to find a slight improvement—using default
+    parameter values—over the `AdaBoostClassifier`, as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/16b1fe7c-5a2c-44be-a37b-583e0b0d7afc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: How to tune parameters with GridSearchCV
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The `GridSearchCV` class in the `model_selection` module facilitates the systematic
+    evaluation of all combinations of the hyperparameter values that we would like
+    to test. In the following code, we will illustrate this functionality for seven
+    tuning parameters that when defined will result in a total of 2⁴ x 3² x 4 = 576
+    different model configurations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `.fit()` method executes the cross-validation using the custom `OneStepTimeSeriesSplit`
+    and the `roc_auc` score to evaluate the 12-folds. Sklearn lets us persist the
+    result as it would for any other model using the `joblib` pickle implementation,
+    as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `GridSearchCV` object has several additional attributes after completion
+    that we can access after loading the pickled result to learn which hyperparameter
+    combination performed best and its average cross-validation AUC score, which results
+    in a modest improvement over the default values. This is shown in the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Parameter impact on test scores
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The `GridSearchCV` result stores the average cross-validation scores so that
+    we can analyze how different hyperparameter settings affect the outcome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The six `seaborn` swarm plots in the left-hand panel of the below chart show
+    the distribution of AUC test scores for all parameter values. In this case, the
+    highest AUC  test scores required a low `learning_rate` and a large value for `max_features`.
+    Some parameter settings, such as a low `learning_rate`, produce a wide range of
+    outcomes that depend on the complementary settings of other parameters. Other
+    parameters are compatible with high scores for all settings use in the experiment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/b4cbf385-72cf-4ce4-a880-4cfc240163d7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We will now explore how hyperparameter settings jointly affect the mean cross-validation
+    score. To gain insight into how parameter settings interact, we can train a `DecisionTreeRegressor`
+    with the mean test score as the outcome and the parameter settings, encoded as categorical
+    variables in one-hot or dummy format (see the notebook for details). The tree
+    structure highlights that using all features (`max_features_1`), a low `learning_rate`,
+    and a `max_depth` over three led to the best results, as shown in the following
+    diagram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/99276663-6052-4441-b59a-39f01f1bc6fe.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The bar chart in the right-hand panel of the first chart in this section displays
+    the influence of the hyperparameter settings in producing different outcomes,
+    measured by their feature importance for a decision tree that is grown to its
+    maximum depth. Naturally, the features that appear near the top of the tree also
+    accumulate the highest importance scores.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to test on the holdout set
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Finally, we would like to evaluate the best model''s performance on the holdout
+    set that we excluded from the `GridSearchCV` exercise. It contains the last six
+    months of the sample period (through February 2018; see the notebook for details).
+    We obtain a generalization performance estimate based on the AUC score of `0.6622`
+    using the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The downside of the sklearn gradient boosting implementation is the limited
+    speed of computation which makes it difficult to try out different hyperparameter
+    settings quickly. In the next section, we will see that several optimized implementations
+    have emerged over the last few years that significantly reduce the time required
+    to train even large-scale models, and have greatly contributed to a broader scope
+    for applications of this highly effective algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fast scalable GBM implementations
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Over the last few years, several new gradient boosting implementations have
+    used various innovations that accelerate training, improve resource efficiency,
+    and allow the algorithm to scale to very large datasets. The new implementations
+    and their sources are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: XGBoost (extreme gradient boosting), started in 2014 by Tianqi Chen at the University
+    of Washington
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: LightGBM, first released in January 2017, by Microsoft
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: CatBoost, first released in April 2017 by Yandex
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'These innovations address specific challenges of training a gradient boosting
+    model (see this chapter''s `README` on GitHub for detailed references). The XGBoost implementation
+    was the first new implementation to gain popularity: among the 29 winning solutions
+    published by Kaggle in 2015, 17 solutions used XGBoost. Eight of these solely
+    relied on XGBoost, while the others combined XGBoost with neural networks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will first introduce the key innovations that have emerged over time and
+    subsequently converged (so that most features are available for all implementations)
+    before illustrating their implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How algorithmic innovations drive performance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Random forests can be trained in parallel by growing individual trees on independent
+    bootstrap samples. In contrast, the sequential approach of gradient boosting slows
+    down training, which in turn complicates experimentation with a large number of
+    hyperparameters that need to be adapted to the nature of the task and the dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To expand the ensemble by a tree, the training algorithm incrementally minimizes
+    the prediction error with respect to the negative gradient of the ensemble's loss
+    function, similar to a conventional gradient descent optimizer. Hence, the computational
+    cost during training is proportional to the time it takes to evaluate the impact
+    of potential split points for each feature on the decision tree's fit to the current
+    gradient.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Second-order loss function approximation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The most important algorithmic innovations lower the cost of evaluating the
+    loss function by using approximations that rely on second-order derivatives, resembling
+    Newton's method to find stationary points. As a result, scoring potential splits
+    during greedy tree expansion is faster relative to using the full loss function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As mentioned previously, a gradient boosting model is trained in an incremental
+    manner with the goal of minimizing the combination of the prediction error and
+    the regularization penalty for the ensemble *H[M]*.Denoting the prediction of
+    the outcome *y[i]* by the ensemble after step *m* as *ŷ[i]*^((*m*)), *l* as a
+    differentiable convex loss function that measures the difference between the outcome
+    and the prediction, and Ω as a penalty that increases with the complexity of the
+    ensemble *H[M]*, the incremental hypothesis *h[m]* aims to minimize the following
+    objective:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/2b510aee-4afd-43d9-b3c0-420662cbd92a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The regularization penalty helps to avoid overfitting by favoring the selection
+    of a model that uses simple and predictive regression trees. In the case of XGBoost,
+    for example, the penalty for a regression tree *h* depends on the number of leaves
+    per tree *T*, the regression tree scores for each terminal node *w*, and the hyperparameters γ
+    and λ. This is summarized in the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/0958570b-42a4-4892-be18-ebd5d1fcf297.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Therefore, at each step, the algorithm greedily adds the hypothesis *h[m]*
+    that most improves the regularized objective. The second-order approximation of
+    a loss function, based on a Taylor expansion, speeds up the evaluation of the
+    objective, as summarized in the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d2814899-392e-4acd-8f31-afb6ab63148c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *g[i]* is the first-order gradient of the loss function before adding
+    the new learner for a given feature value, and *h[i] *is the corresponding second-order
+    gradient (or Hessian) value, as shown in the following formulas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/9171f3bb-111d-4e63-8a3e-ff9390df102d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The XGBoost algorithm was the first open-source algorithm to leverage this approximation
+    of the loss function to compute the optimal leave scores for a given tree structure
+    and the corresponding value of the loss function. The score consists of the ratio
+    of the sums of the gradient and Hessian for the samples in a terminal node. It
+    uses this value to score the information gain that would result from a split,
+    similar to the node impurity measures we saw in the previous chapter, but applicable
+    to arbitrary loss functions (see the references on GitHub for the detailed derivation).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simplified split-finding algorithms
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The gradient boosting implementation by sklearn finds the optimal split that
+    enumerates all options for continuous features. This precise greedy algorithm
+    is computationally very demanding because it must first sort the data by feature
+    values before scoring the potentially very large number of split options and making
+    a decision. This approach faces challenges when the data does not fit in memory
+    or when training in a distributed setting on multiple machines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An approximate split-finding algorithm reduces the number of split points by
+    assigning feature values to a user-determined set of bins, which can also greatly
+    reduce the memory requirements during training because only a single split needs
+    to be stored for each bin. XGBoost introduced a quantile sketch algorithm that
+    was also able to divide weighted training samples into percentile bins to achieve
+    a uniform distribution. XGBoost also introduced the ability to handle sparse data
+    caused by missing values, frequent zero-gradient statistics, and one-hot encoding,
+    and can also learn an optimal default direction for a given split. As a result,
+    the algorithm only needs to evaluate non-missing values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast, LightGBM uses **gradient-based one-side sampling** (**GOSS**) to
+    exclude a significant proportion of samples with small gradients, and only uses
+    the remainder to estimate the information gain and select a split value accordingly.
+    Samples with larger gradients require more training and tend to contribute more
+    to the information gain. LightGBM also uses exclusive feature bundling to combine features
+    that are mutually exclusive, in that they rarely take nonzero values simultaneously,
+    to reduce the number of features. As a result, LightGBM was the fastest implementation
+    when released.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Depth-wise versus leaf-wise growth
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'LightGBM differs from XGBoost and CatBoost in how it prioritizes which nodes
+    to split. LightGBM decides on splits leaf-wise, i.e., it splits the leaf node
+    that maximizes the information gain, even when this leads to unbalanced trees.
+    In contrast, XGBoost and CatBoost expand all nodes depth-wise and first split
+    all nodes at a given depth before adding more levels. The two approaches expand
+    nodes in a different order and will produce different results except for complete
+    trees. The following diagram illustrates the two approaches:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/f953b310-1ecc-45cd-9804-0b76aeaae036.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: LightGBM's leaf-wise splits tend to increase model complexity and may speed
+    up convergence, but also increase the risk of overfitting. A tree grown depth-wise
+    with *n* levels has up to *2*^(*n* )terminal nodes, whereas a leaf-wise tree with *2^n* leaves
+    can have significantly more levels and contain correspondingly fewer samples in
+    some leaves. Hence, tuning LightGBM's `num_leaves` setting requires extra caution,
+    and the library allows us to control `max_depth` at the same time to avoid undue
+    node imbalance. More recent versions of LightGBM also offer depth-wise tree growth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GPU-based training
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: All new implementations support training and prediction on one or more GPUs
+    to achieve significant speedups. They are compatible with current CUDA-enabled
+    GPUs. Installation requirements vary and are evolving quickly. The XGBoost and
+    CatBoost implementations work for several current versions, but LightGBM may require
+    local compilation (see GitHub for links to the relevant documentation).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The speedups depend on the library and the type of the data, and range from
+    low, single-digit multiples to factors of several dozen. Activation of the GPU
+    only requires the change of a task parameter and no other hyperparameter modifications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: DART – dropout for trees
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In 2015, Rashmi and Gilad-Bachrach proposed a new model to train gradient boosting
+    trees that aimed to address a problem they labeled over-specialization: trees
+    added during later iterations tend only to affect the prediction of a few instances
+    while making a minor contribution regarding the remaining instances. However,
+    the model's out-of-sample performance can suffer, and it may become over-sensitive
+    to the contributions of a small number of trees added earlier in the process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The new algorithms employ dropouts which have been successfully used for learning
+    more accurate deep neural networks where dropouts mute a random fraction of the
+    neural connections during the learning process. As a result, nodes in higher layers
+    cannot rely on a few connections to pass the information needed for the prediction.
+    This method has made a significant contribution to the success of deep neural
+    networks for many tasks and has also been used with other learning techniques,
+    such as logistic regression, to mute a random share of the features. Random forests
+    and stochastic gradient boosting also drop out a random subset of features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: DART operates at the level of trees and mutes complete trees as opposed to individual
+    features. The goal is for trees in the ensemble generated using DART to contribute
+    more evenly towards the final prediction. In some cases, this has been shown to
+    produce more accurate predictions for ranking, regression, and classification
+    tasks. The approach was first implemented in LightGBM and is also available for
+    XGBoost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Treatment of categorical features
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The CatBoost and LightGBM implementations handle categorical variables directly
+    without the need for dummy encoding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The CatBoost implementation (which is named for its treatment of categorical
+    features) includes several options to handle such features, in addition to automatic
+    one-hot encoding, and assigns either the categories of individual features or
+    combinations of categories for several features to numerical values. In other
+    words, CatBoost can create new categorical features from combinations of existing
+    features. The numerical values associated with the category levels of individual
+    features or combinations of features depend on their relationship with the outcome
+    value. In the classification case, this is related to the probability of observing
+    the positive class, computed cumulatively over the sample, based on a prior, and
+    with a smoothing factor. See the documentation for more detailed numerical examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The LightGBM implementation groups the levels of the categorical features to
+    maximize homogeneity (or minimize variance) within groups with respect to the
+    outcome values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The XGBoost implementation does not handle categorical features directly and
+    requires one-hot (or dummy) encoding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additional features and optimizations
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: XGBoost optimized computation in several respects to enable multithreading by
+    keeping data in memory in compressed column blocks, where each column is sorted
+    by the corresponding feature value. XGBoost computes this input data layout once
+    before training and reuses it throughout to amortize the additional up-front cost.
+    The search for split statistics over columns becomes a linear scan when using
+    quantiles that can be done in parallel with easy support for column subsampling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The subsequently released LightGBM and CatBoost libraries built on these innovations,
+    and LightGBM further accelerated training through optimized threading and reduced
+    memory usage. Because of their open source nature, libraries have tended to converge
+    over time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: XGBoost also supports monotonicity constraints. These constraints ensure that
+    the values for a given feature are only positively or negatively related to the
+    outcome over its entire range. They are useful to incorporate external assumptions
+    about the model that are known to be true.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use XGBoost, LightGBM, and CatBoost
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: XGBoost, LightGBM, and CatBoost offer interfaces for multiple languages, including
+    Python, and have both a sklearn interface that is compatible with other sklearn
+    features, such as `GridSearchCV` and their own methods to train and predict gradient
+    boosting models. The `gbm_baseline.ipynb` notebook illustrates the use of the
+    sklearn interface for each implementation. The library methods are often better
+    documented and are also easy to use, so we'll use them to illustrate the use of
+    these models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The process entails the creation of library-specific data formats, the tuning
+    of various hyperparameters, and the evaluation of results that we will describe
+    in the following sections. The accompanying notebook contains the `gbm_tuning.py`,
+    `gbm_utils.py` and, `gbm_params.py` files that jointly provide the following functionalities and
+    have produced the corresponding results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to create binary data formats
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: All libraries have their own data format to precompute feature statistics to
+    accelerate the search for split points, as described previously. These can also
+    be persisted to accelerate the start of subsequent training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code constructs binary train and validation datasets for each
+    model to be used with the `OneStepTimeSeriesSplit`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The available options vary slightly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`xgboost` allows the use of all available threads'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`lightgbm` explicitly aligns the quantiles that are created for the validation
+    set with the training set'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `catboost` implementation needs feature columns identified using indices
+    rather than labels
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to tune hyperparameters
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The numerous hyperparameters are listed in `gbm_params.py`. Each library has
+    parameter settings to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Specify the overall objectives and learning algorithm
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Design the base learners
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Apply various regularization techniques
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Handle early stopping during training
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enabling the use of GPU or parallelization on CPU
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The documentation for each library details the various parameters that may refer
+    to the same concept, but which have different names across libraries. The GitHub
+    repository contains links to a site that highlights the corresponding parameters
+    for `xgboost` and `lightgbm`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Objectives and loss functions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The libraries support several boosting algorithms, including gradient boosting
+    for trees and linear base learners, as well as DART for LightGBM and XGBoost.
+    LightGBM also supports the GOSS algorithm which we described previously, as well
+    as random forests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The appeal of gradient boosting consists of the efficient support of arbitrary
+    differentiable loss functions and each library offers various options for regression,
+    classification, and ranking tasks. In addition to the chosen loss function, additional
+    evaluation metrics can be used to monitor performance during training and cross-validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning parameters
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Gradient boosting models typically use decision trees to capture feature interaction,
+    and the size of individual trees is the most important tuning parameter. XGBoost
+    and CatBoost set the `max_depth` default to 6\. In contrast, LightGBM uses a default
+    `num_leaves` value of 31, which corresponds to five levels for a balanced tree,
+    but imposes no constraints on the number of levels. To avoid overfitting, `num_leaves`
+    should be lower than *2^(max_depth)*. For example, for a well-performing `max_depth`
+    value of 7, you would set `num_leaves` to 70–80 rather than 2⁷=128, or directly
+    constrain `max_depth`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of trees or boosting iterations defines the overall size of the ensemble.
+    All libraries support `early_stopping` to abort training once the loss functions
+    register no further improvements during a given number of iterations. As a result,
+    it is usually best to set a large number of iterations and stop training based
+    on the predictive performance on a validation set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regularization
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: All libraries implement the regularization strategies for base learners, such
+    as minimum values for the number of samples or the minimum information gain required
+    for splits and leaf nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: They also support regularization at the ensemble level using shrinkage via a
+    learning rate that constrains the contribution of new trees. It is also possible
+    to implement an adaptive learning rate via callback functions that lower the learning
+    rate as the training progresses, as has been successfully used in the context
+    of neural networks. Furthermore, the gradient boosting loss function can be regularized
+    using *L1* or *L2*, regularization similar to the Ridge and Lasso linear regression
+    models by modifying Ω(*h[m]*) or by increasing the penalty γ for adding more trees, as
+    described previously.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The libraries also allow for the use of bagging or column subsampling to randomize
+    tree growth for random forests and decorrelate prediction errors to reduce overall
+    variance. The quantization of features for approximate split finding adds larger
+    bins as an additional option to protect against overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Randomized grid search
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: To explore the hyperparameter space, we specify values for key parameters that
+    we would like to test in combination. The sklearn library supports `RandomizedSearchCV` to
+    cross-validate a subset of parameter combinations that are sampled randomly from
+    specified distributions. We will implement a custom version that allows us to
+    leverage early stopping while monitoring the current best-performing combinations
+    so we can abort the search process once satisfied with the result rather than
+    specifying a set number of iterations beforehand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To this end, we specify a parameter grid according to each library''s parameters
+    as before, generate all combinations using the built-in Cartesian `product` generator
+    provided by the `itertools` library, and randomly `shuffle` the result. In the
+    case of LightGBM, we automatically set `max_depth` as a function of the current
+    `num_leaves` value, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We then execute cross-validation as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `run_cv` function implements cross-validation for all three libraries.
+    For the `light_gbm` example, the process looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `train()` method also produces validation scores that are stored in the
+    `scores` dictionary. When early stopping takes effect, the last iteration is also
+    the best score. See the full implementation on GitHub for additional details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to evaluate the results
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Using a GPU, we can train a model in a few minutes and evaluate several hundred
+    parameter combinations in a matter of hours, which would take many days using
+    the sklearn implementation. For the LightGBM model, we explore both a factor version
+    that uses the libraries' ability to handle categorical variables and a dummy version
+    that uses one-hot encoding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The results are available in the `model_tuning.h5` HDF5 store. The model evaluation
+    code samples are in the `eval_results.ipynb` notebook.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross-validation results across models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'When comparing average cross-validation AUC across the four test runs with
+    the three libraries, we find that CatBoost produces a slightly higher AUC score
+    for the top-performing model, while also producing the widest dispersion of outcomes,
+    as shown in the following graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/e9acfd13-bad6-4969-8a22-b15d1678ac06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The top-performing CatBoost model uses the following parameters (see notebook
+    for detail):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`max_depth` of 12 and `max_bin` of 128'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`max_ctr_complexity` of 2, which limits the number of combinations of categorical
+    features'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`one_hot_max_size` of 2, which excludes binary features from the assignment
+    of numerical variables'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`random_strength` different from 0 to randomize the evaluation of splits'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Training is a bit slower compared to LightGBM and XGBoost (all use the GPU)
+    at an average of 230 seconds per model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A more detailed look at the top-performing models for the LightGBM and XGBoost
+    models shows that the LightGBM Factors model achieves nearly as good a performance
+    as the other two models with much lower model complexity. It only consists on
+    average of 41 trees up to three levels deep with no more than eight leaves each,
+    while also using regularization in the form of `min_gain_to_split`. It overfits
+    significantly less on the training set, with a train AUC only slightly above the
+    validation AUC. It also trains much faster, taking only 18 seconds per model because
+    of its lower complexity. In practice, this model would be preferable since it
+    is more likely to produce good out-of-sample performance. The details are shown
+    in the following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | **LightGBM dummies** | **XGBoost dummies** | **LightGBM factors** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Validation AUC | 68.57% | 68.36% | 68.32% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Train AUC | 82.35% | 79.81% | 72.12% |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `learning_rate` | 0.1 | 0.1 | 0.3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `max_depth` | 13 | 9 | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `num_leaves` | 8192 |  | 8 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `colsample_bytree` | 0.8 | 1 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `min_gain_to_split` | 0 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rounds | 44.42 | 59.17 | 41.00 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Time | 86.55 | 85.37 | 18.78 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The following plot shows the effect of different `max_depth` settings on the
+    validation score for the LightGBM and XGBoost models: shallower trees produce
+    a wider range of outcomes and need to be combined with appropriate learning rates
+    and regularization settings to produce the strong result shown in the preceding
+    table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d8ccc54a-3cb5-4f16-8ac5-e7c0763679ca.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Instead of a `DecisionTreeRegressor` as shown previously, we can also use linear
+    regression to evaluate the statistical significance of different features concerning
+    the validation AUC score. For the LightGBM Dummy model, where the regression explains
+    68% of the variation in outcomes, we find that only the `min_gain_to_split` regularization
+    parameter was not significant, as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/1b04533f-fb2a-4f43-9267-3eb1c10d0fce.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: In practice, gaining deeper insights into how the models arrive at predictions
+    is extremely important, in particular for investment strategies where decision
+    makers often require plausible explanations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to interpret GBM results
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Understanding why a model predicts a certain outcome is very important for several
+    reasons, including trust, actionability, accountability, and debugging. Insights
+    into the nonlinear relationship between features and the outcome uncovered by
+    the model, as well as interactions among features, are also of value when the
+    goal is to learn more about the underlying drivers of the phenomenon under study.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A common approach to gaining insights into the predictions made by tree ensemble
+    methods, such as gradient boosting or random forest models, is to attribute feature
+    importance values to each input variable. These feature importance values can
+    be computed on an individual basis for a single prediction or globally for an
+    entire dataset (that is, for all samples) to gain a higher-level perspective on
+    how the model makes predictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feature importance
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'There are three primary ways to compute **g****lobal feature importance** values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Gain**: This classic approach introduced by Leo Breiman in 1984 uses the
+    total reduction of loss or impurity contributed by all splits for a given feature.
+    The motivation is largely heuristic, but it is a commonly used method to select
+    features.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Split count**: This is an alternative approach that counts how often a feature
+    is used to make a split decision, based on the selection of features for this
+    purpose based on the resultant information gain.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Permutation**: This approach randomly permutes the feature values in a test
+    set and measures how much the model''s error changes, assuming that an important
+    feature should create a large increase in the prediction error. Different permutation
+    choices lead to alternative implementations of this basic approach.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Individualized feature importance values that compute the relevance of features
+    for a single prediction are less common because available model-agnostic explanation
+    methods are much slower than tree-specific methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'All gradient boosting implementations provide feature-importance scores after
+    training as a model attribute. The XGBoost library provides five versions, as
+    shown in the following list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`total_gain` and `gain` as its average per split'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`total_cover` as the number of samples per split when a feature was used'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`weight` as the split count from preceding values'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'These values are available using the trained model''s `.get_score()` method
+    with the corresponding `importance_type` parameter. For the best performing XGBoost
+    model, the results are as follows (the *total* measures have a correlation of
+    0.8, as do `cover` and `total_cover`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d12d54b5-9bf1-4028-b0c3-0bad6902c658.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: While the indicators for different months and years dominate, the most recent
+    1 month return is the second-most important feature from a `total_gain` perspective,
+    and is used frequently according to the `weight` measure, but produces low average
+    gains as it is applied to relatively few instances on average (see the notebook
+    for implementation details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Partial dependence plots
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In addition to the summary contribution of individual features to the model's
+    prediction, partial dependence plots visualize the relationship between the target
+    variable and a set of features. The nonlinear nature of gradient boosting trees
+    causes this relationship to depends on the values of all other features. Hence,
+    we will marginalize these features out. By doing so, we can interpret the partial
+    dependence as the expected target response.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can visualize partial dependence only for individual features or feature
+    pairs. The latter results in contour plots that show how combinations of feature
+    values produce different predicted probabilities, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After some additional formatting (see the companion notebook), we obtain the
+    following plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/ba89c98e-9f72-4e8d-a595-3ac2e89483f5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The lower-right plot shows the dependence of the probability of a positive
+    return over the next month given the range of values for lagged 1-month and 3-month
+    returns after eliminating outliers at the [1%, 99%] percentiles. The `month_9` variable is
+    a dummy variable, hence the step-function-like plot. We can also visualize the
+    dependency in 3D, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This produces the following 3D plot of the partial dependence of the 1-month
+    return direction on lagged 1-month and 3-months returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/227d7528-588a-4af8-8be9-5e8971f7304c.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: SHapley Additive exPlanations
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: At the 2017 NIPS conference, Scott Lundberg and Su-In Lee from the University
+    of Washington presented a new and more accurate approach to explaining the contribution
+    of individual features to the output of tree ensemble models called **SHapley
+    Additive exPlanations**, or **SHAP** values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This new algorithm departs from the observation that feature-attribution methods
+    for tree ensembles, such as the ones we looked at earlier, are inconsistent—that
+    is, a change in a model that increases the impact of a feature on the output can
+    lower the importance values for this feature (see the references on GitHub for
+    detailed illustrations of this).
+  prefs: []
+  type: TYPE_NORMAL
+- en: SHAP values unify ideas from collaborative game theory and local explanations,
+    and have been shown to be theoretically optimal, consistent, and locally accurate
+    based on expectations. Most importantly, Lundberg and Lee have developed an algorithm
+    that manages to reduce the complexity of computing these model-agnostic, additive
+    feature-attribution methods from *O*(*TLD^M*) to *O*(*TLD*²), where *T* and *M*
+    are the number of trees and features, respectively, and *D* and *L* are the maximum
+    depth and number of leaves across the trees. This important innovation permits
+    the explanation of predictions from previously intractable models with thousands
+    of trees and features in a fraction of a second. An open source implementation
+    became available in late 2017 and is compatible with XGBoost, LightGBM, CatBoost,
+    and sklearn tree models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Shapley values originated in game theory as a technique for assigning a value
+    to each player in a collaborative game that reflects their contribution to the
+    team's success. SHAP values are an adaptation of the game theory concept to tree-based
+    models and are calculated for each feature and each sample. They measure how a
+    feature contributes to the model output for a given observation. For this reason,
+    SHAP values provide differentiated insights into how the impact of a feature varies
+    across samples, which is important given the role of interaction effects in these
+    nonlinear models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to summarize SHAP values by feature
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To get a high-level overview of the feature importance across a number of samples,
+    there are two ways to plot the SHAP values: a simple average across all samples
+    that resembles the global feature-importance measures computed previously (as
+    shown in the left-hand panel of the following screenshot), or a scatter graph
+    to display the impact of every feature for every sample (as shown in the right-hand
+    panel of the following screenshot). They are very straightforward to produce using
+    a trained model of a compatible library and matching input data, as shown in the
+    following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The scatter plot on the right of the following screenshot sorts features by
+    their total SHAP values across all samples, and then shows how each feature impacts
+    the model output as measured by the SHAP value as a function of the feature''s
+    value, represented by its color, where red represents high and blue represents
+    low values relative to the feature''s range:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/c6666557-7466-4c75-9365-9631133abbf8.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: How to use force plots to explain a prediction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The following force plot shows the cumulative impact of various features and
+    their values on the model output, which in this case was 0.6, quite a bit higher
+    than the base value of 0.13 (the average model output over the provided dataset).
+    Features highlighted in red increase the output. The month being October is the
+    most important feature and increases the output from 0.338 to 0.537, whereas the
+    year being 2017 reduces the output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hence, we obtain a detailed breakdown of how the model arrived at a specific
+    prediction, as shown in the following image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/c6352fa7-b7b2-403a-8d22-c7a3b866a7a0.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can also compute force plots for numerous data points or predictions at
+    a time and use a clustered visualization to gain insights into how prevalent certain
+    influence patterns are across the dataset. The following plot shows the force
+    plots for the first 1,000 observations rotated by 90 degrees, stacked horizontally,
+    and ordered by the impact of different features on the outcome for the given observation.
+    The implementation uses hierarchical agglomerative clustering of data points on
+    the feature SHAP values to identify these patterns, and displays the result interactively
+    for exploratory analysis (see the notebook), as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This produces the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/ee376d94-c6bc-4f46-90f2-dbf758860722.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: How to analyze feature interaction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Lastly, SHAP values allow us to gain additional insights into the interaction
+    effects between different features by separating these interactions from the main
+    effects. The `shap.dependence_plot`  can be defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It displays how different values for 1-month returns (on the *x* axis) affect
+    the outcome (SHAP value on the *y* axis), differentiated by 3-month returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/2f5b68f1-0ccc-48a4-a0a0-f10c71f91121.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: SHAP values provide granular feature attribution at the level of each individual prediction,
+    and enable much richer inspection of complex models through (interactive) visualization.
+    The SHAP summary scatterplot displayed at the beginning of this section offers
+    much more differentiated insights than a global feature-importance bar chart.
+    Force plots of individual clustered predictions allow for more detailed analysis,
+    while SHAP dependence plots capture interaction effects and, as a result, provide
+    more accurate and detailed results than partial dependence plots.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The limitations of SHAP values, as with any current feature-importance measure,
+    concern the attribution of the influence of variables that are highly correlated
+    because their similar impact could be broken down in arbitrary ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we explored the gradient boosting algorithm, which is used
+    to build ensembles in a sequential manner, adding a shallow decision tree that
+    only uses a very small number of features to improve on the predictions that have
+    been made. We saw how gradient boosting trees can be very flexibly applied to
+    a broad range of loss functions and offer many opportunities to tune the model
+    to a given dataset and learning task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recent implementations have greatly facilitated the use of gradient boosting
+    by accelerating the training process and offering more consistent and detailed
+    insights into the importance of features and the drivers of individual predictions.
+    In the next chapter, we will turn to Bayesian approaches to ML.
+  prefs: []
+  type: TYPE_NORMAL

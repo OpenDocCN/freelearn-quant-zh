@@ -1,0 +1,1927 @@
+- en: Linear Models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The family of linear models represents one of the most useful hypothesis classes.
+    Many learning algorithms that are widely applied in algorithmic trading rely on
+    linear predictors because they can be efficiently trained in many cases, they
+    are relatively robust to noisy financial data, and they have strong links to the
+    theory of finance. Linear predictors are also intuitive, easy to interpret, and
+    often fit the data reasonably well or at least provide a good baseline.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Linear regression has been known for over 200 years when Legendre and Gauss
+    applied it to astronomy and began to analyze its statistical properties. Numerous
+    extensions have since adapted the linear regression model and the baseline **ordinary
+    least squares** (**OLS**) method to learn its parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Generalized linear models** (**GLM**) expand the scope of applications by
+    allowing for response variables that imply an error distribution other than the
+    normal distribution. GLM include the probit or logistic models for **categorical
+    response variables** that appear in classification problems.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: More **robust estimation methods** enable statistical inference where the data
+    violates baseline assumptions due to, for example, correlation over time or across
+    observations. This is often the case with panel data that contains repeated observations
+    on the same units such as historical returns on a universe of assets.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Shrinkage methods** aim to improve the predictive performance of linear models.
+    They use a complexity penalty that biases the coefficients learned by the model
+    with the goal of reducing the model''s variance and improving out-of-sample predictive
+    performance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In practice, linear models are applied to regression and classification problems
+    with the goals of inference and prediction. Numerous asset pricing models that
+    have been developed by academic and industry researchers leverage linear regression.
+    Applications include the identification of significant factors that drive asset
+    returns, for example, as a basis for risk management, as well as the prediction
+    of returns over various time horizons. Classification problems, on the other hand,
+    include directional price forecasts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will cover the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How linear regression works and which assumptions it makes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to train and diagnose linear regression models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use linear regression to predict future returns
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How use regularization to improve the predictive performance
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How logistic regression works
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to convert a regression into a classification problem
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For code examples, additional resources, and references, see the directory for
+    this chapter in the online GitHub repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear regression for inference and prediction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: As the name suggests, linear regression models assume that the output is the
+    result of a linear combination of the inputs. The model also assumes a random
+    error that allows for each observation to deviate from the expected linear relationship.
+    The reasons that the model does not perfectly describe the relationship between
+    inputs and output in a deterministic way include, for example, missing variables,
+    measurement, or data collection issues.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we want to draw statistical conclusions about the true (but not observed)
+    linear relationship in the population based on the regression parameters estimated
+    from the sample, we need to add assumptions about the statistical nature of these
+    errors. The baseline regression model makes the strong assumption that the distribution
+    of the errors is identical across errors and that errors are independent of each
+    other, that is, knowing one error does not help to forecast the next error. The
+    assumption of **independent and identically distributed** (**iid**) errors implies
+    that their covariance matrix is the identity matrix multiplied by a constant representing
+    the error variance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: These assumptions guarantee that the OLS method delivers estimates that are
+    not only unbiased but also efficient, that is, they have the lowest sampling error
+    learning algorithms. However, these assumptions are rarely met in practice. In
+    finance, we often encounter panel data with repeated observations on a given cross-section.
+    The attempt to estimate the systematic exposure of a universe of assets to a set
+    of risk factors over time typically surfaces correlation in the time or cross-sectional
+    dimension, or both. Hence, alternative learning algorithms have emerged that assume
+    more error covariance matrices that differ from multiples of the identity matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the other hand, methods that learn biased parameters for a linear model may
+    yield estimates with a lower variance and, hence, improve the predictive performance.
+    **Shrinkage methods** reduce the model complexity by applying regularization that
+    adds a penalty term to the linear objective function. The penalty is positively
+    related to the absolute size of the coefficients so that these are shrunk relative
+    to the baseline case. Larger coefficients imply a more complex model that reacts
+    more strongly to variations in the inputs. Properly calibrated, the penalty can
+    limit the growth of the model's coefficients beyond what an optimal bias-variance
+    trade-off would suggest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will introduce the baseline cross-section and panel techniques for linear
+    models and important enhancements that produce accurate estimates when key assumptions
+    are violated. We will then illustrate these methods by estimating factor models
+    that are ubiquitous in the development of algorithmic trading strategies. Lastly,
+    we will focus on regularization methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The multiple linear regression model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We will introduce the model's specification and objective function, methods
+    to learn its parameters, statistical assumptions that allow for inference and
+    diagnostics of these assumptions, as well as extensions to adapt the model to
+    situations where these assumptions fail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to formulate the model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The multiple regression model defines a linear functional relationship between
+    one continuous outcome variable and *p* input variables that can be of any type
+    but may require preprocessing. Multivariate regression, in contrast, refers to
+    the regression of multiple outputs on multiple input variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the population, the linear regression model has the following form for a
+    single instance of the output *y*, an input vector ![](img/ca17efd5-4e85-4e63-a2b2-59e7e7afc866.png), and
+    the error *ε*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/c3c0ce60-a6be-4b9d-96c4-e0f29963c384.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The interpretation of the coefficients is straightforward: the value of a coefficient ![](img/f2a0ef61-33a5-44a1-9f1a-fb132389afa3.png) is the
+    partial, average effect of the variable *x[i ]*on the output, holding all other
+    variables constant.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The model can also be written more compactly in matrix form. In this case,
+    *y* is a vector of *N* output observations, *X*is the design matrix with *N* rows
+    of observations on the *p* variables plus a column of 1s for the intercept, and ![](img/681890d8-fe44-4a8b-8bc4-33b2159a51c5.png) is
+    the vector containing the *P = p+1* coefficients ![](img/96e3b5c2-497d-449d-9c8e-bf3c4a038d2a.png):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/18eef579-bc58-4079-a75f-b75ccb553879.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The model is linear in its *p +1* parameters but can model non-linear relationships
+    by choosing or transforming variables accordingly, for example by including a
+    polynomial basis expansion or logarithmic terms. It can also use categorical variables
+    with dummy encoding, and interactions between variables by creating new inputs
+    of the form *x[i] . x[j]*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To complete the formulation of the model from a statistical point of view so
+    that we can test a hypothesis about the parameters, we need to make specific assumptions
+    about the error term. We'll do this after first introducing the alternative methods
+    to learn the parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to train the model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'There are several methods to learn the model parameters ![](img/cabc1f80-1d1b-4793-8a1f-80370fd84fea.png) from
+    the data: **ordinary least squares** (**OLS**), **maximum likelihood estimation**
+    (**MLE**), and **stochastic gradient descent** (**SGD**).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Least squares
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The least squares method is the original method to learn the parameters of the
+    hyperplane that best approximates the output from the input data. As the name
+    suggests, the best approximation minimizes the sum of the squared distances between
+    the output value and the hyperplane represented by the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The difference between the model''s prediction and the actual outcome for a
+    given data point is the residual (whereas the deviation of the true model from
+    the true output in the population is called **error**). Hence, in formal terms,
+    the least squares estimation method chooses the coefficient vector ![](img/b3139f6c-4371-4a74-9335-bbe76eeeba46.png) to
+    minimize the **residual** **sum of squares** (**RSS**):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/8123f8ed-b798-41e9-be38-a8c004d4d0ef.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Hence, the least-squares coefficients ![](img/087b73ba-7e6b-4d5b-b7c6-fd90f2cf6d8d.png) are
+    computed as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/8480afe1-ae4b-4e12-91db-e20143a84b40.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The optimal parameter vector that minimizes RSS results from setting the derivatives
+    of the preceding expression with respect to ![](img/90907b87-43c2-4724-ac11-b62f61852e2a.png) to zero.
+    This produces a unique solution, assuming X has full column rank, that is, the
+    input variables are not linearly dependent, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/53ae7775-f160-40be-b1ec-4a80c1fba44e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'When *y* and *X* have been de-meaned by subtracting their respective means, ![](img/90907b87-43c2-4724-ac11-b62f61852e2a.png) represents
+    the ratio of the covariance between the inputs and the outputs ![](img/af4e8def-395c-49b0-a82e-25b2593dd732.png) and the
+    output variance ![](img/181b1459-5eef-4d5b-b978-c00e00be4c71.png). There is also
+    a geometric interpretation: the coefficients that minimize RSS ensure that the
+    vector of residuals ![](img/7ff3850e-4378-4c76-b59a-72eb4c5aa04d.png) is orthogonal
+    to the subspace of ![](img/540ecc41-c8d6-462b-8676-971ecc683b25.png)spanned by
+    the columns of *X*, and the estimates ![](img/80dcda91-dc61-4571-8345-9f646a4e9b5a.png) are orthogonal
+    projections into that subspace.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Maximum likelihood estimation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: MLE is an important general method to estimate the parameters of a statistical
+    model. It relies on the likelihood function that computes how likely it is to
+    observe the sample of output values for a given set of both input data as a function
+    of the model parameters. The likelihood differs from probabilities in that it
+    is not normalized to range from 0 to 1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can set up the likelihood function for the linear regression example by
+    assuming a distribution for the error term, such as the standard normal distribution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/60eff427-da2c-43a5-8d3e-7f13c71a89a9.png).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This allows us to compute the conditional probability of observing a given
+    output ![](img/ca374814-159c-47ee-beda-967393c46f27.png) given the corresponding
+    input vector *x[i]* and the parameters, ![](img/3fb23a9c-71d9-4391-9ace-33350e36821b.png):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/219455c0-b5e2-43a9-9310-4472d95f6164.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Assuming the output values are conditionally independent given the inputs,
+    the likelihood of the sample is proportional to the product of the conditional
+    probabilities of the individual output data points. Since it is easier to work
+    with sums than with products, we apply the logarithm to obtain the log-likelihood
+    function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/197fca5b-2456-41f0-a988-fc5b646fa4a2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The goal of MLE is to maximize the probability of the output sample that has
+    in fact been observed by choosing model parameters, taking the observed inputs
+    as given. Hence, the MLE parameter estimate results from maximizing the (log)
+    likelihood function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/c2814000-7a34-48a2-b790-2dd022c3944d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Due to the assumption of normal distribution, maximizing the log-likelihood
+    function produces the same parameter solution as least squares because the only
+    expression that depends on the parameters is squared residual in the exponent.
+    For other distributional assumptions and models, MLE will produce different results,
+    and in many cases, least squares is not applicable, as we will see later for logistic
+    regression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gradient descent
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Gradient descent is a general-purpose optimization algorithm that will find
+    stationary points of smooth functions. The solution will be a global optimum if
+    the objective function is convex. Variations of gradient descent are widely used
+    in the training of complex neural networks, but also to compute solutions for
+    MLE problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm uses the gradient of the objective function that contains its
+    partial derivatives with respect to the parameters. These derivatives indicate
+    how much the objective changes for infinitesimal steps in the direction of the
+    corresponding parameters. It turns out that the maximal change of the function
+    value results from a step in the direction of the gradient itself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hence, when minimizing a function that describes, for example, the cost of a
+    prediction error, the algorithm computes the gradient for the current parameter
+    values using the training data and modifies each parameter according to the negative
+    value of its corresponding gradient component. As a result, the objective function
+    will assume a lower value and move the parameters move closer to the solution. The
+    optimization stops when the gradient becomes small, and the parameter values change
+    very little.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The size of these steps is the learning rate, which is a critical parameter
+    that may require tuning; many implementations include the option for this learning
+    rate to increase with the number of iterations gradually. Depending on the size
+    of the data, the algorithm may iterate many times over the entire dataset. Each
+    such iteration is called an **epoch.** The number of epochs and the tolerance
+    used to stop further iterations are hyperparameters you can tune.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stochastic gradient descent randomly selects a data point and computes the gradient
+    for this data point as opposed to an average over a larger sample to achieve a
+    speedup. There are also batch versions that use a certain number of data points
+    for each step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Gauss—Markov theorem
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: To assess the statistical of the model and conduct inference, we need to make
+    assumptions about the residuals, that is, the properties of the unexplained part
+    of the input. The **Gauss—Markov theorem** (**GMT**) defines the assumptions required
+    for OLS to produce unbiased estimates of the model parameters ![](img/33eb8f33-f98e-4c29-82c8-76db82a7b46a.png), and
+    when these estimates have the lowest standard error among all linear models for
+    cross-sectional data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The baseline multiple regression model makes the following GMT assumptions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the population, **linearity** holds, ![](img/8feae49c-7c0f-492c-8581-fa3fb1b0d30a.png) where ![](img/ebb48f07-023f-4a4f-b46d-a0cf606d8ceb.png) are
+    unknown but constant and ![](img/c6cfab11-33d7-4c05-81c8-fded5bb113da.png) is
+    a random error
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The data for the input variables ![](img/ac422091-f903-413e-ab66-b8f884a4b0d8.png) are
+    a **random sample** from the population
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: No perfect **collinearity**—there are no exact linear relationships among the
+    input variables
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The **error has a conditional mean of zero** given any of the inputs: ![](img/fc56cd9c-b8ea-483b-b6c6-b6a01481a1df.png)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Homoskedasticity**, the error term ![](img/f0ded6ea-538b-40a8-9d3a-cb9f5483e17d.png) has
+    constant variance given the inputs: ![](img/e5f9d3b1-a11c-4072-9cd9-d443cc1ce234.png)'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The fourth assumption implies that no missing variable exists that is correlated
+    with any of the input variables. Under the first four assumptions, the OLS method
+    delivers **unbiased** estimates: including an irrelevant variable does not bias
+    the intercept and slope estimates, but omitting a relevant variable will bias
+    the OLS estimates. OLS is then also **consistent**: as the sample size increases,
+    the estimates converge to the true value as the standard errors become arbitrary.
+    The converse is unfortunately also true: if the conditional expectation of the
+    error is not zero because the model misses a relevant variable or the functional
+    form is wrong (that is, quadratic or log terms are missing), then all parameter
+    estimates are biased. If the error is correlated with any of the input variables
+    then OLS is also not consistent, that is, adding more data will not remove the
+    bias.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we add the fifth assumptions, then OLS also produces the best linear, unbiased
+    estimates (BLUE), where best means that the estimates have the lowest standard
+    error among all linear estimators. Hence, if the five assumptions hold and statistical inference
+    is the goal, then the OLS estimates is the way to go. If the goal, however, is
+    to predict, then we will see that other estimators exist that trade off some bias
+    for a lower variance to achieve superior predictive performance in many settings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that we have introduced the basic OLS assumptions, we can take a look at
+    inference in small and large samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to conduct statistical inference
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Inference in the linear regression context aims to draw conclusions about the
+    true relationship in the population from the sample data. This includes tests
+    of hypothesis about the significance of the overall relationship or the values
+    of particular coefficients, as well as estimates of confidence intervals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The key ingredient for statistical inference is a test statistic with a known
+    distribution. We can use it to assume that the null hypothesis is true and compute
+    the probability of observing the value for this statistic in the sample, familiar
+    as the p-value. If the p-value drops below a significance threshold (typically
+    five percent) then we reject the hypothesis because it makes the actual sample
+    value very unlikely. At the same time, we accept that the p-value reflects the
+    probability that we are wrong in rejecting what is, in fact, a correct hypothesis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to the five GMT assumptions, the classical linear model assumes **normality**—the population
+    error is normally distributed and independent of the input variables. This assumption
+    implies that the output variable is normally distributed, conditional on the input
+    variables. This strong assumption permits the derivation of the exact distribution
+    of the coefficients, which in turn implies exact distributions of the test statistics
+    required for similarly exact hypotheses tests in small samples. This assumption
+    often fails—asset returns, for instance, are not normally distributed—but, fortunately,
+    the methods used under normality are also approximately valid.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have the following distributional characteristics and test statistics, approximately
+    under GMT assumptions 1–5, and exactly when normality holds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The parameter estimates follow a multivariate normal distribution: ![](img/41d4d2b8-7cf6-4a50-aa7a-b9ada8e5b6eb.png) .
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Under GMT 1–5, the parameter estimates are already unbiased and we can get an unbiased
+    estimate of ![](img/c255ed13-6923-4756-ba34-fc71c5b92cb3.png), the constant error
+    variance, using ![](img/b5d5614e-5b53-416d-83d9-d168b96e8207.png).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The t statistic for a hypothesis tests about an individual coefficient ![](img/fbfdf074-0b0d-4404-9e4b-80a87114d05a.png)is ![](img/60566dde-3959-4693-a060-9cac717f012b.png) and
+    follows a t distribution with *N-p-1* degrees of freedom where ![](img/3bda39a2-09ae-4e22-9920-c0dfe0fa9414.png) is
+    the j's element of the diagonal of ![](img/7a6b5101-d2be-4553-b96f-43949ce9508b.png).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The *t* distribution converges to the normal distribution and since the 97.5
+    quantile of the normal distribution is 1.96, a useful rule of thumb for a 95%
+    confidence interval around a parameter estimate is ![](img/bb155050-7a1f-40b1-b171-eb5ca79d1622.png).
+    An interval that includes zero implies that we can't reject the null hypothesis
+    that the true parameter is zero and, hence, irrelevant for the model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The *F* statistic allows for tests of restrictions on several parameters, including
+    whether the entire regression is significant. It measures the change (reduction)
+    in the RSS that results from additional variables.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, the **Lagrange Multiplier** (**LM**) test is an alternative to the
+    *F* test to restrict multiple restrictions.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to diagnose and remedy problems
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Diagnostics validate the model assumptions and prevent wrong conclusions when
+    interpreting the result and conducting statistical inference. They include measures
+    of goodness of fit and various tests of the assumptions about the error term,
+    including how closely the residuals match a normal distribution. Furthermore,
+    diagnostics test whether the residual variance is indeed constant or exhibits
+    heteroskedasticity, and if the errors are conditionally uncorrelated or exhibit
+    serial correlation, that is, if knowing one error helps to predict consecutive
+    errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to the tests outlined as follows, it is always important to visually
+    inspect the residuals to detect whether there are systematic patterns because
+    these indicate that the model is missing one or more factors that drive the outcome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Goodness of fit
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Goodness-of-fit measures assess how well a model explains the variation in the
+    outcome. They help to assess the quality of model specification, for instance,
+    to select among different model designs. They differ in how they evaluate the
+    fit. The measures discussed here provide in-sample information; we will use out-of-sample
+    testing and cross-validation when we focus on predictive models in the next section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Prominent goodness-of-fit measures include the (adjusted) R² that should be
+    maximized and is based on the least-squares estimate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: R² measures the share of the variation in the outcome data explained by the
+    model and is computed as ![](img/6a2363f4-83b4-42ce-85f0-3103f56a7a5a.png), where
+    TSS is the sum of squared deviations of the outcome from its mean. It also corresponds
+    to the squared correlation coefficient between the actual outcome values and those
+    estimated (fitted) by the model. The goals is to maximize R² but it never decreases
+    as the model adds more variables and, hence, encourages overfitting.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The adjusted R² penalizes R² for adding more variables; each additional variable
+    needs to reduce RSS significantly to produce better goodness of fit.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Alternatively, the Akaike (AIC) and the **Bayesian Information Criterion**
+    (**BIC**) are to be minimized and are based on the maximum-likelihood estimate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/58a56311-c140-4adf-bcd0-adb48108167a.png), where ![](img/030f5c24-ec0a-47c9-9a82-265617c34044.png) is
+    the value of the maximized likelihood function, k is the number of parameters'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![](img/232898ca-2946-4ac5-8d69-1b9f4e32bfdb.png) where *N* is the sample size'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Both metrics penalize for complexity, with BIC imposing a higher penalty so
+    that it might underfit whereas AIC might overfit in relative terms. Conceptually, AIC
+    aims at finding the model that best describes an unknown data-generating process,
+    whereas BIC tries to find the best model among the set of candidates. In practice,
+    both criteria can be used jointly to guide model selection when the goal is in-sample
+    fit; otherwise, cross-validation and selection based on estimates of generalization
+    error are preferable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heteroskedasticity
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: GMT assumption 5 requires the residual covariance to take the shape ![](img/881489a2-b2d6-4688-a184-051c15fca6b3.png),
+    that is, a diagonal matrix with entries equal to the constant variance of the
+    error term. Heteroskedasticity occurs when the residual variance is not constant
+    but differs across observations. If the residual variance is positively correlated
+    with an input variable, that is, when errors are larger for input values that
+    are far from their mean, then OLS standard error estimates will be too low, and,
+    consequently, the t-statistic will be inflated leading to false discoveries of
+    relationships where none actually exist.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Diagnostics starts with a visual inspection of the residuals. Systematic patterns
+    in the (supposedly random) residuals suggest statistical tests of the null hypothesis
+    that errors are homoscedastic against various alternatives. These tests include
+    the Breusch—Pagan and White tests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several ways to correct OLS estimates for heteroskedasticity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Robust standard errors (sometimes called white standard errors) take heteroskedasticity
+    into account when computing the error variance using a so-called **sandwich**
+    **estimator**.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Clustered standard errors assume that there are distinct groups in your data
+    that are homoskedastic but the error variance differs between groups. These groups
+    could be different asset classes or equities from different industries.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Several alternatives to OLS estimate the error covariance matrix using different
+    assumptions when ![](img/1fa8ab87-92ba-4bad-b08f-75d550e4d599.png). The following
+    are available in `statsmodels`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Weighted least squares** (**WLS**): For heteroskedastic errors where the
+    covariance matrix has only diagonal entries as for OLS, but now the entries are
+    allowed to vary'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Feasible **generalized least squares** (**GLSAR**), for autocorrelated errors
+    that follow an autoregressive AR (p) process (see the chapter on linear time series
+    models)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Generalized least squares** (**GLS**) for arbitrary covariance matrix structure;
+    yields efficient and unbiased estimates in the presence of heteroskedasticity
+    or serial correlation'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Serial correlation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Serial correlation means that consecutive residuals produced by linear regression
+    are correlated, which violates the fourth GMT assumption. Positive serial correlation
+    implies that the standard errors are underestimated and the t-statistics will
+    be inflated, leading to false discoveries if ignored. However, there are procedures
+    to correct for serial correlation when calculating standard errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Durbin—Watson statistic diagnoses serial correlation. It tests the hypothesis
+    that the OLS residuals are not autocorrelated against the alternative that they
+    follow an autoregressive process (that we will explore in the next chapter). The
+    test statistic ranges from 0 to 4, and values near 2 indicate non-autocorrelation,
+    lower values suggest positive, and higher values indicate negative autocorrelation.
+    The exact threshold values depend on the number of parameters and observations
+    and need to be looked up in tables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multicollinearity
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Multicollinearity occurs when two or more independent variables are highly
+    correlated. This poses several challenges:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is difficult to determine which factors influence the dependent variable
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The individual p values can be misleading—a p-value can be high even if the
+    variable is important
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The confidence intervals for the regression coefficients will be excessive,
+    possibly even including zero, making it impossible to determine the effect of
+    an independent variable on the outcome
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is no formal or theory-based solution that corrects for multicollinearity.
+    Instead, try to remove one or more of the correlated input variables, or increase
+    the sample size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to run linear regression in practice
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The accompanying notebook `linear_regression_intro.ipynb` illustrates a simple
+    and then a multiple linear regression, the latter using both OLS and gradient
+    descent. For the multiple regression, we generate two random input variables *x[1 ]*and
+    *x[2]* that range from -50 to +50, and an outcome variable calculated as a linear
+    combination of the inputs plus random Gaussian noise to meet the normality assumption
+    GMT 6:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/e51fe442-ed74-43fd-82fe-bc610bc10f8e.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: OLS with statsmodels
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We use `statsmodels` to estimate a multiple regression model that accurately
+    reflects the data generating process as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This yields the following **OLS Regression Results** summary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/bb6ff5b6-0bd0-4778-9951-91d5cc77e648.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Summary ofOLS Regression Results
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The upper part of the summary displays the dataset characteristics, namely
+    the estimation method, the number of observations and parameters, and indicates
+    that standard error estimates do not account for heteroskedasticity. The middle
+    panel shows the coefficient values that closely reflect the artificial data generating
+    process. We can confirm that the estimates displayed in the middle of the summary
+    result can be obtained using the OLS formula derived previously:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following diagram illustrates the hyperplane fitted by the model to the
+    randomly generated data points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/e3ec55b4-5d60-473b-ae25-2d5a9be6af8d.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Hyperplane
+  prefs: []
+  type: TYPE_NORMAL
+- en: The upper right part of the panel displays the goodness-of-fit measures just
+    discussed, alongside the F-test that rejects the hypothesis that all coefficients
+    are zero and irrelevant. Similarly, the t-statistics indicate that intercept and
+    both slope coefficients are, unsurprisingly, highly significant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bottom part of the summary contains the residual diagnostics. The left panel
+    displays skew and kurtosis that are used to test the normality hypothesis. Both
+    the Omnibus and the Jarque—Bera test fails to reject the null hypothesis that
+    the residuals are normally distributed. The Durbin—Watson statistic tests for
+    serial correlation in the residuals and has a value near 2 which, given 2 parameters
+    and 625 observations, fails to reject the hypothesis of no serial correlation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Lastly, the condition number provides evidence about multicollinearity: it is
+    the ratio of the square roots of the largest and the smallest eigenvalue of the design
+    matrix that contains the input data. A value above 30 suggests that the regression
+    may have significant multicollinearity.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`statsmodels` includes additional diagnostic tests that are linked in the notebook.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stochastic gradient descent with sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The `sklearn` library includes an `SGDRegressor` model in its `linear_models`
+    module. To learn the parameters for the same model using this method, we need
+    to first standardize the data because the gradient is sensitive to the scale.
+    We use `StandardScaler()` for this purpose that computes the mean and the standard
+    deviation for each input variable during the fit step, and then subtracts the
+    mean and divides by the standard deviation during the transform step that we can
+    conveniently conduct in a single `fit_transform()` command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then we instantiate the `SGDRegressor` using the default values except for
+    a `random_state` setting to facilitate replication:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we can fit the `sgd` model, create the in-sample predictions for both the
+    OLS and the `sgd` models, and compute the root mean squared error for each:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: As expected, both models yield the same result. We will now take on a more ambitious
+    project using linear regression to estimate a multi-factor asset pricing model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build a linear factor model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Algorithmic trading strategies use **linear factor models** to quantify the
+    relationship between the return of an asset and the sources of risk that represent
+    the main drivers of these returns. Each factor risk carries a premium, and the
+    total asset return can be expected to correspond to a weighted average of these
+    risk premia.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several practical applications of factor models across the portfolio
+    management process from construction and asset selection to risk management and
+    performance evaluation. The importance of factor models continues to grow as common
+    risk factors are now tradeable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A summary of the returns of many assets by a much smaller number of factors
+    reduces the amount of data required to estimate the covariance matrix when optimizing
+    a portfolio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An estimate of the exposure of an asset or a portfolio to these factors allows
+    for the management of the resultant risk, for instance by entering suitable hedges
+    when risk factors are themselves traded
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A factor model also permits the assessment of the incremental signal content
+    of new alpha factors
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A factor model can also help assess whether a manager's performance relative
+    to a benchmark is indeed due to skill in selecting assets and timing the market,
+    or if instead, the performance can be explained by portfolio tilts towards known
+    return drivers that can today be replicated as low-cost, passively managed funds
+    without incurring active management fees
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The following examples apply to equities, but risk factors have been identified
+    for all asset classes (see references in the GitHub repository).
+  prefs: []
+  type: TYPE_NORMAL
+- en: From the CAPM to the Fama—French five-factor model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Risk factors have been a key ingredient to quantitative models since the **Capital
+    Asset Pricing Model **(**CAPM**) explained the expected returns of all *N* assets ![](img/31afacbc-b4b4-4f0f-97ac-fff357bc652a.png)
+    using their respective exposure ![](img/a332fea0-7be6-4858-a873-73742a227f66.png)
+    to a single factor, the expected excess return of the overall market over the
+    risk-free rate ![](img/4f4b2d16-602f-4672-941b-3be7cc28d1a4.png). The model takes
+    the following linear form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/3a6152b2-582b-4452-a8d2-c70388fd9827.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This differs from classic fundamental analysis a la Dodd and Graham where returns
+    depend on firm characteristics. The rationale is that, in the aggregate, investors
+    cannot eliminate this so-called systematic risk through diversification. Hence, in
+    equilibrium, they require compensation for holding an asset commensurate with
+    its systematic risk. The model implies that, given efficient markets where prices
+    immediately reflect all public information, there should be no superior risk-adjusted
+    returns, that is, the value of ![](img/f9d4110b-3746-4824-9340-1ec387bb81f6.png)
+    should be zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Empirical tests of the model use linear regression and have consistently failed,
+    prompting a debate whether the efficient markets or the single factor aspect of
+    the joint hypothesis is to blame. It turns out that both premises are probably
+    wrong:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Joseph Stiglitz earned the 2001 Nobel Prize in economics in part for showing
+    that markets are generally not perfectly efficient: if markets are efficient,
+    there is no value in collecting data because this information is already reflected
+    in prices. However, if there is no incentive to gather information, it is hard
+    to see how it should be already reflected in prices.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: On the other hand, theoretical and empirical improvements on the CAPM suggest
+    that additional factors help explain some of the anomalies that consisted in superior
+    risk-adjusted returns that do not depend on overall market exposure, such as higher
+    returns for smaller firms.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Stephen Ross proposed the **Arbitrage Pricing Theory** (**APT**) in 1976 as
+    an alternative that allows for several risk factors while eschewing market efficiency.
+    In contrast to the CAPM, it assumes that opportunities for superior returns due
+    to mispricing may exist but will quickly be arbitraged away. The theory does not
+    specify the factors, but research by the author suggests that the most important
+    are changes in inflation and industrial production, as well as changes in risk
+    premia or the term structure of interest rates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Kenneth French and Eugene Fama (who won the 2013 Nobel Prize) identified additional
+    risk factors that depend on firm characteristics and are widely used today. In
+    1993, the Fama—French three-factor model added the relative size and value of
+    firms to the single CAPM source of risk. In 2015, the five-factor model further
+    expanded the set to include firm profitability and level of investment that had
+    been shown to be significant in the intervening years. In addition, many factor
+    models include a price momentum factor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Fama—French risk factors are computed as the return difference on diversified
+    portfolios with high or low values according to metrics that reflect a given risk
+    factor. These returns are obtained by sorting stocks according to these metrics
+    and then going long stocks above a certain percentile while shorting stocks below
+    a certain percentile. The metrics associated with the risk factors are defined
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Size**: **Market Equity** (**ME**)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Value**: **Book Value of Equity** (**BE**) divided by ME'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Operating Profitability (OP)**: Revenue minus cost of goods sold/assets'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Investment**: Investment/assets'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are also unsupervised learning techniques for a data-driven discovery
+    of risk factors using factors and principal component analysis that we will explore
+    in [Chapter 12](c187906e-9fde-4f85-b709-df88dd0f7e88.xhtml), *Unsupervised Learning.*
+  prefs: []
+  type: TYPE_NORMAL
+- en: Obtaining the risk factors
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Fama and French make updated risk factor and research portfolio data available
+    through their website, and you can use the `pandas_datareader` library to obtain
+    the data. For this application, refer to the `fama_macbeth.ipynb` notebook for
+    additional detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In particular, we will be using the five Fama—French factors that result from
+    sorting stocks first into three size groups and then into two for each of the
+    remaining three firm-specific factors. Hence, the factors involve three sets of
+    value-weighted portfolios formed as 3 x 2 sorts on size and book-to-market, size
+    and operating profitability, and size and investment. The risk factor values computed
+    as the average returns of the **portfolios** (**PF**) as outlined in the following
+    table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Concept** | **Label** | **Name** | **Risk factor calculation** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Size | SMB | Small minus big | Nine small stock PF minus nine large stock
+    PF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Value | HML | High minus low |  Two value PF minus two growth (with low BE/ME
+    value) PF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Profitability | RMW | Robust minus weak | Two robust OP PF minus two weak
+    OP PF |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Investment | CMA | Conservative minus aggressive | Two conservative investment
+    portfolios minus two aggressive investment portfolios |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Market | Rm-Rf | Excess return on the market | Value-weight return of all
+    firms incorporated in and listed on  major US exchanges with good data minus the
+    one-month Treasury bill rate |'
+  prefs: []
+  type: TYPE_TB
+- en: 'We will use returns at a monthly frequency that we obtain for the period 2010
+    – 2017 as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Fama and French also make available numerous portfolios that we can illustrate
+    the estimation of the factor exposures, as well as the value of the risk premia
+    available in the market for a given time period. We will use a panel of the 17
+    industry portfolios at a monthly frequency. We will subtract the risk-free rate
+    from the returns because the factor model works with excess returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will now build a linear factor model based on this panel data using a method
+    that addresses the failure of some basic linear regression assumptions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fama—Macbeth regression
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Given data on risk factors and portfolio returns, it is useful to estimate the
+    portfolio's exposure, that is, how much the risk factors drive portfolio returns,
+    as well as how much the exposure to a given factor is worth, that is, the what
+    market's risk factor premium is. The risk premium then permits to estimate the
+    return for any portfolio provided the factor exposure is known or can be assumed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More formally, we will have *i=1, ..., N* asset or portfolio returns over *t=1,
+    ..., T* periods and each asset's excess period return will be denoted ![](img/65e5c37d-8bfd-47b8-85a9-07e538fd00f8.png). The
+    goals is to test whether the *j=1, ..., M* factors ![](img/ca9ceac1-0c7c-4833-b6d1-dd15cb47660d.png)explain
+    the excess returns and the risk premium associated with each factor. In our case,
+    we have *N=17* portfolios and *M=5* factors, each with =96 periods of data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Factor models are estimated for many stocks in a given period. Inference problems
+    will likely arise in such cross-sectional regressions because the fundamental
+    assumptions of classical linear regression may not hold. Potential violations
+    include measurement errors, covariation of residuals due to heteroskedasticity
+    and serial correlation, and multicollinearity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To address the inference problem caused by the correlation of the residuals,
+    Fama and MacBeth proposed a two-step methodology for a cross-sectional regression
+    of returns on factors. The two-stage Fama—Macbeth regression is designed to estimate
+    the premium rewarded for the exposure to a particular risk factor by the market. The
+    two stages consist of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**First stage**: *N* time-series regression, one for each asset or portfolio,
+    of its excess returns on the factors to estimate the factor loadings. In matrix
+    form, for each asset:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![](img/e187e1c1-3c7a-4dc4-a691-0e80d387a11b.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Second stage**: T cross-sectional regression, one for each time period, to
+    estimate the risk premium. In matrix form, we obtain a vector ![](img/8a5b412f-8c0f-40f0-97d5-d3f50789362e.png) of
+    risk premia for each period:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![](img/ebf5ed03-1aaf-4cef-85aa-33cc4fb12ad1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now we can compute the factor risk premia as the time average and get t-statistic
+    to assess their individual significance, using the assumption that the risk premia
+    estimates are independent over time:![](img/105fc0bb-9211-48d6-b2cb-c1ff1081bbf3.png).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we had a very large and representative data sample on traded risk factors
+    we could use the sample mean as a risk premium estimate. However, we typically
+    do not have a sufficiently long history to and the margin of error around the
+    sample mean could be quite large. The Fama—Macbeth methodology leverages the covariance
+    of the factors with other assets to determine the factor premia. The second moment
+    of asset returns is easier to estimate than the first moment, and obtaining more
+    granular data improves estimation considerably, which is not true of mean estimation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can implement the first stage to obtain the 17 factor loading estimates
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For the second stage, we run 96 regressions of the period returns for the cross
+    section of portfolios on the factor loadings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, we compute the average for the 96 periods to obtain our factor risk
+    premium estimates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `linear_models` library extends `statsmodels` with various models for panel
+    data and also implements the two-stage Fama—MacBeth procedure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This provides us with the same result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/74d5d23a-9727-43c3-b1a1-3cb8ece117dd.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: LinearFactorModel Estimation Summary
+  prefs: []
+  type: TYPE_NORMAL
+- en: The accompanying notebook illustrates the use of categorical variables by using
+    industry dummies when estimating risk premia for a larger panel of individual
+    stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Shrinkage methods: regularization for linear regression'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The least squares methods to train a linear regression model will produce the
+    best, linear, and unbiased coefficient estimates when the Gauss—Markov assumptions
+    are met. Variations like GLS fare similarly well even when OLS assumptions about
+    the error covariance matrix are violated. However, there are estimators that produce
+    biased coefficients to reduce the variance to achieve a lower generalization error
+    overall.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When a linear regression model contains many correlated variables, their coefficients
+    will be poorly determined because the effect of a large positive coefficient on
+    the RSS can be canceled by a similarly large negative coefficient on a correlated
+    variable. Hence, the model will have a tendency for high variance due to this
+    wiggle room of the coefficients that increases the risk that the model overfits
+    to the sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to hedge against overfitting
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: One popular technique to control overfitting is that of **regularization**,
+    which involves the addition of a penalty term to the error function to discourage
+    the coefficients from reaching large values. In other words, size constraints
+    on the coefficients can alleviate the resultant potentially negative impact on
+    out-of-sample predictions. We will encounter regularization methods for all models
+    since overfitting is such a pervasive problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this section, we will introduce shrinkage methods that address two motivations
+    to improve on the approaches to linear models discussed so far:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Prediction accuracy**: The low bias but high variance of least squares estimates
+    suggests that the generalization error could be reduced by shrinking or setting
+    some coefficients to zero, thereby trading off a slightly higher bias for a reduction
+    in the variance of the model.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Interpretation**: A large number of predictors may complicate the interpretation
+    or communication of the big picture of the results. It may be preferable to sacrifice
+    some detail to limit the model to a smaller subset of parameters with the strongest
+    effects.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Shrinkage models restrict the regression coefficients by imposing a penalty
+    on their size. These models achieve this goal by adding a term to the objective function
+    so that the coefficients of a shrinkage model minimize the RSS plus a penalty
+    that is positively related to the (absolute) size of the coefficients. The added
+    penalty turns finding the linear regression coefficients into a constrained minimization
+    problem that, in general, takes the following Lagrangian form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/2dd72b9d-c072-47ce-834f-356b6c948b14.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The regularization parameter λ determines the size of the penalty effect, that
+    is, the strength of the regularization. As soon as λ is positive, the coefficients
+    will differ from the unconstrained least squared parameters, which implies a biased
+    estimate. The hyperparameter λ should be adaptively chosen using cross-validation
+    to minimize an estimate of expected prediction error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Shrinkage models differ by how they calculate the penalty, that is, the functional
+    form of S. The most common versions are the ridge regression that uses the sum
+    of the squared coefficients, whereas the lasso model bases the penalty on the
+    sum of the absolute values of the coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How ridge regression works
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The ridge regression shrinks the regression coefficients by adding a penalty
+    to the objective function that equals the sum of the squared coefficients, which
+    in turn corresponds to the L² norm of the coefficient vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/119120f8-5beb-4dd6-9aaf-d613fb2edb63.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Hence, the ridge coefficients are defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/b2783010-31ca-4a32-8997-dd5c559c40e6.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The intercept ![](img/71cf85ed-96c5-49f5-b91d-07099b5ed007.png) has been excluded
+    from the penalty to make the procedure independent of the origin chosen for the
+    output variable—otherwise, adding a constant to all output values would change
+    all slope parameters as opposed to a parallel shift.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is important to standardize the inputs by subtracting from each input the
+    corresponding mean and dividing the result by the input''s standard deviation because
+    the ridge solution is sensitive to the scale of the inputs. There is also a closed
+    solution for the ridge estimator that resembles the OLS case:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/4d2c6a4a-0e95-4314-932e-9cdec5694253.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The solution adds the scaled identity matrix λ*I* to *X^TX* before inversion,
+    which guarantees that the problem is non-singular, even if *X^T**X* does not have full
+    rank. This was one of the motivations for using this estimator when it was originally
+    introduced.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ridge penalty results in proportional shrinkage of all parameters. In the
+    case of **orthonormal inputs**, the ridge estimates are just a scaled version
+    of the least squares estimates, that is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/bba72082-ca29-4704-a72d-d811aa84a7c2.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Using the **singular value decomposition** (**SVD**) of the input matrix *X*,
+    we can gain insight into how the shrinkage affects inputs in the more common case
+    where they are not orthonormal. The SVD of a centered matrix represents the principal
+    components of a matrix (refer to [Chapter 11](2fbfa6b5-87f3-49c3-b13a-5ead63471370.xhtml),
+    *Gradient Boosting Machines*, on unsupervised learning) that capture uncorrelated
+    directions in the column space of the data in descending order of variance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ridge regression shrinks coefficients on input variables that are associated
+    with directions in the data that have less variance more than input variables
+    that correlate with directions that exhibit more variance. Hence, the implicit
+    assumption of ridge regression is that the directions in the data that vary the
+    most will be most influential or most reliable when predicting the output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How lasso regression works
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The lasso, known as basis pursuit in signal processing, also shrinks the coefficients
+    by adding a penalty to the sum of squares of the residuals, but the lasso penalty
+    has a slightly different effect. The lasso penalty is the sum of the absolute
+    values of the coefficient vector, which corresponds to its L¹ norm. Hence, the
+    lasso estimate is defined by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/c05889b1-7c7b-415e-b0eb-280833978de1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Similarly to ridge regression, the inputs need to be standardized. The lasso
+    penalty makes the solution nonlinear, and there is no closed-form expression for
+    the coefficients as in ridge regression. Instead, the lasso solution is a quadratic
+    programming problem and there are available efficient algorithms that compute
+    the entire path of coefficients that result for different values of λ with the
+    same computational cost as for ridge regression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The lasso penalty had the effect ofgradually reducing some coefficients to zero
+    as the regularization increases. For this reason, the lasso can be used for the
+    continuous selection of a subset of features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use linear regression to predict returns
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The notebook `linear_regression.ipynb` contains examples for the prediction
+    of stock prices using OLS with `statsmodels` and `sklearn`, as well as ridge and
+    lasso models. It is designed to run as a notebook on the Quantopian research platform
+    and relies on the `factor_library` introduced in [Chapter 4](31520630-da72-4cf6-8d84-6a74b7f4f259.xhtml), *Alpha
+    Factors Research*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Prepare the data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We need to select a universe of equities and a time horizon, build and transform
+    alpha factors that we will use as features, calculate forward returns that we
+    aim to predict, and potentially clean our data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Universe creation and time horizon
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will use equity data for the years 2014 and 2015 from a custom `Q100US`
+    universe that uses built-in filters, factors, and classifiers to select the 100
+    stocks with the highest average dollar volume of the last 200 trading days filtered
+    by additional default criteria (see Quantopian docs linked on GitHub for detail).
+    The universe dynamically updates based on the filter criteria so that, while there
+    are 100 stocks at any given point, there may be more than 100 distinct equities
+    in the sample:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Target return computation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will test predictions for various `lookahead` periods to identify the best
+    holding periods that generate the best predictability, measured by the information
+    coefficient. More specifically, we compute returns for 1, 5, 10, and 20 days using
+    the built-in `Returns` function, resulting in over 50,000 observations for the
+    universe of 100 stocks over two years (that include approximately 252 trading
+    days each):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Alpha factor selection and transformation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We will use over 50 features that cover a broad range of factors based on market,
+    fundamental, and alternative data. The notebook also includes custom transformations
+    to convert fundamental data that is typically available in quarterly reporting
+    frequency to rolling annual totals or averages to avoid excessive season fluctuations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Once the factors have been computed through the various pipelines outlined
+    in [Chapter 4](31520630-da72-4cf6-8d84-6a74b7f4f259.xhtml), *Alpha Factors Research*,
+    we combine them using `pd.concat()`, assign index names, and create a categorical
+    variable that identifies the asset for each data point:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data cleaning – missing data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In a next step, we remove rows and columns that lack more than 20 percent of
+    the observations, resulting in a loss of six percent of the observations and three
+    columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'At this point, we have 51 features and the categorical identifier of the stock:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Data exploration
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: For linear regression models, it is important to explore the correlation among
+    the features to identify multicollinearity issues, and to check the correlation
+    between the features and the target. The notebook contains a seaborn clustermap
+    that shows the hierarchical structure of the feature correlation matrix. It identifies
+    a small number of highly correlated clusters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Dummy encoding of categorical variables
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We need to convert the categorical `stock` variable into a numeric format so
+    that the linear regression can process it. For this purpose, we use dummy encoding
+    that creates individual columns for each category level and flags the presence
+    of this level in the original categorical column with an entry of `1`, and `0`
+    otherwise. The pandas function `get_dummies()` automates dummy encoding. It detects
+    and properly converts columns of type objects as illustrated next. If you need
+    dummy variables for columns containing integers, for instance, you can identify
+    them using the keyword `columns`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When converting all categories to dummy variables and estimating the model
+    with an intercept (as you typically would), you inadvertently create multicollinearity:
+    the matrix now contains redundant information and no longer has full rank, that
+    is, becomes singular. It is simple to avoid this by removing one of the new indicator
+    columns. The coefficient on the missing category level will now be captured by
+    the intercept (which is always `1` when every other category dummy is `0`). Use
+    the `drop_first` keyword to correct the dummy variables accordingly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Applied to our combined features and returns, we obtain 181 columns because
+    there are more than 100 stocks as the universe definition automatically updates
+    the stock selection:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creating forward returns
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The goal is to predict returns over a given holding period. Hence, we need
+    to align the features with return values with the corresponding return data point
+    1, 5, 10, or 20 days into the future for each equity. We achieve this by combining
+    the pandas `.groupby()` method with the `.shift()` method as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are now different numbers of observations for each return series as the
+    forward shift has created missing values at the tail end for each equity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear OLS regression using statsmodels
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We can estimate a linear regression model using OLS with `statsmodels` as demonstrated
+    previously. We select a forward return, for example for a 10-day holding period,
+    remove outliers below the 2.5% and above the 97.5% percentiles, and fit the model
+    accordingly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Diagnostic statistics
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The summary is available in the notebook to save some space due to the large
+    number of variables. The diagnostic statistics show that, given the high p-value
+    on the Jarque—Bera statistic, the hypothesis that the residuals are normally distributed
+    cannot be rejected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the Durbin—Watson statistic is low at 1.5 so we can reject the null
+    hypothesis of no autocorrelation comfortably at the 5% level. Hence, the standard
+    errors are likely positively correlated. If our goal were to understand which
+    factors are significantly associated with forward returns, we would need to rerun
+    the regression using robust standard errors (a parameter in `statsmodels .fit()`
+    method), or use a different method altogether such as a panel model that allows
+    for more complex error covariance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear OLS regression using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Since sklearn is tailored towards prediction, we will evaluate the linear regression
+    model based on its predictive performance using cross-validation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Custom time series cross-validation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Our data consists of grouped time series data that requires a custom cross-validation
+    function to provide the train and test indices that ensure that the test data
+    immediately follows the training data for each equity and we do not inadvertently
+    create a look-ahead bias or leakage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can achieve this using the following function that returns a `generator` yielding
+    pairs of train and test dates. The set of train dates that ensure a minimum length
+    of the training periods. The number of pairs depends on the parameter `nfolds`. The
+    distinct test periods do not overlap and are located at the end of the period
+    available in the data. After a test period is used, it becomes part of the training
+    data that grow in size accordingly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Select features and target
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We need to select the appropriate return series (we will again use a 10-day
+    holding period) and remove outliers. We will also convert returns to log returns
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cross-validating the model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We will use 250 folds to generally predict about 2 days of forward returns
+    following the historical training data that will gradually increase in length.
+    Each iteration obtains the appropriate training and test dates from our custom
+    cross-validation function, selects the corresponding features and targets, and
+    then trains and predicts accordingly. We capture the root mean squared error as
+    well as the Spearman rank correlation between actual and predicted values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Test results – information coefficient and RMSE
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We have captured the test predictions from the 250 folds and can compute both
+    the overall and a 21-day rolling average:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We obtain the following chart that highlights the negative correlation of IC
+    and RMSE and their respective values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/f2f699e8-ecac-49db-b305-7af3946654b3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Chart highlighting the negative correlation of IC and RMSE
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the entire period, we see that the Information Coefficient measured by
+    the rank correlation of actual and predicted returns is weakly positive and statistically
+    significant:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/33da13e6-51b6-4893-a3da-9a25c2f4dee5.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Ridge regression using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: For the ridge regression, we need to tune the regularization parameter with
+    the keyword `alpha` that corresponds to the λ we used previously. We will try
+    21 values from 10^(-5) to 10⁵ in logarithmic steps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The scale sensitivity of the ridge penalty requires us to standardize the inputs
+    using the `StandardScaler`. Note that we always learn the mean and the standard
+    deviation from the training set using the `.fit_transform()` method and then apply
+    these learned parameters to the test set using the `.transform()` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tuning the regularization parameters using cross-validation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We then proceed to cross-validate the hyperparameter values again using `250`
+    folds as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cross-validation results and ridge coefficient paths
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We can now plot the information coefficient obtained for each hyperparameter
+    value and also visualize how the coefficient values evolve as the regularization
+    increases. The results show that we get the highest IC value for a value of λ=10\.
+    For this level of regularization, the right-hand panel reveals that the coefficients
+    have been already significantly shrunk compared to the (almost) unconstrained
+    model with *λ=10^(-5)*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/83c16cfe-0936-4705-a073-fa1849cd7d82.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Cross-validation results and ridge coefficient paths
+  prefs: []
+  type: TYPE_NORMAL
+- en: Top 10 coefficients
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The standardization of the coefficients allows us to draw conclusions about
+    their relative importance by comparing their absolute magnitude. The 10 most relevant
+    coefficients are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/36b556ea-a0b2-46e1-b01a-ac2185ac20df.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Top 10 coefficients
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lasso regression using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The lasso implementation looks very similar to the ridge model we just ran.
+    The main difference is that lasso needs to arrive at a solution using iterative
+    coordinate descent whereas ridge can rely on a closed-form solution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cross-validated information coefficient and Lasso Path
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'As before, we can plot the average information coefficient for all test sets
+    used during cross-validation. We see again that regularization improves the IC
+    over the unconstrained model, delivering the best out-of-sample result at a level
+    of *λ=10^(-5)*. The optimal regularization value is quite different from ridge
+    regression because the penalty consists of the sum of the absolute, not the squared
+    values of the relatively small coefficient values. We can also see that for this
+    regularization level, the coefficients have been similarly shrunk, as in the ridge
+    regression case:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/013530cc-20f7-463a-ac1d-354825bd10e3.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Cross-validated information coefficient and Lasso Path
+  prefs: []
+  type: TYPE_NORMAL
+- en: In sum, ridge and lasso will produce similar results. Ridge often computes faster,
+    but lasso also yields continuous features subset selection by gradually reducing
+    coefficients to zero, hence eliminating features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear classification
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The linear regression model discussed so far assumes a quantitative response
+    variable. In this section, we will focus on approaches to modeling qualitative
+    output variables for inference and prediction, a process that is known as **classification**
+    and that occurs even more frequently than regression in practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Predicting a qualitative response for a data point is called **classifying**
+    that observation because it involves assigning the observation to a category,
+    or class. In practice, classification methods often predict probabilities for
+    each of the categories of a qualitative variable and then use this probability
+    to decide on the proper classification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We could approach the classification problem ignoring the fact that the output
+    variable assumes discrete values, and apply the linear regression model to try
+    to predict a categorical output using multiple input variables. However, it is
+    easy to construct examples where this method performs very poorly. Furthermore,
+    it doesn't make intuitive sense for the model to produce values larger than 1
+    or smaller than 0 when we know that *y ∈ [0, 1]*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are many different classification techniques, or classifiers, that are
+    available to predict a qualitative response. In this section, we will introduce
+    the widely used logistic regression which is closely related to linear regression. We
+    will address more complex methods in the following chapters, on generalized additive
+    models that include decision trees and random forests, as well as gradient boosting
+    machines and neural networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The logistic regression model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The logistic regression model arises from the desire to model the probabilities
+    of the output classes given a function that is linear in *x*, just like the linear
+    regression model, while at the same time ensuring that they sum to one and remain
+    in the [0, 1] as we would expect from probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we introduce the objective and functional form of the logistic
+    regression model and describe the training method. We then illustrate how to use
+    logistic regression for statistical inference with macro data using statsmodels,
+    and how to predict price movements using the regularized logistic regression implemented
+    by sklearn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Objective function
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'For illustration, we''ll use the output variable y that takes on the value
+    1 if a stock return is positive over a given time horizon d, and 0 otherwise:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/959b63ca-ea20-4c97-bc7c-154d2341e74a.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We could easily extend y to three categories, where 0 and 2 reflect negative
+    and positive price moves beyond a certain threshold, and 1 otherwise. Rather than
+    modeling the output variable *y*, however, logistic regression models the probability
+    that y belongs to either of the categories given a vector of alpha factors or
+    features ![](img/90185215-12e0-4ea9-9ab1-2b277832e26c.png). In other words, the logistic
+    regression models the probability that the stock price goes up, conditional on
+    the values of the variables included in the model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/767f64a0-9327-4123-8a14-68b4aa0fab23.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The logistic function
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To prevent the model from producing values outside the [0, 1] interval, we
+    must model *p(x)* using a function that only gives outputs between 0 and 1 over
+    the entire domain of *x*. The logistic function meets this requirement and always
+    produces an S-shaped curve (see notebook examples), and so, regardless of the
+    value of X, we will obtain a sensible prediction:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/5ca89660-1107-4c0a-a57d-adae0541bcee.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, the vector *x* includes a 1 for the intercept captured by the first component
+    of ![](img/5218aa4d-ecfa-4abb-970a-67b11c0c557a.png), ![](img/565b1832-0731-474d-8eb8-9ad248442204.png).
+    We can transform this expression to isolate the part that looks like a linear
+    regression to arrive at:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/30e97c9b-97c4-44a5-a528-d1e54384d4bc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The quantity *p(x)/[1−p(x)]* is called the **odds**, an alternative way to express
+    probabilities that may be familiar from gambling, and can take on any value odds
+    between 0 and ∞, where low values also imply low probabilities and high values
+    imply high probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The logit is also called log-odds (since it is the logarithm of the odds). Hence,
+    the logistic regression represents a logit that is linear in *x* and looks a lot
+    like the preceding linear regression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Maximum likelihood estimation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The coefficient vector ![](img/67a36c05-1101-4552-92e7-a069bab53116.png) must
+    be estimated using the available training data. Although we could use (non-linear)
+    least squares to fit the logistic regression model, the more general method of
+    maximum likelihood is preferred, since it has better statistical properties. As
+    we have just discussed, the basic intuition behind using maximum likelihood to
+    fit a logistic regression model is to seek estimates for ![](img/67a36c05-1101-4552-92e7-a069bab53116.png)
+    such that the predicted probability ![](img/86fcfb37-c25d-4cbd-b39d-a72674162df0.png)
+    corresponds as closely as possible to the actual outcome. In other words, we try
+    to find ![](img/6754827d-5689-4136-b222-c162c910b0c7.png) such that these estimates
+    yield a number close to 1 for all cases where the stock price went up, and a number
+    close to 0 otherwise. More formally, we are seeking to maximize the likelihood
+    function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/9ee6262d-4015-4968-a752-11c1a87ef6ba.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'It is easier to work with sums than with products, so let''s take logs on both
+    sides to get the log-likelihood function and the corresponding definition of the
+    logistic regression coefficients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/598f2e46-7876-403f-a502-2f045e6161e1.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Maximizing this equation by setting the derivatives of ![](img/a4a91a01-a2c2-47a4-8ed3-a2ba2408d686.png) with
+    respect to ![](img/67a36c05-1101-4552-92e7-a069bab53116.png) to zero yields p+1
+    so-called score equations that are nonlinear in the parameters that can be solved
+    using iterative numerical methods for the concave log-likelihood function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to conduct inference with statsmodels
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We will illustrate how to use logistic regression with `statsmodels` based on
+    a simple built-in dataset containing quarterly US macro data from 1959 – 2009
+    (see the notebook `logistic_regression_macro_data.ipynb` for detail).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The variables and their transformations are listed in the following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| **Variable** | **Description** | **Transformation** |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `realgdp` | Real gross domestic product | Annual Growth Rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `realcons` | Real personal consumption expenditures | Annual Growth Rate
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `realinv` | Real gross private domestic investment | Annual Growth Rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `realgovt` | Real federal expenditures and gross investment | Annual Growth
+    Rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `realdpi` | Real private disposable income | Annual Growth Rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `m1` | M1 nominal money stock | Annual Growth Rate |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `tbilrate` | Monthly 3 treasury bill rate | Level |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `unemp` | Seasonally adjusted unemployment rate (%) | Level |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `infl` | Inflation rate | Level |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `realint` | Real interest rate | Level |'
+  prefs: []
+  type: TYPE_TB
+- en: To obtain a binary target variable, we compute the 20-quarter rolling average
+    of the annual growth rate of quarterly real GDP. We then assign 1 if current growth
+    exceeds the moving average and 0 otherwise. Finally, we shift the indicator variables
+    to align next quarter's outcome with the current quarter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We use an intercept and convert the quarter values to dummy variables and train
+    the logistic regression model as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This produces the following summary for our model with 198 observations and
+    13 variables, including intercept:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/d8e2376b-b48e-4f53-8694-0f337f29b986.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Logit Regression results
+  prefs: []
+  type: TYPE_NORMAL
+- en: The summary indicates that the model has been trained using maximum likelihood
+    and provides the maximized value of the log-likelihood function at -67.9.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The LL-Null value of -136.42 is the result of the maximized log-likelihood function
+    when only an intercept is included. It forms the basis for the pseudo-R² statisticand
+    the Log-**Likelihood Ratio** (**LLR**) test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The pseudo-R^(2 )statistic is a substitute for the familiar R² available under
+    least squares. It is computed based on the ratio of the maximized log-likelihood
+    function for the null model m[0] and the full model m[1] as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/58c66c64-3260-4ce4-83a2-6ed4ec540c23.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The values vary from 0 (when the model does not improve the likelihood) to 1
+    where the model fits perfectly and the log-likelihood is maximized at 0\. Consequently,
+    higher values indicate a better fit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The LLR test generally compares a more restricted model and is computed as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/0849e323-b0ee-4890-9cdd-9d93940804de.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The null hypothesis is that the restricted model performs better but the low
+    p-value suggests that we can reject this hypothesis and prefer the full model
+    over the null model. This is similar to the F-test for linear regression (where
+    we can also use the LLR test when we estimate the model using MLE).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The z-statistic plays the same role as the t-statistic in the linear regression
+    output and is equally computed as the ratio of the coefficient estimate and its
+    standard error. The p-values also indicate the probability of observing the test
+    statistic assuming the null hypothesis *H[0] : β = 0* that the population coefficient
+    is zero. We can reject this hypothesis for the `intercept`, `realcons`, `realinv`,
+    `realgovt`, `realdpi`, and `unemp`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use logistic regression for prediction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The lasso L[1] penalty and the ridge L[2] penalty can both be used with logistic
+    regression. They have the same shrinkage effect as we have just discussed, and
+    the lasso can again be used for variable selection with any linear regression
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Just as with linear regression, it is important to standardize the input variables
+    as the regularized models are scale sensitive. The regularization hyperparameter
+    also requires tuning using cross-validation as in the linear regression case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to predict price movements using sklearn
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We continue the price prediction example but now we binarize the outcome variable
+    so that it takes on the value 1 whenever the 10-day return is positive and 0 otherwise;
+    see the notebook `logistic_regression.ipynb` in the sub directory `stock_price_prediction`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With this new categorical outcome variable, we can now train a logistic regression
+    using the default L[2] regularization. For logistic regression, the regularization
+    is formulated inversely to linear regression: higher values for λ imply less regularization
+    and vice versa. We evaluate 11 parameter values using cross validation as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We then use the `roc_auc_score` discussed in the previous chapter to compare
+    the predictive accuracy across the various regularization parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can again plot the AUC result for the range of hyperparameter values alongside
+    the coefficient path that shows the improvements in predictive accuracy as the
+    coefficients are a bit shrunk at the optimal regularization value 10²:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/e2e88587-b9b2-4e2d-a204-712534c693d7.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: AUC and Logistic Ridge path
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we introduced the first machine learning models using the important
+    baseline case of linear models for regression and classification. We explored
+    the formulation of the objective functions for both tasks, learned about various
+    training methods, and learned how to use the model for both inference and prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We applied these new machine learning techniques to estimate linear factor models
+    that are very useful to manage risks, assess new alpha factors, and attribute
+    performance. We also applied linear regression and classification to accomplish
+    the first predictive task of predicting stock returns in absolute and directional
+    terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will look at the important topic of linear time series
+    models that are designed to capture serial correlation patterns in the univariate
+    and multivariate case. We will also learn about new trading strategies as we explore
+    pairs trading based on the concept of cointegration that captures dynamic correlation
+    among two stock price series.
+  prefs: []
+  type: TYPE_NORMAL
