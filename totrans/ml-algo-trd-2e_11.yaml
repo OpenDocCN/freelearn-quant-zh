@@ -1,8 +1,10 @@
 - en: '11'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: Random Forests – A Long-Short Strategy for Japanese Stocks
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -13,12 +15,14 @@
     tree and use it for prediction with regression and classification problems, visualize
     and interpret the rules learned by the model, and tune the model''s hyperparameters
     to optimize the bias-variance trade-off and prevent overfitting.'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
 - en: Decision trees are not only important standalone models but are also frequently
     used as components in other models. In the second part of this chapter, we will
     introduce ensemble models that combine multiple individual models to produce a
     single aggregate prediction with lower prediction-error variance.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
 - en: We will illustrate **bootstrap aggregation**, often called *bagging*, as one
@@ -28,6 +32,7 @@
     configure, train, and tune random forests. We will see how random forests, as
     an ensemble of a (potentially large) number of decision trees, can dramatically
     reduce prediction errors, at the expense of some loss in interpretation.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
 - en: Then, we will proceed and build a long-short trading strategy that uses a random
@@ -38,42 +43,52 @@
     relationship we saw in *Chapter 9*, *Time-Series Models for Volatility Forecasts
     and Statistical Arbitrage*, to identify and trade baskets of securities whose
     prices will likely move in opposite directions over a given investment horizon.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
 - en: 'In short, after reading this chapter, you will be able to:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
 - en: Use decision trees for regression and classification
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Gain insights from decision trees and visualize the rules learned from the data
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Understand why ensemble models tend to deliver superior results
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Use bootstrap aggregation to address the overfitting challenges of decision
     trees
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Train, tune, and interpret random forests
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Employ a random forest to design and evaluate a profitable trading strategy
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: You can find the code samples for this chapter and links to additional resources
     in the corresponding directory of the GitHub repository. The notebooks include
     color versions of the images.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
 - en: Decision trees – learning rules from data
+  id: totrans-14
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -81,26 +96,34 @@
     target variable based on **decision rules learned from data**. The algorithm can
     be applied to both regression and classification problems by changing the objective
     function that governs how the tree learns the rules.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树是一种机器学习算法，它根据从数据中学习到的**决策规则**来预测目标变量的值。该算法可以通过改变管理树如何学习规则的目标函数应用于回归和分类问题。
 - en: We will discuss how decision trees use rules to make predictions, how to train
     them to predict (continuous) returns as well as (categorical) directions of price
     movements, and how to interpret, visualize, and tune them effectively. See Rokach
     and Maimon (2008) and Hastie, Tibshirani, and Friedman (2009) for additional details
     and further background information.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将讨论决策树如何使用规则进行预测，如何训练它们来预测（连续的）收益以及（分类的）价格走势方向，以及如何有效地解释、可视化和调整它们。有关更多详细信息和背景信息，请参阅Rokach和Maimon（2008）以及Hastie、Tibshirani和Friedman（2009）。
 - en: How trees learn and apply decision rules
+  id: totrans-17
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 树是如何学习和应用决策规则的
 - en: The **linear models** we studied in *Chapter 7*, *Linear Models – From Risk
     Factors to Return Forecasts*, and *Chapter 9*, *Time-Series Models for Volatility
     Forecasts and Statistical Arbitrage*, learn a set of parameters to predict the
     outcome using a linear combination of the input variables, possibly after being
     transformed by an S-shaped link function, in the case of logistic regression.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在*第7章*，*线性模型 - 从风险因素到收益预测*和*第9章*，*时间序列模型用于波动率预测和统计套利*中学习的**线性模型**通过学习一组参数来预测输出，可能在逻辑回归的情况下通过S形链接函数进行转换。
 - en: 'Decision trees take a different approach: they learn and sequentially apply
     a set of rules that split data points into subsets and then make one prediction
     for each subset. The predictions are based on the outcome values for the subset
@@ -109,37 +132,49 @@
     frequencies or the value of the majority class directly, whereas **regression
     trees** compute prediction from the mean of the outcome values for the available
     data points.'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树采用不同的方法：它们学习并依次应用一组规则，将数据点分成子集，然后为每个子集做出一个预测。这些预测基于应用给定规则序列所导致的训练样本子集的结果值。**分类树**预测从相对类频率或最多类的值直接估计的概率，而**回归树**计算可用数据点的结果值均值的预测。
 - en: 'Each of these rules relies on one particular feature and uses a threshold to
     split the samples into two groups, with values either below or above the threshold
     for this feature. A **binary tree** naturally represents the logic of the model:
     the root is the starting point for all samples, nodes represent the application
     of the decision rules, and the data moves along the edges as it is split into
     smaller subsets until it arrives at a leaf node, where the model makes a prediction.'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 每一条规则都依赖于一个特定的特征，并使用一个阈值将样本分成两组，其中值要么低于要么高于该特征的阈值。**二叉树**自然地表示了模型的逻辑：根是所有样本的起点，节点代表决策规则的应用，数据沿着边移动，当它被分成更小的子集时，直到到达叶节点，模型进行预测。
 - en: For a linear model, the parameter values allow an interpretation of the impact
     of the input variables on the output and the model's prediction. In contrast,
     for a decision tree, the various possible paths from the root to the leaves determine
     how the features and their values lead to specific decisions by the model. As
     a consequence, decision trees are **capable of capturing interdependence** among
     features that linear models cannot capture "out of the box."
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于线性模型，参数值允许解释输入变量对输出和模型预测的影响。相反，对于决策树，从根到叶的各种可能路径确定了特征及其值如何导致模型做出具体决策。因此，决策树能够捕捉线性模型无法“开箱即用”捕捉的特征之间的**相互依赖**。
 - en: 'The following diagram highlights how the model learns a rule. During training,
     the algorithm scans the features and, for each feature, seeks to find a cutoff
     that splits the data to minimize the loss that results from predictions made.
     It does so using the subsets that would result from the split, weighted by the
     number of samples in each subset:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图表突出显示了模型如何学习一条规则。在训练过程中，算法扫描特征，并且对于每个特征，它寻求找到一个分割数据以最小化由预测造成的损失的切分点。它使用将结果来自于分割的子集，按每个子集中的样本数量加权：
 - en: '![](img/B15439_11_01.png)'
+  id: totrans-23
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_01.png)'
 - en: 'Figure 11.1: How a decision tree learns rules from data'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.1：决策树如何从数据中学习规则
 - en: To build an entire tree during training, the learning algorithm repeats this
     process of dividing the feature space, that is, the set of possible values for
     the *p* input variables, *X*[1], *X*[2], ..., *X*[p], into mutually-exclusive
@@ -148,8 +183,10 @@
     space, given the explosive number of possible combinations of sequences of features
     and thresholds. Tree-based learning takes a **top-down**, **greedy approach**,
     known as **recursive binary splitting**, to overcome this computational limitation.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 在训练期间构建整个树，学习算法重复此过程，即将特征空间，即*p*个输入变量*X*[1]、*X*[2]、...、*X*[p]的可能值集合，划分为互斥且集体穷尽的区域，每个区域由一个叶节点表示。不幸的是，由于特征空间的可能组合和阈值序列的爆炸性数量，算法将无法评估特征空间的每种可能分区。基于树的学习采用了一种**自顶向下**、**贪婪的方法**，称为**递归二元分割**，以克服这种计算限制。
 - en: This process is recursive because it uses subsets of data resulting from prior
     splits. It is top-down because it begins at the root node of the tree, where all
     observations still belong to a single region, and then successively creates two
@@ -159,8 +196,10 @@
     looking ahead and evaluating the loss several steps ahead. We will return to the
     splitting logic in the more specific context of regression and classification
     trees because this represents the major difference between them.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 此过程是递归的，因为它使用来自先前分割的数据子集。它是自顶向下的，因为它从树的根节点开始，所有观察仍然属于单个区域，然后通过向预测器空间添加一个以上的分割来连续创建树的两个新分支。它是贪婪的，因为算法根据对目标函数的直接影响选择最佳规则，而不是向前看并评估数步之后的损失。我们将在更具体的回归和分类树的上下文中返回分割逻辑，因为这代表了它们之间的主要差异。
 - en: The number of training samples continues to shrink as recursive splits add new nodes
     to the tree. If rules split the samples evenly, resulting in a perfectly balanced
     tree with an equal number of children for every node, then there would be 2^n nodes
@@ -168,14 +207,18 @@
     observations. In practice, this is unlikely, so the number of samples along some
     branches may diminish rapidly, and trees tend to grow to different levels of depth
     along different paths.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练样本数量随着递归分割向树中添加新节点而不断减少。如果规则将样本均匀分割，导致树完美平衡，每个节点都有相同数量的子节点，那么在第*n*级就会有2^n个节点，每个节点包含总观测数的相应部分。实际上，这是不太可能的，因此沿某些分支的样本数量可能会迅速减少，并且树倾向于沿不同路径生长到不同的深度。
 - en: Recursive splitting would continue until each leaf node contains only a single
     sample and the training error has been reduced to zero. We will introduce several
     methods to limit splits and prevent this natural tendency of decision trees to
     produce extreme overfitting.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 递归分割将继续，直到每个叶节点仅包含单个样本，并且训练误差已经降低到零。我们将介绍几种方法来限制分割并防止决策树产生极端过拟合的自然倾向。
 - en: To arrive at a **prediction** for a new observation, the model uses the rules
     that it inferred during training to decide which leaf node the data point should
     be assigned to, and then uses the mean (for regression) or the mode (for classification)
@@ -183,84 +226,118 @@
     A smaller number of training samples in a given region of the feature space, that
     is, in a given leaf node, reduces the confidence in the prediction and may reflect
     overfitting.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了对新的观测值进行**预测**，模型使用在训练期间推断出的规则来决定数据点应分配到哪个叶节点，然后使用特征空间相应区域中训练观测的平均值（用于回归）或模式（用于分类）。特征空间中给定区域（即给定叶节点）中训练样本数量较少，会降低预测的置信度，并可能反映出过拟合。
 - en: Decision trees in practice
+  id: totrans-30
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 实践中的决策树
 - en: In this section, we will illustrate how to use tree-based models to gain insight
     and make predictions. To demonstrate regression trees, we predict returns, and
     for the classification case, we return to the example of positive and negative
     asset price moves. The code examples for this section are in the notebook `decision_trees`,
     unless stated otherwise.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将说明如何使用基于树的模型来获得洞察并进行预测。为了演示回归树，我们预测收益，对于分类案例，我们回到了正向和负向资产价格变动的示例。本节的代码示例位于笔记本`decision_trees`中，除非另有说明。
 - en: The data – monthly stock returns and features
+  id: totrans-32
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 数据 - 月度股票收益和特征
 - en: 'We will select a subset of the Quandl US equity dataset covering the period
     2006-2017 and follow a process similar to our first feature engineering example
     in *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*.
     We will compute monthly returns and 25 (hopefully) predictive features for the
     500 most-traded stocks based on the 5-year moving average of their dollar volume,
     yielding 56,756 observations. The features include:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将选择涵盖2006-2017年期间的Quandl美国股票数据集的子集，并按照我们第一个特征工程示例中的过程进行操作，*第4章*，*金融特征工程 -
+    如何研究阿尔法因子*。我们将计算月度收益和基于它们的5年移动平均值的500种最常交易的股票的25个（希望是）预测性特征，产生56,756个观察值。这些特征包括：
 - en: '**Historical returns** for the past 1, 3, 6, and 12 months.'
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 过去1、3、6和12个月的**历史收益**。
 - en: '**Momentum indicators** that relate the most recent 1- or 3-month returns to
     those for longer horizons.'
+  id: totrans-35
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**动量指标**将最近1个或3个月的收益与较长时间跨度的收益相关联。'
 - en: '**Technical indicators** designed to capture volatility like the (normalized)
     average true range (NATR and ATR) and momentum like the **relative strength index**
     (**RSI**).'
+  id: totrans-36
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 设计用于捕捉波动性的**技术指标**，如（归一化的）平均真实范围（NATR和ATR）和像**相对强弱指数**（**RSI**）这样的动量指标。
 - en: '**Factor loadings** for the five Fama-French factors based on rolling OLS regressions.'
+  id: totrans-37
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 根据滚动OLS回归的**五个Fama-French因子的因子加载**。
 - en: '**Categorical variables** for year and month, as well as sector.'
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**年份和月份**以及部门的**分类变量**。'
 - en: '*Figure 11.2* displays the mutual information between these features and the
     monthly returns we use for regression (left panel) and their binarized classification
     counterpart, which represents positive or negative price moves for the same period.
     It shows that, on a univariate basis, there appear to be substantial differences
     in the signal content regarding both outcomes across the features.'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图11.2*显示了这些特征与我们用于回归的月度收益之间的互信息（左侧面板），以及它们的二值化分类对应物，代表了相同期间的正向或负向价格变动。它显示，从单变量的角度来看，无论是对于这些特征的哪一种结果，都存在着信号内容的显著差异。'
 - en: 'More details can be found in the `data_prep` notebook in the GitHub repository
     for this chapter. The decision tree models in this chapter are not equipped to
     handle missing or categorical variables, so we will drop the former and apply
     dummy encoding (see *Chapter 4*, *Financial Feature Engineering – How to Research
     Alpha Factors* and *Chapter 6*, *The Machine Learning Process*) to the categorical
     sector variable:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 更多细节可以在这一章的GitHub存储库中的`data_prep`笔记本中找到。本章的决策树模型不具备处理缺失或分类变量的能力，因此我们将放弃前者并对分类部门变量应用虚拟编码（参见*第4章*，*金融特征工程
+    - 如何研究阿尔法因子*和*第6章*，*机器学习过程*）：
 - en: '![](img/B15439_11_02.png)'
+  id: totrans-41
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_02.png)'
 - en: 'Figure 11.2: Mutual information for features and returns or price move direction'
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.2：特征与收益或价格变动方向的互信息
 - en: Building a regression tree with time-series data
+  id: totrans-43
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用时间序列数据构建回归树
 - en: Regression trees make predictions based on the mean outcome value for the training
     samples assigned to a given node, and typically rely on the mean-squared error
     to select optimal rules during recursive binary splitting.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 回归树根据分配给给定节点的训练样本的平均结果值进行预测，并且通常依靠平均平方误差在递归二进制分割过程中选择最佳规则。
 - en: Given a training set, the algorithm iterates over the *p* predictors, *X*[1],
     *X*[2], ..., *X*[p], and *n* possible cutpoints, *s*[1], *s*[2], ..., *s*[n],
     to find an optimal combination. The optimal rule splits the feature space into
@@ -268,29 +345,44 @@
     the *X*[i] feature either below or above the *s*[j] threshold, so that predictions
     based on the training subsets maximize the reduction of the squared residuals
     relative to the current node.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 给定一个训练集，算法在*p*个预测变量 *X*[1]、*X*[2]、...、*X*[p] 和*n*个可能的切分点 *s*[1]、*s*[2]、...、*s*[n]
+    上进行迭代，以找到最佳组合。最佳规则将特征空间分割成两个区域，{*X*|*X*[i] < *s*[j]} 和 {*X*|*X*[i] > *s*[j]}，其中
+    *X*[i] 特征的值要么在 *s*[j] 阈值以下，要么在 *s*[j] 阈值以上，以便基于训练子集的预测最大程度地减少相对于当前节点的平方残差。
 - en: 'Let''s start with a simplified example to facilitate visualization and also
     demonstrate how we can use time-series data with a decision tree. We will only
     use 2 months of lagged returns to predict the following month, in the vein of
     an AR(2) model from the previous chapter:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从一个简化的示例开始，以便进行可视化，并演示如何使用时间序列数据与决策树。我们将只使用 2 个月的滞后回报来预测以下月份，与前一章中的 AR(2)
+    模型类似：
 - en: '![](img/B15439_11_001.png)'
+  id: totrans-47
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_001.png)'
 - en: 'Using scikit-learn, configuring and training a regression tree is very straightforward:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 scikit-learn，配置和训练回归树非常简单：
 - en: '[PRE0]'
+  id: totrans-49
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: The OLS summary and a visualization of the first two levels of the decision
     tree reveal the striking differences between the models (see *Figure 11.3*). The
     OLS model provides three parameters for the intercepts and the two features in
     line with the linear assumption this model makes about the function.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: OLS 摘要和决策树前两个层级的可视化展示了模型之间的显著差异（见 *图 11.3*）。OLS 模型提供了三个参数，分别为截距和两个特征，符合该模型对函数的线性假设。
 - en: 'In contrast, the regression tree chart displays, for each node of the first
     two levels, the feature and threshold used to split the data (note that features
     can be used repeatedly), as well as the current value of the **mean-squared error**
@@ -298,42 +390,61 @@
     samples. Also, note that training the decision tree takes 58 milliseconds compared
     to 66 microseconds for the linear regression. While both models run fast with
     only two features, the difference is a factor of 1,000:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 相反，回归树图表显示了前两个层级的每个节点使用的特征和阈值来拆分数据（请注意特征可以重复使用），以及**均方误差（MSE）**、样本数量和基于这些训练样本的预测值的当前值。此外，请注意，与线性回归的
+    66 微秒相比，训练决策树需要 58 毫秒。虽然两种模型在只有两个特征时运行速度很快，但差异是 1,000 倍：
 - en: '![](img/B15439_11_03.png)'
+  id: totrans-52
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_03.png)'
 - en: 'Figure 11.3: OLS results and regression tree'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 11.3：OLS 结果和回归树
 - en: The tree chart also highlights the uneven distribution of samples across the
     nodes as the numbers vary between 545 and 55,000 samples after the first splits.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 树状图还突出显示了节点间样本分布的不均匀性，因为在第一个分割之后，样本数量在 545 到 55,000 之间变化。
 - en: 'To further illustrate the different assumptions about the functional form of
     the relationships between the input variables and the output, we can visualize
     the current return predictions as a function of the feature space, that is, as
     a function of the range of values for the lagged returns. The following image
     shows the current monthly return as a function of returns one and two periods
     ago for linear regression (left panel) and the regression tree:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进一步说明输入变量和输出之间的不同假设关系的功能形式，我们可以将当前回报预测可视化为特征空间的函数，即基于滞后回报值的值范围的函数。下图显示了线性回归（左侧面板）和回归树的当前月回报与一段时间前回报之间的关系：
 - en: '![](img/B15439_11_04.png)'
+  id: totrans-56
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_04.png)'
 - en: 'Figure 11.4: Decision surfaces for linear regression and the regression tree'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 11.4：线性回归和回归树的决策表面
 - en: The linear regression model result on the left-hand side underlines the linearity
     of the relationship between lagged and current returns, whereas the regression
     tree chart on the right illustrates the nonlinear relationship encoded in the
     recursive partitioning of the feature space.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 左侧的线性回归模型结果强调了滞后和当前回报之间关系的线性性，而右侧的回归树图表则说明了特征空间的递归分区中编码的非线性关系。
 - en: Building a classification tree
+  id: totrans-59
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 构建分类树
 - en: A classification tree works just like the regression version, except that the
     categorical nature of the outcome requires a different approach to making predictions
     and measuring the loss. While a regression tree predicts the response for an observation
@@ -341,116 +452,164 @@
     a classification tree uses the mode, that is, the most common class among the
     training samples in the relevant region. A classification tree can also generate
     probabilistic predictions based on relative class frequencies.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类树的工作方式与回归版本相同，只是结果的分类性质需要不同的方法来进行预测和衡量损失。虽然回归树使用相关训练样本的平均结果来预测分配给叶节点的观测值的响应，但是分类树使用模式，即相关区域内训练样本中最常见的类别。分类树还可以基于相对类频率生成概率预测。
 - en: How to optimize for node purity
+  id: totrans-61
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 如何优化节点纯度
 - en: When growing a classification tree, we also use recursive binary splitting,
     but instead of evaluating the quality of a decision rule using the reduction of
     the mean-squared error, we can use the **classification error rate**, which is
     simply the fraction of the training samples in a given (leaf) node that do not
     belong to the most common class.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 在构建分类树时，我们也使用递归二元拆分，但是我们不是使用减少均方误差来评估决策规则的质量，而是可以使用**分类错误率**，它简单地是给定（叶）节点中不属于最常见类别的训练样本的比例。
 - en: However, the alternative measures, either **Gini impurity** or **cross-entropy**,
     are preferred because they are more sensitive to node purity than the classification
     error rate, as you can see in *Figure 11.5*. **Node purity** refers to the extent
     of the preponderance of a single class in a node. A node that only contains samples
     with outcomes belonging to a single class is pure and implies successful classification
     for this particular region of the feature space.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，更倾向于使用**基尼不纯度**或**交叉熵**等替代度量方法，因为它们对节点纯度的敏感性比分类错误率更高，正如您在*图11.5*中所见。**节点纯度**指的是节点中单个类别占优势的程度。一个只包含属于单个类别结果的样本的节点是纯净的，并且意味着在特征空间的这个特定区域的成功分类。
 - en: 'Let''s see how to compute these measures for a classification outcome with
     *K* categories 0,1,…, *K*-1 (with *K*=2, in the binary case). For a given node
     *m*, let *p*[mk] be the proportion of samples from the *k*^(th) class:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 看看如何计算具有*K*类别0,1,...,*K*-1（在二进制情况下为*K*=2）的分类结果的这些度量值。对于给定的节点*m*，让*p*[mk]为来自*k*^(th)类的样本比例：
 - en: '![](img/B15439_11_002.png)'
+  id: totrans-65
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_002.png)'
 - en: 'The following plot shows that both the Gini impurity and cross-entropy measures
     are maximized over the [0, 1] interval when the class proportions are even, or
     0.5 in the binary case. Both measures decline when the class proportions approach
     zero or one and the child nodes tend toward purity as a result of a split. At
     the same time, they imply a higher penalty for node impurity than the classification
     error rate:'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图显示了当类别比例均匀时（在二进制情况下为0.5），基尼不纯度和交叉熵度量在[0,1]区间内达到最大值。当类别比例接近零或一时，这些度量值会下降，并且由于拆分而导致的子节点趋向纯净。与此同时，它们对节点不纯度的惩罚比分类错误率更高：
 - en: '![](img/B15439_11_05.png)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_05.png)'
 - en: 'Figure 11.5: Classification loss functions'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.5：分类损失函数
 - en: Note that cross-entropy takes almost 20 times as long to compute as the Gini
     measure (see the notebook for details).
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，与基尼测度相比，交叉熵的计算时间几乎要长20倍（详见笔记本中的详情）。
 - en: How to train a classification tree
+  id: totrans-70
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 如何训练分类树
 - en: We will now train, visualize, and evaluate a classification tree with up to
     five consecutive splits using 80 percent of the samples for training to predict
     the remaining 20 percent. We will take a shortcut here to simplify the illustration
     and use the built-in `train_test_split`, which does not protect against lookahead
     bias, as the custom `MultipleTimeSeriesCV` iterator we introduced in *Chapter
     6*, *The Machine Learning Process* and will use later in this chapter.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将使用80%的样本进行训练，预测剩余的20%来训练、可视化和评估一个最多进行五次连续拆分的分类树。为了简化说明，我们将采用一种捷径并使用内置的`train_test_split`，它不会防止前瞻偏差，就像我们在*第6章*——*机器学习过程*中介绍的自定义`MultipleTimeSeriesCV`迭代器一样，稍后我们将在本章中使用。
 - en: 'The tree configuration implies up to 2⁵=32 leaf nodes that, on average, in
     the balanced case, would contain over 1,400 of the training samples. Take a look
     at the following code:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 树的配置意味着最多有2⁵=32个叶节点，平衡情况下平均会包含超过1,400个训练样本。看一下下面的代码：
 - en: '[PRE1]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: The output after training the model displays all the `DecisionTreeClassifier`
     parameters. We will address these in more detail in the *Hyperparameter tuning*
     section.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练模型后的输出显示了所有`DecisionTreeClassifier`的参数。我们将在*超参数调整*部分详细讨论这些。
 - en: Visualizing a decision tree
+  id: totrans-75
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 可视化决策树
 - en: 'You can visualize the tree using the Graphviz library (see GitHub for installation
     instructions) because scikit-learn can output a description of the tree using
     the DOT language used by that library. You can configure the output to include
     feature and class labels and limit the number of levels to keep the chart readable,
     as follows:'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以使用Graphviz库（请参阅GitHub安装说明）来可视化树，因为scikit-learn可以输出使用该库使用的DOT语言描述的树的描述。您可以配置输出以包括特征和类标签，并限制级别的数量以使图表可读，如下所示：
 - en: '[PRE2]'
+  id: totrans-77
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'The following diagram shows how the model uses different features and indicates
     the split rules for both continuous and categorical (dummy) variables. Under the
     label value for each node, the chart shows the number of samples from each class
     and, under the label class, the most common class (there were more up months during
     the sample period):'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图显示了模型如何使用不同的特征，并指示了连续和分类（虚拟）变量的分裂规则。在每个节点的标签值下，图表显示了来自每个类的样本数量，并在类标签下显示了最常见的类（在样本期间上涨的月份更多）：
 - en: '![](img/B15439_11_06.png)'
+  id: totrans-79
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_06.png)'
 - en: 'Figure 11.6: Visualization of a classification tree'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.6：分类树的可视化
 - en: Evaluating decision tree predictions
+  id: totrans-81
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 评估决策树预测
 - en: 'To evaluate the predictive accuracy of our first classification tree, we will
     use our test set to generate predicted class probabilities, as follows:'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了评估我们第一个分类树的预测准确度，我们将使用测试集生成预测的类概率，如下所示：
 - en: '[PRE3]'
+  id: totrans-83
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'The `.predict_proba()` method produces one probability for each class. In the
     binary class, these probabilities are complementary and sum to 1, so we only need
     the value for the positive class. To evaluate the generalization error, we will
@@ -459,43 +618,59 @@
     a significant improvement above and beyond the baseline value of 0.5 for a random
     prediction (but keep in mind that the cross-validation method here does not respect
     the time-series nature of the data):'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.predict_proba()`方法为每个类别生成一个概率。在二元类别中，这些概率是互补的并总和为1，因此我们只需要正类的值。为了评估泛化误差，我们将使用基于接收器操作特征的曲线下面积，我们在*第6章*，*机器学习过程*中介绍过。结果表明，相对于随机预测的基准值0.5，有了显著的改进（但请记住，这里的交叉验证方法不考虑数据的时间序列性）：'
 - en: '[PRE4]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Overfitting and regularization
+  id: totrans-86
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 过拟合和正则化
 - en: Decision trees have a strong tendency to overfit, especially when a dataset
     has a large number of features relative to the number of samples. As discussed
     in previous chapters, overfitting increases the prediction error because the model
     does not only learn the signal contained in the training data, but also the noise.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树在数据集相对于样本数量具有大量特征时很容易过拟合。正如前几章讨论的那样，过拟合会增加预测误差，因为模型不仅学习了训练数据中包含的信号，还学习了噪音。
 - en: 'There are multiple ways to **address the risk of overfitting**, including:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 有多种方法可以**解决过拟合的风险**，包括：
 - en: '**Dimensionality reduction** (see *Chapter 13*, *Data-Driven Risk Factors and
     Asset Allocation with Unsupervised Learning*) improves the feature-to-sample ratio
     by representing the existing features with fewer, more informative, and less noisy
     features.'
+  id: totrans-89
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**降维**（请参阅*第13章*，*使用无监督学习的数据驱动风险因子和资产配置*）通过用更少、更具信息性和更少噪声的特征表示现有特征来改善特征与样本的比率。'
 - en: '**Ensemble models**, such as random forests, combine multiple trees while randomizing
     the tree construction, as we will see in the second part of this chapter.'
+  id: totrans-90
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**集成模型**，例如随机森林，结合了多个树，同时随机化树的构建，我们将在本章的第二部分中看到。'
 - en: Decision trees provide several regularization hyperparameters to limit the growth
     of a tree and the associated complexity. While every split increases the number
     of nodes, it also reduces the number of samples available per node to support
     a prediction. For each additional level, twice the number of samples is needed
     to populate the new nodes with the same sample density.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树提供了几个正则化超参数来限制树的增长和相关复杂度。虽然每次分裂都会增加节点数，但也会减少每个节点可用于支持预测的样本数量。对于每个额外的层级，需要两倍数量的样本才能使新节点以相同的样本密度填充。
 - en: '**Tree pruning** is an additional tool to reduce the complexity of a tree.
     It does so by eliminating nodes or entire parts of a tree that add little value
     but increase the model''s variance. Cost-complexity-pruning, for instance, starts
@@ -503,57 +678,85 @@
     essentially running the tree construction in reverse. The various steps produce
     a sequence of trees that can then be compared using cross-validation to select
     the ideal size.'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: '**树修剪**是减少树复杂性的另一种工具。它通过消除添加了很少价值但增加了模型方差的节点或整个树的部分来实现。例如，成本复杂度修剪从一个大树开始，并通过将节点替换为叶子来递归地减小其大小，本质上是反向运行树构建。各种步骤产生一系列树，然后可以使用交叉验证来选择理想的大小。'
 - en: How to regularize a decision tree
+  id: totrans-93
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何规范化决策树
 - en: 'The following table lists the key parameters available for this purpose in
     the scikit-learn decision tree implementation. After introducing the most important
     parameters, we will illustrate how to use cross-validation to optimize the hyperparameter
     settings with respect to the bias-variance trade-off and lower prediction errors:'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表格列出了 scikit-learn 决策树实现中用于此目的的关键参数。在介绍了最重要的参数后，我们将说明如何使用交叉验证来优化超参数设置，以便在偏差-方差权衡和降低预测误差方面：
 - en: '| Parameter | Description | Default | Options |'
+  id: totrans-95
   prefs: []
   type: TYPE_TB
+  zh: '| 参数 | 描述 | 默认 | 选项 |'
 - en: '| `max_depth` | The maximum number of levels: split the nodes until `max_depth`
     has been reached. All leaves are pure or contain fewer samples than `min_samples_split`.
     | None | int |'
+  id: totrans-96
   prefs: []
   type: TYPE_TB
+  zh: '| `max_depth` | 最大级别数：分割节点直到达到`max_depth`。所有叶子都是纯的，或者包含的样本少于`min_samples_split`。
+    | None | int |'
 - en: '| `max_features` | Number of features to consider for a split. | None | None:
     all features `int`: # features`float`: fraction`auto`, `sqrt`: sqrt(`n_features`)`log2`:
     log2(`n_features`) |'
+  id: totrans-97
   prefs: []
   type: TYPE_TB
+  zh: '| `max_features` | 考虑用于分割的特征数量。 | None | None：所有特征 `int`：＃ 特征`float`：分数`auto`，`sqrt`：sqrt（`n_features`）`log2`：log2（`n_features`）
+    |'
 - en: '| `max_leaf_nodes` | Split nodes until creating this many leaves. | None |
     None: unlimited `int` |'
+  id: totrans-98
   prefs: []
   type: TYPE_TB
+  zh: '| `max_leaf_nodes` | 分割节点直到创建这么多叶子。 | None | None：无限 `int` |'
 - en: '| `min_impurity_decrease` | Split node if impurity decreases by at least this
     value. | 0 | `float` |'
+  id: totrans-99
   prefs: []
   type: TYPE_TB
+  zh: '| `min_impurity_decrease` | 如果不纯度减少至少这个值，则分割节点。 | 0 | `float` |'
 - en: '| `min_samples_leaf` | A split will only be considered if there are at least
     `min_samples_leaf` training samples in each of the left and right branches. |
     1 | `int`;`float` (as a percent of *N*) |'
+  id: totrans-100
   prefs: []
   type: TYPE_TB
+  zh: '| `min_samples_leaf` | 只有在左右分支的每个中至少有`min_samples_leaf`训练样本时，才会考虑分割。 | 1 |
+    `int`;`float`（作为百分比*N*） |'
 - en: '| `min_samples_split` | The minimum number of samples required to split an
     internal node. | 2 | `int`; `float` (percent of *N*) |'
+  id: totrans-101
   prefs: []
   type: TYPE_TB
+  zh: '| `min_samples_split` | 分割内部节点所需的最小样本数。 | 2 | `int`；`float`（百分之*N*） |'
 - en: '| `min_weight_fraction_leaf` | The minimum weighted fraction of the sum total
     of all sample weights needed at a leaf node. Samples have equal weight unless
     `sample_weight` is provided in the fit method. | 0 |  |'
+  id: totrans-102
   prefs: []
   type: TYPE_TB
+  zh: '| `min_weight_fraction_leaf` | 在叶子节点上需要的所有样本权重的最小加权分数。除非在拟合方法中提供了`sample_weight`，否则样本具有相同的权重。
+    | 0 |  |'
 - en: The `max_depth` parameter imposes a hard limit on the number of consecutive
     splits and represents the most straightforward way to cap the growth of a tree.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: '`max_depth` 参数对连续分割的次数施加了硬限制，并代表了限制树生长的最直接方式。'
 - en: The `min_samples_split` and `min_samples_leaf` parameters are alternative, data-driven
     ways to limit the growth of a tree. Rather than imposing a hard limit on the number
     of consecutive splits, these parameters control the minimum number of samples
@@ -564,31 +767,41 @@
     The default values are often quite low, and you should use cross-validation to
     explore a range of potential values. You can also use a float to indicate a percentage,
     as opposed to an absolute number.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: '`min_samples_split` 和 `min_samples_leaf` 参数是另一种基于数据的方法来限制树的生长。与对连续分割的次数施加硬限制不同，这些参数控制进一步分割数据所需的最小样本数。后者保证了每个叶子的一定样本数量，而前者在分割导致非常不均匀的分布时可能会创建非常小的叶子。较小的参数值有助于过拟合，而较高的数字可能会阻止树学习数据中的信号。默认值通常相当低，您应该使用交叉验证来探索一系列潜在值。您还可以使用浮点数来表示百分比，而不是绝对数字。'
 - en: The scikit-learn documentation contains additional details about how to use
     the various parameters for different use cases; see the resources linked on GitHub
     for more information.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: scikit-learn文档中包含有关如何在不同用例中使用各种参数的其他详细信息；有关更多信息，请参阅GitHub上链接的资源。
 - en: Decision tree pruning
+  id: totrans-106
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 决策树修剪
 - en: Recursive binary-splitting will likely produce good predictions on the training
     set but tends to overfit the data and produce poor generalization performance.
     This is because it leads to overly complex trees, which are reflected in a large
     number of leaf nodes, or partitioning of the feature space. Fewer splits and leaf
     nodes imply an overall smaller tree and often lead to better predictive performance,
     as well as interpretability.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 递归二元分裂很可能会在训练集上产生良好的预测结果，但往往会导致数据过度拟合，产生较差的泛化性能。这是因为它导致了过于复杂的树，这在大量叶节点或特征空间的划分中反映出来。较少的分裂和叶节点意味着总体较小的树，并且通常会导致更好的预测性能，以及可解释性。
 - en: One approach to limit the number of leaf nodes is to avoid further splits unless
     they yield significant improvements in the objective metric. The downside of this
     strategy, however, is that sometimes, splits that result in small improvements
     enable more valuable splits later as the composition of the samples keeps changing.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 限制叶节点数量的一种方法是除非它们产生目标度量的显着改善，否则避免进一步分裂。然而，这种策略的缺点是，有时候，导致小幅改善的分裂在样本组成不断变化时会使后续更有价值的分裂变得更加困难。
 - en: Tree pruning, in contrast, starts by growing a very large tree before removing
     or pruning nodes to reduce the large tree to a less complex and overfit subtree.
     Cost-complexity-pruning generates a sequence of subtrees by adding a penalty for
@@ -597,16 +810,22 @@
     penalty. Applied to the large tree, an increasing penalty will automatically produce
     a sequence of subtrees. Cross-validation of the regularization parameter can be
     used to identify the optimal, pruned subtree.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 相比之下，树修剪首先通过生长一个非常大的树，然后移除或修剪节点，以将大树减小为一个较少复杂且过度拟合的子树。成本复杂度修剪通过对向树模型添加叶节点增加惩罚并引入正则化参数来生成一系列子树，类似于套索和岭线性回归模型，调节惩罚的影响。应用于大树，增加的惩罚将自动产生一系列子树。可以使用正则化参数的交叉验证来识别最佳的修剪子树。
 - en: This method was introduced in scikit-learn version 0.22; see Esposito et al.
     (1997) for a survey of how various methods work and perform.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种方法是在scikit-learn版本0.22中引入的；有关各种方法的工作原理和性能，请参见Esposito等人(1997)的调查。
 - en: Hyperparameter tuning
+  id: totrans-111
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 超参数调整
 - en: Decision trees offer an array of hyperparameters to control and tune the training
     result. Cross-validation is the most important tool to obtain an unbiased estimate
     of the generalization error, which, in turn, permits an informed choice among
@@ -615,384 +834,537 @@
     convenience class, which we will illustrate in the next section. Learning curves
     also allow diagnostics that evaluate potential benefits of collecting additional
     data to reduce the generalization error.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树提供了一系列超参数来控制和调整训练结果。交叉验证是获得对泛化误差的无偏估计的最重要工具，反过来又允许在各种配置选项之间做出明智选择。scikit-learn提供了几个工具来简化交叉验证大量参数设置的过程，即我们将在下一节中介绍的`GridSearchCV`便利类。学习曲线还允许进行诊断，评估收集额外数据以减少泛化误差的潜在好处。
 - en: Using GridsearchCV with a custom metric
+  id: totrans-113
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用自定义度量标准的GridsearchCV
 - en: As highlighted in *Chapter 6*, *The Machine Learning Process*, scikit-learn
     provides a method to define ranges of values for multiple hyperparameters. It
     automates the process of cross-validating the various combinations of these parameter
     values to identify the optimal configuration. Let's walk through the process of
     automatically tuning your model.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 如*第6章*，*机器学习流程*中所强调的，scikit-learn提供了一种定义多个超参数值范围的方法。它自动化了交叉验证各种参数值组合的过程，以确定最佳配置。让我们逐步了解自动调整模型的过程。
 - en: 'The first step is to instantiate a model object and define a dictionary where
     the keywords name the hyperparameters, and the values list the parameter settings
     to be tested:'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一步是实例化一个模型对象，并定义一个字典，其中关键词命名超参数，值列出要测试的参数设置：
 - en: '[PRE5]'
+  id: totrans-116
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Then, instantiate the `GridSearchCV` object, providing the estimator object
     and parameter grid, as well as a scoring method and cross-validation choice, to
     the initialization method.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，实例化`GridSearchCV`对象，提供估算器对象和参数网格，以及评分方法和交叉验证选择，传递给初始化方法。
 - en: 'We set our custom `MultipleTimeSeriesSplit` class to train the model for 60
     months, or 5 years, of data and to validate performance using the subsequent 6
     months, repeating the process over 10 folds to cover an out-of-sample period of
     5 years:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将自定义的`MultipleTimeSeriesSplit`类设置为对模型进行60个月或5年的数据训练，并使用随后的6个月验证性能，重复此过程10次以覆盖5年的样本外期间：
 - en: '[PRE6]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'We use the `roc_auc` metric to score the classifier, and define a custom information
     coefficient (IC) metric using scikit-learn''s `make_scorer` function for the regression
     model:'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用`roc_auc`指标对分类器进行评分，并使用scikit-learn的`make_scorer`函数为回归模型定义自定义信息系数（IC）指标：
 - en: '[PRE7]'
+  id: totrans-121
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: We can parallelize the search using the `n_jobs` parameter and automatically
     obtain a trained model that uses the optimal hyperparameters by setting `refit=True`.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用`n_jobs`参数并通过设置`refit=True`自动获取使用最佳超参数的训练模型。
 - en: 'With all the settings in place, we can fit `GridSearchCV` just like any other
     model:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有设置都已就绪后，我们可以像任何其他模型一样拟合`GridSearchCV`：
 - en: '[PRE8]'
+  id: totrans-124
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: The training process produces some new attributes for our `GridSearchCV` object,
     most importantly the information about the optimal settings and the best cross-validation
     score (now using the proper setup, which avoids lookahead bias).
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练过程为我们的`GridSearchCV`对象生成了一些新的属性，最重要的是有关最佳设置和最佳交叉验证分数的信息（现在使用适当的设置，避免了前瞻偏差）。
 - en: 'The following table lists the parameters and scores for the best regression
     and classification model, respectively. With a shallower tree and more regularized
     leaf nodes, the regression tree achieves an IC of 0.083, while the classifier''s
     AUC score is 0.525:'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表格分别列出了最佳回归模型和分类模型的参数和分数。具有更浅的树和更加正则化的叶节点，回归树的IC为0.083，而分类器的AUC得分为0.525：
 - en: '| Parameter | Regression | Classification |'
+  id: totrans-127
   prefs: []
   type: TYPE_TB
+  zh: '| 参数 | 回归 | 分类 |'
 - en: '| **max_depth** | 6 | 12 |'
+  id: totrans-128
   prefs: []
   type: TYPE_TB
+  zh: '| **max_depth** | 6 | 12 |'
 - en: '| **max_features** | sqrt | sqrt |'
+  id: totrans-129
   prefs: []
   type: TYPE_TB
+  zh: '| **max_features** | sqrt | sqrt |'
 - en: '| **min_samples_leaf** | 50 | 5 |'
+  id: totrans-130
   prefs: []
   type: TYPE_TB
+  zh: '| **min_samples_leaf** | 50 | 5 |'
 - en: '| **Score** | 0.0829 | 0.5250 |'
+  id: totrans-131
   prefs: []
   type: TYPE_TB
+  zh: '| **分数** | 0.0829 | 0.5250 |'
 - en: The automation is quite convenient, but we also would like to inspect how the
     performance evolves for different parameter values. Upon completion of this process,
     the `GridSearchCV` object makes detailed cross-validation results available so
     that we can gain more insights.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 自动化非常方便，但我们也希望检查性能如何随不同参数值的变化而变化。完成此过程后，`GridSearchCV`对象提供了详细的交叉验证结果，以便我们可以获得更多见解。
 - en: How to inspect the tree structure
+  id: totrans-133
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何检查树结构
 - en: 'The notebook also illustrates how to run cross-validation more manually to
     obtain custom tree attributes, such as the total number of nodes or leaf nodes
     associated with certain hyperparameter settings. The following function accesses
     the internal `.tree_ attribute` to retrieve information about the total node count,
     as well as how many of these nodes are leaf nodes:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 该笔记本还说明了如何手动运行交叉验证以获取自定义树属性，例如与某些超参数设置相关联的总节点数或叶节点数。以下函数访问内部的`.tree_属性`以检索有关总节点计数以及其中多少个节点是叶节点的信息：
 - en: '[PRE9]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'We can combine this information with the train and test scores to gain detailed
     knowledge about the model behavior throughout the cross-validation process, as
     follows:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以将此信息与训练和测试分数结合起来，以获取有关模型在整个交叉验证过程中行为的详细知识，如下所示：
 - en: '[PRE10]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The following plot displays how the number of leaf nodes increases with the
     depth of the tree. Due to the sample size of each cross-validation fold containing
     60 months with around 500 data points each, the number of leaf nodes is limited
     to around 3,000 when limiting the number of `min_samples_leaf` to 10 samples:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图表显示了叶节点数随树深度增加而增加的情况。由于每个交叉验证折叠的样本大小为60个月，每个样本约包含500个数据点，因此将`min_samples_leaf`限制为10个样本时，叶节点数限制在约3,000个：
 - en: '![](img/B15439_11_07.png)'
+  id: totrans-139
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_07.png)'
 - en: 'Figure 11.7: Visualization of a classification tree'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.7：分类树的可视化
 - en: Comparing regression and classification performance
+  id: totrans-141
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 比较回归和分类的性能
 - en: To take a closer look at the performance of the models, we will show the cross-validation
     performance for various levels of depth, while maintaining the other parameter
     settings that produced the best grid search results. *Figure 11.8* displays the
     train and the validation scores and highlights the degree of overfitting for deeper
     trees. This is because the training scores steadily increase, whereas validation
     performance remains flat or decreases.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更仔细地观察模型的性能，我们将展示各种深度的交叉验证性能，同时保持产生最佳网格搜索结果的其他参数设置。*图11.8*显示了训练和验证分数，并突出了更深的树的过拟合程度。这是因为训练分数稳步增加，而验证性能保持不变或下降。
 - en: 'Note that, for the classification tree, the grid search suggested 12 levels
     for the best predictive accuracy. However, the plot shows similar AUC scores for
     less complex trees, with three or seven levels. We would prefer a shallower tree
     that promises comparable generalization performance while reducing the risk of
     overfitting:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，对于分类树，网格搜索建议使用12个级别以获得最佳预测准确性。然而，图表显示较简单的树（具有三个或七个级别）的AUC得分相似。我们更倾向于一个更浅的树，它承诺具有可比较的泛化性能，同时减少了过拟合的风险：
 - en: '![](img/B15439_11_08.png)'
+  id: totrans-144
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_08.png)'
 - en: 'Figure 11.8: Train and validation scores for both models'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.8：两个模型的训练和验证分数
 - en: Diagnosing training set size with learning curves
+  id: totrans-146
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用学习曲线诊断训练集规模
 - en: A **learning curve** is a useful tool that displays how the validation and training
     scores evolve as the number of training samples increases.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: '**学习曲线**是一种有用的工具，显示了随着训练样本数量增加，验证和训练分数如何演变。'
 - en: The purpose of the learning curve is to find out whether and how much the model
     would benefit from using more data during training. It also helps to diagnose
     whether the model's generalization error is more likely driven by bias or variance.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 学习曲线的目的是找出模型在训练过程中是否以及在多大程度上会受益于使用更多数据。它还有助于诊断模型的泛化误差更可能是由偏差还是方差驱动。
 - en: If the training score meets performance expectations and the validation score
     exhibits significant improvement as the training sample grows, training for a
     longer lookback period or obtaining more data might add value. If, on the other
     hand, both the validation and the training score converge to a similarly poor
     value, despite an increasing training set size, the error is more likely due to
     bias, and additional training data is unlikely to help.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果训练分数符合预期的性能，并且随着训练样本数量的增加，验证分数表现出显著改善，那么训练更长的回溯期或获取更多数据可能会增加价值。另一方面，如果尽管训练集大小增加，但验证分数和训练分数都收敛到类似较差的值，则错误更可能是由于偏差，并且额外的训练数据不太可能有所帮助。
 - en: 'The following image depicts the learning curves for the best regression and
     classification models:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图片显示了最佳回归和分类模型的学习曲线：
 - en: '![](img/B15439_11_09.png)'
+  id: totrans-151
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_09.png)'
 - en: 'Figure 11.9: Learning curves for the best version of each model'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 图11.9：每个模型最佳版本的学习曲线
 - en: Especially for the regression model, the validation performance improves with
     a larger training set. This suggests that a longer training period may yield better
     results. Try it yourself to see if it works!
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 特别是对于回归模型，随着训练集规模的扩大，验证性能有所提高。这表明延长训练周期可能会产生更好的结果。你可以自己试一试，看看是否奏效！
 - en: Gaining insight from feature importance
+  id: totrans-154
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 从特征重要性中获得洞察力
 - en: Decision trees can not only be visualized to inspect the decision path for a
     given feature, but can also summarize the contribution of each feature to the
     rules learned by the model to fit the training data.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树不仅可以可视化以检查给定特征的决策路径，还可以总结每个特征对模型学习以拟合训练数据的规则的贡献。
 - en: Feature importance captures how much the splits produced by each feature help
     optimize the model's metric used to evaluate the split quality, which in our case
     is the Gini impurity. A feature's importance is computed as the (normalized) total
     reduction of this metric and takes into account the number of samples affected
     by a split. Hence, features used earlier in the tree where the nodes tend to contain
     more samples are typically considered of higher importance.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 特征重要性捕捉到每个特征产生的分裂如何帮助优化模型用于评估分裂质量的度量，我们的情况下是基尼不纯度。特征的重要性是计算为这个度量的（标准化的）总减少，并考虑到受分裂影响的样本数量。因此，在树的较早节点使用的特征，其中节点往往包含更多的样本，通常被认为是更重要的。
 - en: '*Figure 11.10* shows the plots for feature importance for the top 15 features
     of each model. Note how the order of features differs from the univariate evaluation
     based on the mutual information scores given at the beginning of this section.
     Clearly, the ability of decision trees to capture interdependencies, such as between
     time periods and other features, can alter the value of each feature:'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 11.10* 显示了每个模型前 15 个特征的特征重要性的图表。注意特征的顺序如何与本节开头给出的互信息分数的单变量评估不同。显然，决策树捕获时间段与其他特征之间的相互依赖关系的能力可能改变每个特征的价值：'
 - en: '![](img/B15439_11_10.png)'
+  id: totrans-158
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_10.png)'
 - en: 'Figure 11.10: Feature importance for the best regression and classification
     models'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 11.10：最佳回归和分类模型的特征重要性
 - en: Strengths and weaknesses of decision trees
+  id: totrans-160
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 决策树的优势和劣势
 - en: 'Regression and classification trees approach making predictions very differently
     from the linear models we have explored in the previous chapters. How do you **decide
     which model is more suitable** for the problem at hand? Consider the following:'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 回归树和分类树在预测方面与我们在前几章中探讨过的线性模型有着非常不同的方法。如何**决定哪种模型更适合**当前的问题？考虑以下内容：
 - en: If the relationship between the outcome and the features is approximately linear
     (or can be transformed accordingly), then linear regression will likely outperform
     a more complex method, such as a decision tree that does not exploit this linear
     structure.
+  id: totrans-162
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果结果与特征之间的关系大致是线性的（或可以相应地转换），那么线性回归可能会胜过更复杂的方法，例如不利用这种线性结构的决策树。
 - en: If the relationship appears highly nonlinear and more complex, decision trees
     will likely outperform the classical models. Keep in mind that the complexity
     of the relationship needs to be systematic or "real," rather than driven by noise,
     which leads more complex models to overfit.
+  id: totrans-163
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果关系呈现高度非线性和更复杂，决策树可能会胜过传统模型。请记住，关系的复杂性需要是系统的或“真实的”，而不是由噪声驱动，这会导致更复杂的模型过拟合。
 - en: 'Several **advantages** have made decision trees very popular:'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树具有几个**优点**：
 - en: They are fairly straightforward to understand and to interpret, not least because
     they can be easily visualized and are thus more accessible to a non-technical
     audience. Decision trees are also referred to as white-box models, given the high
     degree of transparency about how they arrive at a prediction. Black-box models,
     such as ensembles and neural networks, may deliver better prediction accuracy,
     but the decision logic is often much more challenging to understand and interpret.
+  id: totrans-165
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它们相当容易理解和解释，尤其是因为它们可以很容易地可视化，因此更容易让非技术人员理解。决策树也被称为白盒模型，因为它们在如何得出预测方面具有高度透明性。黑盒模型，例如集成和神经网络，可能会提供更好的预测精度，但是决策逻辑往往更难理解和解释。
 - en: Decision trees require less data preparation than models that make stronger
     assumptions about the data or are more sensitive to outliers and require data
     standardization (such as regularized regression).
+  id: totrans-166
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策树比那些对数据做出更强假设或对异常值更敏感且需要数据标准化的模型需要更少的数据准备（例如正则化回归）。
 - en: Some decision tree implementations handle categorical input, do not require
     the creation of dummy variables (improving memory efficiency), and can work with
     missing values, as we will see in *Chapter 12*, *Boosting Your Trading Strategy*,
     but this is not the case for scikit-learn.
+  id: totrans-167
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一些决策树实现可以处理分类输入，不需要创建虚拟变量（提高内存效率），并且可以处理缺失值，正如我们将在 *第 12 章*，*提升您的交易策略* 中看到的，但这不适用于
+    scikit-learn。
 - en: Prediction is fast because it is logarithmic in the number of leaf nodes (unless
     the tree becomes extremely unbalanced).
+  id: totrans-168
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 预测速度很快，因为它与叶节点的数量呈对数关系（除非树变得极不平衡）。
 - en: It is possible to validate the model using statistical tests and account for
     its reliability (see the references for more details).
+  id: totrans-169
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可以使用统计测试验证模型并考虑其可靠性（有关更多细节，请参阅参考文献）。
 - en: 'Decision trees also have several key **disadvantages**:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树还具有几个关键**劣势**：
 - en: Decision trees have a built-in tendency to overfit to the training set and produce
     a high generalization error. The key steps to address this weakness are pruning
     and regularization using the early-stopping criteria that limits tree growth,
     as outlined in this section.
+  id: totrans-171
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策树内置了对训练集的过度拟合的倾向，并产生了高的泛化误差。解决这一弱点的关键步骤是修剪和正则化，使用限制树生长的早停准则，如本节所述。
 - en: Decision trees are also sensitive to unbalanced class weights and may produce
     biased trees. One option is to oversample the underrepresented classes or undersample
     the more frequent class. It is typically better, though, to use class weights
     and directly adjust the objective function.
+  id: totrans-172
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策树还对不平衡类权重敏感，可能会产生偏向某一类的树。一种选择是对少数类进行过采样或对更频繁出现的类进行欠采样。通常更好的选择是使用类权重并直接调整目标函数。
 - en: The high variance of decision trees is tied to their ability to closely adapt
     to a training set. As a result, minor variations in the data can produce wide
     swings in the tree's structure and, consequently, the model's predictions. A key
     prevention mechanism is the use of an ensemble of randomized decision trees that
     have low bias and produce uncorrelated prediction errors.
+  id: totrans-173
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策树的高方差与它们密切适应训练集的能力有关。因此，数据中的细微变化可能会导致树结构和模型预测的广泛波动。一个关键的预防机制是使用一组具有低偏差且产生不相关预测误差的随机决策树的集成。
 - en: The greedy approach to decision-tree learning optimizes local criteria that
     reduce the prediction error at the current node and do not guarantee a globally
     optimal outcome. Again, ensembles consisting of randomized trees help to mitigate
     this problem.
+  id: totrans-174
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策树学习的贪婪方法优化了减少当前节点预测误差的局部标准，并不保证全局最优结果。同样，由随机树组成的集成有助于缓解这个问题。
 - en: We will now turn to the ensemble method of mitigating the risk of overfitting
     that's inherent when using decision trees.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在将转向缓解决策树使用时固有的过拟合风险的集成方法。
 - en: Random forests – making trees more reliable
+  id: totrans-176
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 随机森林——使树更可靠
 - en: Decision trees are not only useful for their transparency and interpretability.
     They are also fundamental building blocks for more powerful ensemble models that
     combine many individual trees, while randomly varying their design to address
     the overfitting problems we just discussed.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 决策树不仅因其透明度和解释性而有用。它们也是更强大的集成模型的基本构建模块，这些模型组合了许多个体树，同时随机变化其设计，以解决我们刚刚讨论的过拟合问题。
 - en: Why ensemble models perform better
+  id: totrans-178
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 为什么集成模型表现更好
 - en: Ensemble learning involves combining several machine learning models into a
     single new model that aims to make better predictions than any individual model.
     More specifically, an ensemble integrates the predictions of several base estimators,
     trained using one or more learning algorithms, to reduce the generalization error
     that these models produce on their own.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 集成学习涉及将几个机器学习模型组合成一个新的模型，旨在比任何单个模型做出更好的预测。更具体地说，集成整合了几个基本估计器的预测，这些估计器使用一个或多个学习算法进行训练，以减少它们自己产生的泛化误差。
 - en: 'For ensemble learning to achieve this goal, **the individual models must be**:'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了使集成学习达到这个目标，**个体模型必须是**：
 - en: '**Accurate**: Outperform a naive baseline (such as the sample mean or class
     proportions)'
+  id: totrans-181
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**准确**: 胜过一个简单的基线（例如样本平均值或类比例）'
 - en: '**Independent**: Predictions are generated differently to produce different
     errors'
+  id: totrans-182
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**独立**: 预测是通过不同的方式产生的，以产生不同的误差'
 - en: Ensemble methods are among the most successful machine learning algorithms,
     in particular for standard numerical data. Large ensembles are very successful
     in machine learning competitions and may consist of many distinct individual models
     that have been combined by hand or using another machine learning algorithm.
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 集成方法是最成功的机器学习算法之一，特别适用于标准的数值数据。大型集成在机器学习竞赛中非常成功，可能由许多不同的个体模型组成，这些模型已经手工组合或使用另一个机器学习算法组合起来。
 - en: There are several disadvantages to combining predictions made by different models.
     These include reduced interpretability and higher complexity and cost of training,
     prediction, and model maintenance. As a result, in practice (outside of competitions),
     the small gains in accuracy from large-scale ensembling may not be worth the added
     costs.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 将不同模型的预测组合起来存在几个缺点。这些包括降低了解释性以及训练、预测和模型维护的复杂性和成本。因此，在实践中（不考虑竞赛），从大规模集成中获得的准确度微小增益可能不值得额外的成本。
 - en: 'There are two groups of ensemble methods that are typically distinguished between,
     depending on how they optimize the constituent models and then integrate the results
     for a single ensemble prediction:'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据它们如何优化组成模型然后将结果集成为单个集成预测，通常可以区分两组集成方法：
 - en: '**Averaging methods** train several base estimators independently and then
     average their predictions. If the base models are not biased and make different
     prediction errors that are not highly correlated, then the combined prediction
     may have lower variance and can be more reliable. This resembles the construction
     of a portfolio from assets with uncorrelated returns to reduce the volatility
     without sacrificing the return.'
+  id: totrans-186
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Boosting methods**, in contrast, train base estimators sequentially with
     the specific goal of reducing the bias of the combined estimator. The motivation
     is to combine several weak models into a powerful ensemble.'
+  id: totrans-187
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: We will focus on automatic averaging methods in the remainder of this chapter
     and boosting methods in *Chapter 12*, *Boosting Your Trading Strategy*.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: Bootstrap aggregation
+  id: totrans-189
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1001,6 +1373,7 @@
     sample. We have also seen that a model with low variance, such as linear regression,
     produces similar estimates, despite different training samples, as long as there
     are sufficient samples given the number of features.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: For a given a set of independent observations, each with a variance of ![](img/B15439_11_003.png),
@@ -1009,6 +1382,7 @@
     A natural way to reduce the variance of a model and its generalization error would,
     thus, be to collect many training sets from the population, train a different
     model on each dataset, and average the resulting predictions.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: In practice, we do not typically have the luxury of many different training
@@ -1016,19 +1390,23 @@
     Bagging is a general-purpose method that's used to reduce the variance of a machine
     learning model, which is particularly useful and popular when applied to decision
     trees.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: We will first explain how this technique mitigates overfitting and then show
     how to apply it to decision trees.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
 - en: How bagging lowers model variance
+  id: totrans-194
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Bagging refers to the aggregation of bootstrap samples, which are random samples
     with replacement. Such a random sample has the same number of observations as
     the original dataset but may contain duplicates due to replacement.
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
 - en: Bagging increases predictive accuracy but decreases model interpretability because
@@ -1036,17 +1414,21 @@
     each feature. As an ensemble algorithm, bagging methods train a given number of
     base estimators on these bootstrapped samples and then aggregate their predictions
     into a final ensemble prediction.
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
 - en: 'Bagging reduces the variance of the base estimators to reduce their generalization
     error by:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: Randomizing how each tree is grown
+  id: totrans-198
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Averaging their predictions
+  id: totrans-199
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -1055,115 +1437,159 @@
     models that have low bias and high variance**, such as deep decision trees, because
     its goal is to limit overfitting. Boosting methods, in contrast, work best with
     weak models, such as shallow decision trees.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 这通常是一种简单的方法来改进给定模型，而无需更改基础算法。这种技术对于具有低偏差和高方差的**复杂模型**特别有效，例如深层次的决策树，因为其目标是限制过拟合。相比之下，提升方法在弱模型（例如浅决策树）上效果最佳。
 - en: 'There are several bagging methods that differ by the random sampling process
     they apply to the training set:'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 有几种bagging方法的不同之处在于它们应用于训练集的随机抽样过程：
 - en: '**Pasting** draws random samples from the training data without replacement,
     whereas bagging samples with replacement.'
+  id: totrans-202
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**粘贴**从训练数据中无替换地随机抽取样本，而bagging则使用替换抽样。'
 - en: '**Random subspaces** randomly sample from the features (that is, the columns)
     without replacement.'
+  id: totrans-203
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**随机子空间**随机从特征（即列）中抽取样本，不进行替换。'
 - en: '**Random patches** train base estimators by randomly sampling both observations
     and features.'
+  id: totrans-204
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**随机补丁**通过随机抽样观察值和特征来训练基本估算器。'
 - en: Bagged decision trees
+  id: totrans-205
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Bagged决策树
 - en: To apply bagging to decision trees, we create bootstrap samples from our training
     data by repeatedly sampling with replacement. Then, we train one decision tree
     on each of these samples and create an ensemble prediction by averaging over the
     predictions of the different trees. You can find the code for this example in
     the notebook `bagged_decision_trees`, unless otherwise noted.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 要将bagging应用于决策树，我们通过反复抽样替换来创建从训练数据中生成bootstrap样本。然后，我们在每个样本上训练一个决策树，并通过对不同树的预测进行平均来创建一个集成预测。您可以在笔记本`bagged_decision_trees`中找到此示例的代码，除非另有说明。
 - en: Bagged decision trees are usually grown large, that is, they have many levels
     and leaf nodes and are not pruned so that each tree has a low bias but high variance.
     The effect of averaging their predictions then aims to reduce their variance.
     Bagging has been shown to substantially improve predictive performance by constructing
     ensembles that combine hundreds or even thousands of trees trained on bootstrap
     samples.
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: Bagged决策树通常生长较大，即它们具有许多层和叶子节点，并且不进行修剪，以使每棵树的偏差低而方差高。然后，对其预测进行平均的效果旨在减少其方差。通过构建在bootstrap样本上训练的数百甚至数千棵树的集成，已经证明了bagging能够显著提高预测性能。
 - en: 'To illustrate the effect of bagging on the variance of a regression tree, we
     can use the `BaggingRegressor` meta-estimator provided by scikit-learn. It trains
     a user-defined base estimator based on parameters that specify the sampling strategy:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 要说明bagging对回归树方差的影响，我们可以使用scikit-learn提供的`BaggingRegressor`元估计器。它基于指定抽样策略的参数来训练用户定义的基础估算器。
 - en: '`max_samples` and `max_features` control the size of the subsets drawn from
     the rows and the columns, respectively.'
+  id: totrans-209
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`max_samples`和`max_features`分别控制从行和列中绘制的子集的大小。'
 - en: '`bootstrap` and `bootstrap_features` determine whether each of these samples
     is drawn with or without replacement.'
+  id: totrans-210
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`bootstrap`和`bootstrap_features`确定是否使用或不使用替换来绘制这些样本。'
 - en: The following example uses an exponential function to generate training samples
     for a single `DecisionTreeRegressor` and a `BaggingRegressor` ensemble that consists
     of 10 trees, each grown 10 levels deep. Both models are trained on the random
     samples and predict outcomes for the actual function with added noise.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下示例使用指数函数生成单个`DecisionTreeRegressor`和由10棵树组成的`BaggingRegressor`集成的训练样本，每棵树都生长了10层深度。这两个模型都在随机样本上进行训练，并为添加了噪声的实际函数预测结果。
 - en: 'Since we know the true function, we can decompose the mean-squared error into
     bias, variance, and noise, and compare the relative size of these components for
     both models according to the following breakdown:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们知道真实函数，因此我们可以将均方误差分解为偏差、方差和噪声，并根据以下分解比较这些组件的相对大小：
 - en: '![](img/B15439_11_005.png)'
+  id: totrans-213
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_11_005.png)'
 - en: 'We will draw 100 random samples of 250 training and 500 test observations each
     to train each model and collect the predictions:'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将分别从训练集和测试集中随机抽取100组样本，每组样本包括250个训练观察和500个测试观察，以训练每个模型并收集预测结果：
 - en: '[PRE11]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'For each model, the plots in *Figure 11.11* show:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于每个模型，在*图11.11*中显示的绘图如下：
 - en: The mean prediction and a band of two standard deviations around the mean (upper
     panel)
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 平均预测值和平均值周围两个标准偏差的带状区间（上部面板）。
 - en: The bias-variance-noise breakdown based on the values for the true function
     (bottom panel)
+  id: totrans-218
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 根据真实函数的值（底部面板），进行偏差-方差-噪声分解。
 - en: 'We find that the variance of the predictions of the individual decision tree
     (left side) is almost twice as high as that for the small ensemble of 10 bagged
     trees, based on bootstrapped samples:'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_11.png)'
+  id: totrans-220
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.11: Bias-variance breakdown for individual and bagged decision trees'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
 - en: See the notebook `bagged_decision_trees` for implementation details.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
 - en: How to build a random forest
+  id: totrans-223
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: The random forest algorithm builds on the randomization introduced by bagging
     to further reduce variance and improve predictive performance.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
 - en: In addition to training each ensemble member on bootstrapped training data,
@@ -1171,30 +1597,37 @@
     replacement). Depending on the implementation, the random samples can be drawn
     for each tree or each split. As a result, the algorithm faces different options
     when learning new rules, either at the level of a tree or for each split.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
 - en: 'The **sample size for the features** differs between regression and classification
     trees:'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
 - en: For **classification**, the sample size is typically the square root of the
     number of features.
+  id: totrans-227
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: For **regression**, it can be anywhere from one-third to all features and should
     be selected based on cross-validation.
+  id: totrans-228
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'The following diagram illustrates how random forests randomize the training
     of individual trees and then aggregate their predictions into an ensemble prediction:'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_12.png)'
+  id: totrans-230
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.12: How a random forest grows individual trees'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
 - en: The goal of randomizing the features in addition to the training observations
@@ -1203,9 +1636,11 @@
     will be selected much more frequently and earlier in the tree-construction process,
     making decision trees more alike across the ensemble. However, the less the generalization
     errors of individual trees correlate, the more the overall variance will be reduced.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
 - en: How to train and tune a random forest
+  id: totrans-233
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1213,25 +1648,31 @@
     individual decision trees introduced in the *How to tune the hyperparameters*
     section. The following table lists additional options for the two `RandomForest`
     classes:'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
 - en: '| Keyword | Default | Description |'
+  id: totrans-235
   prefs: []
   type: TYPE_TB
 - en: '| `bootstrap` | `TRUE` | Bootstrap samples during training |'
+  id: totrans-236
   prefs: []
   type: TYPE_TB
 - en: '| `n_estimators` | `10` | Number of trees in the forest |'
+  id: totrans-237
   prefs: []
   type: TYPE_TB
 - en: '| `oob_score` | `FALSE` | Uses out-of-bag samples to estimate the R2 on unseen
     data |'
+  id: totrans-238
   prefs: []
   type: TYPE_TB
 - en: The `bootstrap` parameter activates the bagging algorithm just described. Bagging,
     in turn, enables the computation of the out-of-bag score (`oob_score`), which
     estimates the generalization accuracy from samples not included in the bootstrap
     sample used to train a given tree (see the *Out-of-bag testing* section).
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
 - en: The parameter `n_estimators` defines the number of trees to be grown as part
@@ -1240,6 +1681,7 @@
     grows. The goal is to identify when the rising cost of training an additional
     tree outweighs the benefit of reducing the validation error, or when the latter
     starts to increase again.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: The `max_features` parameter controls the size of the randomly selected feature
@@ -1249,6 +1691,7 @@
     good starting values are the number of training features for regression problems
     and the square root of this number for classification problems, but will depend
     on the relationships among features and should be optimized using cross-validation.
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: Random forests are designed to contain deep fully-grown trees, which can be
@@ -1256,6 +1699,7 @@
     are not necessarily optimal, especially for high-dimensional data with many samples
     and, consequently, potentially very deep trees that can become very computationally,
     and memory, intensive.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: The `RandomForest` class provided by scikit-learn supports parallel training
@@ -1266,66 +1710,86 @@
     is often quite significant for large forests or deep individual trees that may
     take a meaningful amount of time to train when the data is large, and split evaluation
     becomes costly.
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: As always, the best parameter configuration should be identified using cross-validation.
     The following steps illustrate the process. The code for this example is in the
     notebook `random_forest_tuning`.
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: 'We will use `GridSearchCV` to identify an optimal set of parameters for an
     ensemble of classification trees:'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'We use the same 10-fold custom cross-validation as in the decision tree example
     previously and populate the parameter grid with values for the key configuration
     settings:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Configure `GridSearchCV` using the preceding as input:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'We run our grid search as before and find the following result for the best-performing
     regression and classification models. A random forest regression model does better
     with shallower trees compared to the classifier but otherwise uses the same settings:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: '| Parameter | Regression | Classification |'
+  id: totrans-252
   prefs: []
   type: TYPE_TB
 - en: '| max_depth | 5 | 15 |'
+  id: totrans-253
   prefs: []
   type: TYPE_TB
 - en: '| min_samples_leaf | 5 | 5 |'
+  id: totrans-254
   prefs: []
   type: TYPE_TB
 - en: '| n_estimators | 100 | 100 |'
+  id: totrans-255
   prefs: []
   type: TYPE_TB
 - en: '| Score | 0.0435 | 0.5205 |'
+  id: totrans-256
   prefs: []
   type: TYPE_TB
 - en: However, both models underperform their individual decision tree counterparts,
     highlighting that more complex models do not necessarily outperform simpler approaches,
     especially when the data is noisy and the risk of overfitting is high.
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: Feature importance for random forests
+  id: totrans-258
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: A random forest ensemble may contain hundreds of individual trees, but it is
     still possible to obtain an overall summary measure of feature importance from
     bagged models.
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: For a given feature, the **importance score** is the total reduction in the
@@ -1335,6 +1799,7 @@
     due to the larger number of observations contained in the smaller number of available
     nodes. By averaging over many trees grown in a randomized fashion, the feature
     importance estimate loses some variance and becomes more accurate.
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: The score is measured in terms of the mean-squared error for regression trees
@@ -1343,20 +1808,25 @@
     computed is also popular for feature selection as an alternative to the mutual
     information measures we saw in *Chapter 6*, *The Machine Learning Process* (see
     `SelectFromModel` in the `sklearn.feature_selection` module).
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: '*Figure 11.13* shows the values for the top 15 features for both models. The
     regression model relies much more on time periods than the better-performing decision
     tree:'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_13.png)'
+  id: totrans-263
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.13: Random forest feature importance'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: Out-of-bag testing
+  id: totrans-265
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1367,6 +1837,7 @@
     sample, and each observation has the same probability, 1/*n*, to be drawn. Hence,
     the probability of not entering a bootstrap sample at all is (1-1/*n*)*n*, which
     converges (quickly) to 1/*e*, or roughly one third.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
 - en: This remaining one-third of the observations that are not included in the training
@@ -1377,6 +1848,7 @@
     vote or predicted probability (if classification is the goal) for a single ensemble
     prediction for each OOB sample. These predictions produce an unbiased estimate
     of the generalization error, which is conveniently computed during training.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
 - en: The resulting OOB error is a valid estimate of the generalization error for
@@ -1385,6 +1857,7 @@
     large, the OOB error closely approximates the leave-one-out cross-validation error.
     The OOB approach to estimate the test error is very efficient for large datasets
     where cross-validation can be computationally costly.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: 'However, the same caveats apply as for cross-validation: you need to take care
@@ -1392,60 +1865,74 @@
     *out-of-order*. In practice, this makes it very difficult to use OOB testing with
     time-series data, where the validation set needs to be selected subject to the
     sequential nature of the data.'
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: Pros and cons of random forests
+  id: totrans-270
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Bagged ensemble models have both advantages and disadvantages.
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: 'The **advantages** of random forests include:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
 - en: Depending on the use case, a random forest can perform on par with the best
     supervised learning algorithms.
+  id: totrans-273
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Random forests provide a reliable feature importance estimate.
+  id: totrans-274
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: They offer efficient estimates of the test error without incurring the cost
     of repeated model training associated with cross-validation.
+  id: totrans-275
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'On the other hand, the **disadvantages** of random forests include:'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: An ensemble model is inherently less interpretable than an individual decision
     tree.
+  id: totrans-277
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Training a large number of deep trees can have high computational costs (but
     can be parallelized) and use a lot of memory.
+  id: totrans-278
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Predictions are slower, which may create challenges for applications that require
     low latency.
+  id: totrans-279
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Let's now take a look at how we can use a random forest for a trading strategy.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: Long-short signals for Japanese stocks
+  id: totrans-281
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: In *Chapter 9*, *Time-Series Models for Volatility Forecasts and Statistical
     Arbitrage*, we used cointegration tests to identify pairs of stocks with a long-term
     equilibrium relationship in the form of a common trend to which their prices revert.
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
 - en: In this chapter, we will use the predictions of a machine learning model to
@@ -1454,6 +1941,7 @@
     trading strategy that used linear regression in *Chapter 7*, *Linear Models –
     From Risk Factors to Return Forecasts*, and *Chapter 8*, *The ML4T Workflow –
     From Model to Strategy Backtesting*.
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
 - en: Instead of the scikit-learn random forest implementation, we will use the LightGBM
@@ -1462,9 +1950,11 @@
     numeric features rather than using one-hot dummy encoding (Fisher 1958). We'll
     provide a more detailed introduction in the next chapter, but the code samples
     should be easy to follow as the logic is similar to the scikit-learn version.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
 - en: The data – Japanese equities
+  id: totrans-285
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1472,6 +1962,7 @@
     provided by Stooq, a Polish data provider that currently offers interesting datasets
     for various asset classes, markets, and frequencies, which we also relied upon
     in *Chapter 9*, *Time-Series Models for Volatility Forecasts and Statistical Arbitrage*.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: While there is little transparency regarding the sourcing and quality of the
@@ -1479,6 +1970,7 @@
     words, we get to experiment with data on stocks, bonds, commodities, and FX at
     daily, hourly, and 5-minute frequencies, but should take the results with a large
     grain of salt.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
 - en: The `create_datasets` notebook in the data directory of this book's GitHub repository
@@ -1486,67 +1978,81 @@
     For this example, we are using price data on some 3,000 Japanese stocks for the
     2010-2019 period. The last 2 years will serve as the out-of-sample test period,
     while the prior years will serve as our cross-validation sample for model selection.
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
 - en: Please refer to the notebook `japanese_equity_features` for the code samples
     in this section. We remove tickers with more than five consecutive missing values
     and only keep the 1,000 most-traded stocks.
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
 - en: The features – lagged returns and technical indicators
+  id: totrans-290
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: We'll keep it relatively simple and combine historical returns for 1, 5, 10,
     21, and 63 trading days with several technical indicators provided by TA-Lib (see
     *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*).
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
 - en: 'More specifically, we compute for each stock:'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: '**Percentage price oscillator** (**PPO**): A normalized version of the **moving
     average convergence/divergence** (**MACD**) indicator that measures the difference
     between the 14-day and the 26-day exponential moving average to capture differences
     in momentum across assets.'
+  id: totrans-293
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Normalized average true range** (**NATR**): Measures price volatility in
     a way that can be compared across assets.'
+  id: totrans-294
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Relative strength index** (**RSI**): Another popular momentum indicator (see
     *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors* for
     details).'
+  id: totrans-295
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Bollinger Bands**: Ratios of the moving average to the moving standard deviations
     used to identify opportunities for mean reversion.'
+  id: totrans-296
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: We will also include markers for the time periods year, month, and weekday,
     and rank stocks on a scale from 1 to 20 with respect to their latest return for
     each of the six intervals on each trading day.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
 - en: The outcomes – forward returns for different horizons
+  id: totrans-298
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: To test the predictive ability of a random forest given these features, we generate
     forward returns for the same intervals up to 21 trading days (1 month).
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
 - en: The leads and lags implied by the historical and forward returns cause some
     loss of data that increases with the investment horizon. We end up with 2.3 million
     observations on 18 features and 4 outcomes for 941 stocks.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
 - en: The ML4T workflow with LightGBM
+  id: totrans-301
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1554,46 +2060,56 @@
     signals. Several studies have done so successfully; see, for instance, Krauss,
     Do, and Huck (2017) and Rasekhschaffe and Jones (2019) and the resources referenced
     there.
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: We will use the fast and memory-efficient LightGBM implementation that's open
     sourced by Microsoft and most popular for gradient boosting, which is the topic
     of the next chapter, where we will take a closer look at the various LightGBM
     features.
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
 - en: We will begin by discussing key experimental design decisions, then build and
     evaluate a predictive model whose signals will drive the trading strategy that
     we will design and evaluate in the final step. Please refer to the notebook `random_forest_return_signals`
     for the code samples in this section, unless otherwise stated.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
 - en: From universe selection to hyperparameter tuning
+  id: totrans-305
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'To develop a trading strategy that uses a machine learning model, we need to
     make several decisions on the scope and design of the model, including:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: '**Lookback period**: How many historical trading days to use for training'
+  id: totrans-307
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Lookahead period**: How many days into the future to predict returns'
+  id: totrans-308
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Test period**: For how many consecutive days to make predictions with the
     same model'
+  id: totrans-309
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Hyperparameters**: Which parameters and configurations to evaluate'
+  id: totrans-310
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Ensembling**: Whether to rely on a single model or some combination of multiple models'
+  id: totrans-311
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -1601,57 +2117,70 @@
     **time period** for cross-validation, as well as an out-of-sample test period
     and universe. More specifically, we cross-validate several options for the period
     up to 2017 on a subset of our sample of Japanese stocks.
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: Once we've settled on a model, we'll define trading rules and backtest the strategy
     that uses the signals of our model **out-of-sample** over the last 2 years on
     the complete universe to validate its performance.
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: 'For the time-series cross-validation, we''ll rely on the `MultipleTimeSeriesCV`
     that we developed in *Chapter 7*, *Linear Models – From Risk Factors to Return
     Forecasts*, to parameterize the length of the training and test period while avoiding
     lookahead bias. This custom CV class permits us to:'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: Train the model on a consecutive sample containing `train_length` days for each
     ticker.
+  id: totrans-315
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Validate its performance during a subsequent period containing `test_length`
     days and `lookahead` number of days, apart from the training period, to avoid
     data leakage.
+  id: totrans-316
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Repeat for a given number of `n_splits` while rolling the train and validation
     periods forward for `test_length` number of days each time.
+  id: totrans-317
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: We'll work on the model selection step in this section and on strategy backtesting
     in the following one.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: Sampling tickers to speed up cross-validation
+  id: totrans-319
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Training a random forest takes quite a bit longer than linear regression and
     depends on the configuration, where the number of trees and their depth are the
     main drivers.
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
 - en: 'To keep our experiments manageable, we''ll select the 250 most-traded stocks
     over the 2010-17 period to evaluate the performance of different outcomes and
     model configurations, as follows:'
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-322
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Defining lookback, lookahead, and roll-forward periods
+  id: totrans-323
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1660,16 +2189,21 @@
     parameters and predict the outcome for a certain number of future days. In our
     example, we'll consider 63, 126, 252, 756, and 1,260 trading days for training
     while rolling forward and predicting for 5, 21, or 63 days during each iteration.
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
 - en: 'We will pair the parameters in a list for easy iteration and optional sampling
     and/or shuffling, as follows:'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-326
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Hyperparameter tuning with LightGBM
+  id: totrans-327
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1678,110 +2212,142 @@
     and the next chapter). For our purposes, we just need to enable the random forest
     algorithm by defining `boosting_type`, setting `bagging_freq` to a positive number,
     and setting `objective` to `regression`:'
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-329
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'Next, we select the hyperparameters most likely to affect the predictive accuracy,
     namely:'
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
 - en: The number of trees to grow for the model (`num_boost_round`)
+  id: totrans-331
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The share of rows (`bagging_fraction`) and columns (`feature_fraction`) used
     for bagging
+  id: totrans-332
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The minimum number of samples required in a leaf (`min_data_in_leaf`) to control
     for overfitting
+  id: totrans-333
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Another benefit of LightGBM is that we can evaluate a trained model for a subset
     of its trees (or continue training after a certain number of evaluations), which
     allows us to test multiple `num_iteration` values during a single training session.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: Alternatively, you can enable `early_stopping` to interrupt training when the
     loss metric for a validation set no longer improves. However, the cross-validation
     performance estimates will be biased upward as the model uses information on the
     outcome that will not be available under realistic circumstances.
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: 'We''ll use the following values for the hyperparameters, which control the
     bagging method and tree growth:'
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-337
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Cross-validating signals over various horizons
+  id: totrans-338
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: To evaluate a model for a given set of hyperparameters, we will generate predictions
     using the lookback, lookahead, and roll-forward periods.
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: 'First, we will identify categorical variables because LightGBM does not require
     one-hot encoding; instead, it sorts the categories according to the outcome, which
     delivers better results for regression trees, according to Fisher (1958). We''ll
     create variables to identify different periods:'
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-341
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'To this end, we will create the binary LightGBM Dataset and configure `MultipleTimeSeriesCV`
     using the given `train_length` and `test_length`, which determine the number of
     splits for our 2-year validation period:'
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-343
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'Next, we take the following steps:'
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: Select the hyperparameters for this iteration.
+  id: totrans-345
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Slice the binary LightGM Dataset we just created into train and test sets.
+  id: totrans-346
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Train the model.
+  id: totrans-347
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: 'Generate predictions for the validation set for a range of `num_iteration`
     settings:'
+  id: totrans-348
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-349
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'To evaluate the validation performance, we compute the IC for the complete
     set of predictions, as well as on a daily basis, for a range of numbers of iterations:'
+  id: totrans-350
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-351
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Now, we need to assess the signal content of the predictions to select a model
     for our trading strategy.
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: Analyzing cross-validation performance
+  id: totrans-353
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1789,9 +2355,11 @@
     and test windows, as well as prediction horizons across all hyperparameter settings.
     Then, we'll take a closer look at the impact of the hyperparameter settings on
     the model's predictive accuracy.
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: IC for different lookback, roll-forward, and lookahead periods
+  id: totrans-355
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1801,16 +2369,20 @@
     insights into whether shorter or longer windows do better, but rather illustrates
     the degree of noise in the data due to the range of model configurations we tested
     and the resulting lack of consistency in outcomes:'
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_14.png)'
+  id: totrans-357
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.14: Distribution of the daily mean information coefficient for various
     model configurations'
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
 - en: OLS regression of random forest configuration parameters
+  id: totrans-359
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1818,6 +2390,7 @@
     outcome, we can run an OLS regression of these parameters on the daily mean IC.
     *Figure 11.15* shows the coefficients and confidence intervals for the 1- and
     5-day lookahead periods.
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: 'All variables are one-hot encoded and can be interpreted relative to the smallest
@@ -1827,16 +2400,20 @@
     appears to improve the 1-day model up to a certain point, but this is less clear
     for the 5-day model. The only somewhat consistent result seems to suggest a lower
     bagging fraction and higher minimum sample settings:'
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_15.png)'
+  id: totrans-362
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.15: OLS coefficients and confidence intervals for the various random
     forest configuration parameters'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: Ensembling forecasts – signal analysis using Alphalens
+  id: totrans-364
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1844,6 +2421,7 @@
     our investment universe and holding period. To this end, we'll evaluate the return
     spread produced by equal-weighted portfolios invested in different quantiles of
     the predicted returns using Alphalens.
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: As discussed in *Chapter 4*, *Financial Feature Engineering – How to Research
@@ -1851,32 +2429,40 @@
     the predictive performance of an Alpha Factor. The notebook `alphalens_signals_quality`
     illustrates how to combine the model predictions with price data in the appropriate
     format using the utility function `get_clean_factor_and_forward_returns`.
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: To address some of the noise inherent in the CV predictions, we select the top
     three 1-day models according to their mean daily IC and average their results.
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
 - en: 'When we provide the resulting signal to Alphalens, we find the following for
     a 1-day holding period:'
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: Annualized alpha of 0.081 and beta of 0.083
+  id: totrans-369
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: A mean period-wise spread between top and bottom quintile returns of 5.16 basis points
+  id: totrans-370
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'The following image visualizes the mean period-wise returns by factor quintile
     and the cumulative daily forward returns associated with the stocks in each quintile:'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_16.png)'
+  id: totrans-372
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.16: Alphalens factor signal evaluation'
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
 - en: The preceding image shows that the 1-day ahead predictions appear to contain
@@ -1884,9 +2470,11 @@
     top and bottom quintiles. We'll now move on and develop and backtest a strategy
     that uses predictions generated by the top ten 1-day lookahead models that produced
     the results shown here for the validation period.
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: The strategy – backtest with Zipline
+  id: totrans-375
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1894,9 +2482,11 @@
     predictions for our universe for the test period, ingest the Japanese equity data
     and load the signal into Zipline, set up a pipeline, and define rebalancing rules
     to trigger trades accordingly.
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
 - en: Ingesting Japanese Equities into Zipline
+  id: totrans-377
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1905,17 +2495,21 @@
     bundle. The directory `custom_bundle` contains the preprocessing module that creates
     the asset IDs and metadata, defines an ingest function that does the heavy lifting,
     and registers the bundle with an extension.
+  id: totrans-378
   prefs: []
   type: TYPE_NORMAL
 - en: The folder contains a `README` with additional instructions.
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
 - en: Running an in- and out-of-sample strategy backtest
+  id: totrans-380
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: The notebook `random_forest_return_signals` shows how to select the hyperparameters
     that produced the best validation IC performance and generate forecasts accordingly.
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
 - en: 'We will use our 1-day model predictions and apply some simple logic: we will
@@ -1923,86 +2517,110 @@
     lowest negative predicted returns. We will trade every day, as long as there are
     at least 15 candidates on either side, and close out all positions that are not
     among the current top forecasts.'
+  id: totrans-382
   prefs: []
   type: TYPE_NORMAL
 - en: This time, we will also include a small trading commission of $0.05 per share
     but will not use slippage since we are trading the most liquid Japanese stocks
     with a relatively modest capital base.
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
 - en: The results – evaluation with pyfolio
+  id: totrans-384
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: The left panel shown in *Figure 11.17* shows the in-sample (2016-17) and out-of-sample
     (2018-19) performance of the strategy relative to the Nikkei 225, which was mostly
     flat throughout the period.
+  id: totrans-385
   prefs: []
   type: TYPE_NORMAL
 - en: The strategy earns 10.4 percent for in-sample and 5.5 percent for out-of-sample
     on an annualized basis.
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
 - en: 'The right panel shows the 3-month rolling Sharpe ratio, which reaches 0.96
     in-sample and 0.61 out-of-sample:'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_11_17.png)'
+  id: totrans-388
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 11.17: Pyfolio strategy evaluation'
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
 - en: 'The overall performance statistics highlight cumulative returns of 36.6 percent
     after the (low) transaction costs of $0.05 cent per share, implying an out-of-sample
     alpha of 0.06 and a beta of 0.08 (relative to the NIKKEI 225). The maximum drawdown
     was 11.0 percent in-sample and 8.7 percent out-of-sample:'
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
 - en: '|  | All | In-sample | Out-of-sample |'
+  id: totrans-391
   prefs: []
   type: TYPE_TB
 - en: '| # Months | 48 | 25 | 23 |'
+  id: totrans-392
   prefs: []
   type: TYPE_TB
 - en: '| Annual return | 8.00% | 10.40% | 5.50% |'
+  id: totrans-393
   prefs: []
   type: TYPE_TB
 - en: '| Cumulative returns | 36.60% | 22.80% | 11.20% |'
+  id: totrans-394
   prefs: []
   type: TYPE_TB
 - en: '| Annual volatility | 10.20% | 10.90% | 9.60% |'
+  id: totrans-395
   prefs: []
   type: TYPE_TB
 - en: '| Sharpe ratio | 0.8 | 0.96 | 0.61 |'
+  id: totrans-396
   prefs: []
   type: TYPE_TB
 - en: '| Calmar ratio | 0.72 | 0.94 | 0.63 |'
+  id: totrans-397
   prefs: []
   type: TYPE_TB
 - en: '| Stability | 0.82 | 0.82 | 0.64 |'
+  id: totrans-398
   prefs: []
   type: TYPE_TB
 - en: '| Max drawdown | -11.00% | -11.00% | -8.70% |'
+  id: totrans-399
   prefs: []
   type: TYPE_TB
 - en: '| Sortino ratio | 1.26 | 1.53 | 0.95 |'
+  id: totrans-400
   prefs: []
   type: TYPE_TB
 - en: '| Daily value at risk | -1.30% | -1.30% | -1.20% |'
+  id: totrans-401
   prefs: []
   type: TYPE_TB
 - en: '| Alpha | 0.08 | 0.11 | 0.06 |'
+  id: totrans-402
   prefs: []
   type: TYPE_TB
 - en: '| Beta | 0.06 | 0.04 | 0.08 |'
+  id: totrans-403
   prefs: []
   type: TYPE_TB
 - en: The pyfolio tearsheets contain lots of additional details regarding exposure,
     risk profile, and other aspects.
+  id: totrans-404
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-405
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -2011,20 +2629,24 @@
     so far. We saw how decision trees learn rules to partition the feature space into
     regions that yield predictions, and thus segment the input data into specific
     regions.
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
 - en: Decision trees are very useful because they provide unique insights into the
     relationships between features and target variables, and we saw how to visualize
     the sequence of decision rules encoded in the tree structure.
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
 - en: Unfortunately, a decision tree is prone to overfitting. We learned that ensemble
     models and the bootstrap aggregation method manage to overcome some of the shortcomings
     of decision trees and render them useful as components of much more powerful composite
     models.
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
 - en: In the next chapter, we will explore another ensemble model, boosting, which
     has come to be considered one of the most important machine learning algorithms.
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
