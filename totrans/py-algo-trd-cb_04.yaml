@@ -2,6 +2,7 @@
   id: totrans-0
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算蜡烛图案和历史数据
 - en: The historical data of a financial instrument is data about all the past prices
     at which a financial instrument was brought or sold. An algorithmic trading strategy
     is always vpot_candlestickirtually executed on historical data to evaluate its
@@ -20,89 +21,108 @@
   id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 金融工具的历史数据是指金融工具过去所有买入或卖出价格的数据。算法交易策略总是在历史数据上进行虚拟执行，以评估其在实际投资前的过去表现。这个过程被称为**回测**。历史数据对于回测至关重要（在[第8章](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml)，*回测策略*中有详细介绍）。此外，历史数据还需要用于计算技术指标（在[第5章](16529fe4-d3ea-4017-a6f9-bad85a41d8a0.xhtml)，*计算和绘制技术指标*中有详细介绍），这有助于在实时进行买卖决策。蜡烛图案是股票分析中广泛使用的工具。分析师通常使用各种类型的蜡烛图案。本章提供了一些示例，展示了如何使用经纪人
+    API 获取历史数据，如何获取和计算多个蜡烛图案 – 日本（**开-高-低-收**（**OHLC**）、线段、Renko 和 Heikin-Ashi – 以及如何使用第三方工具获取历史数据。
 - en: 'In this chapter, we will cover the following recipes:'
   id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将介绍以下示例：
 - en: Fetching historical data using the broker API
   id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用经纪人 API 获取历史数据
 - en: Fetching historical data with the Japanese (OHLC) candlestick pattern
   id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用日本（OHLC）蜡烛图案获取历史数据
 - en: Fetching the Japanese candlestick pattern with variations in candle intervals
   id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用蜡烛间隔变化的日本蜡烛图案获取数据
 - en: Fetching historical data with the Line Break candlestick pattern
   id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用线段烛台图案获取历史数据
 - en: Fetching historical data with the Renko candlestick pattern
   id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用 Renko 蜡烛图案获取历史数据
 - en: Fetching historical data with the Heikin-Ashi candlestick pattern
   id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 利用 Heikin-Ashi 蜡烛图案获取历史数据
 - en: Fetching historical data using Quandl
   id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用 Quandl 获取历史数据
 - en: Let's get started!
   id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们开始吧！
 - en: Technical requirements
   id: totrans-11
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 技术要求
 - en: 'You will need the following to successfully execute the recipes in this chapter:'
   id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将需要以下内容才能成功执行本章中的示例：
 - en: Python 3.7+
   id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python 3.7+
 - en: 'Python packages:'
   id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python 包：
 - en: '`pyalgotrading` (`$ pip install pyalgotrading`)'
   id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`pyalgotrading`（`$ pip install pyalgotrading`）'
 - en: '`quandl` (`$pip install quandl`) this is optional and only needed for the last
     recipe'
   id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`quandl` （`$pip install quandl`）这是可选的，仅用于最后一个示例'
 - en: The latest Jupyter Notebook for this chapter can be found on GitHub at [https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter04](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter04).
   id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的最新 Jupyter 笔记本可在 GitHub 上找到：[https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter04](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter04)。
 - en: The following code will help you set up the broker connection with Zerodha,
     which will be used by all the recipes in this chapter. Please make sure you have
     followed these steps before trying out any of the recipes provided.
   id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码将帮助您设置与 Zerodha 的经纪人连接，这将被本章中的所有示例使用。请确保在尝试任何提供的示例之前已经执行了这些步骤。
 - en: The first thing you need to do to set connectivity with the broker is to gather
     the required API keys. The broker provides unique keys to each customer, typically
     as `api-key` and `api-secret` key pairs. These API keys are chargeable, usually
@@ -112,15 +132,19 @@
   id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置与经纪人的连接的第一件事是收集所需的 API 密钥。经纪人为每个客户提供唯一的密钥，通常是`api-key`和`api-secret`密钥对。这些
+    API 密钥通常是按月付费的。在开始本章之前，您需要从经纪人网站获取您的`api-key`和`api-secret`的副本。您可以参考*附录 I*了解更多详情。
 - en: 'Execute the following steps:'
   id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤：
 - en: 'Import the necessary modules:'
   id: totrans-21
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入必要的模块：
 - en: '[PRE0]'
   id: totrans-22
   prefs: []
@@ -316,12 +340,14 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`candle_interval`: 一个有效的字符串，表示历史数据中每个蜡烛图的持续时间。你在这里传递`minute`。（可能的值可以是`minute`，`3minute`，`5minute`，`10minute`，`30minute`，`60minute`和`day`。）'
 - en: '`start_date`: The date from which the historical data must be fetched. Should
     be a string in the `YYYY-MM-DD` format. You pass `2020-01-01` here.'
   id: totrans-53
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`start_date`: 截取历史数据的开始日期。应该是`YYYY-MM-DD`格式的字符串。你在这里传递`2020-01-01`。'
 - en: '`end_date:` The date until which the historical data must be fetched, inclusive
     of this date. Should be a string in the `YYYY-MM-DD` format. You pass `2020-01-01`
     here.'
@@ -329,11 +355,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`end_date:` 截取历史数据的截止日期，包括该日期。应该是`YYYY-MM-DD`格式的字符串。你在这里传递`2020-01-01`。'
 - en: In *step 2*, you fetch and print the available columns of `historical_data`.
     You get the columns as `timestamp`, `open`, `high`, `low`, `close`, and `volume`.
   id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤2*中，你获取并打印`historical_data`的可用列。你得到的列是`timestamp`、`open`、`high`、`low`、`close`和`volume`。
 - en: More information on candlesticks will be covered in the next recipe, *Fetching
     historical data using the Japanese (OHLC) candlestick pattern*, and the third
     recipe in this chapter, *Fetching the Japanese candlestick pattern with variations
@@ -341,17 +369,20 @@
   id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 更多有关蜡烛图案的信息将在下一篇配方*使用日本（OHLC）蜡烛图案获取历史数据*以及本章的第三篇配方*获取具有蜡烛间隔变化的日本蜡烛图案*中介绍。
 - en: Fetching historical data using the Japanese (OHLC) candlestick pattern
   id: totrans-57
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用日本（OHLC）蜡烛图案获取历史数据
 - en: The historical data of a financial instrument is an array of candlesticks. Each
     entry in the historical data is a single candlestick. There are various types
     of candlestick patterns.
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 金融工具的历史数据是一个蜡烛图数组。历史数据中的每个条目都是一个单独的蜡烛图。有各种各样的蜡烛图案。
 - en: 'This recipe demonstrates the most commonly used candlestick pattern – the Japanese
     candlestick pattern. It is a type of candlestick pattern where each candlestick
     holds a duration and indicates all the prices the instrument would have taken
@@ -360,30 +391,35 @@
   id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 本配方演示了最常用的蜡烛图案——日本蜡烛图案。它是一种蜡烛图案，每个蜡烛图案持有一个持续时间，并指示在该持续时间内工具可能会取得的所有价格。这些数据使用四个参数表示——开盘价、最高价、最低价和收盘价。可以描述如下：
 - en: '**Open**: The price of the financial instrument at the beginning of the candle''s
     duration'
   id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Open**: 蜡烛持续时间开始时金融工具的价格'
 - en: '**High**: The highest recorded price of the financial instrument during the
     entire duration of the candle'
   id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**High**: 蜡烛整个持续时间内金融工具的最高记录价格'
 - en: '**Low**: The lowest recorded price of the financial instrument during the entire
     duration of the candle'
   id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Low**: 蜡烛整个持续时间内金融工具的最低记录价格'
 - en: '**Close**: The price of the financial instrument at the end of the candle''s
     duration'
   id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Close**: 蜡烛持续时间结束时金融工具的价格'
 - en: The Japanese candlestick pattern is also known as the **OHLC candlestick pattern**
     based on these parameters. All the timestamps in a Japanese candlestick pattern
     are equally spaced (within market hours). For example, the timestamps on a trading
@@ -393,11 +429,13 @@
   id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据这些参数，日本蜡烛图案也被称为**OHLC蜡烛图案**。日本蜡烛图案中的所有时间戳都是等距的（在市场开放时间内）。例如，一个交易日的时间戳看起来像是上午9:15、9:16、9:17、9:18等等，对于1分钟的蜡烛间隔，每个时间戳都是在1分钟的间隔内等距分布的。
 - en: Getting ready
   id: totrans-65
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备工作
 - en: Make sure the `broker_connection` and `historical_data` objects are available
     in your Python namespace. Refer to the *Technical requirements* section of this
     chapter to set up `broker_connection`. Refer to the previous recipe to set up
@@ -405,20 +443,24 @@
   id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保`broker_connection`和`historical_data`对象在你的Python命名空间中可用。参考本章的*技术要求*部分设置`broker_connection`。参考上一篇配方设置`historical_data`。
 - en: How to do it…
   id: totrans-67
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 操作步骤…
 - en: 'We execute the following steps to for this recipe:'
   id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们执行以下步骤来进行这个配方：
 - en: 'Import the necessary modules:'
   id: totrans-69
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入必要的模块：
 - en: '[PRE8]'
   id: totrans-70
   prefs: []
@@ -429,6 +471,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从`historical_data`的一行创建一个绿色蜡烛图：
 - en: '[PRE9]'
   id: totrans-72
   prefs: []
@@ -438,15 +481,18 @@
   id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将得到以下输出：
 - en: '![](img/8c19dad2-8126-49bf-842b-530183ad8d42.png)'
   id: totrans-74
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/8c19dad2-8126-49bf-842b-530183ad8d42.png)'
 - en: 'Create a red candle from one of the rows of `historical_data`:'
   id: totrans-75
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从`historical_data`的一行创建一个红色蜡烛图：
 - en: '[PRE10]'
   id: totrans-76
   prefs: []
@@ -456,15 +502,18 @@
   id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将给您以下输出：
 - en: '![](img/273fcc9f-7f5f-4d06-b72e-96705752369e.png)'
   id: totrans-78
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/273fcc9f-7f5f-4d06-b72e-96705752369e.png)'
 - en: 'Plot a chart for the historical data of an instrument:'
   id: totrans-79
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制一个仪器历史数据的图表：
 - en: '[PRE11]'
   id: totrans-80
   prefs: []
@@ -474,15 +523,18 @@
   id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将给您以下输出：
 - en: '![](img/ca1f393a-ad16-4126-b989-d3512a4872e9.png)'
   id: totrans-82
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/ca1f393a-ad16-4126-b989-d3512a4872e9.png)'
 - en: 'Plot a chart for the historical data of another instrument:'
   id: totrans-83
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制另一个仪器历史数据的图表：
 - en: '[PRE12]'
   id: totrans-84
   prefs: []
@@ -492,15 +544,18 @@
   id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将给您以下输出：
 - en: '![](img/d8f3fb78-1547-4855-ac79-6d610afa48a0.png)'
   id: totrans-86
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/d8f3fb78-1547-4855-ac79-6d610afa48a0.png)'
 - en: 'Plot a chart for the historical data of yet another instrument:'
   id: totrans-87
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制另一个仪器历史数据的图表：
 - en: '[PRE13]'
   id: totrans-88
   prefs: []
@@ -510,15 +565,18 @@
   id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将给您以下输出：
 - en: '![](img/9bccb883-f64f-471e-beee-521109686b74.png)'
   id: totrans-90
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/9bccb883-f64f-471e-beee-521109686b74.png)'
 - en: How it works…
   id: totrans-91
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '工作原理… '
 - en: In *step 1*, you import `plot_candlestick_chart`, a quick utility function for
     plotting candlestick pattern charts, and `PlotType`, an enum for various types
     of candlestick patterns. The next two steps introduce two types of candlesticks,
@@ -536,6 +594,7 @@
   id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤1*中，您导入`plot_candlestick_chart`，这是一个用于绘制蜡烛图表的快速实用函数，以及`PlotType`，一个用于各种蜡烛图案类型的枚举。接下来的两步介绍了两种蜡烛图，或简称为**蜡烛**——一个绿色蜡烛和一个红色蜡烛。正如我们之前提到的，历史数据中的每个条目都是一个蜡烛。这两个步骤有选择地从数据中提取绿色和红色蜡烛。（请注意，如果您选择了与*使用经纪人API获取历史数据*配方中不同的持续时间`historical_data`，则传递给`historical_data.iloc`的索引将不同）。如果一个日本蜡烛的**收盘**价高于其**开盘**价，它的颜色将是绿色。绿色蜡烛也称为**看涨**蜡烛，因为它表明价格在那段时间内看涨，即上涨。如果一个日本蜡烛的**收盘**价低于其**开盘**价，它的颜色将是红色。红色蜡烛也称为**看跌**蜡烛，因为它表明价格在那段时间内看跌，即下跌。
 - en: In *step 4*, you plot the complete historical data held by `historical_data`
     using the `plot_candlestick_chart()` function. The chart is a combination of multiple
     candlesticks, each with a different length. Hence, such a chart is called a **candlestick
@@ -546,6 +605,7 @@
   id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤4*中，您使用`plot_candlestick_chart()`函数绘制了`historical_data`持有的完整历史数据。图表是多个蜡烛图的组合，每个蜡烛图的长度都不同。因此，这样的图表被称为**蜡烛图案图表**。请注意，蜡烛间隔为1分钟，意味着时间戳在1分钟间隔内等间距排列。*步骤5*和*步骤6*演示了相似的1分钟蜡烛间隔蜡烛图案图表，分别用于`NSE:INFY`和`NSE:ICICIBANK`仪器。
 - en: If you are new to candlestick pattern charts, I would recommend that you interact
     with the charts that can be found in this chapter's Jupyter Notebook at [https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/blob/master/Chapter04/CHAPTER%204.ipynb](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/blob/master/Chapter04/CHAPTER%204.ipynb).
     Try hovering over multiple candles to see their values and zoom in/out or pan
@@ -557,11 +617,14 @@
   id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您是蜡烛图表的新手，我建议您与本章的 Jupyter Notebook 中的图表进行交互，网址为[https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/blob/master/Chapter04/CHAPTER%204.ipynb](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/blob/master/Chapter04/CHAPTER%204.ipynb)。尝试悬停在多个蜡烛图上以查看它们的值，并放大/缩小或移动到各种持续时间以更清晰地查看蜡烛图。尝试将这些蜡烛图的颜色与本食谱中的描述联系起来。如果由于某种原因
+    Jupyter Notebook 中的图表没有自动呈现给您，您可以下载此 html 文件，该文件是相同 Jupyter Notebook 的文件，将其在浏览器中打开并与其进行交互：[https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/blob/master/Chapter04/CHAPTER%204.ipynb](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/blob/master/Chapter04/CHAPTER%204.ipynb)。
 - en: Fetching the Japanese candlestick pattern with variations in candle intervals
   id: totrans-95
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 获取以不同蜡烛图间隔为特征的日本蜡烛图案：
 - en: The historical data of a financial instrument can be analyzed in the form of
     Japanese candlesticks pattern with varying candle intervals. Brokers typically
     support candle intervals of 1 minute, 3 minutes, 5 minutes, 10 minutes, 15 minutes,
@@ -574,31 +637,38 @@
   id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 金融工具的历史数据可以以不同的蜡烛图间隔形式进行分析。经纪人通常支持 1 分钟、3 分钟、5 分钟、10 分钟、15 分钟、30 分钟、1 小时、1 天等蜡烛图间隔。较短的蜡烛图间隔暗示着局部价格运动趋势，而较大的蜡烛图间隔则表示整体价格运动趋势。根据算法交易策略的不同，您可能需要较短的蜡烛图间隔或较大的蜡烛图间隔。1
+    分钟的蜡烛图间隔通常是最小的可用蜡烛图间隔。此示例演示了金融工具一天的历史数据在各种蜡烛图间隔下的情况。
 - en: Getting ready
   id: totrans-97
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备就绪
 - en: Make sure the `broker_connection` object is available in your Python namespace.
     Refer to the *Technical requirements* section of this chapter to learn how to
     set up `broker_connection`.
   id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保`broker_connection`对象在您的 Python 命名空间中可用。请参考本章的*技术要求*部分，了解如何设置`broker_connection`。
 - en: How to do it…
   id: totrans-99
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何执行…
 - en: 'We execute the following steps for this recipe:'
   id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们执行此食谱的以下步骤：
 - en: 'Import the necessary modules:'
   id: totrans-101
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入必要的模块：
 - en: '[PRE14]'
   id: totrans-102
   prefs: []
@@ -609,6 +679,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取一个工具：
 - en: '[PRE15]'
   id: totrans-104
   prefs: []
@@ -620,6 +691,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为 1 分钟的蜡烛图：
 - en: '[PRE16]'
   id: totrans-106
   prefs: []
@@ -629,16 +701,19 @@
   id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将获得以下输出：
 - en: '![](img/95db5fe7-032e-431c-a91d-1bab7dcc19de.png)'
   id: totrans-108
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/95db5fe7-032e-431c-a91d-1bab7dcc19de.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 3-minute candle
     interval:'
   id: totrans-109
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为 3 分钟的蜡烛图：
 - en: '[PRE17]'
   id: totrans-110
   prefs: []
@@ -648,16 +723,19 @@
   id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将获得以下输出：
 - en: '![](img/70cf68b1-6358-40ff-8404-687350291dcf.png)'
   id: totrans-112
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/70cf68b1-6358-40ff-8404-687350291dcf.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 5-minute candle
     interval:'
   id: totrans-113
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为 5 分钟的蜡烛图：
 - en: '[PRE18]'
   id: totrans-114
   prefs: []
@@ -667,16 +745,19 @@
   id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将获得以下输出：
 - en: '![](img/fac26bb3-cdc9-4686-b462-394525e7ec62.png)'
   id: totrans-116
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/fac26bb3-cdc9-4686-b462-394525e7ec62.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 10-minute candle
     interval:'
   id: totrans-117
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为 10 分钟的蜡烛图：
 - en: '[PRE19]'
   id: totrans-118
   prefs: []
@@ -686,16 +767,19 @@
   id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将获得以下输出：
 - en: '![](img/b9295ac1-a6e7-44c4-8918-4f0168111e5a.png)'
   id: totrans-120
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/b9295ac1-a6e7-44c4-8918-4f0168111e5a.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 15-minute candle
     interval:'
   id: totrans-121
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为 15 分钟的蜡烛图：
 - en: '[PRE20]'
   id: totrans-122
   prefs: []
@@ -705,6 +789,7 @@
   id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将获得以下输出：
 - en: '![](img/1c18a46f-d277-4c9a-b95b-a507df515b57.png)'
   id: totrans-124
   prefs: []
@@ -1024,6 +1109,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制该工具的历史数据图，每根蜡烛间隔为10分钟：
 - en: '[PRE32]'
   id: totrans-183
   prefs: []
@@ -1033,16 +1119,19 @@
   id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/a254d5c7-8fd3-49d5-baca-a6aa57188f94.png)'
   id: totrans-185
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/a254d5c7-8fd3-49d5-baca-a6aa57188f94.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 15-minute candle
     interval:'
   id: totrans-186
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制该工具的历史数据图，每根蜡烛间隔为15分钟：
 - en: '[PRE33]'
   id: totrans-187
   prefs: []
@@ -1052,16 +1141,19 @@
   id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/0ae9f5d4-a6ae-48a7-8ff5-46a76a1bdf2c.png)'
   id: totrans-189
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/0ae9f5d4-a6ae-48a7-8ff5-46a76a1bdf2c.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 30-minute candle
     interval:'
   id: totrans-190
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制该工具的历史数据图，每根蜡烛间隔为30分钟：
 - en: '[PRE34]'
   id: totrans-191
   prefs: []
@@ -1071,16 +1163,19 @@
   id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/27be9a13-bb54-48af-b49f-67ed03514393.png)'
   id: totrans-193
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/27be9a13-bb54-48af-b49f-67ed03514393.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-hour candle
     interval:'
   id: totrans-194
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制该工具的历史数据图，每根蜡烛间隔为1小时：
 - en: '[PRE35]'
   id: totrans-195
   prefs: []
@@ -1090,16 +1185,19 @@
   id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/0a9cd917-6d6b-4e2c-8257-5eab8c5ca531.png)'
   id: totrans-197
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/0a9cd917-6d6b-4e2c-8257-5eab8c5ca531.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-day candle
     interval:'
   id: totrans-198
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制该工具的历史数据图，每根蜡烛间隔为1天：
 - en: '[PRE36]'
   id: totrans-199
   prefs: []
@@ -1109,15 +1207,18 @@
   id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/dd6aece0-c34a-4bd5-b686-780fe2336e03.png)'
   id: totrans-201
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/dd6aece0-c34a-4bd5-b686-780fe2336e03.png)'
 - en: How it works…
   id: totrans-202
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的...
 - en: In *step 1*, you import `plot_candlestick_chart`, a quick utility function for
     plotting candlestick pattern charts, `PlotType`, an enum for various types of
     candlestick patterns, and the `Linebreak` function, which can convert historical
@@ -1144,6 +1245,16 @@
   id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 1* 中，你导入 `plot_candlestick_chart`，一个用于绘制蜡烛图表的快捷实用函数，`PlotType`，一个用于各种蜡烛图案的枚举，以及
+    `Linebreak` 函数，该函数可以将日本蜡烛图案的历史数据转换成线条蜡烛图案。在 *步骤 2* 中，你使用 `broker_connection` 的
+    `get_instrument()` 方法来获取一个工具，并将其赋值给一个新属性 `instrument`。这个对象是 `Instrument` 类的一个实例。调用
+    `get_instrument()` 需要的两个参数是交易所（`'NSE'`）和交易符号（`'TATASTEEL'`）。接下来，你使用 `broker_connection`
+    对象的 `get_historical_data()` 方法获取工具的历史数据，时段为 2019 年 12 月，蜡烛间隔为 1 分钟。返回的时间序列数据以日本蜡烛图案的形式呈现。`Linebreak()`
+    函数将此数据转换为线条蜡烛图案，另一个 `pandas.DataFrame` 对象。你将其赋值给 `historical_data_1minute_linebreak`。注意到
+    `historical_data_1minute_linebreak` 只有 `timestamp`、`open` 和 `close` 列。另外，请注意时间戳不是等距的，因为线条蜡烛是基于价格变动而不是时间的。在
+    *步骤 3* 和 *步骤 4* 中，你从数据中选择性地提取了一个绿色和一个红色蜡烛。（请注意，如果您选择了第一章中获取的 `historical_data`
+    的不同持续时间，传递给 `historical_data.iloc` 的索引将不同。）请注意，蜡烛没有影子（延伸在主要蜡烛体两侧的线）因为蜡烛只有 `open` 和
+    `close` 属性。在 *步骤 5* 中，你使用 `plot_candlestick_chart()` 函数绘制了 `historical_data` 持有的完整历史数据。
 - en: 'In *steps 6* until *12*, you fetch the historical data using the Japanese candlestick
     pattern, convert it into the Line Break candlestick pattern, and plot the converted
     data for candle intervals of 3 minutes, 5 minutes, 10 minutes, 15 minutes, 30
@@ -1152,11 +1263,14 @@
   id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 6* 到 *12* 中，您使用日本烛台图案获取历史数据，将其转换为 Line Break 烛台图案，并绘制烛台间隔为 3 分钟、5 分钟、10
+    分钟、15 分钟、30 分钟、1 小时和 1 天的转换数据。随着烛台间隔的增加，观察以下图表之间的差异和相似之处：
 - en: The total number of candlesticks decreases.
   id: totrans-205
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 烛台总数减少。
 - en: The spikes in the charts due to sudden price movement are minimized. Smaller
     candle interval charts have more spikes as they focus on local trends, while larger
     candle interval charts have fewer spikes and are smoother.
@@ -1164,11 +1278,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由于突然的价格变动，图表中的尖峰被最小化。较小的烛台间隔图表具有更多尖峰，因为它们关注局部趋势，而较大的烛台间隔图表具有较少的尖峰，并且更加平滑。
 - en: A long-term trend in the stock price becomes visible.
   id: totrans-207
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 股价的长期趋势变得可见。
 - en: Decision-making may become slower because you have to wait longer to get new
     candle data. Slower decisions may or may not be desirable, depending on the strategy.
     For example, to confirm trends, using a combination of data with a smaller candle
@@ -1179,12 +1295,15 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策可能变得较慢，因为您必须等待更长时间才能获取新的烛台数据。较慢的决策可能是可取的，也可能不是，这取决于策略。例如，为了确认趋势，使用较小烛台间隔的数据（例如
+    3 分钟）和较大烛台间隔的数据（例如 15 分钟）的组合是可取的。另一方面，为了抓住日内交易的机会，不希望使用较大烛台间隔（例如 1 小时或 1 天）的数据。
 - en: The price ranges (y-axis spread) of two adjacent candles don't overlap with
     each other. Adjacent candles always share one of their ends.
   id: totrans-209
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 两个相邻烛台的价格范围（y 轴跨度）不会重叠。相邻的烛台始终共享其中一个端点。
 - en: None of the timestamps need to be equally spaced in time (unlike the Japanese
     candlestick pattern) as candles are formed based on price movement and not time
     movement.
@@ -1192,17 +1311,21 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与日本烛台图案不同，时间戳无需等间隔（烛台是基于价格变动而不是时间变动形成的）。
 - en: If you are interested in finding out about the Math and implementation of Line
     Break candles, please refer to its source code in the `pyalgotrading` package
     at [https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/linebreak.py](https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/linebreak.py).
   id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您对查找数学和实现 Line Break 烛台感兴趣，请参阅位于 [https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/linebreak.py](https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/linebreak.py)
+    的 `pyalgotrading` 包中的源代码。
 - en: Fetching historical data using the Renko candlestick pattern
   id: totrans-212
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 Renko 砖块图案获取历史数据
 - en: The historical data of a financial instrument can be analyzed in the form of
     the Renko candlestick pattern, a candlestick pattern that focuses on price movement.
     This differs from the Japanese candlestick pattern, which focuses on time movement.
@@ -1216,20 +1339,26 @@
   id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 金融工具的历史数据可以以 Renko 砖块图案的形式进行分析，这是一种关注价格变动的烛台图案。这与关注时间变动的日本烛台图案不同。经纪人通常不通过 API
+    提供 Renko 砖块图案的历史数据。经纪人通常通过使用需要转换为 Renko 砖块图案的日本烛台图案来提供历史数据。较短的烛台间隔暗示着局部价格变动趋势，而较大的烛台间隔则表示整体价格变动趋势。根据您的算法交易策略，您可能需要烛台间隔小或大。1
+    分钟的烛台间隔通常是最小的可用烛台间隔。
 - en: 'The Renko candlestick pattern works as follows:'
   id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: Renko 砖块图案的工作原理如下：
 - en: Each candle only has `open` and `close` attributes.
   id: totrans-215
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 每个烛台仅具有 `open` 和 `close` 属性。
 - en: You define a **Brick Count** (`b`) setting, which is usually set to `2`.
   id: totrans-216
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 您可以定义一个**砖块计数** (`b`) 设置，通常设置为 `2`。
 - en: Each candle is always fixed and is equal to `Brick Count`. Hence, a candle is
     also called a **brick** here.
   id: totrans-217
@@ -1416,6 +1545,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 5 分钟蜡烛间隔绘制工具的历史数据图表：
 - en: '[PRE44]'
   id: totrans-252
   prefs: []
@@ -1425,16 +1555,19 @@
   id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/5bd0dda9-a247-47ba-b7fc-ec1e9bf98a86.png)'
   id: totrans-254
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/5bd0dda9-a247-47ba-b7fc-ec1e9bf98a86.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 10-minute candle
     interval:'
   id: totrans-255
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 10 分钟蜡烛间隔绘制工具的历史数据图表：
 - en: '[PRE45]'
   id: totrans-256
   prefs: []
@@ -1444,16 +1577,19 @@
   id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/5896de8b-9d3b-4f30-9b7c-4082f3872c21.png)'
   id: totrans-258
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/5896de8b-9d3b-4f30-9b7c-4082f3872c21.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 15-minute candle
     interval:'
   id: totrans-259
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 15 分钟蜡烛间隔绘制工具的历史数据图表：
 - en: '[PRE46]'
   id: totrans-260
   prefs: []
@@ -1463,16 +1599,19 @@
   id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/78259599-5668-4f55-8d2f-ed81435c6360.png)'
   id: totrans-262
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/78259599-5668-4f55-8d2f-ed81435c6360.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 30-minute candle
     interval:'
   id: totrans-263
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 30 分钟蜡烛间隔绘制工具的历史数据图表：
 - en: '[PRE47]'
   id: totrans-264
   prefs: []
@@ -1482,16 +1621,19 @@
   id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/17aba6c5-ed1d-431d-a73a-a66e44c3d57b.png)'
   id: totrans-266
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/17aba6c5-ed1d-431d-a73a-a66e44c3d57b.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-hour candle
     interval:'
   id: totrans-267
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 1 小时蜡烛间隔绘制工具的历史数据图表：
 - en: '[PRE48]'
   id: totrans-268
   prefs: []
@@ -1501,16 +1643,19 @@
   id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/3625da45-cc9e-4910-8b7d-6d6c93f6b51f.png)'
   id: totrans-270
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/3625da45-cc9e-4910-8b7d-6d6c93f6b51f.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-day candle
     interval:'
   id: totrans-271
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用 1 天蜡烛间隔绘制工具的历史数据图表：
 - en: '[PRE49]'
   id: totrans-272
   prefs: []
@@ -1520,15 +1665,18 @@
   id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到以下输出：
 - en: '![](img/4051a346-dcb6-4ba4-b78f-73ff2fda08c6.png)'
   id: totrans-274
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/4051a346-dcb6-4ba4-b78f-73ff2fda08c6.png)'
 - en: How it works…
   id: totrans-275
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作原理…
 - en: In *step 1*, you import `plot_candlestick_chart`, a quick utility function for
     plotting candlestick pattern charts, `PlotType`, an enum for various types of
     candlestick patterns, and the `Renko` function, which can convert historical data
@@ -1553,6 +1701,11 @@
   id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 1* 中，你导入了`plot_candlestick_chart`，一个用于绘制蜡烛图表的快速实用函数，`PlotType`，用于各种蜡烛图案的枚举，以及`Renko`函数，该函数可以将日本蜡烛图案的历史数据转换为Renko蜡烛图案。在
+    *步骤 2* 中，你使用`broker_connection`的`get_instrument()`方法来获取一个工具，并将其赋值给一个新属性`instrument`。这个对象是`Instrument`类的一个实例。调用get_instrument()所需的两个参数是交易所（`'NSE'`）和交易符号（`'TATASTEEL'`）。接下来，你使用`broker_connection`对象的`get_historical_data()`方法来获取
+    2019 年 12 月的历史数据，蜡烛间隔为 1 分钟。返回的时间序列数据以日本蜡烛图案的形式呈现。`Renko()`函数将此数据转换为Renko蜡烛图案，另一个`pandas.DataFrame`对象。你将其赋值给`historical_data_1minute_renko`。请注意，`historical_data_1minute_renko`具有`timestamp`、`open`和`close`列。同时请注意，时间戳不是等距的，因为Renko蜡烛是基于价格变动而不是时间的。在
+    *步骤 3* 和 *4* 中，你选择性地从数据中提取一个绿色蜡烛和一个红色蜡烛（请注意，传递给`historical_data.iloc`的索引是从本章第一个配方中获取的）。请注意，蜡烛没有影子（延伸在主要蜡烛体两侧的线），因为蜡烛只有`open`和`close`属性。在
+    *步骤 5* 中，你使用`plot_candlestick_chart()`函数绘制`historical_data`中保存的完整历史数据。
 - en: 'In *steps 6* until *12*, you fetch the historical data using the Japanese candlestick
     pattern, convert it into the Renko candlestick pattern, and plot the converted
     data for candle intervals of 3 minutes, 5 minutes, 10 minutes, 15 minutes, 30
@@ -1655,84 +1808,100 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当前平均蜡烛的`Open`
 - en: '`Close` of current Heikin-Ashi candle'
   id: totrans-293
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当前平均蜡烛的`Close`
 - en: '`High` of current Japanese candle'
   id: totrans-294
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当前日本蜡烛的`High`
 - en: '`Low` is the min of:'
   id: totrans-295
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`Low`是：'
 - en: '`Open` of current Heikin-Ashi candle'
   id: totrans-296
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当前平均蜡烛的`Open`
 - en: '`Close` of current Heikin-Ashi candle'
   id: totrans-297
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当前平均蜡烛的`Close`
 - en: '`Low` of current Japanese Candle'
   id: totrans-298
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当前日本蜡烛的`Low`
 - en: A green candle is formed when `Close` is higher than `Open`. (This is the same
     as the green candle in the Japanese candlestick pattern.)
   id: totrans-299
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当`Close`高于`Open`时形成绿色蜡烛。（与日本蜡烛图案中的绿色蜡烛相同。）
 - en: A red candle is formed when `Close` is lower than `Open`. (This is the same
     as the red candle in the Japanese candlestick pattern.)
   id: totrans-300
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 当`Close`低于`Open`时形成红色蜡烛。（与日本蜡烛图案中的红色蜡烛相同。）
 - en: All the timestamps are equally spaced (within market hours).
   id: totrans-301
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有时间戳均等间隔（在市场营业时间内）。
 - en: This recipe shows you how to fetch historical data using Japanese candlestick
     pattern when using the broker API, as well as how to convert and plot the historical
     data using the Heikin-Ashi candlestick pattern for various candle intervals.
   id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 此示例向您展示了在使用经纪人 API 时如何使用日本蜡烛图案获取历史数据，以及如何转换和绘制各种蜡烛间隔的历史数据使用平均蜡烛图案。
 - en: Getting ready
   id: totrans-303
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备就绪
 - en: Make sure the `broker_connection` object is available in your Python namespace.
     Refer to the *Technical requirements* section of this chapter to learn how to
     set up `broker_connection`.
   id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保在你的 Python 命名空间中可用 `broker_connection` 对象。请参考本章的*技术要求*部分了解如何设置 `broker_connection`。
 - en: How to do it…
   id: totrans-305
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何实现…
 - en: 'We execute the following steps for this recipe:'
   id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们对这个配方执行以下步骤：
 - en: 'Import the necessary modules:'
   id: totrans-307
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入必要的模块：
 - en: '[PRE50]'
   id: totrans-308
   prefs: []
@@ -1744,6 +1913,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取仪器的历史数据并将其转换为平均蜡烛数据：
 - en: '[PRE51]'
   id: totrans-310
   prefs: []
@@ -1753,15 +1923,18 @@
   id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/e6ce20c1-3076-4026-956e-e551d4e769d9.png)'
   id: totrans-312
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/e6ce20c1-3076-4026-956e-e551d4e769d9.png)'
 - en: 'Create a green Heikin-Ashi candle for one row of data:'
   id: totrans-313
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建一行数据的绿色平均蜡烛：
 - en: '[PRE52]'
   id: totrans-314
   prefs: []
@@ -1771,15 +1944,18 @@
   id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/6d87f35f-5267-4821-817a-4788a36977fb.png)'
   id: totrans-316
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/6d87f35f-5267-4821-817a-4788a36977fb.png)'
 - en: 'Create a red Heikin-Ashi candle for one row of data:'
   id: totrans-317
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建一行数据的红色平均蜡烛：
 - en: '[PRE53]'
   id: totrans-318
   prefs: []
@@ -1789,16 +1965,19 @@
   id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/59a36b0a-c1da-4a2c-a26d-40aed004707a.png)'
   id: totrans-320
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/59a36b0a-c1da-4a2c-a26d-40aed004707a.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-minute candle
     interval:'
   id: totrans-321
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为1分钟：
 - en: '[PRE54]'
   id: totrans-322
   prefs: []
@@ -1808,16 +1987,19 @@
   id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/93d8dcab-2716-4f4a-a5ff-69622ad7720b.png)'
   id: totrans-324
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/93d8dcab-2716-4f4a-a5ff-69622ad7720b.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 3-minute candle
     interval:'
   id: totrans-325
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为3分钟：
 - en: '[PRE55]'
   id: totrans-326
   prefs: []
@@ -1827,16 +2009,19 @@
   id: totrans-327
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/2b9e5c4a-1f20-4ff8-b655-cb450ec4b51d.png)'
   id: totrans-328
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/2b9e5c4a-1f20-4ff8-b655-cb450ec4b51d.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 5-minute candle
     interval:'
   id: totrans-329
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为5分钟：
 - en: '[PRE56]'
   id: totrans-330
   prefs: []
@@ -1846,16 +2031,19 @@
   id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/43712f77-438b-4284-8391-ff59e6dce24c.png)'
   id: totrans-332
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/43712f77-438b-4284-8391-ff59e6dce24c.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 10-minute candle
     interval:'
   id: totrans-333
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为10分钟：
 - en: '[PRE57]'
   id: totrans-334
   prefs: []
@@ -1865,16 +2053,19 @@
   id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/ca2c179b-4020-49ae-aed3-13ade0abd2fe.png)'
   id: totrans-336
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/ca2c179b-4020-49ae-aed3-13ade0abd2fe.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 15-minute candle
     interval:'
   id: totrans-337
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为15分钟：
 - en: '[PRE58]'
   id: totrans-338
   prefs: []
@@ -1884,16 +2075,19 @@
   id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/3d3462b5-0b58-4a56-b97b-031f2523d8ca.png)'
   id: totrans-340
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/3d3462b5-0b58-4a56-b97b-031f2523d8ca.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 30-minute candle
     interval:'
   id: totrans-341
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为30分钟：
 - en: '[PRE59]'
   id: totrans-342
   prefs: []
@@ -1903,16 +2097,19 @@
   id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/f18afad9-d8a5-4bff-9f26-e0e6d0d4234c.png)'
   id: totrans-344
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/f18afad9-d8a5-4bff-9f26-e0e6d0d4234c.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-hour candle
     interval:'
   id: totrans-345
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为1小时：
 - en: '[PRE60]'
   id: totrans-346
   prefs: []
@@ -1922,16 +2119,19 @@
   id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/bd8109ae-7421-4c0d-a7fa-268be204c0fb.png)'
   id: totrans-348
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/bd8109ae-7421-4c0d-a7fa-268be204c0fb.png)'
 - en: 'Plot a chart for the historical data of the instrument with a 1-day candle
     interval:'
   id: totrans-349
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制仪器历史数据的图表，间隔为1天：
 - en: '[PRE61]'
   id: totrans-350
   prefs: []
@@ -1941,15 +2141,18 @@
   id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将获得以下输出：
 - en: '![](img/dfc0ca08-a2ff-4cfe-acbd-b0cd7c5e99e5.png)'
   id: totrans-352
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/dfc0ca08-a2ff-4cfe-acbd-b0cd7c5e99e5.png)'
 - en: How it works…
   id: totrans-353
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作原理…
 - en: In *step 1*, you import `plot_candlestick_chart`, a quick utility function for
     plotting candlestick pattern charts, `PlotType`, an enum for various types of
     candlestick patterns, and the `HeikinAshi` function, which can convert historical
@@ -1977,6 +2180,7 @@
   id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤1*中，您导入`plot_candlestick_chart`，一个用于绘制蜡烛图模式图表的快捷工具函数，`PlotType`，一个用于各种蜡烛图模式的枚举，以及`HeikinAshi`函数，该函数可以将日本蜡烛图模式的历史数据转换为适用于平均阴阳蜡烛图模式的数据。在*步骤2*中，您使用`broker_connection`的`get_instrument()`方法获取一个工具，并将其分配给一个新属性`instrument`。这个对象是`Instrument`类的一个实例。调用`get_instrument()`所需的两个参数是交易所（`'NSE'`）和交易符号（`'TATASTEEL'`）。接下来，您使用`broker_connection`对象的`get_historical_data()`方法获取2019年12月的历史数据，蜡烛间隔为1分钟。返回的时间序列数据以日本蜡烛图模式的形式返回。`HeikinAshi()`函数将这些数据转换为平均阴阳蜡烛图模式，另一个`pandas.DataFrame`对象。您将其分配给`historical_data_1minute_heikinashi`。注意`historical_data_1minute_heikinashi`具有`timestamp`、`close`、`open`、`high`和`low`列。还请注意，时间戳是等距的，因为平均阴阳蜡烛图是基于日本蜡烛的平均值。在*步骤3*和*步骤4*中，您从数据中选择性地提取绿色和红色蜡烛。（请注意，如果您选择本章第一个配方中获取的`historical_data`的不同持续时间，则传递给`historical_data.iloc`的索引将不同。）请注意，蜡烛具有阴影（延伸在主蜡烛体两侧的线），因为蜡烛具有`high`和`low`属性，以及`open`和`close`属性。在*步骤5*中，您使用`plot_candlstick_charts()`函数绘制`historical_data`保存的完整历史数据。
 - en: 'In *steps 6* until *12*, you fetch the historical data using the Japanese candlestick
     pattern, converts it into the Heikin-Ashi candlestick pattern, and plots the converted
     data for candle intervals of 3 minutes, 5 minutes, 10 minutes, 15 minutes, 30
@@ -1985,11 +2189,13 @@
   id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤6*到*步骤12*之间，您使用日本蜡烛图模式获取历史数据，将其转换为平均阴阳蜡烛图模式，并分别为3分钟、5分钟、10分钟、15分钟、30分钟、1小时和1天的蜡烛间隔绘制转换后的数据图表。随着蜡烛间隔的增加，观察以下图表之间的差异和相似之处：
 - en: The total number of candlesticks decreases.
   id: totrans-356
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 蜡烛总数减少。
 - en: The spikes in the charts due to sudden price movement are minimized. Smaller
     candle interval charts have more spikes as they focus on local trends, while larger
     candle interval charts have fewer spikes and are smoother.
@@ -1997,11 +2203,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由于突然的价格波动，图表中的尖峰被最小化。较小的蜡烛间隔图表具有更多的尖峰，因为它们专注于局部趋势，而较大的蜡烛间隔图表具有较少的尖峰，更加平滑。
 - en: A long-term trend in the stock price becomes visible.
   id: totrans-358
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 股价的长期趋势变得可见。
 - en: Decision-making may become slower because you have to wait longer to get new
     candle data. Slower decisions may or may not be desirable, depending on the strategy.
     For example, to confirm trends, using a combination of data with a smaller candle
@@ -2012,26 +2220,32 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 决策可能会变慢，因为你必须等待更长时间才能获取新的蜡烛数据。决策速度变慢可能是好事，也可能不是，这取决于策略。例如，为了确认趋势，使用较小蜡烛间隔的数据（例如
+    3 分钟）和较大蜡烛间隔的数据（例如 15 分钟）会是理想的。另一方面，为了抓住日内交易的机会，较大蜡烛间隔（例如 1 小时或 1 天）的数据则不理想。
 - en: The price ranges (y-axis spread) of adjacent candles may or may not overlap.
   id: totrans-360
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 相邻蜡烛的价格范围（y 轴跨度）可能重叠，也可能不重叠。
 - en: All the timestamps are equally spaced in time (within market hours).
   id: totrans-361
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所有的时间戳在时间上是均匀分布的（在市场开放时间内）。
 - en: If you are interested in finding out about the Math and implementation of Heikin-Ashi
     candles, please refer to the source code in the `pyalgotrading` package at [https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/heikinashi.py](https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/heikinashi.py).
   id: totrans-362
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你对 Heikin-Ashi 蜡烛图的数学和实现感兴趣，请参考 `pyalgotrading` 包中的源代码：[https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/heikinashi.py](https://github.com/algobulls/pyalgotrading/blob/master/pyalgotrading/utils/candlesticks/heikinashi.py)。
 - en: Fetching historical data using Quandl
   id: totrans-363
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 Quandl 获取历史数据
 - en: So far, in all the recipes in this chapter, you have used the broker connection
     to fetch historical data. In this recipe, you will fetch historical data using
     a third-party tool, Quandl ([https://www.quandl.com/tools/python](https://www.quandl.com/tools/python)).
@@ -2041,16 +2255,20 @@
   id: totrans-364
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，在本章的所有配方中，你都使用了经纪连接来获取历史数据。在这个配方中，你将使用第三方工具 Quandl ([https://www.quandl.com/tools/python](https://www.quandl.com/tools/python))
+    来获取历史数据。它有一个免费使用的 Python 版本，可以使用 `pip` 轻松安装。这个配方演示了使用 `quandl` 来获取 **FAAMG** 股票价格（Facebook、亚马逊、苹果、微软和谷歌）的历史数据。
 - en: Getting ready
   id: totrans-365
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备工作
 - en: 'Make sure you have installed the Python `quandl` package. If you haven''t,
     you can install it using the following `pip` command:'
   id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保你已安装了 Python 的 `quandl` 包。如果没有，你可以使用以下 `pip` 命令进行安装：
 - en: '[PRE62]'
   id: totrans-367
   prefs: []
@@ -2061,15 +2279,18 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何做…
 - en: 'We execute the following steps for this recipe:'
   id: totrans-369
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们对此配方执行以下步骤：
 - en: 'Import the necessary modules:'
   id: totrans-370
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入必要的模块：
 - en: '[PRE63]'
   id: totrans-371
   prefs: []
@@ -2080,6 +2301,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制 Facebook 的历史数据图表，蜡烛间隔为 1 天：
 - en: '[PRE64]'
   id: totrans-373
   prefs: []
@@ -2089,15 +2311,18 @@
   id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将得到以下输出：
 - en: '![](img/2d71218d-450a-465e-b7ab-93d85be55eeb.png)'
   id: totrans-375
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/2d71218d-450a-465e-b7ab-93d85be55eeb.png)'
 - en: 'Plot a chart for the historical data of Amazon with a 1-day candle interval:'
   id: totrans-376
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制亚马逊的历史数据图表，蜡烛间隔为 1 天：
 - en: '[PRE65]'
   id: totrans-377
   prefs: []
@@ -2107,15 +2332,18 @@
   id: totrans-378
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将得到以下输出：
 - en: '![](img/2c9e01c8-7e1f-4424-bc21-e3f37d3710e1.png)'
   id: totrans-379
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/2c9e01c8-7e1f-4424-bc21-e3f37d3710e1.png)'
 - en: 'Plot a chart for the historical data of Apple with a 1-day candle interval:'
   id: totrans-380
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制苹果的历史数据图表，蜡烛间隔为 1 天：
 - en: '[PRE66]'
   id: totrans-381
   prefs: []
@@ -2125,15 +2353,18 @@
   id: totrans-382
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将得到以下输出：
 - en: '![](img/f1be033d-d543-45e8-9bed-524fb25c4131.png)'
   id: totrans-383
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/f1be033d-d543-45e8-9bed-524fb25c4131.png)'
 - en: 'Plot a chart for the historical data of Microsoft with a 1-day candle interval:'
   id: totrans-384
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制微软的历史数据图表，蜡烛间隔为 1 天：
 - en: '[PRE67]'
   id: totrans-385
   prefs: []
@@ -2143,15 +2374,18 @@
   id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将得到以下输出：
 - en: '![](img/eb2909f1-4625-4284-8944-c6eb0112fe0d.png)'
   id: totrans-387
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/eb2909f1-4625-4284-8944-c6eb0112fe0d.png)'
 - en: 'Plot a chart for the historical data of Google with a 1-day candle interval:'
   id: totrans-388
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制谷歌的历史数据图表，蜡烛间隔为 1 天：
 - en: '[PRE68]'
   id: totrans-389
   prefs: []
@@ -2161,15 +2395,18 @@
   id: totrans-390
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将得到以下输出：
 - en: '![](img/1c9ce622-24a8-4866-9855-e70e553dc739.png)'
   id: totrans-391
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/1c9ce622-24a8-4866-9855-e70e553dc739.png)'
 - en: How it works…
   id: totrans-392
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作原理…
 - en: In *step 1*, you import `plot_candlestick_chart`, a quick utility function for
     plotting candlestick pattern charts, `PlotType`, an enum for various types of
     candlestick patterns, and the `quandl` module. In the remaining steps, historical
