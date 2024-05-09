@@ -1,30 +1,41 @@
 - en: Placing Regular Orders on the Exchange
+  id: totrans-0
   prefs: []
   type: TYPE_NORMAL
+  zh: 在交易所上下常规订单
 - en: This chapter introduces various types of regular orders that can be placed on
     exchanges via the broker APIs. The recipes include code on placing 16 types of
     orders, querying their statuses, and exiting completed orders. These recipes will
     be a fundamental part of your algorithmic trading strategies. Understanding all
     of the types of orders and knowing which one to place for the given requirement
     is crucial for building a successful trading strategy.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章介绍了通过经纪人 API 可以在交易所上下的各种类型的常规订单。这些示例包括关于下订单、查询订单状态以及退出已完成订单的代码。这些示例将是你算法交易策略的基础部分。了解所有类型的订单并知道在特定需求下应该下哪种订单对于建立成功的交易策略至关重要。
 - en: 'Every order has multiple attributes, as described in the following list:'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个订单都有多个属性，如下列表所述：
 - en: '**Order transaction type**: This attribute simply defines whether the order
     is a `BUY` transaction or a `SELL` transaction. Possible values, obviously, can
     be one of `BUY` or `SELL`.'
+  id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**订单交易类型**：此属性简单地定义订单是 `BUY` 交易还是 `SELL` 交易。可能的值显然可以是 `BUY` 或 `SELL` 中的一个。'
 - en: '**Order type**: This attribute defines the type of the order, which would imply
     the high-level behavior of the order. Commonly used order types are `REGULAR`
     order, `BRACKET` order, `COVER` order, and so on. Your broker may define many
     more types of orders. This chapter includes recipes on `REGULAR` orders.'
+  id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**订单类型**：此属性定义订单的类型，这将暗示订单的高级行为。常用的订单类型包括 `REGULAR` 订单、`BRACKET` 订单、`COVER`
+    订单等等。你的经纪人可能定义了更多类型的订单。本章包括 `REGULAR` 订单的示例。'
 - en: '**Order code**: This attribute defines whether the order would be squared-off
     (that is, exited) at the end of the trading hours for the day or be carried to
     the next trading day. Possible values can be one of `INTRADAY` or `DELIVERY`.
@@ -34,219 +45,312 @@
     and exists until it is explicitly squared-off by the user. A `DELIVERY` order
     may go through multiple states before getting finally delivered to the user''s
     Demat account, as in this example:'
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**订单代码**：此属性定义订单是否在当天交易结束时结算（即退出）或持续到下一个交易日。可能的值可以是 `INTRADAY` 或 `DELIVERY`
+    中的一个。如其名，`INTRADAY` 订单的寿命只有一天，如果未在当天结束前退出，经纪人会在当天结束时退出。另一方面，`DELIVERY` 订单交付到用户的证券账户，并在用户明确结算前存在。`DELIVERY`
+    订单在最终交付给用户的证券账户之前可能会经历多个状态，就像这个例子中一样：'
 - en: '`DELIVERY T+0` (on the day of placing the order)'
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`DELIVERY T+0`（下单当天）'
 - en: '`DELIVERY T+1` (on the next trading day of placing the order)'
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`DELIVERY T+1`（下单后的下一个交易日）'
 - en: '`DELIVERY T+2` (on and after the second trading day of placing the order)'
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`DELIVERY T+2`（下单后的第二个交易日及以后）'
 - en: This depends on the underlying segment. For example, a `DELIVERY` order for
     an equity segment instrument would go through these states. A `DELIVERY` order
     for a futures and options segment instrument would not go through these states.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 这取决于基础段。例如，股票段工具的 `DELIVERY` 订单会经历这些状态。期货和期权段工具的 `DELIVERY` 订单不会经历这些状态。
 - en: '**Order variety**: This attribute is related to the pricing and activation
     of the order. Possible values can be one of the following:'
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**订单种类**：此属性与订单的定价和激活有关。可能的值可以是以下之一：'
 - en: '`MARKET`: The order is placed immediately at the best available market price.
     The user need not specify the price while placing the order.'
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`MARKET`：订单立即以最佳可用市场价格下单。用户下订单时不需要指定价格。'
 - en: '`LIMIT`: The order is placed at a specified price, which is either below the
     **Last Traded Price** (**LTP**) (for `BUY` orders) or above the LTP (for `SELL`
     orders). The user should specify a *limit price* when placing the order. The *limit
     price* would be the price at which the user intends to buy/sell the instrument.'
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`LIMIT`：订单以指定价格下单，该价格要么低于**最近交易价格**（**LTP**）（对于 `BUY` 订单），要么高于 LTP（对于 `SELL`
+    订单）。用户下订单时应指定一个*限价*。*限价*将是用户打算买入/卖出工具的价格。'
 - en: '`STOPLOSS_LIMIT`: The order is placed at a specified price, which is either
     above the LTP (for `BUY` orders) or below the LTP (for `SELL` orders). The user
     should specify the *trigger price* and the *limit price*. When the `LTP` crosses
     the *trigger price*, the order is activated and places an order at the specified
     *limit* *price*.'
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`STOPLOSS_LIMIT`：订单以指定价格下单，该价格要么高于LTP（对于“买入”订单），要么低于LTP（对于“卖出”订单）。用户应指定*触发价格*和*限价*。当`LTP`穿过*触发价格*时，订单被激活，并以指定的*限价*下单。'
 - en: '`STOPLOSS_MARKET`: The order is placed at a specified price, which is either
     above the LTP (for `BUY` orders) or below the LTP (for `SELL` orders). The user
     should specify the *trigger price*. When the LTP crosses the *trigger price*,
     the order is activated and places an order at the market price.'
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`STOPLOSS_MARKET`：订单以指定价格下单，该价格要么高于LTP（对于“买入”订单），要么低于LTP（对于“卖出”订单）。用户应指定*触发价格*。当LTP穿过*触发价格*时，订单被激活，并以市价下单。'
 - en: All of these attributes together define a complete order. To place an order,
     all four attributes should be known precisely.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有这些属性一起定义了一个完整的订单。为了下订单，四个属性都应该被精确知道。
 - en: The aforementioned attributes, namely, the order transaction type, order type,
     order code, and order variety, are defined by the `pyalgotrading` package. The
     same attribute may be named differently by the broker of your choice. The `pyalgotrading`
     package handles such translations internally.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述属性，即订单交易类型、订单类型、订单代码和订单种类，由`pyalgotrading`软件包定义。您选择的经纪人可能会以不同的方式命名相同的属性。`pyalgotrading`软件包在内部处理这样的转换。
 - en: 'Every order placed on the exchange goes through various states during its lifetime.
     The broker used in this chapter supports the following states for every order:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个放置在交易所的订单在其生命周期内都经历各种状态。本章使用的经纪人支持每个订单的以下状态：
 - en: '`PUT ORDER REQ RECEIVED`'
+  id: totrans-18
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`PUT ORDER REQ RECEIVED`'
 - en: '`VALIDATION PENDING`'
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`VALIDATION PENDING`'
 - en: '`OPEN PENDING`'
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`OPEN PENDING`'
 - en: '`TRIGGER PENDING`'
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`TRIGGER PENDING`'
 - en: '`CANCEL PENDING`'
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`CANCEL PENDING`'
 - en: '`COMPLETE`'
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`COMPLETE`'
 - en: '`CANCELLED`'
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`CANCELLED`'
 - en: '`OPEN`'
+  id: totrans-25
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`OPEN`'
 - en: '`REJECTED`'
+  id: totrans-26
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`REJECTED`'
 - en: The recipes in this chapter provide detailed state machine diagrams for the
     state transitions of every variety of a regular order.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的示例为常规订单的各种类型的状态转换提供了详细的状态机图。
 - en: If you are using a different broker, the broker might support different order
     states or name the order states differently. You can consult the broker API documentation
     to understand the meaning of each of the states.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用的是不同的经纪人，则经纪人可能支持不同的订单状态或以不同的方式命名订单状态。您可以查阅经纪人API文档以了解每个状态的含义。
 - en: 'In this chapter, we will cover the following recipes:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将介绍以下示例：
 - en: Placing a regular market order
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 放置常规市价订单
 - en: Placing a regular limit order
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 放置常规限价订单
 - en: Placing a regular stoploss-limit order
+  id: totrans-32
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 放置常规止损限价订单
 - en: Placing a regular stoploss-market order
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 放置常规止损市价订单
 - en: Please make sure you try all of these recipes during live market hours with
     sufficient balance in your broking account. If these recipes are tried outside
     of market hours or with insufficient balance, your orders would be rejected by
     the broker. This means the orders would never reach the exchange and you would
     not get the expected response.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 请确保您在活跃市场时间内，经纪账户余额充足时尝试所有这些示例。如果在非市场时间或资金不足时尝试这些示例，您的订单将被经纪人拒绝。这意味着订单将永远不会到达交易所，您将无法获得预期的响应。
 - en: Technical requirements
+  id: totrans-35
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 技术要求
 - en: 'You will need the following to successfully execute the recipes in this chapter:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 要成功执行本章中的示例，您需要以下内容：
 - en: Python 3.7+
+  id: totrans-37
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python 3.7+
 - en: Python packages: `pyalgotrading` (`$ pip install pyalgotrading`)
+  id: totrans-38
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python软件包：`pyalgotrading`（`$ pip install pyalgotrading`）
 - en: The latest Jupyter notebook for this chapter can be found on GitHub at [https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter06](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter06).
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的最新Jupyter笔记本可以在GitHub上找到：[https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter06](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter06)。
 - en: The first thing needed for setting connectivity with the broker is getting the
     API keys. The broker would provide each customer with unique keys, typically as
     an `api-key` and `api-secret` key pair. These API keys are chargeable, usually
     on a monthly subscription basis. You need to get your copy of `api-key` and `api-secret` from
     the broker website before starting this. You can refer to *Appendix I* for more
     details.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
 - en: 'The following steps will help you to set up the broker connection with Zerodha,
     which will be used by all of the recipes in this chapter. Please make sure you
     have followed these steps before trying out any recipe:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
 - en: 'Import the necessary modules:'
+  id: totrans-42
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE0]'
+  id: totrans-43
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: All `pyalgotrading` constants are now available in your Python namespace.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
 - en: 'Get the `api_key` and `api_secret` keys from the broker. These are unique to
     you and will be used by the broker to identify your Demat account:'
+  id: totrans-45
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE1]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'We get the following output:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE2]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: If you are running this for the first time and `kiteconnect` is not installed,
     `pyalgotrading` will automatically install it for you. The final output of *step
     2* will be a link. Click on the link and log in with your Zerodha credentials.
     If the authentication is successful, you will see a link in your browser's address
     bar similar to `https://127.0.0.1/?request_token=<alphanimeric-toke>&action=login&status=success`.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
 - en: 'We have the following example:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Copy the alphanumeric-token and paste it in `request_token`:'
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: The `broker_connection` instance is now ready for performing API calls.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
 - en: The `pyalgotrading` package supports multiple brokers and provides a connection
@@ -257,9 +361,11 @@
     documentation for setting up the broker connection if you are not using Zerodha
     as your broker. For Zerodha users, the steps mentioned in the preceding section
     would suffice.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
 - en: Placing a regular market order
+  id: totrans-56
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -268,6 +374,7 @@
     market price is equivalent to the LTP (as explained in the *Last traded price
     of a financial instrument* recipe of [Chapter 3](d82aae2c-b9a8-4a79-bfea-44719adf1acf.xhtml),
     *Fetching Financial Data*).
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
 - en: 'On placing a regular market order, it goes through various intermediate states
@@ -275,195 +382,266 @@
     order immediately moves to the end state without waiting on any intermediate states.
     The following state machine diagram demonstrates the various states of a regular market
     order during its lifetime:'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/b41fd051-0228-400b-8f0b-cc9a0bd77409.png)'
+  id: totrans-59
   prefs: []
   type: TYPE_IMG
 - en: 'This recipe demonstrates placing of the following regular market orders and
     querying their status:'
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
 - en: '`BUY`, `REGULAR`, `INTRADAY`, `MARKET` order'
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`SELL`, `REGULAR`, `INTRADAY`, `MARKET` order'
+  id: totrans-62
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`BUY`, `REGULAR`, `DELIVERY`, `MARKET` order'
+  id: totrans-63
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`SELL`, `REGULAR`, `DELIVERY`, `MARKET` order'
+  id: totrans-64
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Getting ready
+  id: totrans-65
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Make sure the `broker_connection` object and constants from the `pyalgotrading`
     package are available in your Python namespace. Refer to the *Technical requirements*
     section of this chapter to set up this object.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
 - en: How to do it…
+  id: totrans-67
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'We execute the following steps for this recipe:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: 'Fetch a financial instrument and assign it to `instrument`:'
+  id: totrans-69
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE5]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Place a `BUY`, `REGULAR`, `INTRADAY`, `MARKET` order and display the order
     ID:'
+  id: totrans-71
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE6]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE7]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Fetch and display the order status:'
+  id: totrans-75
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'We get the following output:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-78
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/9d06a98e-80e3-4e9d-8f06-01b23534c607.png)'
+  id: totrans-80
   prefs: []
   type: TYPE_IMG
 - en: 'Place a `SELL`, `REGULAR`, `INTRADAY`, `MARKET` order and display the order
     ID:'
+  id: totrans-81
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'We get the following output (your output would differ):'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-84
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'Fetch and display the order status:'
+  id: totrans-85
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'We get the following output:'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-88
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/56776fec-c06e-4699-b617-32b26a293431.png)'
+  id: totrans-90
   prefs: []
   type: TYPE_IMG
 - en: 'Place a `BUY`, `REGULAR`, `DELIVERY`, `MARKET` order and display the order
     ID:'
+  id: totrans-91
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Fetch and display the order status:'
+  id: totrans-95
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'We get the following output:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-98
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/a43f6a7c-008a-4b3a-a16e-6564af2c96af.png)'
+  id: totrans-100
   prefs: []
   type: TYPE_IMG
 - en: 'Place a `SELL`, `REGULAR`, `DELIVERY`, `MARKET` order and display the order
     ID:'
+  id: totrans-101
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'Fetch and display the order status:'
+  id: totrans-105
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'We get the following output:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/d98335e5-6541-4fe1-a9ab-0068ab48066b.png)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
 - en: How it works…
+  id: totrans-111
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -471,48 +649,57 @@
     class to fetch an instrument and assign it to a new attribute, `instrument`. This
     object is an instance of the `Instrument` class. The two parameters needed to
     call `get_instrument` are the exchange (`'NSE'`) and the trading-symbol (`'HDFCBANK'`).
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
 - en: 'In *step 2*, you use the `place_order` method of the `broker_connection` object
     to place a `BUY`, `REGULAR`, `INTRADAY`, `MARKET` order on the exchange. The `place_order`
     method is a wrapper on the broker specific place order API. It takes the following
     attributes:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
 - en: '`instrument`: This is the financial instrument for which the order must be
     placed and should be an instance of the `Instrument` class. We pass `instrument`
     here.'
+  id: totrans-114
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_transaction_type`: This is the order transaction type and should be
     an enum of the `BrokerOrderTransactionTypeConstants` type. We pass `BrokerOrderTransactionTypeConstants.BUY`
     here.'
+  id: totrans-115
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_type`: This is the order type and should be an enum of the `BrokerOrderTypeConstants` type.
     We pass `BrokerOrderTypeConstants.REGULAR` here.'
+  id: totrans-116
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_code`: This is the order code and should be an enum of the `BrokerOrderCodeConstants` type.
     We pass `BrokerOrderCodeConstants.INTRADAY` here.'
+  id: totrans-117
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_variety`: This is the order variety and should be an enum of the `BrokerOrderVarietyConstants` type.
     We pass `BrokerOrderVarietyConstants.MARKET` here.'
+  id: totrans-118
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`quantity`: This is the number of shares to be traded for the given instrument
     and it should be a positive integer. We pass `1` here.'
+  id: totrans-119
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: (The attributes passed to the `place_order` method are broker-agnostic constants,
     imported earlier from the `pyalgotrading.constants` module.)
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: On placing the order in *step 2*, you get an order ID from the broker, which
@@ -523,35 +710,43 @@
     to the `get_order_status()` method. You get the order status as `'COMPLETE'`,
     a `string` type. You can use `order1_id` to fetch the status of the placed order
     at any later point of time as well.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
 - en: You can also verify the successful placement of your order by logging in to
     the broker website and checking the orders section there. You should see data
     similar to the screenshot shown in the output of *step 3*.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
 - en: 'The other steps in this recipe follow the same pattern of placing an order
     and getting its status, for a different combination of attributes:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
 - en: '*Steps 4* and *5*: `SELL`, `REGULAR`, `INTRADAY`, `MARKET` order'
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '*Steps 6* and *7*: `BUY`, `REGULAR`, `DELIVERY`, `MARKET` order'
+  id: totrans-125
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '*Steps 8* and *9*: `SELL`, `REGULAR`, `DELIVERY`, `MARKET` order'
+  id: totrans-126
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The order ID returned by the broker for an order is unique across all its clients.
     You will never get the same order ID again and you will never get an order ID
     that was assigned to an order placed by someone else.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: Placing a regular limit order
+  id: totrans-128
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -559,450 +754,671 @@
     a specific price. Unlike the regular market order, this is not the market price.
     To place this order, a specific parameter called the *limit price* is needed.
     This parameter should satisfy the following conditions:'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
 - en: The *limit price* should be below the market price for a `BUY` order.
+  id: totrans-130
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The *limit price* should be above the market price for a `SELL` order.
+  id: totrans-131
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: If these conditions are not satisfied, the order may either get placed at the
     market price, essentially converting it into a regular market order, or it may
     be rejected by the broker as an invalid order.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这些条件不满足，则订单可能会以市场价格下单，从而将其转换为常规市价订单，或者经纪人可能会将其拒绝为无效订单。
 - en: 'On placing a regular limit order, it goes through various intermediate states
     before finally reaching an end state (`COMPLETE`, `CANCELLED`, or `REJECTED`).
     A regular limit order could stay in the `OPEN` state for a while until favorable
     market conditions are achieved, before moving to the `COMPLETE` state. The following
     state machine diagram demonstrates the various states of a regular limit order
     during its lifetime:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 下单常规限价订单时，它会在最终到达终态（`完成`，`取消`或`拒绝`）之前经历各种中间状态。在有利的市场条件实现之前，常规限价订单可能会在`开放`状态停留一段时间，然后转移到`完成`状态。以下状态机图演示了常规限价订单在其生命周期中的各种状态：
 - en: '![](img/7d539482-0de2-4a86-9dd0-dfdb4f511c01.png)'
+  id: totrans-134
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/7d539482-0de2-4a86-9dd0-dfdb4f511c01.png)'
 - en: 'This recipe demonstrates placing the following regular limit orders and querying
     their statuses:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 此示例演示了下列常规限价订单的下单及查询其状态：
 - en: '`BUY`, `REGULAR`, `INTRADAY`, `LIMIT` order'
+  id: totrans-136
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`购买`，`常规`，`即日交易`，`限价`订单'
 - en: '`SELL`, `REGULAR`, `INTRADAY`, `LIMIT` order'
+  id: totrans-137
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`卖出`，`常规`，`即日交易`，`限价`订单'
 - en: '`BUY`, `REGULAR`, `DELIVERY`, `LIMIT` order'
+  id: totrans-138
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`购买`，`常规`，`交割`，`限价`订单'
 - en: '`SELL`, `REGULAR`, `DELIVERY`, `LIMIT` order'
+  id: totrans-139
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`卖出`，`常规`，`交割`，`限价`订单'
 - en: Getting ready
+  id: totrans-140
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备就绪
 - en: Make sure the `broker_connection` object and constants from the `pyalgotrading`
     package are available in your Python namespace. Refer to the *Technical requirements*
     section of this chapter to set up this object.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保您的 Python 命名空间中可用来自`pyalgotrading`包的`broker_connection`对象和常量。请参考本章的*技术要求*部分设置此对象。
 - en: How to do it...
+  id: totrans-142
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作...
 - en: 'We execute the following steps for this recipe:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们为此示例执行以下步骤：
 - en: 'Fetch a financial instrument and assign it to `instrument`:'
+  id: totrans-144
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取一个金融工具并将其分配给`instrument`：
 - en: '[PRE22]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Fetch the LTP. Place a `BUY`, `REGULAR`, `INTRADAY`, `LIMIT` order and display
     the order ID:'
+  id: totrans-146
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取最新成交价。下单`购买`，`常规`，`即日交易`，`限价`并显示订单 ID：
 - en: '[PRE23]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE24]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'Fetch and display the order status:'
+  id: totrans-150
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取并显示订单状态：
 - en: '[PRE25]'
+  id: totrans-151
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE26]'
+  id: totrans-153
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详情，如下图所示（您的一些数据可能不同）：
 - en: '![](img/86556936-7312-4c08-9b0c-0257645107f4.png)'
+  id: totrans-155
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/86556936-7312-4c08-9b0c-0257645107f4.png)'
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-156
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 过一段时间后再次获取并显示订单状态：
 - en: '[PRE27]'
+  id: totrans-157
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE28]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详情，如下图所示（您的一些数据可能不同）：
 - en: '![](img/dcb4a09b-8d92-41c7-a6be-9b54aa64ded7.png)'
+  id: totrans-161
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/dcb4a09b-8d92-41c7-a6be-9b54aa64ded7.png)'
 - en: 'Fetch the LTP. Place a `SELL`, `REGULAR`, `INTRADAY`, `LIMIT` order and display
     the order ID:'
+  id: totrans-162
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取最新成交价。下单`卖出`，`常规`，`即日交易`，`限价`并显示订单 ID：
 - en: '[PRE29]'
+  id: totrans-163
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE30]'
+  id: totrans-165
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Fetch and display the order status:'
+  id: totrans-166
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取并显示订单状态：
 - en: '[PRE31]'
+  id: totrans-167
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'We get the following result:'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下结果：
 - en: '[PRE32]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详情，如下图所示（您的一些数据可能不同）：
 - en: '![](img/d11da58f-7cf9-4287-a7d6-ddc67d7c8a1b.png)'
+  id: totrans-171
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/d11da58f-7cf9-4287-a7d6-ddc67d7c8a1b.png)'
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-172
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 过一段时间后再次获取并显示订单状态：
 - en: '[PRE33]'
+  id: totrans-173
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE34]'
+  id: totrans-175
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详情，如下图所示（您的一些数据可能不同）：
 - en: '![](img/ce277caa-0f16-4a66-abd3-e50dd524f400.png)'
+  id: totrans-177
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/ce277caa-0f16-4a66-abd3-e50dd524f400.png)'
 - en: 'Fetch the LTP. Place a `BUY`, `REGULAR`, `DELIVERY`, `LIMIT` order and display
     the order ID:'
+  id: totrans-178
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取LTP。下一个`BUY`，`REGULAR`，`DELIVERY`，`LIMIT`订单并显示订单ID：
 - en: '[PRE35]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE36]'
+  id: totrans-181
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'Fetch and display the order status:'
+  id: totrans-182
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取并显示订单状态：
 - en: '[PRE37]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'We get the following output:'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE38]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详细信息，如下图所示（您的数据可能有所不同）：
 - en: '![](img/ca9d5bee-592a-4697-89c3-3f9b3cbb73eb.png)'
+  id: totrans-187
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/ca9d5bee-592a-4697-89c3-3f9b3cbb73eb.png)'
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-188
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 一段时间后再次获取并显示订单状态：
 - en: '[PRE39]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'We get the following output:'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE40]'
+  id: totrans-191
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详细信息，如下图所示（您的数据可能有所不同）：
 - en: '![](img/78a6f220-f74d-4fd7-9f21-6d7739777ab0.png)'
+  id: totrans-193
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/78a6f220-f74d-4fd7-9f21-6d7739777ab0.png)'
 - en: 'Fetch the LTP. Place a `SELL`, `REGULAR`, `DELIVERY`, `LIMIT` order and display
     the order ID:'
+  id: totrans-194
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取LTP。下一个`SELL`，`REGULAR`，`DELIVERY`，`LIMIT`订单并显示订单ID：
 - en: '[PRE41]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能有所不同）：
 - en: '[PRE42]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'Fetch and display the order status:'
+  id: totrans-198
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取并显示订单状态：
 - en: '[PRE43]'
+  id: totrans-199
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'We get the following output:'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE44]'
+  id: totrans-201
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详细信息，如下图所示（您的数据可能有所不同）：
 - en: '![](img/1ea9d941-f7c9-4145-9e91-1397ab459f7f.png)'
+  id: totrans-203
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/1ea9d941-f7c9-4145-9e91-1397ab459f7f.png)'
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-204
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 一段时间后再次获取并显示订单状态：
 - en: '[PRE45]'
+  id: totrans-205
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'We get the following output:'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE46]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详细信息，如下图所示（您的数据可能有所不同）：
 - en: '![](img/be8d7386-2b8d-4316-8b75-af5dc8a5e273.png)'
+  id: totrans-209
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/be8d7386-2b8d-4316-8b75-af5dc8a5e273.png)'
 - en: How it works...
+  id: totrans-210
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作原理...
 - en: In *step 1*, you use the `get_instrument()` method of the `BrokerConnectionZerodha`
     class to fetch an instrument and assign it to a new attribute, `instrument`. This
     object is an instance of the `Instrument` class. The two parameters needed to
     call `get_instrument` are the exchange (`'NSE'`) and the trading-symbol (`'ICICIBANK'`).
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤1*中，您使用`BrokerConnectionZerodha`类的`get_instrument()`方法获取一个工具并将其分配给一个新属性`instrument`。该对象是`Instrument`类的实例。调用`get_instrument`所需的两个参数是交易所（`'NSE'`）和交易符号（`'ICICIBANK'`）。
 - en: 'In *step 2*, you fetch the LTP of the instrument using the `get_ltp()` method
     of the `BrokerConnectionZerodha` class and assign it to a new attribute, `ltp`.
     The `instrument` object is passed as the parameter here. Next, you use the `place_order`
     method of the `broker_connection` object to place a `BUY`, `REGULAR`, `INTRADAY`, `LIMIT` order
     on the exchange. The `place_order` method is a wrapper on the broker specific
     place order API. It takes the following attributes:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤2*中，您使用`BrokerConnectionZerodha`类的`get_ltp()`方法获取工具的LTP，并将其分配给一个新属性`ltp`。这里将`instrument`对象作为参数传递。接下来，您使用`broker_connection`对象的`place_order`方法在交易所上下订单。`place_order`方法是经纪人特定的下订单API的包装器。它接受以下属性：
 - en: '`instrument`: This is the financial instrument for which the order must be
     placed and should be an instance of the `Instrument` class. We pass `instrument`
     here.'
+  id: totrans-213
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`instrument`：这是必须下订单的金融工具，应该是`Instrument`类的实例。我们在这里传递`instrument`。'
 - en: '`order_transaction_type`: This is the order transaction type and should be
     an enum of the `BrokerOrderTransactionTypeConstants` type. We pass `BrokerOrderTransactionTypeConstants.BUY`
     here.'
+  id: totrans-214
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_transaction_type`：这是订单交易类型，应该是`BrokerOrderTransactionTypeConstants`类型的枚举。我们在这里传递`BrokerOrderTransactionTypeConstants.BUY`。'
 - en: '`order_type`: This is the order type and should be an enum of the `BrokerOrderTypeConstants` type.
     We pass `BrokerOrderTypeConstants.REGULAR` here.'
+  id: totrans-215
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_type`：这是订单类型，应该是`BrokerOrderTypeConstants`类型的枚举。我们在这里传递`BrokerOrderTypeConstants.REGULAR`。'
 - en: '`order_code`: This is the order code and should be an enum of the `BrokerOrderCodeConstants` type.
     We pass `BrokerOrderCodeConstants.INTRADAY` here.'
+  id: totrans-216
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_code`：这是订单代码，应该是`BrokerOrderCodeConstants`类型的枚举。我们在这里传递`BrokerOrderCodeConstants.INTRADAY`。'
 - en: '`order_variety`: This is the order variety and should be an enum of the `BrokerOrderVarietyConstants` type.
     We pass `BrokerOrderVarietyConstants.LIMIT` here.'
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_variety`：这是订单类型，应该是`BrokerOrderVarietyConstants`类型的枚举。我们在这里传递`BrokerOrderVarietyConstants.LIMIT`。'
 - en: '`quantity`: The number of shares to be traded for the given instrument and
     should be a positive integer. We pass `1` here.'
+  id: totrans-218
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`quantity`：要交易的股票数量，应为正整数。我们在这里传递`1`。'
 - en: '`price`: This is the limit price at which the order should be placed. We pass
     `ltp-1` here, which means 1 unit price below `ltp`.'
+  id: totrans-219
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`price`：这是应该下订单的限价。我们在这里传递`ltp-1`，这意味着低于`ltp`1单位价格。'
 - en: (The attributes passed to the `place_order` method are broker-agnostic constants,
     imported earlier from the `pyalgotrading.constants` module.)
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: （传递给`place_order`方法的属性是经纪人无关的常量，之前从`pyalgotrading.constants`模块导入。）
 - en: On placing the order in *step 2*, you get an order ID from the broker, which
     you assign to a new attribute, `order1_id`. The `order1_id` object is a string.
     If the order placement is not successful for some reason, you may not get an order
     ID. Observe that the price parameter is passed a value of `ltp-1`. This means
     the order is placed below the market price, which is a necessary condition for
     placing `BUY LIMIT` orders.
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 2* 中下订单时，您将从经纪人那里获得一个订单 ID，将其分配给一个新属性，`order1_id`。`order1_id` 对象是一个字符串。如果由于某种原因订单未成功下达，则可能不会获得订单
+    ID。请注意，价格参数传递了值`ltp-1`。这意味着订单被放置在市场价格下方，这是放置`BUY LIMIT`订单的必要条件之一。
 - en: In *step 3*, you fetch the status of the placed order using the `get_order_status()`
     method of the `broker_connection` object. You pass `order1_id` as the parameter
     to the `get_order_status()` method. You get the order status as `'OPEN'`, a string.
     You can use `order1_id` to fetch the status of the placed order at any later point
     of time as well. In *step 4*, you fetch the order status again, and if the order
     is completed, you get the order status as `'COMPLETE'`.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 3* 中，您使用`broker_connection`对象的`get_order_status()`方法获取已下订单的状态。您将`order1_id`作为参数传递给`get_order_status()`方法。您将订单状态获取为`'OPEN'`，一个字符串。您随时可以使用`order1_id`来获取已下订单的状态。在*步骤
+    4* 中，您再次获取订单状态，如果订单已完成，您将获取订单状态为`'COMPLETE'`。
 - en: You can also verify the successful placement of your order by logging in to
     the broker website and checking the orders section there. You should see data
     similar to the screenshot shown in the outputs of *step 3* and *step 4*.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 您还可以通过登录经纪人网站并检查订单部分来验证您的订单成功下达。您应该看到与*步骤 3* 和 *步骤 4* 的输出中显示的屏幕截图类似的数据。
 - en: In *step 3*, if you see the status as `'COMPLETE'` instead of `'OPEN'`, this
     could be due to high volatility. If you want the order to stay in the `'OPEN'` state
     for a while, try placing the order further away from the market price.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 3* 中，如果您看到状态为`'COMPLETE'`而不是`'OPEN'`，这可能是由于市场波动性过高。如果您希望订单在`'OPEN'`状态下保持一段时间，请尝试将订单放置在远离市场价格的位置。
 - en: 'The other steps in this recipe follow the same pattern of placing an order
     and getting its status, for a different combination of attributes:'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 此配方中的其他步骤遵循相同的模式，用于放置订单和获取其状态，用于不同属性组合：
 - en: '*Steps 5*, *6,* and *7*: `SELL`, `REGULAR`, `INTRADAY`, `LIMIT` order'
+  id: totrans-226
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤 5*、*6* 和 *7*：`SELL`、`REGULAR`、`INTRADAY`、`LIMIT`订单'
 - en: '*Steps 8*, *9,* and *10*: `BUY`, `REGULAR`, `DELIVERY`, `LIMIT` order'
+  id: totrans-227
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤 8*、*9* 和 *10*：`BUY`、`REGULAR`、`DELIVERY`、`LIMIT`订单'
 - en: '*Steps 11*, *12,* and *13*: `SELL`, `REGULAR`, `DELIVERY`, `LIMIT` order'
+  id: totrans-228
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤 11*、*12* 和 *13*：`SELL`、`REGULAR`、`DELIVERY`、`LIMIT`订单'
 - en: Placing a regular stoploss-limit order
+  id: totrans-229
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 下达常规止损限价订单
 - en: 'A regular stoploss-limit order is a type of order where a single order is placed
     at a specific price. Unlike the regular market order, this is not the market price.
     To place this order, two specific parameters are needed, the *trigger price* and
     the *limit price*. These parameters should satisfy the following conditions:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 常规止损限价订单是一种在特定价格下下达单一订单的订单类型。与常规市价订单不同，这不是市场价格。要下达此订单，需要两个特定参数，即*触发价格*和*限价*。这些参数应满足以下条件：
 - en: 'For a `BUY` order, we need to observe the following:'
+  id: totrans-231
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于`BUY`订单，我们需要遵循以下规则：
 - en: The *trigger price* and *limit price* should be above the market price.
+  id: totrans-232
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*触发价格*和*限价*应高于市场价格。'
 - en: The *limit price* should be greater than the *trigger price.*
+  id: totrans-233
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*限价*应大于*触发价格*。'
 - en: 'For a `SELL` order, the following should be observed:'
+  id: totrans-234
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对于`SELL`订单，应该观察以下内容：
 - en: The *trigger price* and *limit price* should be below the market price.
+  id: totrans-235
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*触发价* 和*限价* 应低于市场价格。'
 - en: The *limit price* should be lower than the *trigger price.*
+  id: totrans-236
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*限价* 应低于*触发价*。'
 - en: If these conditions are not satisfied, the order may either get placed at the
     market price, essentially converting it into a regular market order, or may be
     rejected by the broker as an invalid order.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这些条件不满足，订单可能会以市价成交，从而转换为普通市价订单，或者经纪人可能会拒绝订单，认为它是无效订单。
 - en: 'On placing a regular stoploss-limit order, it goes through various intermediate
     states before finally reaching an end state (`COMPLETE`, `CANCELLED`, or `REJECTED`).
     A regular stoploss-limit order could stay in the `TRIGGER_PENDING` state for a
     while until favorable market conditions are achieved, before moving to the `COMPLETE`
     state. The following state machine diagram demonstrates the various states of
     a regular stoploss-limit order during its lifetime:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下普通止损限价订单时，订单会经历各种中间状态，最终达到最终状态（`COMPLETE`、`CANCELLED`或`REJECTED`）。普通止损限价订单可能会在`TRIGGER_PENDING`状态停留一段时间，直到市场条件有利才会转移到`COMPLETE`状态。以下状态机图表明了普通止损限价订单在其生命周期中的各种状态：
 - en: '![](img/d4c353fe-a89d-4444-b068-18a0446521d3.png)'
+  id: totrans-239
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/d4c353fe-a89d-4444-b068-18a0446521d3.png)'
 - en: After the order is placed, it stays in the `TRIGGER_PENDING` state until the
     market price breaches the *trigger price* but not the *limit price*. That is when
     this order gets activated and is sent to the exchange. The order then gets executed
@@ -1011,276 +1427,399 @@
     the `COMPLETE` state. If the market is too volatile and the market price breaches
     both *trigger price* and *limit price*, the order remains in the `TRIGGER_PENDING`
     state.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 下单后，订单会保持`TRIGGER_PENDING`状态，直到市场价格突破*触发价*但未突破*限价*。此时订单激活并发送到交易所。然后，订单以最佳可用市场价格执行，该价格介于*触发价*和*限价*之间。订单状态从`TRIGGER_PENDING`转移到`OPEN`到`COMPLETE`状态。如果市场过于波动，市场价格同时突破*触发价*和*限价*，订单将保持`TRIGGER_PENDING`状态。
 - en: 'This recipe demonstrates placing the following regular stoploss-limit orders
     and querying their statuses:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 此配方演示了下列普通止损限价订单的下单和查询其状态：
 - en: '`BUY`, `REGULAR`, `INTRADAY`, `STOPLOSS_LIMIT` order'
+  id: totrans-242
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`BUY`、`REGULAR`、`INTRADAY`、`STOPLOSS_LIMIT`订单'
 - en: '`SELL`, `REGULAR`, `INTRADAY`, `STOPLOSS_LIMIT` order'
+  id: totrans-243
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`SELL`、`REGULAR`、`INTRADAY`、`STOPLOSS_LIMIT`订单'
 - en: '`BUY`, `REGULAR`, `DELIVERY`, `STOPLOSS_LIMIT` order'
+  id: totrans-244
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`BUY`、`REGULAR`、`DELIVERY`、`STOPLOSS_LIMIT`订单'
 - en: '`SELL`, `REGULAR`, `DELIVERY`, `STOPLOSS_LIMIT` order'
+  id: totrans-245
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`SELL`、`REGULAR`、`DELIVERY`、`STOPLOSS_LIMIT`订单'
 - en: Getting ready...
+  id: totrans-246
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备就绪...
 - en: Make sure the `broker_connection` object and constants from the `pyalgotrading`
     package are available in your Python namespace. Refer to the *Technical requirements*
     section of this chapter to set up this object.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保`pyalgotrading`包中的`broker_connection`对象和常量在您的Python命名空间中可用。请参考本章的*技术要求*部分设置此对象。
 - en: How to do it…
+  id: totrans-248
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'We execute the following steps for this recipe:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们按照以下步骤执行此配方：
 - en: 'Fetch a financial instrument and assign it to `instrument`:'
+  id: totrans-250
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取一个金融工具并将其分配给`instrument`：
 - en: '[PRE47]'
+  id: totrans-251
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'Fetch the LTP. Place a `BUY`, `REGULAR`, `INTRADAY`, `STOPLOSS_LIMIT` order
     and display the order ID:'
+  id: totrans-252
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取最新交易价。下`BUY`、`REGULAR`、`INTRADAY`、`STOPLOSS_LIMIT`订单并显示订单ID：
 - en: '[PRE48]'
+  id: totrans-253
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能会有所不同）：
 - en: '[PRE49]'
+  id: totrans-255
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'Fetch and display the order status:'
+  id: totrans-256
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取并显示订单状态：
 - en: '[PRE50]'
+  id: totrans-257
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'We get the following output:'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE51]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详细信息，如以下截图所示（某些数据可能与您的情况不同）：
 - en: '![](img/b411757f-d52d-4686-9b7f-b2eb90fc2778.png)'
+  id: totrans-261
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/b411757f-d52d-4686-9b7f-b2eb90fc2778.png)'
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-262
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 过一段时间后再次获取并显示订单状态：
 - en: '[PRE52]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: 'We get the following output:'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE53]'
+  id: totrans-265
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详细信息，如以下截图所示（某些数据可能与您的情况不同）：
 - en: '![](img/887a0773-eab0-4c85-8c3f-bfb9a172ca03.png)'
+  id: totrans-267
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/887a0773-eab0-4c85-8c3f-bfb9a172ca03.png)'
 - en: 'Fetch the LTP. Place a `SELL`, `REGULAR`, `INTRADAY`, `STOPLOSS_LIMIT` order
     and display the order ID:'
+  id: totrans-268
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE54]'
+  id: totrans-269
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE55]'
+  id: totrans-271
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: 'Fetch and display the order status:'
+  id: totrans-272
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE56]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: 'We get the following output:'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE57]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/fb717075-7c67-4b7e-9e43-15254c9df24d.png)'
+  id: totrans-277
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-278
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE58]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'We get the following output:'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE59]'
+  id: totrans-281
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/826bbc07-ee6a-455e-8ca5-32860e32712c.png)'
+  id: totrans-283
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch the LTP. Place a `BUY`, `REGULAR`, `DELIVERY`, `STOPLOSS_LIMIT` order
     and display the order id:'
+  id: totrans-284
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE60]'
+  id: totrans-285
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE61]'
+  id: totrans-287
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: 'Fetch and display the order status:'
+  id: totrans-288
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE62]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: 'We get the following output:'
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE63]'
+  id: totrans-291
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/63bfc394-32b8-4796-85bd-386c912a9588.png)'
+  id: totrans-293
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-294
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE64]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: 'We get the following output:'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE65]'
+  id: totrans-297
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/9d2fb42c-0f5a-4514-8910-cb44c76aa75d.png)'
+  id: totrans-299
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch the LTP. Place a `SELL`, `REGULAR`, `DELIVERY`, `STOPLOSS_LIMIT` order
     and display the order ID:'
+  id: totrans-300
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE66]'
+  id: totrans-301
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE67]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'Fetch and display the order status:'
+  id: totrans-304
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE68]'
+  id: totrans-305
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: 'We get the following output:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE69]'
+  id: totrans-307
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/f44556e0-f9e7-44c7-ab45-6e1053ff82c0.png)'
+  id: totrans-309
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-310
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE70]'
+  id: totrans-311
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: 'We get the following output:'
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE71]'
+  id: totrans-313
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/41796f34-4d09-4982-ae54-cf0a2803497b.png)'
+  id: totrans-315
   prefs: []
   type: TYPE_IMG
 - en: How it works…
+  id: totrans-316
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1288,6 +1827,7 @@
     class to fetch an instrument and assign it to a new attribute, `instrument`. This
     object is an instance of the `Instrument` class. The two parameters needed to
     call `get_instrument` are the exchange (`'NSE'`) and the trading-symbol (`'AXISBANK'`).
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
 - en: 'In *step 2*, you fetch the LTP of the instrument using the `get_ltp()` method
@@ -1296,53 +1836,63 @@
     method of the `broker_connection` object to place a `BUY`, `REGULAR`, `INTRADAY`,
     `STOPLOSS_LIMIT` order on the exchange. The `place_order` method is a wrapper
     on the broker specific place order API. It takes the following attributes:'
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
 - en: '`instrument`: This is the financial instrument for which the order must be
     placed and should be an instance of the `Instrument` class. We pass `instrument`
     here.'
+  id: totrans-319
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_transaction_type`: This is the order transaction type and should be
     an enum of the type, `BrokerOrderTransactionTypeConstants`. We pass `BrokerOrderTransactionTypeConstants.BUY`
     here.'
+  id: totrans-320
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_type`: This is the order type and should be an enum of the type `BrokerOrderTypeConstants`.
     We pass `BrokerOrderTypeConstants.REGULAR` here.'
+  id: totrans-321
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_code`: This is the order code and should be an enum of the type `BrokerOrderCodeConstants`.
     We pass `BrokerOrderCodeConstants.INTRADAY` here.'
+  id: totrans-322
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`order_variety`: This is the order variety and should be an enum of the type
     `BrokerOrderVarietyConstants`. We pass `BrokerOrderVarietyConstants.STOPLOSS_LIMIT`
     here.'
+  id: totrans-323
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`quantity`: This is the number of shares to be traded for the given instrument
     and should be a positive integer. We pass `1` here.'
+  id: totrans-324
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`price`: This is the limit price at which the order should be placed. We pass
     `ltp+1` here, which means `1` unit price above `ltp`.'
+  id: totrans-325
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`trigger_price`: This is the trigger price at which the order should be placed. We
     pass `ltp+1` here, which means `1` unit price above `ltp`.'
+  id: totrans-326
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: (The attributes passed to the `place_order` method are broker-agnostic constants,
     imported earlier from the `pyalgotrading.constants` module.)
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: On placing the order in *step 2*, you get an order ID from the broker, which
@@ -1351,6 +1901,7 @@
     ID. Observe that the price and `trigger_price` parameters are passed a value of
     `ltp+1`. This means the order is placed above the market price, which is a necessary
     condition for placing `BUY STOPLOSS_LIMIT` orders.
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
 - en: In *step 3*, you fetch the status of the placed order using the `get_order_status()`
@@ -1359,453 +1910,637 @@
     a string. You can use `order1_id` to fetch the status of the placed order at any
     later point of time as well. In *step 4*, you fetch the order status again, and
     if the order is completed, you get the order status as `'COMPLETE'`.
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: You can also verify the successful placement of your order by logging in to
     the broker website and checking the orders section there. You should see data
     similar to the screenshots shown in the outputs of *step 3* and *step 4*.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 您还可以通过登录经纪人网站并检查那里的订单部分来验证订单的成功下达。您应该看到类似于*步骤 3*和*步骤 4*输出中显示的屏幕截图的数据。
 - en: In *step 3*, if you see the status as `'COMPLETE'` instead of `'TRIGGER PENDING'`,
     this could be due to high volatility. If you want the order to stay in the `'OPEN'` state
     for a while, try placing the order further away from the market price.
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 3*中，如果状态显示为`'COMPLETE'`而不是`'TRIGGER PENDING'`，这可能是由于高波动性引起的。如果您希望订单在`'OPEN'`状态保持一段时间，请尝试将订单放置在市价之外的位置。
 - en: 'The other steps in this recipe follow the same pattern of placing an order
     and getting its status, for a different combination of attributes:'
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
+  zh: 本配方的其他步骤遵循相同的模式，下达订单并获取其状态，但使用不同组合的属性：
 - en: '*Steps 5*, *6,* and *7*: `SELL`, `REGULAR`, `INTRADAY`, `STOPLOSS_LIMIT` order'
+  id: totrans-333
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤 5*、*6* 和 *7*：`SELL`、`REGULAR`、`INTRADAY`、`STOPLOSS_LIMIT` 订单'
 - en: '*Steps 8*, *9,* and *10*: `BUY`, `REGULAR`, `DELIVERY`, `STOPLOSS_LIMIT` order'
+  id: totrans-334
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤 8*、*9* 和 *10*：`BUY`、`REGULAR`、`DELIVERY`、`STOPLOSS_LIMIT` 订单'
 - en: '*Steps 11*, *12,* and *13*: `SELL`, `REGULAR`, `DELIVERY`, `STOPLOSS_LIMIT`
     order'
+  id: totrans-335
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤 11*、*12* 和 *13*：`SELL`、`REGULAR`、`DELIVERY`、`STOPLOSS_LIMIT` 订单'
 - en: Placing a regular stoploss-market order
+  id: totrans-336
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 下达常规止损市价订单
 - en: 'A regular stoploss-market order is a type of order where a single order is
     placed at a specific price. Unlike the regular market order, this is not the market
     price. To place this order, a specific parameter called the *trigger price* is
     needed. This parameter should satisfy the following conditions:'
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 常规止损市价订单是一种单一价格下单类型的订单。与常规市价订单不同，这不是市价。为了下达此订单，需要一个称为*触发价格*的特定参数。此参数应满足以下条件：
 - en: The *trigger price* should be above the market price for a `BUY` order.
+  id: totrans-338
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*触发价格*对于`BUY`订单应高于市价。'
 - en: The *trigger price* should be below the market price for a `SELL` order.
+  id: totrans-339
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*触发价格*对于`SELL`订单应低于市价。'
 - en: If these conditions are not satisfied, the order may either get placed at the
     market price, essentially converting it into a regular market order, or may be
     rejected by the broker as an invalid order.
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这些条件不满足，则订单可能以市价下单，从而基本上将其转换为常规市价单，或者经纪人可能将其拒绝为无效订单。
 - en: On placing a regular stoploss-market order, it goes through various intermediate
     states before finally reaching an end state (`COMPLETE`, `CANCELLED`, or `REJECTED`).
     A regular stoploss-market order could stay in the `TRIGGER_PEDNING` state for
     a while until favorable market conditions are achieved, before moving to the `COMPLETE`
     state.
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下达常规止损市价订单时，它会在最终达到终止状态（`COMPLETE`、`CANCELLED`或`REJECTED`）之前经历各种中间状态。一个常规止损市价订单可能会在`TRIGGER_PEDNING`状态下保持一段时间，直到有利的市场条件达到，然后转移到`COMPLETE`状态。
 - en: 'The following state machine diagram demonstrates the various states of a regular
     stoploss-market order during its lifetime:'
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下状态机图演示了常规止损市价订单在其生命周期中的各种状态：
 - en: '![](img/22c83c5b-f98a-49a9-82ea-b6206949b8df.png)'
+  id: totrans-343
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/22c83c5b-f98a-49a9-82ea-b6206949b8df.png)'
 - en: After the order is placed, it stays in the `TRIGGER_PENDING` state until the
     market price breaches the *trigger price*. That is when this order is activated
     and sent to the exchange. The order is then executed at the best available market
     price. The order state transitions from `TRIGGER_PENDING` to `OPEN` to the `COMPLETE`
     state.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 订单下达后，它将保持在`TRIGGER_PENDING`状态，直到市价突破*触发价格*。这时订单被激活并发送到交易所。订单然后以最佳可用市场价格执行。订单状态从`TRIGGER_PENDING`转换到`OPEN`再转换到`COMPLETE`状态。
 - en: A regular stoploss-market order behaves similarly to a regular stoploss-limit
     order (see the *Placing a regular stoploss-Limit Order* recipe), except for one
     difference—the stoploss-market order requires only the *trigger price* and not
     the *limit price*, whereas the stoploss-limit order requires both parameters.
     You can consider a stoploss-market order as a stoploss-limit order with an unbounded
     *limit price*.
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个常规止损市价单的行为与常规止损限价单类似（参见*下达常规止损限价单*配方），除了一个区别——止损市价单只需要*触发价格*，而不需要*限价*，而止损限价单则需要这两个参数。你可以将止损市价单视为具有无限制*限价*的止损限价单。
 - en: 'This recipe demonstrates placing of the following regular stoploss-market orders
     and querying their statuses:'
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: 本配方演示了下列常规止损市价订单的下达和查询其状态：
 - en: '`BUY`, `REGULAR`, `INTRADAY`, `STOPLOSS_MARKET` order'
+  id: totrans-347
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`BUY`、`REGULAR`、`INTRADAY`、`STOPLOSS_MARKET` 订单'
 - en: '`SELL`, `REGULAR`, `INTRADAY`, `STOPLOSS_MARKET` order'
+  id: totrans-348
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`BUY`, `REGULAR`, `DELIVERY`, `STOPLOSS_MARKET` order'
+  id: totrans-349
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`SELL`, `REGULAR`, `DELIVERY`, `STOPLOSS_MARKET` order'
+  id: totrans-350
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Getting ready
+  id: totrans-351
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: Make sure the `broker_connection` object and constants from `pyalgotrading`
     package are available in your Python namespace. Refer to the *Technical requirements*
     section of this chapter to set up this object.
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
 - en: How to do it…
+  id: totrans-353
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: 'We execute the following steps for this recipe:'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: 'Fetch a financial instrument and assign it to `instrument`:'
+  id: totrans-355
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE72]'
+  id: totrans-356
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: 'Fetch the LTP. Place a `BUY`, `REGULAR`, `INTRADAY`, `STOPLOSS_MARKET` order
     and display the order ID:'
+  id: totrans-357
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE73]'
+  id: totrans-358
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE74]'
+  id: totrans-360
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: 'Fetch and display the order status:'
+  id: totrans-361
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE75]'
+  id: totrans-362
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: 'We get the following output:'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE76]'
+  id: totrans-364
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/a88793ce-2a5b-4560-9cf0-4a425a274ec2.png)'
+  id: totrans-366
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-367
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE77]'
+  id: totrans-368
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: 'We get the following output:'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE78]'
+  id: totrans-370
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/82d093f4-487a-41dd-847b-fca922289993.png)'
+  id: totrans-372
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch the LTP. Place a `SELL`, `REGULAR`, `INTRADAY`, `STOPLOSS_MARKET` order
     and display the order ID:'
+  id: totrans-373
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE79]'
+  id: totrans-374
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE80]'
+  id: totrans-376
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: 'Fetch and display the order status:'
+  id: totrans-377
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE81]'
+  id: totrans-378
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: 'We get the following output:'
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE82]'
+  id: totrans-380
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE82]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/a8af82e5-3fab-4b50-bfce-bfe4f4e7c8de.png)'
+  id: totrans-382
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-383
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE83]'
+  id: totrans-384
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE83]'
 - en: 'We get the following output:'
+  id: totrans-385
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE84]'
+  id: totrans-386
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE84]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/a8456af7-c617-41b9-9a08-00f5dd61906a.png)'
+  id: totrans-388
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch the LTP. Place a `BUY`, `REGULAR`, `DELIVERY`, `STOPLOSS_MARKET` order
     and display the order ID:'
+  id: totrans-389
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE85]'
+  id: totrans-390
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE85]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE86]'
+  id: totrans-392
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE86]'
 - en: 'Fetch and display the order status:'
+  id: totrans-393
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE87]'
+  id: totrans-394
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE87]'
 - en: 'We get the following output:'
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE88]'
+  id: totrans-396
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE88]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/42e11774-850a-4f20-b3b6-9c93482c3a45.png)'
+  id: totrans-398
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-399
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE89]'
+  id: totrans-400
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE89]'
 - en: 'We get the following output:'
+  id: totrans-401
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE90]'
+  id: totrans-402
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE90]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/c3e1d077-e3c0-40fd-a9a0-59aaff89bcf6.png)'
+  id: totrans-404
   prefs: []
   type: TYPE_IMG
 - en: 'Fetch the LTP. Place a `SELL`, `REGULAR`, `DELIVERY`, `STOPLOSS_MARKET` order
     and display the order ID:'
+  id: totrans-405
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: '[PRE91]'
+  id: totrans-406
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE91]'
 - en: 'We get the following output (your output may differ):'
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（您的输出可能不同）：
 - en: '[PRE92]'
+  id: totrans-408
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE92]'
 - en: 'Fetch and display the order status:'
+  id: totrans-409
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取并显示订单状态：
 - en: '[PRE93]'
+  id: totrans-410
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE93]'
 - en: 'We get the following output:'
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE94]'
+  id: totrans-412
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE94]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-413
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详情，如下面的屏幕截图所示（您的一些数据可能不同）：
 - en: '![](img/d4ca4bed-588e-4c90-8d74-b68834c14c7a.png)'
+  id: totrans-414
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/d4ca4bed-588e-4c90-8d74-b68834c14c7a.png)'
 - en: 'Fetch and display the order status again after some time:'
+  id: totrans-415
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 过一段时间再次获取并显示订单状态：
 - en: '[PRE95]'
+  id: totrans-416
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE95]'
 - en: 'We get the following output:'
+  id: totrans-417
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出：
 - en: '[PRE96]'
+  id: totrans-418
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE96]'
 - en: 'If you log in to the broker site with your credentials and go to the orders
     section, you can find your order details as shown in the following screenshot
     (some data may differ for you):'
+  id: totrans-419
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果您使用您的凭据登录经纪人网站并转到订单部分，您可以找到您的订单详情，如下面的屏幕截图所示（您的一些数据可能不同）：
 - en: '![](img/28d4334a-58ed-4e08-9e65-99b6e165144d.png)'
+  id: totrans-420
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/28d4334a-58ed-4e08-9e65-99b6e165144d.png)'
 - en: How it works…
+  id: totrans-421
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何工作…
 - en: In *step 1*, you use the `get_instrument()` method of the `BrokerConnectionZerodha`
     class to fetch an instrument and assign it to a new attribute, `instrument`. This
     object is an instance of the `Instrument` class. The two parameters needed to
     call `get_instrument` are the exchange (`'NSE'`) and the trading-symbol (`'KOTAKBANK'`).
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤1*中，您使用`BrokerConnectionZerodha`类的`get_instrument()`方法获取一个工具并将其分配给一个新的属性`instrument`。此对象是`Instrument`类的一个实例。调用`get_instrument`所需的两个参数是交易所（`'NSE'`）和交易符号（`'KOTAKBANK'`）。
 - en: 'In *step 2*, you fetch the LTP of the instrument using the `get_ltp()` method
     of the `BrokerConnectionZerodha` class and assign it to a new attribute, `ltp`.
     The `instrument` object is passed as the parameter here. Next, you use the `place_order`
     method of the `broker_connection` object to place a `BUY`, `REGULAR`, `INTRADAY`,
     `STOPLOSS_MARKET` order on the exchange. The `place_order` method is a wrapper
     on the broker specific place order API. It takes the following attributes:'
+  id: totrans-423
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤2*中，您使用`BrokerConnectionZerodha`类的`get_ltp()`方法获取工具的LTP，并将其分配给一个新的属性`ltp`。此处将`instrument`对象作为参数传递。接下来，您使用`broker_connection`对象的`place_order`方法在交易所上下达`BUY`、`REGULAR`、`INTRADAY`、`STOPLOSS_MARKET`订单。`place_order`方法是经纪人特定的下单API的包装器。它接受以下属性：
 - en: '`instrument`: This is the financial instrument for which the order must be
     placed and should be an instance of the `Instrument` class. We pass `instrument`
     here.'
+  id: totrans-424
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`instrument`：这是必须下订单的金融工具，应该是`Instrument`类的实例。我们在这里传递`instrument`。'
 - en: '`order_transaction_type`: This is the order transaction type and should be
     an enum of the `BrokerOrderTransactionTypeConstants` type. We pass `BrokerOrderTransactionTypeConstants.BUY`
     here.'
+  id: totrans-425
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_transaction_type`：这是订单交易类型，应该是`BrokerOrderTransactionTypeConstants`类型的枚举。我们在这里传递`BrokerOrderTransactionTypeConstants.BUY`。 '
 - en: '`order_type`: This is the order type and should be an enum of the `BrokerOrderTypeConstants` type. We
     pass `BrokerOrderTypeConstants.REGULAR` here.'
+  id: totrans-426
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_type`：这是订单类型，应该是`BrokerOrderTypeConstants`类型的枚举。我们在这里传递`BrokerOrderTypeConstants.REGULAR`。'
 - en: '`order_code`: This is the order code and should be an enum of the `BrokerOrderCodeConstants` type. We
     pass `BrokerOrderCodeConstants.INTRADAY` here.'
+  id: totrans-427
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_code`：这是订单代码，应该是`BrokerOrderCodeConstants`类型的枚举。我们在这里传递`BrokerOrderCodeConstants.INTRADAY`。'
 - en: '`order_variety`: This is the order variety and should be an enum of the `BrokerOrderVarietyConstants` type. We
     pass `BrokerOrderVarietyConstants.STOPLOSS_MARKET` here.'
+  id: totrans-428
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`order_variety`：这是订单种类，应该是`BrokerOrderVarietyConstants`类型的枚举。我们在这里传递`BrokerOrderVarietyConstants.STOPLOSS_MARKET`。'
 - en: '`quantity`: This is the number of shares to be traded for the given instrument
     and should be a positive integer. We pass `1` here.'
+  id: totrans-429
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`quantity`：这是要交易的股票数量，并且应该是正整数。我们在这里传递`1`。'
 - en: '`trigger_price`: This is the trigger price at which the order should be placed.
     We pass `ltp+1` here, which means `1` unit price above `ltp`.'
+  id: totrans-430
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`trigger_price`：这是订单应该下达的触发价格。我们在这里传递`ltp+1`，这意味着`ltp`上方`1`单位价格。'
 - en: (The attributes passed to the `place_order` method are broker-agnostic constants,
     imported earlier from the `pyalgotrading.constants` module.)
+  id: totrans-431
   prefs: []
   type: TYPE_NORMAL
+  zh: （传递给`place_order`方法的属性是经纪人无关的常量，之前从`pyalgotrading.constants`模块导入。）
 - en: On placing the order in *step 2*, you get an order ID from the broker, which
     you assign to a new attribute, `order1_id`. The `order1_id` object is a string.
     If the order placement is not successful for some reason, you may not get an order
     ID. Observe that the `trigger_price` parameter is passed a value of `ltp+1`. This
     means the order is placed above the market price, which is a necessary condition
     for placing `BUY STOPLOSS_MARKET` orders.
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第二步*下单时，您将从经纪人那里获得一个订单ID，然后将其分配给一个新属性`order1_id`。`order1_id`对象是一个字符串。如果由于某种原因下单失败，您可能不会得到订单ID。请注意，`trigger_price`参数被赋予了`ltp+1`的值。这意味着订单被放置在市场价格之上，这是放置`BUY
+    STOPLOSS_MARKET`订单的必要条件。
 - en: In *step 3*, you fetch the status of the placed order using `get_order_status()`
     method of the `broker_connection` object. You pass `order1_id` as the parameter
     to the `get_order_status()` method. You get the order status as `'TRIGGER PENDING'`,
     a string. You can use `order1_id` to fetch the status of the placed order at any
     later point of time as well. In *step 4*, you fetch the order status again, and
     if the order is completed, you get the order status as `'COMPLETE'`.
+  id: totrans-433
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第三步*，您使用`broker_connection`对象的`get_order_status()`方法获取已下订单的状态。您将`order1_id`作为`get_order_status()`方法的参数传递。您将订单状态作为`'TRIGGER
+    PENDING'`的字符串获得。您还可以随时使用`order1_id`获取已下订单的状态。在*第四步*，您再次获取订单状态，如果订单已完成，您将获得订单状态为`'COMPLETE'`。
 - en: You can also verify the successful placement of your order by logging in to
     the broker website and checking the orders section there. You should see data
     similar to the screenshot shown in the outputs of *step 3* and *step 4*.
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: 您还可以通过登录经纪人网站并在那里检查订单部分来验证您的订单已成功下单。您应该看到类似于*第三步*和*第四步*输出中显示的屏幕截图的数据。
 - en: In *step 3*, if you see the status as `'COMPLETE'` instead of `'TRIGGER PENDING'`,
     this could be due to high volatility. If you want the order to stay in the `'OPEN'` state
     for a while, try placing the order further away from the market price.
+  id: totrans-435
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第三步*，如果状态显示为`'COMPLETE'`而不是`'TRIGGER PENDING'`，这可能是由于高波动性造成的。如果你希望订单在`'OPEN'`状态保持一段时间，尝试将订单放置在市场价格较远的地方。
 - en: 'The other steps in this recipe follow the same pattern of placing an order
     and getting its status, for a different combination of attributes:'
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个配方中的其他步骤都遵循相同的模式，即下订单并获取其状态，只是属性组合不同：
 - en: '*Steps 5*, *6*, and *7*: `SELL`, `REGULAR`, `INTRADAY`, `STOPLOSS_MARKET` order'
+  id: totrans-437
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤5*、*6*和*7*：`SELL`、`REGULAR`、`INTRADAY`、`STOPLOSS_MARKET`订单'
 - en: '*Steps 8*, *9,* and *10*: `BUY`, `REGULAR`, `DELIVERY`, `STOPLOSS_MARKET` order'
+  id: totrans-438
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤8*、*9*和*10*：`BUY`、`REGULAR`、`DELIVERY`、`STOPLOSS_MARKET`订单'
 - en: '*Steps 11*, *12,* and *13*: `SELL`, `REGULAR`, `DELIVERY`, `STOPLOSS_MARKET`
     order'
+  id: totrans-439
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*步骤11*、*12*和*13*：`SELL`、`REGULAR`、`DELIVERY`、`STOPLOSS_MARKET`订单'
