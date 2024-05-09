@@ -1,6 +1,4 @@
-附录 II
-
-# 第十四章：设置您的 AlgoBulls 账户
+# 附录 II：设置您的 AlgoBulls 账户
 
 本附录将帮助您在 AlgoBulls（[`algobulls.com`](https://algobulls.com)）上设置您的账户。
 

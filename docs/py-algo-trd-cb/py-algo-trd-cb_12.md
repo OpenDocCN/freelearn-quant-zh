@@ -1,6 +1,4 @@
-附录 I
-
-# 第十三章：设置您的 Zerodha 账户
+# 附录 I：设置您的 Zerodha 账户
 
 本附录将帮助您设置与 Zerodha 的证券账户（[`zerodha.com`](https://zerodha.com)）。
 
