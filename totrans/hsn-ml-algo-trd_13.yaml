@@ -1,873 +1,1288 @@
 - en: Working with Text Data
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 处理文本数据
 - en: This is the first of three chapters dedicated to extracting signals for algorithmic
     trading strategies from text data using **natural language processing** (**NLP**)
     and **machine learning** (**ML**).
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是专门从文本数据中提取算法交易策略信号的三章中的第一章，使用**自然语言处理**（**NLP**）和**机器学习**（**ML**）。
 - en: Text data is very rich in content, yet unstructured in format, and hence requires
     more preprocessing so that an ML algorithm can extract the potential signal. The
     key challenge lies in converting text into a numerical format for use by an algorithm,
     while simultaneously expressing the semantics or meaning of the content. We will
     cover several techniques that capture nuances of language that are readily understandable
     to humans so that they can become an input for ML algorithms.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 文本数据在内容上非常丰富，但格式不结构化，因此需要更多的预处理，以便ML算法可以提取潜在信号。关键挑战在于将文本转换为算法可使用的数值格式，同时表达内容的语义或含义。我们将介绍几种捕捉语言细微差别的技术，这些差别对于人类来说很容易理解，因此它们可以成为ML算法的输入。
 - en: In this chapter, we introduce fundamental feature extraction techniques that
     focus on individual semantic units; that is, words or short groups of words called
     **tokens**. We will show how to represent documents as vectors of token counts
     by creating a document-term matrix that, in turn, serves as input for text classification
     and sentiment analysis. We will also introduce the Naive Bayes algorithm, which
     is popular for this purpose.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们介绍了基本的特征提取技术，重点放在单个语义单位上；即单词或称为**标记**的短语。我们将展示如何通过创建文档-术语矩阵将文档表示为标记计数的向量，这反过来又作为文本分类和情感分析的输入。我们还将介绍朴素贝叶斯算法，该算法在此方面很受欢迎。
 - en: In the following two chapters, we build on these techniques and use ML algorithms
     such as topic modeling and word-vector embedding to capture information contained
     in a broader context.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在接下来的两章中，我们将借助这些技术，并使用诸如主题建模和词向量嵌入等ML算法来捕获更广泛上下文中包含的信息。
 - en: 'In particular, in this chapter, we will cover the following:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 特别是，在本章中，我们将介绍以下内容：
 - en: What the fundamental NLP workflow looks like
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基本的NLP工作流程是什么样的
 - en: How to build a multilingual feature extraction pipeline using `spaCy` and `TextBlob`
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用`spaCy`和`TextBlob`构建多语言特征提取管道
 - en: How to perform NLP tasks such as **part-of-speech** (**POS**) tagging or named
     entity recognition
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何执行诸如**词性标注**（**POS**）或命名实体识别之类的NLP任务
 - en: How to convert tokens to numbers using the document-term matrix
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用文档-术语矩阵将标记转换为数字
 - en: How to classify text using the Naive Bayes model
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用朴素贝叶斯模型对文本进行分类
 - en: How to perform sentiment analysis
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何执行情感分析
 - en: The code samples for the following sections are in the GitHub repository for
     this chapter, and references are listed in the main `README` file.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一节的代码示例在本章的GitHub存储库中，参考文献列在主`README`文件中。
 - en: How to extract features from text data
+  id: totrans-13
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何从文本数据中提取特征
 - en: Text data can be extremely valuable given how much information humans communicate
     and store using natural language—the diverse set of data sources relevant to investment
     range from formal documents such as company statements, contracts, and patents,
     to news, opinion, and analyst research, and even to commentary and various types
     of social media posts and messages.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 鉴于人类使用自然语言进行交流和存储的信息量如此之大，文本数据可能非常有价值——与投资相关的各种数据源范围从正式文件（如公司声明、合同和专利）到新闻、观点和分析研究，甚至包括评论和各种类型的社交媒体帖子和消息。
 - en: Numerous and diverse text data samples are available online to explore the use
     of NLP algorithms, many of which are listed among the references for this chapter.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 在线上有大量且多样化的文本数据样本可供探索NLP算法的使用，其中许多列在本章的参考文献中。
 - en: To guide our journey through the techniques and Python libraries that most effectively
     support the realization of this goal, we will highlight NLP challenges, introduce
     critical elements of the NLP workflow, and illustrate applications of ML from
     text data to algorithmic trading.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了指导我们通过最有效地支持实现此目标的技术和Python库的旅程，我们将重点介绍NLP挑战，介绍NLP工作流程的关键要素，并说明从文本数据到算法交易的ML应用。
 - en: Challenges of NLP
+  id: totrans-17
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: NLP的挑战
 - en: The conversion of unstructured text into a machine-readable format requires
     careful preprocessing to preserve valuable semantic aspects of the data. How humans
     derive meaning from, and comprehend the content of language, is not fully understood
     and improving language understanding by machines remains an area of very active
     research.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 将非结构化文本转换为机器可读格式需要进行仔细的预处理，以保留数据的有价值的语义方面。人类如何从语言中获取含义，并理解其内容，目前尚不完全清楚，并且通过机器提高语言理解仍然是一个非常活跃的研究领域。
 - en: 'NLP is challenging because the effective use of text data for ML requires an
     understanding of the inner workings of language as well as knowledge about the
     world to which it refers. Key challenges include the following:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: NLP 是具有挑战性的，因为有效地利用文本数据进行 ML 需要对语言的内部运作以及它所指涉的世界有一定的了解。主要挑战包括以下内容：
 - en: Ambiguity due to polysemy; that is, a word or phrase can have different meanings
     depending on context (local high-school dropouts cut in half could be taken a
     couple of ways, for instance).
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由于多义性而产生的歧义；即，一个词或短语在不同的上下文中可能有不同的含义（例如，local high-school dropouts cut in half
+    可能有几种理解方式）。
 - en: Non-standard and evolving use of language, especially in social media.
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 语言的非标准和不断发展的使用，特别是在社交媒体上。
 - en: The use of idioms, such as throw in the towel.
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用成语，比如扔手巾。
 - en: Tricky entity names, Where is A Bug's Life playing?
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 棘手的实体名称，A Bug's Life 在哪里上映？
 - en: Knowledge of the world—Mary and Sue are sisters versus Mary and Sue are mothers.
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对世界的了解——玛丽和苏是姐妹还是母亲。
 - en: The NLP workflow
+  id: totrans-25
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: NLP 工作流程
 - en: 'A key goal in using ML from text data for algorithmic trading is to extract
     signals from documents. A document is an individual sample from a relevant text
     data source, such as a company report, a headline or news article, or a tweet.
     A corpus, in turn, is a collection of documents (plural: *corpora*).'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 在使用文本数据进行算法交易时，ML的一个关键目标是从文档中提取信号。文档是来自相关文本数据源的单个样本，例如公司报告、标题或新闻文章或推文。语料库则是文档的集合（复数形式：*corpora*）。
 - en: 'The following diagram lays out the key steps to convert documents into a dataset
     that can be used to train a supervised ML algorithm capable of making actionable
     predictions:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图列出了将文档转换为可用于训练监督式机器学习算法的数据集的关键步骤，该算法能够进行可行的预测：
 - en: '![](img/5ff0e8a3-36b2-4867-b1c8-c1b2a3928d5f.png)'
+  id: totrans-28
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/5ff0e8a3-36b2-4867-b1c8-c1b2a3928d5f.png)'
 - en: '**Fundamental techniques** extract text features semantic units called **tokens**,
     and use linguistic rules and dictionaries to enrich these tokens with linguistic
     and semantic annotations. The **bag-of-words** (**BoW**) model uses token frequency
     to model documents as token vectors, which leads to the document-term matrix that
     is frequently used for text classification.'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '**基本技术** 提取称为 **标记** 的文本特征语义单元，并使用语言规则和词典来丰富这些标记的语言和语义注释。**词袋模型** (**BoW**)
+    使用标记频率来将文档建模为标记向量，这导致了经常用于文本分类的文档-术语矩阵。'
 - en: '**Advanced approaches** use ML to refine features extracted by these fundamental
     techniques and produce more informative document models. These include topic models
     that reflect the joint usage of tokens across documents and word-vector models
     that capture the context of token usage.'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: '**高级方法** 使用 ML 来优化基本技术提取的特征，并生成更具信息量的文档模型。这些包括反映跨文档使用标记的主题模型和捕获标记使用上下文的词向量模型。'
 - en: 'We will review key decisions made at each step and related trade-offs in more
     detail before illustrating their implementation using the `spaCy` library in the
     next section. The following table summarizes the key tasks of an NLP pipeline:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一节中，我们将更详细地回顾每个步骤所做的关键决策和相关的权衡，并使用 `spaCy` 库来说明它们的实现。以下表格总结了 NLP 流水线的关键任务：
 - en: '| **Feature** | **Description** |'
+  id: totrans-32
   prefs: []
   type: TYPE_TB
+  zh: '| **特征** | **描述** |'
 - en: '| Tokenization | Segments text into words, punctuation marks, and so on. |'
+  id: totrans-33
   prefs: []
   type: TYPE_TB
+  zh: '| 分词 | 将文本分割为单词、标点符号等。 |'
 - en: '| POS tagging | Assigns word types to tokens, such as a verb or noun. |'
+  id: totrans-34
   prefs: []
   type: TYPE_TB
+  zh: '| 词性标注 | 将词的类型分配给标记，如动词或名词。 |'
 - en: '| Dependency parsing | Labels syntactic token dependencies, such as subject
     <=> object. |'
+  id: totrans-35
   prefs: []
   type: TYPE_TB
+  zh: '| 依存句法分析 | 标记句法标记依赖，如主语 <=> 宾语。 |'
 - en: '| Stemming and lemmatization | Assigns the base forms of words: was => be,
     rats => rat. |'
+  id: totrans-36
   prefs: []
   type: TYPE_TB
+  zh: '| 词干提取和词形还原 | 分配单词的基本形式：was => be, rats => rat。 |'
 - en: '| Sentence boundary detection | Finds and segments individual sentences. |'
+  id: totrans-37
   prefs: []
   type: TYPE_TB
+  zh: '| 句子边界检测 | 查找并分割单独的句子。 |'
 - en: '| Named entity recognition | Labels real-world objects, such as people, companies,
     and locations. |'
+  id: totrans-38
   prefs: []
   type: TYPE_TB
+  zh: '| 命名实体识别 | 标记现实世界对象，如人、公司和地点。 |'
 - en: '| Similarity | Evaluates the similarity of words, text spans, and documents.
     |'
+  id: totrans-39
   prefs: []
   type: TYPE_TB
+  zh: '| 相似度 | 评估单词、文本段和文档之间的相似性。 |'
 - en: Parsing and tokenizing text data
+  id: totrans-40
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 解析和标记文本数据
 - en: A token is an instance of a characters that appears in a given document and
     should be considered a semantic unit for further processing. The vocabulary is
     a set of tokens contained in a corpus deemed relevant for further processing.
     A key trade-off in the following decisions is the accurate reflection of the text
     source at the expense of a larger vocabulary that may translate into more features
     and higher model complexity.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 令牌是在给定文档中出现的字符实例，并且应被视为进一步处理的语义单位。词汇是包含在被认为与进一步处理相关的语料库中的标记集。在以下决策中的一个关键权衡是以更大的词汇量准确反映文本来源，这可能会转化为更多的特征和更高的模型复杂性。
 - en: Basic choices in this regard concern the treatment of punctuation and capitalization,
     the use of spelling correction, and whether to exclude very frequent so-called
     **stop words** (such as *and* or *the*) as meaningless noise.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这方面的基本选择涉及如何处理标点和大写，是否使用拼写校正，以及是否排除非常频繁的所谓**停用词**（如*and*或*the*）作为无意义的噪声。
 - en: An additional decision is about the inclusion of groups of *n* individual tokens
     called **n-grams** as semantic units (an individual token is also called a **unigram**).
     An example of a 2-gram (or bi-gram) is New York, whereas New York City is a 3-gram
     (or tri-gram).
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个决策是关于将* n*个单个令牌组成的组（一个单个令牌也称为**unigram**）作为语义单位包含在内的。2-gram（或双字）的示例是纽约，而纽约市是
+    3-gram（或三字）。
 - en: The goal is to create tokens that more accurately reflect the document's meaning.
     The decision can rely on dictionaries or a comparison of the relative frequencies
     of the individual and joint usage. Including n-grams will increase the number
     of features because the number of unique n-grams tends to be much higher than
     the number of unique unigrams and will likely add noise unless filtered for significance
     by frequency.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 目标是创建更准确反映文档含义的标记。决策可以依赖于字典或单个和联合使用的相对频率的比较。包括 n-gram 将增加特征的数量，因为唯一 n-gram 的数量往往比唯一
+    unigram 的数量高得多，并且可能会增加噪音，除非按频率的显著性进行过滤。
 - en: Linguistic annotation
+  id: totrans-45
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 语言标注
 - en: 'Linguistic annotations include the application of **syntactic and grammatical
     rules** to identify the boundary of a sentence despite ambiguous punctuation,
     and a token''s role in a sentence for POS tagging and dependency parsing. It also
     permits the identification of common root forms for stemming and lemmatization
     to group related words:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 语言标注包括应用**句法和语法规则**来确定句子的边界，尽管标点符号不明确，并且令牌在句子中的角色用于 POS 标注和依赖解析。它还允许识别词干和词形归并的常见根形式以组合相关词汇：
 - en: '**POS annotations:** It helps disambiguate tokens based on their function (this
     may be necessary when a verb and noun have the same form), which increases the
     vocabulary but may result in better accuracy.'
+  id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**POS 标注：** 它有助于根据它们的功能消除标记的歧义（当动词和名词具有相同的形式时可能是必要的），这会增加词汇量但可能导致更好的准确性。'
 - en: '**Dependency parsing**: It identifies hierarchical relationships among tokens,
     is commonly used for translation, and is important for interactive applications
     that require more advanced language understanding, such as chatbots.'
+  id: totrans-48
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**依赖解析：** 它识别标记之间的层次关系，通常用于翻译，并且对于需要更高级语言理解的交互应用程序（如聊天机器人）非常重要。'
 - en: '**Stemming**: It uses simple rules to remove common endings, such as *s*, *ly*,
     *ing*, and *ed*, from a token and reduce it to its stem or root form.'
+  id: totrans-49
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**词干提取：** 它使用简单的规则从标记中去除常见的结尾，例如 *s*、*ly*、*ing* 和 *ed*，并将其减少到其词干或根形式。'
 - en: '**Lemmatization**: It uses more sophisticated rules to derive the canonical
     root (lemma) of a word. It can detect irregular roots, such as better and best,
     and more effectively condenses vocabulary, but is slower than stemming. Both approaches
     simplify vocabulary at the expense of semantic nuances.'
+  id: totrans-50
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**词形归并：** 它使用更复杂的规则来推导单词的规范根（词形）。它可以检测到不规则的根，例如 better 和 best，并且更有效地压缩词汇，但速度比词干提取慢。这两种方法都通过简化词汇以牺牲语义细微差别为代价。'
 - en: Semantic annotation
+  id: totrans-51
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 语义标注
 - en: '**Named entity recognition** (**NER**) aims to identify tokens that represent
     objects of interest, such as people, countries, or companies. It can be further
     developed into a **knowledge graph** that captures semantic and hierarchical relationships
     among such entities. It is a critical ingredient for applications that, for example,
     aim to predict the impact of news events or sentiment.'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '**命名实体识别**（**NER**）旨在识别代表感兴趣对象的标记，例如人物、国家或公司。它可以进一步发展为捕获这些实体之间的语义和层次关系的**知识图**。它是那些旨在预测新闻事件或情感影响的应用程序的关键要素。'
 - en: Labeling
+  id: totrans-53
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 标签
 - en: Many NLP applications learn to predict outcomes from meaningful information
     extracted from text. Supervised learning requires labels to teach the algorithm
     the true input-output relationship. With text data, establishing this relationship
     may be challenging and may require explicit data modeling and collection.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多NLP应用程序从文本中提取的有意义信息中学习预测结果。监督学习需要标签来教会算法真实的输入-输出关系。对于文本数据，建立这种关系可能具有挑战性，可能需要明确的数据建模和收集。
 - en: Data modeling decisions include how to quantify sentiments implicit in a text
     document like an email, a transcribed interview, or a tweet, or which aspects
     of a research document or news report to assign to a specific outcome.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据建模决策包括如何量化文本文档中隐含的情感，例如电子邮件、转录的采访或推文，或者将研究文档或新闻报道的哪些方面分配给特定结果。
 - en: Use cases
+  id: totrans-56
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用案例
 - en: 'The use of ML with text data for algorithmic trading relies on the extraction
     of meaningful information in the form of features that directly or indirectly
     predict future price movements. Applications range from the exploitation of the
     short-term market impact of news to the long-term fundamental analysis of the
     drivers of asset valuation. Examples include the following:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 利用ML和文本数据进行算法交易依赖于以直接或间接预测未来价格变动的特征形式提取有意义信息。应用范围从利用新闻的短期市场影响到资产估值驱动因素的长期基本分析。示例包括以下内容：
 - en: The evaluation of product review sentiment to assess a company's competitive
     position or industry trends
+  id: totrans-58
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 评估产品评论情绪以评估公司的竞争地位或行业趋势
 - en: The detection of anomalies in credit contracts to predict the probability or
     impact of a default
+  id: totrans-59
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 检测信用合同中的异常以预测违约的概率或影响
 - en: The prediction of news impact in terms of direction, magnitude, and affected
     entities
+  id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 新闻影响的预测，包括方向、幅度和受影响的实体
 - en: JP Morgan, for instance, developed a predictive model based on 250,000 analyst
     reports that outperformed several benchmark indices and produced uncorrelated
     signals relative to sentiment factors formed from consensus EPS and recommendation
     changes.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 摩根大通（JP Morgan）例如，开发了一个基于25万份分析师报告的预测模型，该模型胜过了几个基准指数，并产生了与基于共识EPS和推荐变化形成的情绪因素不相关的信号。
 - en: From text to tokens – the NLP pipeline
+  id: totrans-62
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 从文本到标记 - NLP管道
 - en: In this section, we will demonstrate how to construct an NLP pipeline using
     the open source Python library, `spaCy`. The `textacy` library builds on `spaCy`
     and provides easy access to `spaCy` attributes and additional functionality.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将演示如何使用开源Python库`spaCy`构建NLP管道。`textacy`库构建在`spaCy`之上，并提供对`spaCy`属性和附加功能的简便访问。
 - en: Refer to the `nlp_pipeline_with_spaCy` notebook for the following code samples,
     installation instructions, and additional details.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关以下代码示例、安装说明和额外详细信息，请参考`nlp_pipeline_with_spaCy`笔记本。
 - en: NLP pipeline with spaCy and textacy
+  id: totrans-65
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: spaCy和textacy的NLP管道
 - en: '`spaCy` is a widely used Python library with a comprehensive feature set for
     fast text processing in multiple languages. The usage of tokenization and annotation
     engines requires the installation of language models. The features we will use
     in this chapter only require small models; larger models also include word vectors
     that we will cover in [Chapter 15](fde80847-fa0c-48b6-8975-fc4a34daafd2.xhtml),
     *Word Embeddings*.'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: '`spaCy`是一个广泛使用的Python库，具有多语言快速文本处理的全面功能集。标记化和注释引擎的使用需要安装语言模型。本章中我们将使用的特征仅需要小型模型；较大的模型还包括我们将在[第15章](fde80847-fa0c-48b6-8975-fc4a34daafd2.xhtml)中介绍的词向量，*Word
+    Embeddings*。'
 - en: 'Once installed and linked, we can instantiate a `spaCy` language model and
     then call it on a document. As a result, `spaCy` produces a `doc` object that
     tokenizes the text and processes it according to configurable pipeline components
     that, by default, consist of a tagger, a parser, and a named-entity recognizer:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 安装并链接后，我们可以实例化一个 `spaCy` 语言模型，然后在文档上调用它。因此，`spaCy` 会产生一个 `doc` 对象，该对象对文本进行标记化并根据可配置的管道组件进行处理，默认情况下包括标签器、解析器和命名实体识别器：
 - en: '[PRE0]'
+  id: totrans-68
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Let''s illustrate the pipeline using a simple sentence:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用一个简单的句子说明流程：
 - en: '[PRE1]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Parsing, tokenizing, and annotating a sentence
+  id: totrans-71
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 解析、标记和注释句子
 - en: 'Parsed document content is iterable, and each element has numerous attributes
     produced by the processing pipeline. The following sample illustrates how to access
     the following attributes:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 解析后的文档内容可迭代，每个元素由处理流程产生的多个属性组成。以下示例说明了如何访问以下属性：
 - en: '`.text`: Original word text'
+  id: totrans-73
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.text`: 原始词文本'
 - en: '`.lemma_`: Word root'
+  id: totrans-74
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.lemma_`: 词根'
 - en: '`.pos_`: Basic POS tag'
+  id: totrans-75
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.pos_`: 基本词性标签'
 - en: '`.tag_`: Detailed POS tag'
+  id: totrans-76
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.tag_`: 详细的词性标签'
 - en: '`.dep_`: Syntactic relationship or dependency between tokens'
+  id: totrans-77
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.dep_`: 标记之间的句法关系或依赖关系'
 - en: '`.shape_`: The shape of the word regarding capitalization, punctuation, or
     digits'
+  id: totrans-78
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.shape_`: 词的形状，即大写、标点或数字的使用情况'
 - en: '`.is alpha`: Check whether the token is alphanumeric'
+  id: totrans-79
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.is alpha`: 检查标记是否是字母数字字符'
 - en: '` .is stop`: Check whether the token is on a list of common words for the given
     language'
+  id: totrans-80
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`.is stop`: 检查标记是否在给定语言的常用词列表中'
 - en: 'We iterate over each token and assign its attributes to a `pd.DataFrame`:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们遍历每个标记，并将其属性分配给 `pd.DataFrame`：
 - en: '[PRE2]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Which produces the following output:'
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 产生以下输出：
 - en: '| **text** | **lemma** | **pos** | **tag** | **dep** | **shape** | **is_alpha**
     | **is_stop** |'
+  id: totrans-84
   prefs: []
   type: TYPE_TB
+  zh: '| **文本** | **词根** | **词性** | **标签** | **依存关系** | **形状** | **是字母** | **是停用词**
+    |'
 - en: '| Apple | apple | PROPN | NNP | nsubj | Xxxxx | TRUE | FALSE |'
+  id: totrans-85
   prefs: []
   type: TYPE_TB
+  zh: '| 苹果 | 苹果 | PROPN | NNP | nsubj | Xxxxx | TRUE | FALSE |'
 - en: '| is | be | VERB | VBZ | aux | xx | TRUE | TRUE |'
+  id: totrans-86
   prefs: []
   type: TYPE_TB
+  zh: '| 是 | 是 | VERB | VBZ | 辅助动词 | xx | TRUE | TRUE |'
 - en: '| looking | look | VERB | VBG | ROOT | xxxx | TRUE | FALSE |'
+  id: totrans-87
   prefs: []
   type: TYPE_TB
+  zh: '| 寻找 | 寻找 | VERB | VBG | ROOT | xxxx | TRUE | FALSE |'
 - en: '| at | at | ADP | IN | prep | xx | TRUE | TRUE |'
+  id: totrans-88
   prefs: []
   type: TYPE_TB
+  zh: '| 在 | 在 | ADP | IN | prep | xx | TRUE | TRUE |'
 - en: '| buying | buy | VERB | VBG | pcomp | xxxx | TRUE | FALSE |'
+  id: totrans-89
   prefs: []
   type: TYPE_TB
+  zh: '| 购买 | 购买 | VERB | VBG | pcomp | xxxx | TRUE | FALSE |'
 - en: '| U.K. | u.k. | PROPN | NNP | compound | X.X. | FALSE | FALSE |'
+  id: totrans-90
   prefs: []
   type: TYPE_TB
+  zh: '| 英国 | 英国 | PROPN | NNP | compound | X.X. | FALSE | FALSE |'
 - en: '| startup | startup | NOUN | NN | dobj | xxxx | TRUE | FALSE |'
+  id: totrans-91
   prefs: []
   type: TYPE_TB
+  zh: '| 创业公司 | 创业公司 | NOUN | NN | dobj | xxxx | TRUE | FALSE |'
 - en: '| for | for | ADP | IN | prep | xxx | TRUE | TRUE |'
+  id: totrans-92
   prefs: []
   type: TYPE_TB
+  zh: '| for | for | ADP | IN | prep | xxx | TRUE | TRUE |'
 - en: '| $ | $ | SYM | $ | quantmod | $ | FALSE | FALSE |'
+  id: totrans-93
   prefs: []
   type: TYPE_TB
+  zh: '| $ | $ | SYM | $ | 量词修饰符 | $ | FALSE | FALSE |'
 - en: '| 1 | 1 | NUM | CD | compound | d | FALSE | FALSE |'
+  id: totrans-94
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 1 | NUM | CD | compound | d | FALSE | FALSE |'
 - en: '| billion | billion | NUM | CD | pobj | xxxx | TRUE | FALSE |'
+  id: totrans-95
   prefs: []
   type: TYPE_TB
+  zh: '| 十亿 | 十亿 | NUM | CD | pobj | xxxx | TRUE | FALSE |'
 - en: 'We can visualize syntactic dependency in a browser or notebook using the following:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用以下方法在浏览器或笔记本中可视化句法依存：
 - en: '[PRE3]'
+  id: totrans-97
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'The result is a dependency tree:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是一个依存树：
 - en: '![](img/5384fdb2-e7ac-47f8-9f68-b4ca75794ced.png)'
+  id: totrans-99
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/5384fdb2-e7ac-47f8-9f68-b4ca75794ced.png)'
 - en: Dependency tree
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 依存树
 - en: 'We can get additional insights into the meaning of attributes using `spacy.explain()`,
     as here:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用 `spacy.explain()` 获取属性含义的其他见解，如下所示：
 - en: '[PRE4]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Batch-processing documents
+  id: totrans-103
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 批处理文档
 - en: 'We will now read a larger set of 2,225 BBC News articles (see GitHub for data
     source details) that belong to five categories and are stored in individual text
     files. We need to do the following:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将阅读一组更大的 2,225 篇 BBC 新闻文章（有关数据来源的详细信息，请参阅 GitHub），这些文章属于五个类别，并存储在单独的文本文件中。我们需要执行以下操作：
 - en: Call the `.glob()` method of pathlib's `Path` object.
+  id: totrans-105
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 调用 pathlib 的 `Path` 对象的 `.glob()` 方法。
 - en: Iterate over the resulting list of paths.
+  id: totrans-106
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 迭代结果路径列表。
 - en: Read all lines of the news article excluding the heading in the first line.
+  id: totrans-107
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 读取新闻文章的所有行，不包括第一行的标题。
 - en: 'Append the cleaned result to a list:'
+  id: totrans-108
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将清理后的结果附加到列表中：
 - en: '[PRE5]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: Sentence boundary detection
+  id: totrans-110
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 句子边界检测
 - en: 'We will illustrate sentence detection by calling the NLP object on the first
     of the articles:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将通过调用 NLP 对象来说明句子检测，对第一篇文章进行批处理：
 - en: '[PRE6]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: '`spaCy` computes sentence boundaries from the syntactic parse tree so that
     punctuation and capitalization play an important but not decisive role. As a result,
     boundaries will coincide with clause boundaries, even for poorly punctuated text.'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: '`spaCy` 从句法分析树中计算句子边界，因此标点符号和大写字母起着重要但不决定性的作用。因此，边界将与从句边界重合，即使是标点符号不规范的文本也是如此。'
 - en: 'We can access parsed sentences using the `.sents` attribute:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用`.sents`属性访问解析后的句子：
 - en: '[PRE7]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Named entity recognition
+  id: totrans-116
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 命名实体识别
 - en: '`spaCy` enables named entity recognition using the `.ent_type_ attribute`:'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: '`spaCy` 使用 `.ent_type_ 属性` 实现命名实体识别：'
 - en: '[PRE8]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '`textacy` facilitates access to the named entities that appear in the first
     article:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: '`textacy` 简化了访问第一篇文章中出现的命名实体的过程：'
 - en: '[PRE9]'
+  id: totrans-120
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: N-grams
+  id: totrans-121
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: N-grams
 - en: 'N-grams combine *N* consecutive tokens. N-grams can be useful for the BoW model
     because, depending on the textual context, treating something such as data scientist as
     a single token may be more meaningful than treating it as two distinct tokens:
     data and scientist.'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: N-gram 结合 *N* 个连续的标记。在 BoW 模型中，N-gram 可以很有用，因为根据文本环境，将像数据科学家这样的内容视为一个单独的标记可能比将其视为两个不同的标记更有意义。
 - en: '`textacy` makes it easy to view the `ngrams` of a given length *n* occurring
     with at least `min_freq` times:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: '`textacy` 方便查看至少出现 `min_freq` 次的给定长度 *n* 的 `ngrams`：'
 - en: '[PRE10]'
+  id: totrans-124
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: spaCy's streaming API
+  id: totrans-125
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: spaCy 的流式 API
 - en: 'To pass a larger number of documents through the processing pipeline, we can
     use `spaCy`''s streaming API as follows:'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 要通过处理管道传递更多文档，我们可以使用 `spaCy` 的流式 API 如下：
 - en: '[PRE11]'
+  id: totrans-127
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: Multi-language NLP
+  id: totrans-128
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 多语言自然语言处理
 - en: '`spaCy` includes trained language models for English, German, Spanish, Portuguese,
     French, Italian, and Dutch, as well as a multi-language model for NER. Cross-language
     usage is straightforward since the API does not change.'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: '`spaCy` 包括针对英语、德语、西班牙语、葡萄牙语、法语、意大利语和荷兰语的训练语言模型，以及用于 NER 的多语言模型。跨语言使用很简单，因为
+    API 不会改变。'
 - en: 'We will illustrate the Spanish language model using a parallel corpus of TED
     Talk subtitles (see the GitHub repo for data source references). For this purpose,
     we instantiate both language models:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用 TED Talk 字幕的平行语料库来说明西班牙语言模型（请参阅数据来源参考的 GitHub 存储库）。为此，我们实例化了两个语言模型：
 - en: '[PRE12]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'We then read small corresponding text samples in each model:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们在每个模型中读取相应的小文本样本：
 - en: '[PRE13]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Sentence boundary detection uses the same logic but finds a different breakdown:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 句子边界检测使用相同的逻辑，但找到了不同的分解：
 - en: '[PRE14]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'POS tagging also works in the same way:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: POS 标记也是同样工作的：
 - en: '[PRE15]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'The result is the side-by-side token annotations for the English and Spanish
     documents:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是英文和西班牙文档的并排标记注释：
 - en: '| **Token** | **POS Tag** | **Meaning** | **Token** | **POS Tag** | **Meaning**
     |'
+  id: totrans-139
   prefs: []
   type: TYPE_TB
+  zh: '| **标记** | **POS 标记** | **含义** | **标记** | **POS 标记** | **含义** |'
 - en: '| There | ADV | adverb | Existe | VERB | verb |'
+  id: totrans-140
   prefs: []
   type: TYPE_TB
+  zh: '| 那里 | ADV | 副词 | 存在 | VERB | 动词 |'
 - en: '| s | VERB | verb | una | DET | determiner |'
+  id: totrans-141
   prefs: []
   type: TYPE_TB
+  zh: '| s | VERB | 动词 | 一个 | DET | 定冠词 |'
 - en: '| a | DET | determiner | estrecha | ADJ | adjective |'
+  id: totrans-142
   prefs: []
   type: TYPE_TB
+  zh: '| 一个 | DET | 定冠词 | 狭窄的 | ADJ | 形容词 |'
 - en: '| tight | ADJ | adjective | y | CONJ | conjunction |'
+  id: totrans-143
   prefs: []
   type: TYPE_TB
+  zh: '| 紧密的 | ADJ | 形容词 | 和 | CONJ | 连词 |'
 - en: '| and | CCONJ | coordinating conjunction | sorprendente | ADJ | adjective |'
+  id: totrans-144
   prefs: []
   type: TYPE_TB
+  zh: '| 和 | CCONJ | 并列连词 | 令人惊讶的 | ADJ | 形容词 |'
 - en: The next section illustrates how to use parsed and annotated tokens to build
     a document-term matrix that can be used for text classification.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一节介绍如何使用解析和注释的标记构建文档-术语矩阵，该矩阵可用于文本分类。
 - en: NLP with TextBlob
+  id: totrans-146
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 TextBlob 进行自然语言处理
 - en: '`TextBlob` is a Python library that provides a simple API for common NLP tasks
     and builds on the **Natural Language Toolkit** (**NLTK**) and the Pattern web
     mining libraries. `TextBlob` facilitates POS tagging, noun phrase extraction,
     sentiment analysis, classification, translation, and more.'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: '`TextBlob` 是一个提供简单 API 用于常见 NLP 任务的 Python 库，它基于 **自然语言工具包** (**NLTK**) 和 Pattern
+    网络挖掘库。`TextBlob` 简化了 POS 标记、名词短语提取、情感分析、分类、翻译等任务。'
 - en: 'To illustrate the use of `TextBlob`, we sample a BBC sports article with the
     headline *Robinson ready for difficult task*. Similarly to `spaCy` and other libraries,
     the first step is to pass the document through a pipeline represented by the `TextBlob`
     object to assign annotations required for various tasks (see the `nlp_with_textblob`
     notebook for this section):'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明使用 `TextBlob`，我们从 BBC 体育文章中抽样一篇标题为 *Robinson ready for difficult task* 的文章。与
+    `spaCy` 和其他库类似，第一步是通过 `TextBlob` 对象表示的管道将文档传递，以分配各种任务所需的注释（请参阅此部分的 `nlp_with_textblob`
+    笔记本）：
 - en: '[PRE16]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Stemming
+  id: totrans-150
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 词干提取
 - en: 'To perform stemming, we instantiate `SnowballStemmer` from the `nltk` library,
     call its `.stem()` method on each token and display modified tokens:'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 要执行词干提取，我们从 `nltk` 库实例化了 `SnowballStemmer`，在每个标记上调用其 `.stem()` 方法，并显示修改后的标记：
 - en: '[PRE17]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Sentiment polarity and subjectivity
+  id: totrans-153
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 情感极性和主观性
 - en: '`TextBlob` provides polarity and subjectivity estimates for parsed documents
     using dictionaries provided by the Pattern library. These dictionaries map adjectives
     frequently found in product reviews to sentiment polarity scores, ranging from
     -1 to +1 (negative ↔ positive) and a similar subjectivity score (objective ↔ subjective).'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: '`TextBlob` 使用 Pattern 库提供的字典为解析的文档提供极性和主观性估计。这些字典将产品评论中经常出现的形容词映射到从 -1 到 +1（负面
+    ↔ 正面）的情感极性分数和类似的主观性分数（客观 ↔ 主观）。'
 - en: 'The `.sentiment` attribute provides the average for each over the relevant
     tokens, whereas the `.sentiment_assessments` attribute lists the underlying values
     for each token (see notebook):'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: '`.sentiment` 属性为每个相关标记提供平均值，而 `.sentiment_assessments` 属性列出了每个标记的基础值（请参见笔记本）：'
 - en: '[PRE18]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: From tokens to numbers – the document-term matrix
+  id: totrans-157
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 从标记到数字 - 文档-术语矩阵
 - en: In this section, we first introduce how the BoW model converts text data into
     a numeric vector space representation that permits the comparison of documents
     using their distance. We then proceed to illustrate how to create a document-term
     matrix using the sklearn library.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们首先介绍 BoW 模型如何将文本数据转换为允许使用距离比较文档的数字向量空间表示法。然后，我们继续说明如何使用 sklearn 库创建文档-术语矩阵。
 - en: The BoW model
+  id: totrans-159
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: BoW 模型
 - en: The BoW model represents a document based on the frequency of the terms or tokens
     it contains. Each document becomes a vector with one entry for each token in the
     vocabulary that reflects the token's relevance to the document.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: BoW 模型根据文档中包含的词或标记的频率来表示文档。每个文档都成为一个向量，每个向量在词汇表中都有一个条目，反映了该标记与文档的相关性。
 - en: The document-term matrix is straightforward to compute given the vocabulary.
     However, it is also a crude simplification because it abstracts from word order
     and grammatical relationships. Nonetheless, it often achieves good results in
     text classification quickly and, thus, is a very useful starting point.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 给定词汇表，文档-术语矩阵很容易计算。然而，它也是一个粗略的简化，因为它抽象了单词顺序和语法关系。尽管如此，它通常很快就能在文本分类中取得良好的结果，因此是一个非常有用的起点。
 - en: 'The following diagram (the one on the right) illustrates how this document
     model converts text data into a matrix with numerical entries, where each row
     corresponds to a document and each column to a token in the vocabulary. The resulting
     matrix is usually both very high-dimensional and sparse; that is, one that contains
     many zero entries because most documents only contain a small fraction of the
     overall vocabulary:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图（右边的那个）说明了该文档模型如何将文本数据转换为具有数字条目的矩阵，其中每行对应于一个文档，每列对应于词汇表中的一个标记。生成的矩阵通常是非常高维且稀疏的；也就是说，它包含许多零条目，因为大多数文档只包含总词汇表的一小部分：
 - en: '![](img/ba824dda-3f15-4595-a6a2-72778e0c6f43.png)'
+  id: totrans-163
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/ba824dda-3f15-4595-a6a2-72778e0c6f43.png)'
 - en: Resultant matrix
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果矩阵
 - en: There are several ways to weigh a token's vector entry to capture its relevance
     to the document. We will illustrate how to use sklearn to use binary flags, which
     indicate presence or absence, counts, and weighted counts that account for differences
     in term frequencies across all documents; that is, in the corpus.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 有几种方法可以衡量标记的向量条目以捕捉其与文档的相关性。我们将说明如何使用 sklearn 使用二进制标志，这些标志指示存在或不存在、计数以及加权计数，这些加权考虑了语料库中所有文档中的词频的差异：
 - en: Measuring the similarity of documents
+  id: totrans-166
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 测量文档的相似性
 - en: The representation of documents as word vectors assigns to each document a location
     in the vector space created by the vocabulary. Interpreting vector entries as
     Cartesian coordinates in this space, we can use the angle between two vectors
     to measure their similarity because vectors that point in the same direction contain
     the same terms with the same frequency weights.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 将文档表示为词向量将每个文档分配到由词汇表创建的向量空间中的位置。在该空间中将向量条目解释为笛卡尔坐标，我们可以使用两个向量之间的角度来衡量它们的相似性，因为指向相同方向的向量包含相同的词及相同的频率权重。
 - en: The preceding diagram (the one on the right) illustrates—simplified in two dimensions—the
     calculation of the distance between a document represented by a vector *d[1]*
     and a query vector (either a set of search terms or another document) represented
     by the vector *q*.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面的图表（右边的那个）简化了二维中表示的文档向量 *d[1]* 与查询向量（搜索词组或另一个文档） *q* 之间距离的计算。
 - en: '**Cosine similarity** equals the cosine of the angle between the two vectors.
     It translates the size of the angle into a number in the range [0, 1] since all
     vector entries are non-negative token weights. A value of 1 implies that both
     documents are identical concerning their token weighs, whereas a value of 0 implies
     that two documents only contain distinct tokens.'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: '**余弦相似度**等于两个向量之间的夹角的余弦。它将角度大小转换为一个范围为 [0, 1] 的数字，因为所有向量条目都是非负的标记权重。值为 1 意味着两个文档在其标记权重方面是相同的，而值为
+    0 意味着两个文档只包含不同的标记。'
 - en: As shown in the diagram, the cosine of the angle is equal to the dot product
     of the vectors; that is, the sum product of their coordinates, divided by the
     product of the lengths, measured by the Euclidean norms of each vector.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 如图所示，角的余弦等于向量的点积；也就是说，它们的坐标的和乘积，除以它们的长度的乘积，由每个向量的欧几里得范数测量。
 - en: Document-term matrix with sklearn
+  id: totrans-171
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 sklearn 创建文档-术语矩阵
 - en: The scikit-learn preprocessing module offers two tools to create a document-term
     matrix. `CountVectorizer` uses binary or absolute counts to measure the **term
     frequency** *tf(d, t)* for each document *d* and token *t*.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: scikit-learn 预处理模块提供了两个工具来创建文档-术语矩阵。`CountVectorizer` 使用二进制或绝对计数来衡量每个文档 *d*
+    和标记 *t* 的**词频** *tf(d, t)*。
 - en: '`TfidFVectorizer`, in contrast, weighs the (absolute) term frequency by the
     **inverse document frequency** (**idf**). As a result, a term that appears in
     more documents will receive a lower weight than a token with the same frequency
     for a given document but lower frequency across all documents. More specifically,
     using the default settings, *tf-idf(d, t)* entries for the document-term matrix
     are computed as *tf-idf(d, t) = tf(d, t) x idf(t)*:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 相反，`TfidFVectorizer` 通过**逆文档频率**（**idf**）对（绝对）词频进行加权。因此，出现在更多文档中的术语将获得比在给定文档中具有相同频率但在所有文档中出现频率较低的标记更低的权重。具体来说，使用默认设置，对于文档-术语矩阵的
+    *tf-idf(d, t)* 条目计算为 *tf-idf(d, t) = tf(d, t) x idf(t)*：
 - en: '![](img/cee1a57c-1d2c-4366-98a6-c62b5d4a8c4f.png)'
+  id: totrans-174
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/cee1a57c-1d2c-4366-98a6-c62b5d4a8c4f.png)'
 - en: Here *n[d]* is the number of documents and *df(d, t)* the document frequency
     of term *t*. The resulting tf-idf vectors for each document are normalized with
     respect to their absolute or squared totals (see the `sklearn` documentation for
     details). The tf-idf measure was originally used in information retrieval to rank
     search engine results and has subsequently proven useful for text classification
     or clustering.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里 *n[d]* 是文档数，*df(d, t)* 是术语 *t* 的文档频率。每个文档的结果 tf-idf 向量相对于它们的绝对或平方总和进行了归一化（有关详细信息，请参阅
+    `sklearn` 文档）。tf-idf 度量最初用于信息检索以排名搜索引擎结果，并且随后被证明对于文本分类或聚类非常有用。
 - en: Both tools use the same interface and perform tokenization and further optional
     preprocessing of a list of documents before vectorizing the text by generating
     token counts to populate the document-term matrix.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 这两个工具使用相同的接口，并在向量化文本之前对文档列表执行标记化和进一步的可选预处理，以生成标记计数来填充文档-术语矩阵。
 - en: 'Key parameters that affect the size of the vocabulary include the following:'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 影响词汇量大小的关键参数包括以下内容：
 - en: '`stop_words`: Use a built-in or provide a list of (frequent) words to exclude'
+  id: totrans-178
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`stop_words`：使用内置或提供要排除的（常见）单词列表'
 - en: '`ngram_range`: Include n-grams in a range for *n* defined by a tuple of (*n[min]*,
     *n[max]*)'
+  id: totrans-179
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`ngram_range`：在由 (*n[min]*, *n[max]*) 元组定义的 *n* 范围内包含 n-gram'
 - en: '`lowercase`: Convert characters accordingly (default is `True`)'
+  id: totrans-180
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`lowercase`：相应地转换字符（默认为 `True`）'
 - en: '`min_df` / `max_df`: Ignore words that appear in less / more (`int`) or a smaller/larger
     share of documents (if `float` [0.0,1.0])'
+  id: totrans-181
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`min_df` / `max_df`：忽略在较少/较多（`int`）或更小/更大（如果是 `float` [0.0,1.0]）的文档中出现的单词'
 - en: '`max_features`: Limit the number of tokens in a vocabulary accordingly'
+  id: totrans-182
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`max_features`：相应地限制词汇表中的标记数'
 - en: '`binary`: Set non-zero counts to 1 `True`'
+  id: totrans-183
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`binary`：将非零计数设置为 1 `True`'
 - en: See the `document_term_matrix` notebook for the following code samples and additional
     details. We are again using the 2,225 BBC News articles for illustration.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关以下代码示例和额外详细信息，请参阅 `document_term_matrix` 笔记本。我们再次使用 2,225 篇 BBC 新闻文章进行说明。
 - en: Using CountVectorizer
+  id: totrans-185
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 CountVectorizer
 - en: 'The notebook contains an interactive visualization that explores the impact
     of the `min_df` and `max_df` settings on the size of the vocabulary. We read the
     articles into a DataFrame, set the `CountVectorizer` to produce binary flags and
     use all tokens, and call its `.fit_transform()` method to produce a document-term
     matrix:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 笔记本包含一个交互式可视化，探索`min_df`和`max_df`设置对词汇量大小的影响。我们将文章读入DataFrame，将`CountVectorizer`设置为生成二进制标志并使用所有标记，并调用其`.fit_transform()`方法生成文档-词矩阵：
 - en: '[PRE19]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: The output is a `scipy.sparse` matrix in row format that efficiently stores
     of the small share (<0.7%) of `445870` non-zero entries in the `2225` (document)
     rows and `29275` (token) columns.
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出是一个`scipy.sparse`矩阵，以行格式有效地存储了`445870`个非零条目中的小部分（<0.7%），其中有`2225`个（文档）行和`29275`个（标记）列。
 - en: Visualizing vocabulary distribution
+  id: totrans-189
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 可视化词汇分布
 - en: The visualization shows that requiring tokens to appear in at least 1% and fewer
     than 50% of documents restricts the vocabulary to around 10% of the almost 30,000
     tokens.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 可视化显示，要求标记在至少1%且少于50%的文档中出现将词汇限制在几乎30,000个标记的约10%左右。
 - en: 'This leaves a mode of slightly over 100 unique tokens per document (left panel),
     and the right panel shows the document frequency histogram for the remaining tokens:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 这留下了每个文档略多于100个独特标记的模式（左面板），右面板显示了剩余标记的文档频率直方图：
 - en: '![](img/d3d0db8b-16b6-4f89-afba-9ac839e39fab.png)'
+  id: totrans-192
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/d3d0db8b-16b6-4f89-afba-9ac839e39fab.png)'
 - en: Documents/Term frequency distribution
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 文档/词频分布
 - en: Finding the most similar documents
+  id: totrans-194
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 查找最相似的文档
 - en: 'The `CountVectorizer` result lets us find the most similar documents using
     the `pdist()` function for pairwise distances provided by the `scipy.spatial.distance`
     module. It returns a condensed distance matrix with entries corresponding to the
     upper triangle of a square matrix. We use `np.triu_indices()` to translate the
     index that minimizes the distance to the row and column indices that in turn correspond
     to the closest token vectors:'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CountVectorizer`的结果让我们可以使用`scipy.spatial.distance`模块提供的`pdist()`函数来找到最相似的文档。它返回一个压缩的距离矩阵，其中的条目对应于方阵的上三角形。我们使用`np.triu_indices()`将最小距离的索引转换为相应于最接近的标记向量的行和列索引：'
 - en: '[PRE20]'
+  id: totrans-196
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'Articles number `11` and `75` are closest by cosine similarity because they
     share 58 tokens (see notebook):'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 文章编号`11`和`75`在余弦相似性上最接近，因为它们共享了58个标记（请参阅笔记本）：
 - en: '| **Topic** | tech | tech |'
+  id: totrans-198
   prefs: []
   type: TYPE_TB
+  zh: '| **主题** | 技术 | 技术 |'
 - en: '| **Heading** | Software watching while you work | BT program to beat dialer
     scams |'
+  id: totrans-199
   prefs: []
   type: TYPE_TB
+  zh: '| **标题** | 在您工作时观看的软件 | 打败拨号诈骗者的BT程序 |'
 - en: '| **Body** | Software that can not only monitor every keystroke and action
     performed at a PC but can also be used as legally binding evidence of wrong-doing
     has been unveiled. Worries about cyber-crime and sabotage have prompted many employers
@@ -875,173 +1290,252 @@
     beat rogue dialer scams, which can cost dial-up net users thousands. From May,
     dial-up net users will be able to download free software to stop computers using
     numbers not on a user''s pre-approved list. |'
+  id: totrans-200
   prefs: []
   type: TYPE_TB
+  zh: '| **正文** | 软件不仅可以监视PC上执行的每个按键和操作，而且还可以作为法律约束证据使用。担心网络犯罪和破坏已促使许多雇主考虑监视员工。 |
+    BT正在推出两项计划，以帮助打败流氓拨号诈骗，这可能会使拨号上网用户损失数千。从五月开始，拨号上网用户将能够下载免费软件，以阻止计算机使用不在用户预先批准名单上的号码。
+    |'
 - en: 'Both `CountVectorizer` and `TfidFVectorizer` can be used with `spaCy`; for
     example, to perform lemmatization and exclude certain characters during tokenization,
     we use the following:'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: '`CountVectorizer`和`TfidFVectorizer`都可以与`spaCy`一起使用；例如，执行词形还原并在标记化过程中排除某些字符，我们使用以下命令：'
 - en: '[PRE21]'
+  id: totrans-202
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: See the notebook for additional details and more examples.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 请查看笔记本以获取更多详细信息和更多示例。
 - en: TfidFTransformer and TfidFVectorizer
+  id: totrans-204
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: TfidFTransformer和TfidFVectorizer
 - en: '`TfidfTransfomer` computes tf-idf weights from a document-term matrix of token
     counts, such as the one produced by the `CountVectorizer`.'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: '`TfidfTransfomer`从文档-词矩阵中的标记计数计算tf-idf权重，例如由`CountVectorizer`生成的矩阵。'
 - en: '`TfidfVectorizer` performs both computations in a single step. It adds a few
     parameters to the `CountVectorizer` API that controls smoothing behavior.'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: '`TfidfVectorizer`一次执行两个计算。它为`CountVectorizer`API添加了一些控制平滑行为的参数。'
 - en: 'TFIDF computation works as follows for a small text sample:'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一个小的文本样本，TFIDF计算的工作方式如下：
 - en: '[PRE22]'
+  id: totrans-208
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'We compute the term frequency as we just did:'
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们像刚才一样计算词频：
 - en: '[PRE23]'
+  id: totrans-210
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Document frequency is the number of documents containing the token:'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 文档频率是包含该标记的文档数量：
 - en: '[PRE24]'
+  id: totrans-212
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'The tf-idf weights are the ratio of these values:'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: tf-idf权重是这些值的比率：
 - en: '[PRE25]'
+  id: totrans-214
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: The effect of smoothing
+  id: totrans-215
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 平滑的效果
 - en: 'To avoid zero division, `TfidfVectorizer` uses smoothing for document and term
     frequencies:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了避免零除法，`TfidfVectorizer`对文档和词项频率使用平滑处理：
 - en: '`smooth_idf`: Add `1` to document frequency, as if an extra document contained
     every token in the vocabulary, to prevent zero divisions'
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`smooth_idf`：将文档频率加`1`，就像额外的文档包含词汇表中的每个标记一样，以防止零除法。'
 - en: '`sublinear_tf`: Apply sublinear `tf` scaling; in other words, replace `tf`
     with `1 + log(tf)`'
+  id: totrans-218
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`sublinear_tf`：应用次线性`tf`缩放；换句话说，用`1 + log(tf)`替换`tf`'
 - en: 'In combination with normed weights, the results differ slightly:'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 与标准化权重结合使用时，结果略有不同：
 - en: '[PRE26]'
+  id: totrans-220
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: How to summarize news articles using TfidFVectorizer
+  id: totrans-221
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何使用TfidFVectorizer总结新闻文章
 - en: Due to their ability to assign meaningful token weights, TFIDF vectors are also
     used to summarize text data. For instance, Reddit's `autotldr` function is based
     on a similar algorithm. See the notebook for an example using the BBC articles.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于它们能够分配有意义的标记权重，TFIDF向量也用于总结文本数据。例如，Reddit的`autotldr`功能基于类似的算法。请参阅笔记本，了解使用BBC文章的示例。
 - en: Text Preprocessing - review
+  id: totrans-223
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 文本预处理 - 回顾
 - en: The large number of techniques to process natural language for its use in machine
     learning models that we introduced in this section is necessary to address the
     complex nature of this highly unstructured data source. The engineering of good
     language features is both challenging and rewarding and is arguably the most important
     step in unlocking the semantic value hidden in text data.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在本节介绍的大量处理自然语言以在机器学习模型中使用的技术是必要的，以应对这种高度非结构化数据源的复杂性质。设计良好的语言特征工程既具有挑战性又具有回报，可以说是解锁文本数据中隐藏的语义价值的最重要的一步。
 - en: In practice, experience helps us select transformations that remove noise rather
     than the signal, but it will likely remain necessary to cross-validate and compare
     the performance of different combinations of preprocessing choices.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实践中，经验有助于我们选择去除噪声而不是信号的转换，但可能仍然需要交叉验证和比较不同预处理选择组合的性能。
 - en: Text classification and sentiment analysis
+  id: totrans-226
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 文本分类和情感分析
 - en: Once text data has been converted into numerical features using the NLP techniques
     discussed in the previous sections, text classification works just like any other
     classification task.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦文本数据使用前面讨论的自然语言处理技术转换为数值特征，文本分类就像任何其他分类任务一样。
 - en: In this section, we will apply these preprocessing technique to news articles,
     product reviews, and Twitter data and teach you about various classifiers to predict
     discrete news categories, review scores, and sentiment polarity.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将这些预处理技术应用于新闻文章、产品评论和Twitter数据，并教您各种分类器，以预测离散新闻类别、评论分数和情感极性。
 - en: First, we will introduce the Naive Bayes model, a probabilistic classification
     algorithm that works well with the text features produced by a bag-of-words model.
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们将介绍朴素贝叶斯模型，这是一种概率分类算法，适用于袋装词模型产生的文本特征。
 - en: The code samples for this section are in the `text_classification` notebook.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: '本节的代码示例在`text_classification`笔记本中。  '
 - en: The Naive Bayes classifier
+  id: totrans-231
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 朴素贝叶斯分类器
 - en: The Naive Bayes algorithm is very popular for text classification because low
     computational cost and memory requirements facilitate training on very large,
     high-dimensional datasets. Its predictive performance can compete with more complex
     models, provides a good baseline, and is best known for successful spam detection.
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 朴素贝叶斯算法非常受欢迎，用于文本分类，因为低计算成本和内存需求便于在非常大的、高维的数据集上进行训练。它的预测性能可以与更复杂的模型竞争，提供了一个良好的基准，并以成功的垃圾邮件检测而闻名。
 - en: The model relies on Bayes' theorem (see [Chapter 9](17b367a4-e525-41d4-8cec-0409f29b94c1.xhtml), *Bayesian
     Machine Learning*) and the assumption that the various features are independent
     of each other given the outcome class. In other words, for a given outcome, knowing
     the value of one feature (such as the presence of a token in a document) does
     not provide any information about the value of another feature.
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模型依赖于贝叶斯定理（参见[第9章](17b367a4-e525-41d4-8cec-0409f29b94c1.xhtml)，*贝叶斯机器学习*）和各种特征独立于结果类别的假设。换句话说，对于给定的结果，知道一个特征的值（例如文档中标记的存在）不会提供有关另一个特征值的任何信息。
 - en: Bayes' theorem refresher
+  id: totrans-234
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 贝叶斯定理复习
 - en: 'Bayes'' theorem expresses the conditional probability of one event (for instance,
     that an email is spam as opposed to benign ham) given another event (for example,
     that the email contains certain words), as follows:'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/d46c39f8-f5cf-4050-b62f-a2d37bf488e4.png)'
+  id: totrans-236
   prefs: []
   type: TYPE_IMG
 - en: 'The **posterior** probability that an email is in fact spam, given it contains
     certain words, depends on the interplay of three factors:'
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: The **prior** probability that an email is spam
+  id: totrans-238
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The **likelihood** of encountering these word in a spam email
+  id: totrans-239
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The **evidence**; that is, the probability of seeing these words in an email
+  id: totrans-240
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: To compute the posterior, we can ignore the evidence because it is the same
     for all outcomes (spam versus ham), and the unconditional prior may be easy to
     compute.
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
 - en: However, the likelihood poses insurmountable challenges for a reasonably sized
@@ -1049,9 +1543,11 @@
     explosion of words that did or did not appear jointly in different documents and
     that prevent the evaluation required to compute a probability table and assign
     a value to the likelihood.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: The conditional independence assumption
+  id: totrans-243
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -1059,18 +1555,22 @@
     it Naive is that the features are independent conditional on the outcome. To illustrate,
     let''s classify an email with the three words *Send money now* so that Bayes''
     theorem becomes the following:'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/6a3bc214-e117-481a-81f2-f64b4f1e37a8.png)'
+  id: totrans-245
   prefs: []
   type: TYPE_IMG
 - en: 'Formally, the assumption that the three words are conditionally independent
     means that the probability of observing *send* is not affected by the presence
     of the other terms given the mail is spam; in other words, *P(send | money, now,
     spam) = P(send | spam)*. As a result, we can simplify the likelihood function:'
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/5c613f92-cb2c-42ba-9b80-83962e64d777.png)'
+  id: totrans-247
   prefs: []
   type: TYPE_IMG
 - en: Using the naive conditional independence assumption, each term in the numerator
@@ -1078,6 +1578,7 @@
     The denominator is constant across classes and can be ignored when posterior probabilities
     need to be compared rather than calibrated. The prior probability becomes less
     relevant as the number of factors—that is, features—increases.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
 - en: In summary, the advantages of the Naive Bayes model are fast training and prediction
@@ -1086,295 +1587,440 @@
     than expensive iterative optimization. It is also intuitive and somewhat interpretable,
     does not require hyperparameter tuning, and is relatively robust to irrelevant
     features given a sufficient signal.
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: However, when the independence assumption does not hold, and text classification
     depends on combinations of features or features are correlated, the model will
     perform poorly.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: News article classification
+  id: totrans-251
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: 'We start with an illustration of the Naive Bayes model for news article classification
     using the BBC articles that we read as before to obtain a DataFrame with 2,225
     articles from five categories:'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从以前阅读的 BBC 文章中使用朴素贝叶斯模型对新闻文章进行分类的示例开始，以获得一个包含来自五个类别的 2,225 篇文章的 DataFrame：
 - en: '[PRE27]'
+  id: totrans-253
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Training and evaluating multinomial Naive Bayes classifier
+  id: totrans-254
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 训练和评估多项式朴素贝叶斯分类器
 - en: 'We split the data into the default 75:25 train-test sets, ensuring that test
     set classes closely mirror the train set:'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将数据拆分为默认的 75:25 训练-测试集，确保测试集类别与训练集类别密切相似：
 - en: '[PRE28]'
+  id: totrans-256
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'We proceed to learn the vocabulary from the training set and transform both
     datasets using `CountVectorizer` with default settings to obtain almost 26,000
     features:'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们继续从训练集中学习词汇，并使用默认设置的`CountVectorizer`转换两个数据集，以获得近 26,000 个特征：
 - en: '[PRE29]'
+  id: totrans-258
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'Training and prediction follow the standard `sklearn` fit/predict interface:'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练和预测遵循标准的`sklearn`拟合/预测接口：
 - en: '[PRE30]'
+  id: totrans-260
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'We evaluate multiclass predictions using `accuracy` and find that the default
     classifier achieved almost 98%:'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用`准确性`评估多类别预测，并发现默认分类器达到了近 98% 的准确率：
 - en: '[PRE31]'
+  id: totrans-262
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Sentiment analysis
+  id: totrans-263
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 情感分析
 - en: Sentiment analysis is one of the most popular uses of NLP and machine learning
     for trading because positive or negative perspectives on assets or other price
     drivers are likely to impact returns.
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 情感分析是自然语言处理和机器学习在交易中最受欢迎的用途之一，因为对资产或其他价格驱动因素的正面或负面观点可能会影响收益。
 - en: Generally, modeling approaches to sentiment analysis rely on dictionaries, such
     as the `TextBlob` library, or models that are trained on outcomes for a specific
     domain. The latter is preferable because it permits more targeted labeling; for
     instance, by tying text features to subsequent price changes rather than indirect
     sentiment scores.
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，情感分析的建模方法依赖于词典，例如`TextBlob`库，或者在特定领域的结果上训练的模型。后者更可取，因为它允许更有针对性的标记；例如，将文本特征与随后的价格变化联系起来，而不是间接的情感分数。
 - en: We will illustrate machine learning for sentiment analysis using a Twitter dataset
     with binary polarity labels, and a large Yelp business review dataset with a five-point
     outcome scale.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用具有二进制极性标签的 Twitter 数据集和具有五点结果量表的大型 Yelp 商业评论数据集说明情感分析的机器学习。
 - en: Twitter data
+  id: totrans-267
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Twitter 数据
 - en: We use a dataset that contains 1.6 million training and 350 test tweets from
     2009 with algorithmically assigned binary positive and negative sentiment scores
     that are fairly evenly split (see the relevant notebook for more detailed data
     exploration).
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用的数据集包含自 2009 年以来的 1.6 百万条训练推文和 350 条测试推文，这些推文具有经过算法分配的二进制正面和负面情感分数，分布相对均匀（有关更详细的数据探索，请参阅相关笔记本）。
 - en: Multinomial Naive Bayes
+  id: totrans-269
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 多项式朴素贝叶斯
 - en: 'We create a document-term matrix with 934 tokens as follows:'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们按照以下方式创建一个包含 934 个标记的文档-术语矩阵：
 - en: '[PRE32]'
+  id: totrans-271
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'We then train the `MultinomialNB` classifier as before and predict the test
     set:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们像以前一样训练`MultinomialNB`分类器，并预测测试集：
 - en: '[PRE33]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'The result is over 77.5% accuracy:'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果达到了超过 77.5% 的准确率：
 - en: '[PRE34]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: Comparison with TextBlob sentiment scores
+  id: totrans-276
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 与 TextBlob 情感分数的比较
 - en: 'We also obtain `TextBlob` sentiment scores for tweets and note (see the following
     left-hand diagram) that positive test tweets receive a significantly higher sentiment
     estimate. We then use the `MultinomialNB` model and the `.predict_proba()` method
     to compute predicted probabilities and compare both models using the respective
     Area Under the Curve (see the following right-hand diagram):'
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还获取了推文的`TextBlob`情感分数，并注意到（请参见以下左侧图表），正面测试推文获得了明显更高的情感估计。然后我们使用`MultinomialNB`模型和`.predict_proba()`方法来计算预测概率，并使用相应的曲线下面积（请参见以下右侧图表）比较两个模型：
 - en: '![](img/1b95ea44-c3b3-4c5b-8724-70553264a16b.png)'
+  id: totrans-278
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/1b95ea44-c3b3-4c5b-8724-70553264a16b.png)'
 - en: TextBlob sentiment scores
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: TextBlob 情感分数
 - en: The Naive Bayes model outperforms `TextBlob` in this case.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，朴素贝叶斯模型优于`TextBlob`。
 - en: Business reviews – the Yelp dataset challenge
+  id: totrans-281
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 商业评论 - Yelp 数据集挑战
 - en: Finally, we apply sentiment analysis to the significantly larger Yelp business
     review dataset with five outcome classes. The data consists of several files with
     information on the business, the user, the review, and other aspects that Yelp
     provides to encourage data science innovation.
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们将情感分析应用于规模更大的 Yelp 商业评论数据集，其中包含五个结果类别。数据由多个文件组成，其中包含关于企业、用户、评论和 Yelp 鼓励数据科学创新的其他方面的信息。
 - en: 'We will use around six million reviews produced over the 2010-2018 period (see
     the relevant notebook for details). The following diagrams show the number of
     reviews and the average number of stars per year:'
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用在2010年至2018年期间产生的约六百万条评论（详见相关笔记本）。以下图表显示每年的评论数量和平均星级：
 - en: '![](img/bfd1bd36-9d24-4149-b84c-0bfdead612d1.png)'
+  id: totrans-284
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/bfd1bd36-9d24-4149-b84c-0bfdead612d1.png)'
 - en: Graphs representing number of reviews and the average number of stars per year
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 表示每年评论数量和平均星级的图表
 - en: In addition to the text features resulting from the review texts, we will also
     use other information submitted with the review or about the user.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了评论文本产生的文本特征外，我们还将使用提交的评论或关于用户的其他信息。
 - en: We will train various models on data through 2017 and use 2018 as the test set.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在2017年之前的数据上训练各种模型，并使用2018年作为测试集。
 - en: Benchmark accuracy
+  id: totrans-288
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 基准准确率
 - en: 'Using the most frequent number of stars (=5) to predict the test set, we achieve
     an accuracy close to 52%:'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用最常见的星级数（=5）来预测测试集，我们实现了接近52%的准确率：
 - en: '[PRE35]'
+  id: totrans-290
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Multinomial Naive Bayes model
+  id: totrans-291
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 多项式朴素贝叶斯模型
 - en: 'Next, we train a Naive Bayes classifier using a document-term matrix produced
     by  `CountVectorizer` with default settings:'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们使用具有默认设置的`CountVectorizer`生成的文档-术语矩阵来训练朴素贝叶斯分类器：
 - en: '[PRE36]'
+  id: totrans-293
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'The prediction produces 64.7% accuracy on the test set, a 24.4% improvement
     over the benchmark:'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 预测在测试集上产生了64.7%的准确率，比基准提高了24.4%：
 - en: '[PRE37]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: One-versus-all logistic regression
+  id: totrans-296
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 一对多逻辑回归
 - en: We proceed to train a one-versus-all logistic regression that trains one model
     per class, while treating the remaining classes as the negative class, and predicts
     probabilities for each class using the different models.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们继续训练一对多逻辑回归，该模型对每个类别训练一个模型，同时将其余类别视为负类，并使用不同的模型预测每个类别的概率。
 - en: 'Using only text features, we train and evaluate the model as follows:'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 仅使用文本特征，我们按以下方式训练和评估模型：
 - en: '[PRE38]'
+  id: totrans-299
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'The model achieves significantly higher accuracy at 73.6%:'
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型的准确率显著提高至73.6%：
 - en: '[PRE39]'
+  id: totrans-301
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: Combining text and numerical features
+  id: totrans-302
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 结合文本和数值特征
 - en: The dataset contains various numerical features (see the relevant notebook for
     implementation details).
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据集包含各种数值特征（有关实施细节，请参阅相关笔记本）。
 - en: Vectorizers produce `scipy.sparse` matrices. To combine vectorized text data
     with other features, we need to first convert these to sparse matrices as well;
     many sklearn objects and other libraries, such as LightGBM, can handle these very
     memory-efficient data structures. Converting the sparse matrix to a dense NumPy
     array risks memory overflow.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 向量化器生成`scipy.sparse`矩阵。要将向量化的文本数据与其他特征结合起来，我们首先需要将其转换为稀疏矩阵；许多sklearn对象和其他库（如LightGBM）可以处理这些非常节省内存的数据结构。将稀疏矩阵转换为密集的NumPy数组会导致内存溢出的风险。
 - en: Most variables are categorical, so we use one-hot encoding since we have a fairly
     large dataset to accommodate the increase in features.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数变量都是分类变量，因此我们使用一位有效编码（one-hot encoding），因为我们有一个相当大的数据集来容纳特征的增加。
 - en: 'We convert the encoded numerical features and combine them with the document-term
     matrix:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将编码的数值特征转换并与文档-术语矩阵相结合：
 - en: '[PRE40]'
+  id: totrans-307
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: Multinomial logistic regression
+  id: totrans-308
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 多项式逻辑回归
 - en: 'Logistic regression also provides a multinomial training option that is faster
     and more accurate than the one-versus-all implementation. We use the `lbfgs` solver
     (see the sklearn documentation linked on GitHub for details):'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 逻辑回归还提供了一种多项式训练选项，比一对多实现更快且更准确。我们使用`lbfgs`求解器（有关详细信息，请参阅GitHub上链接的sklearn文档）：
 - en: '[PRE41]'
+  id: totrans-310
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'This model improves the performance to 74.6% accuracy:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 此模型将性能提高至74.6%的准确率：
 - en: '[PRE42]'
+  id: totrans-312
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: In this case, tuning the regularization parameter `C` did not lead to very significant
     improvements (see the notebook).
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，调整正则化参数`C`并没有带来非常显著的改善（请参阅笔记本）。
 - en: Gradient-boosting machine
+  id: totrans-314
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 梯度提升机
 - en: 'For illustration  purposes, we also train a LightGBM gradient-boosting tree
     ensemble with default settings and the `multiclass` objective:'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明目的，我们还训练了一个具有默认设置和`multiclass`目标的LightGBM梯度提升树集成：
 - en: '[PRE43]'
+  id: totrans-316
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'The basic settings do not improve on multinomial logistic regression, but further
     parameter tuning remains an unused option:'
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本设置并没有改善多项式逻辑回归，但进一步的参数调整仍然是一个未使用的选项：
 - en: '[PRE44]'
+  id: totrans-318
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: Summary
+  id: totrans-319
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we explored numerous techniques and options to process unstructured
     data with the goal of extracting semantically meaningful, numerical features for
     use in machine learning models.
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们探讨了许多技术和选项来处理非结构化数据，目的是提取语义上有意义的数字特征，以供机器学习模型使用。
 - en: We covered the basic tokenization and annotation pipeline and illustrated its
     implementation for multiple languages using spaCy and TextBlob. We built on these
     results to create a document model based on the bag-of-words model to represent
     documents as numerical vectors. We learned how to refine the preprocessing pipeline
     and then used vectorized text data for classification and sentiment analysis.
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们介绍了基本的标记化和注释流程，并使用 spaCy 和 TextBlob 在多种语言中说明了其实现方式。我们在这些结果的基础上构建了一个基于词袋模型的文档模型，以将文档表示为数值向量。我们学习了如何优化预处理流程，然后使用向量化的文本数据进行分类和情感分析。
 - en: In the remaining two chapters on alternative text data, we will learn how to
     summarize text using unsupervised learning to identify latent topics (in the next
     chapter) and examine techniques to represent words as vectors that reflect the
     context of word usage and have been used very successfully to proceed richer text
     features for various classification tasks.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 在剩下的两章中，我们将学习如何使用无监督学习来总结文本，以识别潜在主题（在下一章中），并研究将单词表示为反映单词使用上下文的向量的技术，这些技术已经被成功地用于为各种分类任务提供更丰富的文本特征。
