@@ -1,4 +1,4 @@
-# 第九章：*第八章*：Zipline 和 PyFolio 简介
+# 第九章：Zipline 和 PyFolio 简介
 
 在本章中，您将了解到被称为 Zipline 和 PyFolio 的 Python 库，它们抽象出了算法交易策略的回测和性能/风险分析方面的复杂性。它们允许您完全专注于交易逻辑。
 
