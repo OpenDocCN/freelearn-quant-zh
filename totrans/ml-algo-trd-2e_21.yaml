@@ -912,6 +912,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**重建损失**是我们在*第20章*中对自动编码器的讨论中熟悉的；它比较重构的编码数据与原始数据的相似程度。'
 - en: The **unsupervised loss** reflects the competitive interaction between the generator
     and the discriminator described in the DCGAN example; while the generator aims
     to minimize the probability that the discriminator classifies its output as fake,
@@ -921,6 +922,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**无监督损失**反映了生成器和鉴别器之间的竞争交互，如DCGAN示例中所述；生成器旨在最小化鉴别器将其输出分类为伪造的概率，而鉴别器旨在优化对真实和伪造输入的正确分类。'
 - en: The **supervised loss** captures how well the generator approximates the actual
     next time step in latent space when receiving encoded real data for the prior
     sequence.
@@ -928,26 +930,31 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**监督损失**捕捉生成器在接收编码的真实数据进行前序列时，在潜在空间中逼近实际的下一个时间步骤的程度。'
 - en: 'Training takes place in **three phases**:'
   id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练分为**三个阶段**：
 - en: Training the autoencoder on real time series to optimize reconstruction
   id: totrans-126
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在实际时间序列上训练自动编码器以优化重建。
 - en: Optimizing the supervised loss using real time series to capture the temporal
     dynamics of the historical data
   id: totrans-127
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用实时时间序列优化监督损失，以捕捉历史数据的时间动态。
 - en: Jointly training the four components while minimizing all three loss functions
   id: totrans-128
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 联合训练四个组件，同时最小化所有三个损失函数。
 - en: TimeGAN includes several **hyperparameters** used to weigh the components of
     composite loss functions; however, the authors find the network to be less sensitive
     to these settings than one might expect given the notorious difficulties of GAN
@@ -958,59 +965,70 @@
   id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: TimeGAN包括用于加权复合损失函数组件的几个**超参数**；然而，作者发现网络对这些设置的敏感性要小于人们可能预期的，考虑到GAN训练的困难。事实上，他们在训练过程中**没有发现重大挑战**，并建议嵌入任务用于正则化对抗学习，因为它降低了其维度，而监督损失则约束了生成器的逐步动态。
 - en: We now turn to the TimeGAN implementation using TensorFlow 2; see the paper
     for an in-depth explanation of the math and methodology of the approach.
   id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们转向使用TensorFlow 2实现TimeGAN；请参阅论文以了解该方法的数学和方法的深入解释。
 - en: Implementing TimeGAN using TensorFlow 2
   id: totrans-131
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用TensorFlow 2实现TimeGAN
 - en: 'In this section, we will implement the TimeGAN architecture just described.
     The authors provide sample code using TensorFlow 1 that we will port to TensorFlow
     2\. Building and training TimeGAN requires several steps:'
   id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将实现刚刚描述的TimeGAN架构。作者提供了使用TensorFlow 1的示例代码，我们将其移植到TensorFlow 2。构建和训练TimeGAN需要几个步骤：
 - en: Selecting and preparing real and random time series inputs
   id: totrans-133
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 选择和准备真实和随机时间序列输入
 - en: Creating the key TimeGAN model components
   id: totrans-134
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建关键的TimeGAN模型组件
 - en: Defining the various loss functions and training steps used during the three
     training phases
   id: totrans-135
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义在三个训练阶段使用的各种损失函数和训练步骤。
 - en: Running the training loops and logging the results
   id: totrans-136
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 运行训练循环并记录结果。
 - en: Generating synthetic time series and evaluating the results
   id: totrans-137
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 生成合成时间序列并评估结果。
 - en: We'll walk through the key items for each of these steps; please refer to the
     notebook `TimeGAN_TF2` for the code examples in this section (unless otherwise
     noted), as well as additional implementation details.
   id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将逐步介绍每个步骤的关键项目；请参阅笔记本`TimeGAN_TF2`以获取本节中的代码示例（除非另有说明），以及其他实现细节。
 - en: Preparing the real and random input series
   id: totrans-139
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 准备真实和随机输入系列
 - en: The authors demonstrate the applicability of TimeGAN to financial data using
     15 years of daily Google stock prices downloaded from Yahoo Finance with six features,
     namely open, high, low, close and adjusted close price, and volume. We'll instead
@@ -1020,6 +1038,7 @@
   id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 作者使用了从Yahoo Finance下载的15年每日谷歌股票价格作为金融数据的TimeGAN适用性示例，包括六个特征，即开盘价、最高价、最低价、收盘价和调整后的收盘价以及交易量。我们将使用近20年的六个不同股票的调整后的收盘价，因为它引入了较高的变异性。我们将按照原始论文的要求，针对24个时间步长生成合成序列。
 - en: Among the stocks with the longest history in the Quandl Wiki dataset are those
     displayed in normalized format, that is, starting at 1.0, in *Figure 21.5*. We
     retrieve the adjusted close from 2000-2017 and obtain over 4,000 observations.
