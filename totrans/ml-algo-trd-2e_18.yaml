@@ -1,8 +1,10 @@
 - en: '18'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: CNNs for Financial Time Series and Satellite Images
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -15,6 +17,7 @@
     (Abdel-Hamid et al. 2014). Moreover, they have been shown to deliver state-of-the-art
     performance on time-series classification across various domains (Ismail Fawaz
     et al. 2019).
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
 - en: CNNs are named after a linear algebra operation called a **convolution** that
@@ -22,6 +25,7 @@
     in the last chapter) in at least one of their layers. We will show how convolutions
     work and why they are particularly well suited to data with a certain regular
     structure typically found in images but also present in time series.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
 - en: Research into **CNN architectures** has proceeded very rapidly, and new architectures
@@ -31,79 +35,98 @@
     weights for CNN layers closer to the input while fine-tuning the final layers
     to a specific task. We will also illustrate how to use CNNs for the specific computer
     vision task of **object detection**.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
 - en: 'CNNs can help build a **trading strategy** by generating signals from images
     or (multiple) time-series data:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
 - en: '**Satellite data** may signal future commodity trends, including the supply
     of certain crops or raw materials via aerial images of agricultural areas, mines,
     or transport networks like oil tankers. **Surveillance camera** footage, for example,
     from shopping malls, could be used to track and predict consumer activity.'
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Time-series data** encompasses a very broad range of data sources and CNNs
     have been shown to deliver high-quality classification results by exploiting their
     structural similarity with images.'
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: We will create a trading strategy based on predictions of a CNN that uses time-series
     data that's been deliberately formatted like images and demonstrate how to build
     a CNN to classify satellite images.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
 - en: 'More specifically, in this chapter, you will learn about the following:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
 - en: How CNNs employ several building blocks to efficiently model grid-like data
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Training, tuning, and regularizing CNNs for images and time-series data using
     TensorFlow
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Using transfer learning to streamline CNNs, even with less data
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Designing a trading strategy using return predictions by a CNN trained on time-series
     data formatted like images
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: How to classify satellite images
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: You can find the code samples for this chapter and links to additional resources
     in the corresponding directory of the GitHub repository. The notebooks include
     color versions of the images.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在对应的 GitHub 仓库目录中找到本章的代码示例和其他资源链接。笔记本包括图像的彩色版本。
 - en: How CNNs learn to model grid-like data
+  id: totrans-16
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何训练卷积神经网络来建模网格数据
 - en: 'CNNs are conceptually similar to feedforward **neural networks** (**NNs**):
     they consist of units with parameters called weights and biases, and the training
     process adjusts these parameters to optimize the network''s output for a given
     input according to a loss function. They are most commonly used for classification.
     Each unit uses its parameters to apply a linear operation to the input data or
     activations received from other units, typically followed by a nonlinear transformation.'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 卷积神经网络在概念上类似于前馈 **神经网络**（**NNs**）：它们由带有权重和偏置的单元组成，训练过程调整这些参数，以根据损失函数优化给定输入的网络输出。它们最常用于分类。每个单元使用其参数对输入数据或从其他单元接收到的激活应用线性操作，通常跟随非线性变换。
 - en: The overall network models a **differentiable function** that maps raw data,
     such as image pixels, to class probabilities using an output activation function
     like softmax. CNNs use an objective function such as cross-entropy loss to measure
     the quality of the output with a single metric. They also rely on the gradients
     of the loss with respect to the network parameter to learn via backpropagation.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 整体网络模型了一个 **可微分函数**，它将原始数据，如图像像素，映射到类概率，使用类似 softmax 的输出激活函数。卷积神经网络使用诸如交叉熵损失之类的目标函数来用单个指标衡量输出的质量。它们还依赖于相对于网络参数的损失的梯度，通过反向传播进行学习。
 - en: Feedforward NNs with fully connected layers do not scale well to high-dimensional
     image data with a large number of pixel values. Even the low-resolution images
     included in the CIFAR-10 dataset that we'll use in the next section contain 32×32
@@ -114,8 +137,12 @@
     to 1 million weights for a single input unit. Deep architectures with several
     layers of meaningful width quickly lead to an exploding number of parameters that
     make overfitting during training all but certain.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 全连接层的前馈神经网络在具有大量像素值的高维图像数据上不易扩展。即使是我们将在下一节中使用的 CIFAR-10 数据集中包含的低分辨率图像也包含 32×32
+    像素，每个像素由 8 位表示多达 256 种不同的颜色值。例如，对于 RGB 色彩模型的红、绿和蓝三个通道，完全连接的输入层中的单个单元意味着 32 × 32
+    × 3 = 3,072 个权重。对于标准分辨率 640×480 像素来说，单个输入单元已经产生接近 100 万个权重。具有几层有意义宽度的深度结构很快导致参数数量激增，在训练期间过拟合几乎是肯定的。
 - en: 'A fully connected feedforward NN makes no assumptions about the local structure
     of the input data so that arbitrarily reordering the features has no impact on
     the training result. By contrast, CNNs make the **key assumption** that the **data
@@ -126,47 +153,63 @@
     pixels are likely more relevant to detect key features such as edges and corners
     than faraway data points. Naturally, initial CNN applications such as handwriting
     recognition focused on image data.'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 全连接的前馈神经网络对输入数据的局部结构不做任何假设，因此对特征进行任意重排序对训练结果没有影响。相比之下，卷积神经网络做出了 **关键假设**，即 **数据具有网格状拓扑结构**，并且
+    **局部结构很重要**。换句话说，它们编码了这样一种假设：输入具有图像数据通常具有的结构：像素形成一个二维网格，可能有多个通道来表示颜色信号的组成部分。此外，附近像素的值可能比遥远的数据点更相关于检测边缘和角落等关键特征。自然地，最初的卷积神经网络应用，如手写识别，集中在图像数据上。
 - en: Over time, however, researchers recognized **similar characteristics in time-series
     data**, broadening the scope for the productive use of CNNs. Time-series data
     consists of measurements at regular intervals that create a one-dimensional grid
     along the time axis, such as the lagged returns for a given ticker. There can
     also be a second dimension with additional features for this ticker and the same
     time periods. Finally, we could represent additional tickers using the third dimension.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着时间的推移，研究人员逐渐认识到**时间序列数据中的类似特征**，扩大了CNN的有效使用范围。时间序列数据包含在时间轴上创建的间隔的测量值，形成沿时间轴的一维网格，例如给定股票的滞后回报。
+    还可以具有第二个维度，该维度具有此股票和相同时间段的其他特征。 最后，我们可以使用第三维来表示其他股票。
 - en: A common CNN use case beyond images includes audio data, either in a one-dimensional
     waveform in the time domain or, after a Fourier transform, as a two-dimensional
     spectrum in the frequency domain. CNNs also play a key role in AlphaGo, the first
     algorithm to win a game of Go against humans, where they evaluated different positions
     on the grid-like board.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 超出图像的常见CNN用例还包括音频数据，无论是在时间域中的一维波形还是在傅里叶变换后的频率域中的二维频谱。CNN也在AlphaGo中扮演了关键角色，这是第一个击败人类的围棋算法，在那里它们评估了网格状棋盘上的不同位置。
 - en: The most important element to encode the **assumption of a grid-like topology**
     is the **convolution** operation that gives CNNs their name, combined with **pooling**.
     We will see that the specific assumptions about the functional relationship between
     input and output data imply that CNNs need far fewer parameters and compute more
     efficiently.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 编码**网格状拓扑假设**的最重要元素是给CNN命名的**卷积**操作，与**池化**相结合。我们将看到，关于输入和输出数据之间的功能关系的具体假设意味着CNN需要更少的参数并更有效地计算。
 - en: In this section, we will explain how convolution and pooling layers learn filters
     that extract local features and why these operations are particularly suitable
     for data with the structure just described. State-of-the-art CNNs combine many
     of these basic building blocks to achieve the layered representation learning
     described in the previous chapter. We conclude by describing key architectural
     innovations over the last decade that saw enormous performance improvements.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将解释卷积和池化层如何学习提取局部特征的过滤器，以及为什么这些操作特别适用于具有刚刚描述的结构的数据。最先进的CNN将许多这些基本构建块组合在一起，以实现上一章描述的分层表示学习。我们最后将描述过去十年中关键的架构创新，这些创新带来了巨大的性能改进。
 - en: From hand-coding to learning filters from data
+  id: totrans-25
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 从手工编码到从数据中学习过滤器
 - en: For image data, this local structure has traditionally motivated the development
     of hand-coded filters that extract such patterns for the use as features in **machine
     learning** (**ML**) models.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于图像数据，这种局部结构传统上推动了开发手工编码过滤器的发展，这些过滤器提取这样的模式以供**机器学习**（**ML**）模型使用。
 - en: '*Figure 18.1* displays the effect of simple filters designed to detect certain
     edges. The notebook `filter_example.ipynb` illustrates how to use hand-coded filters
     in a convolutional network and visualizes the resulting transformation of the
@@ -174,53 +217,76 @@
     matrix, shown in the upper right of the figure. Below each filter, its effects
     are shown; they are a bit subtle and will be easier to spot in the accompanying
     notebook.'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图18.1*展示了设计用于检测特定边缘的简单过滤器的效果。笔记本`filter_example.ipynb`演示了如何在卷积网络中使用手工编码的过滤器，并可视化图像的结果转换。
+    过滤器是一个![](img/B15439_18_001.png)矩阵中排列的简单的[-1, 1]模式，显示在图的右上方。 在每个过滤器下面，显示其效果； 它们有点微妙，将在随附笔记本中更容易看到。'
 - en: '![](img/B15439_18_01.png)'
+  id: totrans-28
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_01.png)'
 - en: 'Figure 18.1: The result of basic edge filters applied to an image'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.1：应用于图像的基本边缘过滤器的结果
 - en: Convolutional layers, by contrast, are designed to learn such local feature
     representations from the data. A key insight is to restrict their input, called
     the **receptive field**, to a small area of the input so it captures basic pixel
     constellations that reflect common patterns like edges or corners. Such patterns
     may occur anywhere in an image, though, so CNNs also need to recognize similar
     patterns in different locations and possibly with small variations.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 相比之下，卷积层旨在从数据中学习这种局部特征表示。一个关键的见解是将它们的输入，称为**接受域**，限制在输入的一个小区域内，以便它捕获反映常见模式如边缘或角落的基本像素组合。这样的模式可能出现在图像的任何地方，因此CNN也需要识别不同位置和可能有小变化的类似模式。
 - en: Subsequent layers then learn to synthesize these local features to detect **higher-order
     features**. The linked resources on GitHub include examples of how to visualize
     the filters learned by a deep CNN using some of the deep architectures that we
     present in the next section on reference architectures.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 随后的层次学习合成这些局部特征，以检测**高阶特征**。GitHub上的链接资源包括一些我们在下一节关于参考架构中介绍的深度架构学习到的卷积神经网络卷积核的可视化示例。
 - en: How the elements of a convolutional layer operate
+  id: totrans-32
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 卷积层中元素的操作方式
 - en: 'Convolutional layers integrate **three architectural ideas** that enable the
     learning of feature representations that are to some degree invariant to shifts,
     changes in scale, and distortion:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 卷积层整合了**三种架构思想**，使得学习到的特征表示在某种程度上对移位、尺度变化和失真具有不变性：
 - en: Sparse rather than dense connectivity
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 稀疏连接而不是密集连接
 - en: Weight sharing
+  id: totrans-35
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 权重共享
 - en: Spatial or temporal downsampling
+  id: totrans-36
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 空间或时间下采样
 - en: Moreover, convolutional layers allow for inputs of variable size. We will walk
     through a typical convolutional layer and describe each of these ideas in turn.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，卷积层允许输入的大小可变。我们将逐步介绍一个典型的卷积层，并依次描述每个思想。
 - en: '*Figure 18.2* outlines the set of operations that typically takes place in
     a three-dimensional convolutional layer, assuming image data is input with the
     three dimensions of height, width, and depth, or the number of channels. The range
@@ -228,63 +294,86 @@
     bits. Alternatively, the width axis could represent time, the height different
     features, and the channels could capture observations on distinct objects such
     as tickers.'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图18.2*概述了通常在三维卷积层中发生的一系列操作，假设图像数据输入具有高度、宽度和深度三个维度，或者通道数。像素值的范围取决于位表示，例如，8位表示为[0,
+    255]。或者，宽度轴可以表示时间，高度可以表示不同的特征，通道可以捕捉到关于不同对象的观察，例如股票。'
 - en: '![](img/B15439_18_02.png)'
+  id: totrans-39
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_02.png)'
 - en: 'Figure 18.2: Typical operations in a two-dimensional convolutional layer'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.2：二维卷积层中的典型操作
 - en: Successive computations process the input through the convolutional, detector,
     and pooling stages that we describe in the next three sections. In the example
     depicted in *Figure 18.2*, the convolutional layer receives three-dimensional
     input and produces an output of the same dimensionality.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 连续的计算通过卷积、探测器和池化阶段处理输入，我们在接下来的三节中描述了这些阶段。在*图18.2*中描绘的例子中，卷积层接收三维输入并产生相同维度的输出。
 - en: State-of-the-art CNNs are composed of several such layers of varying sizes that
     are either stacked on top of each other or operate in parallel on different branches.
     With each layer, the network can detect higher-level, more abstract features.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 当代的卷积神经网络由多个这样大小不同的层次组成，这些层次要么堆叠在一起，要么在不同的分支上并行运行。随着每一层的增加，网络可以检测到更高级别、更抽象的特征。
 - en: The convolution stage – extracting local features
+  id: totrans-43
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 卷积阶段 - 提取局部特征
 - en: The first stage applies a filter, also called the **kernel**, to overlapping
     patches of the input image. The filter is a matrix of a much smaller size than
     the input so that its receptive field is limited to a few contiguous values such
     as pixels or time-series values. As a result, it focuses on local patterns and
     dramatically reduces the number of parameters and computations relative to a fully
     connected layer.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一阶段应用一个滤波器，也称为**核**，到输入图像的重叠块上。滤波器是比输入要小得多的矩阵，因此其感受野限制在几个连续值（如像素或时间序列值）上。因此，它专注于局部模式，并且相对于完全连接的层，大大减少了参数和计算的数量。
 - en: A complete convolutional layer has several **feature maps** organized as depth
     slices (depicted in *Figure 18.2*) so that each layer can extract multiple features.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个完整的卷积层具有多个按深度切片组织的**特征图**（如*图18.2*所示），以便每一层可以提取多个特征。
 - en: From filters to feature maps
+  id: totrans-46
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 从滤波器到特征图
 - en: While scanning the input, the kernel is convolved with each input segment covered
     by its receptive field. The convolution operation is simply the dot product between
     the filter weights and the values of the matching input area after both have been
     reshaped to vectors. Each convolution thus produces a single number, and the entire
     scan yields a feature map. Since the dot product is maximized for identical vectors,
     the feature map indicates the degree of activation for each input region.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
 - en: '*Figure 18.3* illustrates the result of the scan of a ![](img/B15439_18_002.png)
     input using a ![](img/B15439_18_003.png) filter with given values, and how the
     activation in the upper-right corner of the feature map results from the dot product
     of the flattened input region and the kernel:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_03.png)'
+  id: totrans-49
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.3: From convolutions to a feature map'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
 - en: The most important aspect is that the **filter values are the parameters** of
@@ -292,9 +381,11 @@
     the chosen loss function. In other words, CNNs learn useful feature representations
     by finding kernel values that activate input patterns that are most useful for
     the task at hand.
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
 - en: How to scan the input – strides and padding
+  id: totrans-52
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -303,27 +394,32 @@
     more (overlapping) areas but are computationally more expensive. Four options
     are commonly used when the filter does not fit the input perfectly and partially
     crosses the image boundary during the scan:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
 - en: '**Valid convolution**: Discards scans where the image and filter do not perfectly
     match'
+  id: totrans-54
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Same convolution**: Zero-pads the input to produce a feature map of equal
     size'
+  id: totrans-55
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Full convolution**: Zero-pads the input so that each pixel is scanned an
     equal number of times, including pixels at the border (to avoid oversampling pixels
     closer to the center)'
+  id: totrans-56
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Causal**: Zero-pads the input only on the left so that the output does not
     depend on an input from a later period; maintains the temporal order for time-series
     data'
+  id: totrans-57
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -331,9 +427,11 @@
     likely located. In combination with the number of depth slices, they determine
     the output size of the convolution stage. The Stanford lecture notes by Andrew
     Karpathy (see GitHub) contain helpful examples using NumPy.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
 - en: Parameter sharing for robust features and fast computation
+  id: totrans-59
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -341,64 +439,88 @@
     elementary feature detectors are likely useful across the entire image. CNNs encode
     these assumptions by sharing or tying the weights for the filter in a given depth
     slice.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
 - en: As a result, each depth slice specializes in a certain pattern and the number
     of parameters is further reduced. Weight sharing works less well, however, when
     images are spatially centered and key patterns are less likely to be uniformly
     distributed across the input area.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
 - en: The detector stage – adding nonlinearity
+  id: totrans-62
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 探测器阶段 - 添加非线性
 - en: The feature maps are usually passed through a nonlinear transformation. The
     **rectified linear unit** (**ReLU**) that we encountered in the last chapter is
     a common function for this purpose. ReLUs replace negative activations element-wise
     by zero and mitigate the risk of vanishing gradients found in other activation
     functions such as tanh (see *Chapter 17*, *Deep Learning for Trading*).
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 特征图通常通过非线性变换。我们在上一章中遇到的**修正线性单元**（**ReLU**）是一个常用函数。ReLU通过零逐元素地替换负激活，减轻了在其他激活函数中发现的梯度消失的风险，如tanh（参见*第17章*，*用于交易的深度学习*）。
 - en: 'A popular alternative is the **softplus function**:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种流行的替代方法是**softplus函数**：
 - en: '![](img/B15439_18_004.png)'
+  id: totrans-65
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_004.png)'
 - en: In contrast to ReLU, it has a derivative everywhere, namely the sigmoid function
     that we used for logistic regression (see *Chapter 7*, *Linear Models – From Risk
     Factors to Return Forecasts*).
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 与ReLU相比，它在任何地方都具有导数，即我们用于逻辑回归的sigmoid函数（参见*第7章*，*线性模型 - 从风险因子到收益预测*）。
 - en: The pooling stage – downsampling the feature maps
+  id: totrans-67
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 池化阶段 - 对特征图进行降采样
 - en: 'The last stage of the convolutional layer may downsample the feature map''s
     input representation to do the following:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 卷积层的最后阶段可能会对特征图的输入表示进行降采样以执行以下操作：
 - en: Reduce its dimensionality and prevent overfitting
+  id: totrans-69
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 减少其维度并防止过拟合
 - en: Lower the computational cost
+  id: totrans-70
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 降低计算成本
 - en: Enable basic translation invariance
+  id: totrans-71
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 启用基本的平移不变性
 - en: This assumes that the precise location of the features is not only less important
     for identifying a pattern but can even be harmful because it will likely vary
     for different instances of the target. Pooling lowers the spatial resolution of
     the feature map as a simple way to render the location information less precise.
     However, this step is optional and many architectures use pooling only for some
     layers or not at all.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 这假设特征的精确位置不仅对于识别模式的重要性较小，而且甚至可能是有害的，因为对于目标的不同实例，它可能会有所不同。池化通过降低特征图的空间分辨率来简化位置信息，这是使位置信息不那么精确的一种简单方式。但是，此步骤是可选的，许多架构仅对一些层使用池化或根本不使用。
 - en: A common pooling operation is **max pooling**, which uses only the maximum activation
     value from (typically) non-overlapping subregions. For a small ![](img/B15439_18_005.png)
     feature map, for instance, ![](img/B15439_18_001.png) max pooling outputs the
@@ -406,12 +528,17 @@
     Less common pooling operators use the average or the median. Pooling does not
     add or learn new parameters but the size of the input window and possibly the
     stride are additional hyperparameters.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种常见的池化操作是**最大池化**，它仅使用（通常）非重叠子区域中的最大激活值。例如，对于一个小的特征图，![](img/B15439_18_005.png)
+    最大池化输出每个四个非重叠区域的最大值。较少见的池化运算符使用平均值或中位数。池化不会添加或学习新参数，但输入窗口的大小和可能的步幅是额外的超参数。
 - en: The evolution of CNN architectures – key innovations
+  id: totrans-74
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: CNN 架构的演变 - 关键创新
 - en: Several CNN architectures have pushed performance boundaries over the past two
     decades by introducing important innovations. Predictive performance growth accelerated
     dramatically with the arrival of big data in the form of ImageNet (Fei-Fei 2015)
@@ -419,8 +546,11 @@
     Turk. The **ImageNet Large Scale Visual Recognition Challenge** (**ILSVRC**) became
     the focal point of CNN progress around a slightly smaller set of 1.2 million images
     from 1,000 classes.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 在过去的二十年中，几种CNN架构通过引入重要的创新推动了性能边界。随着大数据以ImageNet（Fei-Fei 2015）的形式到来，预测性能的增长速度显著加快，其中包括通过亚马逊的Mechanical
+    Turk由人类分配到20,000个类别的1400万张图像。**ImageNet大规模视觉识别挑战赛**（**ILSVRC**）成为围绕稍小一些的来自1000个类别的120万张图像的CNN进展的焦点。
 - en: It is useful to be familiar with the **reference architectures** dominating
     these competitions for practical reasons. As we will see in the next section on
     working with CNNs for image data, they offer a good starting point for standard
@@ -428,66 +558,92 @@
     tasks by building on a successful architecture with pretrained weights. Transfer
     learning not only speeds up architecture selection and training but also enables
     successful applications on much smaller datasets.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于实际原因，熟悉主导这些比赛的**参考架构**是有用的。正如我们将在下一节关于处理图像数据的CNNs中看到的那样，它们为标准任务提供了一个很好的起点。此外，**迁移学习**使我们能够在成功的架构上构建预训练权重，从而解决许多计算机视觉任务。迁移学习不仅加快了架构选择和训练的速度，还使得在更小的数据集上成功应用成为可能。
 - en: In addition, many publications refer to these architectures, and they often
     serve as a basis for networks tailored to segmentation or localization tasks.
     We will further describe some landmark architectures in the section on image classification
     and transfer learning.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 另外，许多出版物提到了这些架构，并且它们经常作为量身定制的网络的基础，用于分割或定位任务。我们将在关于图像分类和迁移学习的章节进一步描述一些里程碑式的架构。
 - en: Performance breakthroughs and network size
+  id: totrans-78
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 性能突破和网络规模
 - en: The left side of *Figure 18.4* plots the top-1 accuracy against the computational
     cost of a variety of network architectures. It suggests a positive relationship
     between the number of parameters and performance, but also shows that the marginal
     benefit of more parameters declines and that architectural design and innovation
     also matter.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图18.4*的左侧绘制了各种网络架构的计算成本与top-1准确度之间的关系。它表明参数数量与性能之间存在正相关关系，但同时也显示出更多参数的边际效益下降，架构设计和创新也很重要。'
 - en: The right side plots the top-1 accuracy per parameter for all networks. Several
     new architectures target use cases on less powerful devices such as mobile phones.
     While they do not achieve state-of-the-art performance, they have found much more
     efficient implementations. See the resources on GitHub for more details on these
     architectures and the analysis behind these charts.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 右侧绘制了所有网络的每个参数的top-1准确度。几种新的架构针对了在诸如手机等性能较低的设备上的用例。虽然它们没有达到最先进的性能，但它们找到了更有效的实现方式。有关这些架构及其图表背后的分析的更多详细信息，请参阅GitHub上的资源。
 - en: '![](img/B15439_18_04.png)'
+  id: totrans-81
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_04.png)'
 - en: 'Figure 18.4: Predictive performance and computational complexity'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.4：预测性能和计算复杂度
 - en: Lessons learned
+  id: totrans-83
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 学到
 - en: 'Some of the lessons learned from 20 years of CNN architecture developments,
     especially since 2012, include the following:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 从20年的CNN架构发展中学到的一些教训，特别是自2012年以来，包括以下内容：
 - en: '**Smaller convolutional** filters perform better (possibly except at the first
     layer) because several small filters can substitute for a larger filter at a lower
     computational cost.'
+  id: totrans-85
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**较小的卷积**滤波器表现更好（可能除了在第一层），因为几个小滤波器可以以较低的计算成本替代一个更大的滤波器。'
 - en: '**1 × 1 convolutions** reduce the dimensionality of feature maps so that the
     network can learn a larger number overall.'
+  id: totrans-86
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**1 × 1卷积**减少了特征图的维度，使得网络能够整体学习更多的数量。'
 - en: '**Skip connections** are able to create multiple paths through the network
     and enable the training of much higher-capacity CNNs.'
+  id: totrans-87
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**跳跃连接**能够通过网络创建多条路径，并使得能够训练容量更大的CNNs。'
 - en: CNNs for satellite images and object detection
+  id: totrans-88
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 用于卫星图像和对象检测的CNNs
 - en: 'In this section, we demonstrate how to solve key computer vision tasks such
     as image classification and object detection. As mentioned in the introduction
     and in *Chapter 3*, *Alternative Data for Finance – Categories and Use Cases*,
@@ -497,25 +653,33 @@
     clues about the supply of agricultural commodities, consumer and economic activity,
     or the status of manufacturing or raw material supply chains. Specific tasks might
     include the following, for example:'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们演示了如何解决关键的计算机视觉任务，例如图像分类和对象检测。正如在介绍和*第3章*，*金融替代数据 - 类别和用例*中所述，图像数据可以通过提供关于未来趋势、变化的基本面或与目标资产类别或投资范围相关的特定事件的线索，来为交易策略提供信息。流行的示例包括利用卫星图像来获取关于农产品供应、消费者和经济活动，或制造业或原材料供应链状况的线索。具体任务可能包括以下内容，例如：
 - en: '**Image classification**: Identifying whether cultivated land for certain crops
     is expanding, or predicting harvest quality and quantities'
+  id: totrans-90
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**图像分类**：识别某些作物的耕种土地是否正在扩大，或者预测收获的质量和数量'
 - en: '**Object detection**: Counting the number of oil tankers on a certain transport
     route or the number of cars in a parking lot, or identifying the locations of
     shoppers in a mall'
+  id: totrans-91
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**对象检测**：计算某条运输路线上的油轮数量或停车场中汽车的数量，或者识别购物中心中购物者的位置'
 - en: In this section, we'll demonstrate how to design CNNs to automate the extraction
     of such information, both from scratch using popular architectures and via transfer
     learning that fine-tunes pretrained weights to a given task. We'll also demonstrate
     how to detect objects in a given scene.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将演示如何设计 CNN 来自动提取此类信息，既可以从流行的架构开始，也可以通过迁移学习微调预训练权重以适应给定任务。我们还将演示如何在给定场景中检测对象。
 - en: We will introduce key CNN architectures for these tasks, explain why they work
     well, and show how to train them using TensorFlow 2\. We will also demonstrate
     how to source pretrained weights and fine-tune time. Unfortunately, satellite
@@ -526,8 +690,11 @@
     how to approach common tasks that you will likely need to tackle when aiming to
     design a trading strategy based on images relevant to the investment universe
     of your choice.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将介绍用于这些任务的关键 CNN 架构，解释它们为什么效果好，并展示如何使用 TensorFlow 2 对它们进行训练。我们还将演示如何获取预训练权重并进行微调。不幸的是，直接与交易策略相关信息的卫星图像非常昂贵且不容易获得。然而，我们将演示如何使用
+    EuroSat 数据集来构建一个识别不同土地用途的分类器。这篇简要介绍关于计算机视觉的 CNN 旨在演示如何处理常见任务，这些任务可能在设计基于图像的交易策略时需要解决。
 - en: All the libraries we introduced in the last chapter provide support for convolutional
     layers; we'll focus on the Keras interface of TensorFlow 2\. We are first going
     to illustrate the LeNet5 architecture using the MNIST handwritten digit dataset.
@@ -536,26 +703,36 @@
     learning based on state-of-the-art architectures before we apply what we've learned
     to actual satellite images. We conclude with an example of object detection in
     real-life scenes.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有我们在上一章介绍的库都支持卷积层；我们将专注于 TensorFlow 2 的 Keras 接口。我们首先将使用 MNIST 手写数字数据集来说明 LeNet5
+    架构。接下来，我们将演示如何在 CIFAR-10 上使用 AlexNet 进行数据增强，这是原始 ImageNet 的简化版本。然后，我们将继续使用最先进的架构进行迁移学习，然后将所学应用于实际卫星图像。最后，我们将以实际场景中的对象检测示例结束。
 - en: LeNet5 – The first CNN with industrial applications
+  id: totrans-95
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: LeNet5 – 第一个具有工业应用的 CNN
 - en: Yann LeCun, now the Director of AI Research at Facebook, was a leading pioneer
     in CNN development. In 1998, after several iterations starting in the 1980s, LeNet5
     became the first modern CNN used in real-world applications that introduced several
     architectural elements still relevant today.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: Yann LeCun，现任 Facebook AI 研究总监，是 CNN 发展的领先先驱之一。在经历了从 1980 年代开始的数次迭代后，1998 年，LeNet5
+    成为了第一个现代 CNN，在真实应用中引入了几个今天仍然相关的架构元素。
 - en: LeNet5 was published in a very instructive paper, *Gradient-Based Learning Applied
     to Document Recognition* (LeCun et al. 1989), that laid out many of the central
     concepts. Most importantly, it promoted the insight that convolutions with learnable
     filters are effective at extracting related features at multiple locations with
     few parameters. Given the limited computational resources at the time, efficiency
     was of paramount importance.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: LeNet5 发表在一篇非常有启发性的论文中，《基于梯度的学习应用于文档识别》（LeCun 等人，1989年），该论文阐述了许多核心概念。最重要的是，它提出了卷积与可学习滤波器相结合在多个位置提取相关特征的见解，而参数却很少。考虑到当时的计算资源有限，效率至关重要。
 - en: LeNet5 was designed to recognize the handwriting on checks and was used by several
     banks. It established a new benchmark for classification accuracy, with a result
     of 99.2 percent on the MNIST handwritten digit dataset. It consists of three convolutional
@@ -563,12 +740,16 @@
     and a fully connected output layer. Throughout the convolutional layers, the number
     of feature maps increases while their dimensions decrease. It has a total of 60,850
     trainable parameters (Lecun et al. 1998).
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: LeNet5设计用于识别支票上的手写字，并被几家银行使用。它为分类准确率建立了一个新的基准，MNIST手写数字数据集的结果为99.2％。它由三个卷积层组成，每个卷积层都包含非线性tanh变换、池化操作和一个全连接的输出层。在卷积层中，特征图的数量增加，而它们的维度减小。它总共有60,850个可训练参数（Lecun等人，1998年）。
 - en: '"Hello World" for CNNs – handwritten digit classification'
+  id: totrans-99
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 卷积神经网络的“Hello World”–手写数字分类
 - en: In this section, we'll implement a slightly simplified version of LeNet5 to
     demonstrate how to build a CNN using a TensorFlow implementation. The original
     MNIST dataset contains 60,000 grayscale images in ![](img/B15439_18_008.png) pixel
@@ -577,167 +758,245 @@
     encountered in *Chapter 13*, *Data-Driven Risk Factors and Asset Allocation with
     Unsupervised Learning*. See the `digit_classification_with_lenet5` notebook for
     implementation details.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将实现一个稍微简化的LeNet5版本，以演示如何使用TensorFlow实现CNN。原始的MNIST数据集包含60,000个灰度图像，每个图像的分辨率为![](img/B15439_18_008.png)像素，每个图像包含一个从0到9的单个手写数字。一个很好的替代品是更具挑战性但结构相似的Fashion
+    MNIST数据集，我们在*第13章*中遇到了它，*数据驱动的风险因子和无监督学习的资产配置*。有关实现细节，请参阅`digit_classification_with_lenet5`笔记本。
 - en: 'We can load it in Keras out of the box:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以直接在Keras中加载它：
 - en: '[PRE0]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '*Figure 18.5* shows the first ten images in the dataset and highlights significant
     variation among instances of the same digit. On the right, it shows how the pixel
     values for an individual image range from 0 to 255:'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图18.5*显示了数据集中的前十个图像，并突出显示了相同数字实例之间的显着变化。右侧显示了单个图像的像素值范围从0到255：'
 - en: '![](img/B15439_18_05.png)'
+  id: totrans-104
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_05.png)'
 - en: 'Figure 18.5: MNIST sample images'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.5：MNIST样本图像
 - en: 'We rescale the pixel values to the range [0, 1] to normalize the training data
     and facilitate the backpropagation process and convert the data to 32-bit floats,
     which reduce memory requirements and computational cost while providing sufficient
     precision for our use case:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将像素值重新缩放到范围[0, 1]以规范化训练数据，并促进反向传播过程，并将数据转换为32位浮点数，这减少了内存需求和计算成本，同时为我们的用例提供了足够的精度：
 - en: '[PRE1]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Defining the LeNet5 architecture
+  id: totrans-108
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 定义LeNet5架构
 - en: 'We can define a simplified version of LeNet5 that omits the original final
     layer containing radial basis functions as follows, using the default "valid"
     padding and single-step strides unless defined otherwise:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以定义一个简化版的LeNet5，省略了包含径向基函数的原始最终层，使用默认的“valid”填充和单步跨度，除非另有定义：
 - en: '[PRE2]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'The summary indicates that the model thus defined has over 300,000 parameters:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 摘要表明，所定义的模型具有超过300,000个参数：
 - en: '[PRE3]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'We compile with `sparse_crossentropy_loss`, which accepts integers rather than
     one-hot-encoded labels and the original stochastic gradient optimizer:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用`sparse_crossentropy_loss`进行编译，它接受整数而不是one-hot编码的标签和原始的随机梯度优化器：
 - en: '[PRE4]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Training and evaluating the model
+  id: totrans-115
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 训练和评估模型
 - en: 'Now we are ready to train the model. The model expects four-dimensional input,
     so we reshape accordingly. We use the standard batch size of 32 and an 80:20 train-validation
     split. Furthermore, we leverage checkpointing to store the model weights if the
     validation error improves, and make sure the dataset is randomly shuffled. We
     also define an `early_stopping` callback to interrupt training once the validation
     accuracy no longer improves for 20 iterations:'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们准备训练模型。模型期望四维输入，因此我们相应地进行了reshape。我们使用标准的批量大小32和80:20的训练-验证分割。此外，我们利用检查点来存储模型权重，如果验证错误改进，并确保数据集被随机洗牌。我们还定义了一个`early_stopping`回调，以在验证准确性不再改进20次迭代后中断训练：
 - en: '[PRE5]'
+  id: totrans-117
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'The training history records the last improvement after 81 epochs that take
     around 4 minutes on a single GPU. The test accuracy of this sample run is 99.09
     percent, almost exactly the same result as for the original LeNet5:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练历史记录了在81个周期之后的最后一次改进，这需要在单个GPU上花费约4分钟。这个样本运行的测试准确率为99.09％，几乎与原始LeNet5的结果完全相同：
 - en: '[PRE6]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: For comparison, a simple two-layer feedforward network achieves "only" 97.04
     percent test accuracy (see the notebook). The LeNet5 improvement on MNIST is,
     in fact, modest. Non-neural methods have also achieved classification accuracies
     greater than or equal to 99 percent, including K-nearest neighbors and support
     vector machines. CNNs really shine with more challenging datasets as we will see
     next.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了比较，一个简单的两层前馈网络只能达到 "仅" 97.04% 的测试准确度（见笔记本）。实际上，LeNet5 在 MNIST 上的改进是有限的。非神经方法也已经实现了大于或等于
+    99% 的分类精度，包括 K 最近邻和支持向量机。CNN 在处理更具挑战性的数据集时表现得非常出色，接下来我们将看到。
 - en: AlexNet – reigniting deep learning research
+  id: totrans-121
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: AlexNet – 重新点燃了深度学习研究
 - en: AlexNet, developed by Alex Krizhevsky, Ilya Sutskever, and Geoff Hinton at the
     University of Toronto, dramatically reduced the error rate and significantly outperformed
     the runner-up at the 2012 ILSVRC, achieving a top-5 error of 16 percent versus
     26 percent (Krizhevsky, Sutskever, and Hinton 2012). This breakthrough triggered
     a renaissance in ML research and put deep learning for computer vision firmly
     on the global technology map.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: AlexNet，由 Alex Krizhevsky、Ilya Sutskever 和 Geoff Hinton 在多伦多大学开发，显著降低了错误率，并在
+    2012 年 ILSVRC 中显著优于亚军，将前五错误率从 26% 降低到 16% (Krizhevsky, Sutskever 和 Hinton 2012)。这一突破引发了机器学习研究的复兴，并将计算机视觉的深度学习牢牢地放在了全球技术地图上。
 - en: The AlexNet architecture is similar to LeNet, but much deeper and wider. It
     is often credited with discovering **the importance of depth** with around 60
     million parameters, exceeding LeNet5 by a factor of 1,000, a testament to increased
     computing power, especially the use of GPUs, and much larger datasets.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: AlexNet 的架构类似于 LeNet，但更深更宽。它通常被认为是发现了**深度的重要性**，约 6000 万参数，比 LeNet5 多了 1000
+    倍，这证明了计算能力的增加，尤其是 GPU 的使用，以及更大的数据集。
 - en: It included convolutions stacked on top of each other rather than combining
     each convolution with a pooling stage, and successfully used dropout for regularization
     and ReLU for efficient nonlinear transformations. It also employed data augmentation
     to increase the number of training samples, added weight decay, and used a more
     efficient implementation of convolutions. It also accelerated training by distributing
     the network over two GPUs.
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 它采用了卷积堆叠而不是将每个卷积与池化阶段相结合，成功地使用了**dropout**进行正则化和**ReLU**进行高效的非线性变换。它还使用数据增强来增加训练样本的数量，添加了权重衰减，并使用了更高效的卷积实现。它还通过在两个GPU上分布网络来加速训练。
 - en: The notebook `image_classification_with_alexnet.ipynb` has a slightly simplified
     version of AlexNet tailored to the CIFAR-10 dataset that contains 60,000 images
     from 10 of the original 1,000 classes. It has been compressed to a ![](img/B15439_18_009.png)
     pixel resolution from the original ![](img/B15439_18_010.png), but still has three
     color channels.
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 笔记本 `image_classification_with_alexnet.ipynb` 中有一个稍微简化了的 AlexNet 版本，专门针对 CIFAR-10
+    数据集，该数据集包含了原始的 1000 类中的 10 类共 60000 张图像。它已经从原始的 ![](img/B15439_18_010.png) 像素分辨率压缩到了
+    ![](img/B15439_18_009.png) 像素，但仍然具有三个色彩通道。
 - en: See the notebook `image_classification_with_alexnet` for implementation details;
     we will skip over some repetitive steps here.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关实现详细信息，请参阅笔记本 `image_classification_with_alexnet`；这里我们将跳过一些重复的步骤。
 - en: Preprocessing CIFAR-10 data using image augmentation
+  id: totrans-127
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用图像增强预处理 CIFAR-10 数据
 - en: CIFAR-10 can also be downloaded using TensorFlow's Keras interface, and we rescale
     the pixel values and one-hot encode the ten class labels as we did with MNIST
     in the previous section.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: CIFAR-10 也可以使用 TensorFlow 的 Keras 接口下载，并且我们将像在上一节中使用 MNIST 时那样重新调整像素值并对十个类标签进行
+    one-hot 编码。
 - en: We first train a two-layer feedforward network on 50,000 training samples for
     45 epochs to achieve a test accuracy of 45.78 percent. We also experiment with
     a three-layer convolutional net with over 528,000 parameters that achieves 74.51
     percent test accuracy (see the notebook).
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先对 50000 个训练样本进行了 45 个周期的两层前馈网络训练，以达到 45.78% 的测试准确度。我们还尝试了一个具有 528000 个参数的三层卷积网络，其测试准确度达到了
+    74.51% （见笔记本）。
 - en: 'A common trick to enhance performance is to artificially increase the size
     of the training set by creating synthetic data. This involves randomly shifting
     or horizontally flipping the image or introducing noise into the image. TensorFlow
     includes an `ImageDataGenerator` class for this purpose. We can configure it and
     fit the training data as follows:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 提高性能的常见技巧是通过创建合成数据人为增加训练集的大小。这涉及随机移动或水平翻转图像，或向图像中引入噪声。TensorFlow 包含一个用于此目的的
+    `ImageDataGenerator` 类。我们可以按如下配置并拟合训练数据：
 - en: '[PRE7]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'The result shows how the augmented images (in low 32×32 resolution) have been
     altered in various ways as expected:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_06.png)'
+  id: totrans-133
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.6: Original and augmented samples'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
 - en: The test accuracy for the three-layer CNN improves modestly to 76.71 percent
     after training on the larger, augmented data.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
 - en: Defining the model architecture
+  id: totrans-136
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -745,14 +1004,17 @@
     images relative to the ImageNet samples used in the competition. To this end,
     we use the original number of filters but make them smaller (see the notebook
     for implementation details).
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
 - en: The summary (see the notebook) shows the five convolutional layers followed
     by two fully connected layers with frequent use of batch normalization, for a
     total of 21.5 million parameters.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: Comparing AlexNet performance
+  id: totrans-139
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -760,12 +1022,15 @@
     the latter with and without image augmentation. After 100 epochs (with early stopping
     if the validation accuracy does not improve for 20 rounds), we obtain the cross-validation
     trajectories and test accuracy for the four models, as displayed in *Figure 18.7*:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_07.png)'
+  id: totrans-141
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.7: Validation performance and test accuracy on CIFAR-10'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: AlexNet achieves the highest test accuracy with 79.33 percent after some 35
@@ -773,9 +1038,11 @@
     that trains for longer due to the larger dataset. The feedforward NN performs
     much worse than on MNIST on this more complex dataset, with a test accuracy of
     43.05 percent.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
 - en: Transfer learning – faster training with less data
+  id: totrans-144
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -785,9 +1052,11 @@
     learning from the first task carries over to the task of interest. If successful,
     it can lead to better performance and faster training that requires less labeled
     data than training a neural network from scratch on the target task.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: Alternative approaches to transfer learning
+  id: totrans-146
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -796,6 +1065,7 @@
     feature representation that generalizes to new images. In a second step, it leverages
     the result to either initialize and retrain a new CNN or use it as input to a
     new network that tackles the task of interest.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: As discussed, CNN architectures typically use a sequence of convolutional layers
@@ -805,19 +1075,25 @@
     the bottleneck features. We can use the **bottleneck features** of a pretrained
     network as inputs into a new fully connected network, usually after applying a
     ReLU activation function.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前所述，CNN架构通常使用一系列卷积层来检测分层模式，然后添加一个或多个全连接层将卷积激活映射到结果类别或值。馈入完全连接部分的最后一个卷积层的输出称为瓶颈特征。我们通常在应用ReLU激活函数后，可以将预训练网络的**瓶颈特征**用作新的全连接网络的输入。
 - en: In other words, we freeze the convolutional layers and **replace the dense part
     of the network**. An additional benefit is that we can then use inputs of different
     sizes because it is the dense layers that constrain the input size.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 换句话说，我们冻结卷积层，并**替换网络的密集部分**。另一个好处是我们可以使用不同尺寸的输入，因为是密集层限制了输入大小。
 - en: Alternatively, we can use the bottleneck features as **inputs into a different
     machine learning algorithm**. In the AlexNet architecture, for instance, the bottleneck
     layer computes a vector with 4,096 entries for each ![](img/B15439_18_010.png)
     input image. We then use this vector as features for a new model.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，我们可以将瓶颈特征用作**输入到不同的机器学习算法**。例如，在AlexNet架构中，瓶颈层为每个输入图像计算一个包含4,096个条目的向量。然后，我们将此向量用作新模型的特征。
 - en: We also can go a step further and not only replace and retrain the final layers
     using new data but also **fine-tune the weights of the pretrained CNN**. To achieve
     this, we continue training, either only for later layers while freezing the weights
@@ -827,145 +1103,201 @@
     ImageNet, for example, contains a wide variety of dog breeds, which may lead to
     feature representations specifically useful for differentiating between these
     classes.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以进一步，不仅使用新数据替换和重新训练最终层，而且**微调预训练的CNN的权重**。为了实现这一点，我们继续训练，要么仅针对较后面的层，同时冻结一些较早的层的权重，要么对所有层进行训练。动机可能是保留更低层学到的更通用的模式，例如边缘或颜色斑块检测器，同时允许CNN的后续层适应新任务的细节。例如，ImageNet包含各种各样的狗品种，这可能导致特征表示特定于区分这些类别。
 - en: Building on state-of-the-art architectures
+  id: totrans-152
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 建立在最先进的架构之上
 - en: Transfer learning permits us to leverage top-performing architectures without
     incurring the potentially fairly GPU- and data-intensive training. We briefly
     outline the key characteristics of a few additional popular architectures that
     are popular starting points.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 转移学习使我们能够利用表现出色的架构，而无需进行可能相当耗费GPU和数据的训练。我们简要概述了一些其他流行架构的关键特性，这些架构是流行的起点。
 - en: VGGNet – more depth and smaller filters
+  id: totrans-154
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: VGGNet – 更深和更小的滤波器
 - en: The runner-up in ILSVRC 2014 was developed by Oxford University's Visual Geometry
     Group (VGG, Simonyan 2015). It demonstrated the effectiveness of **much smaller**
     ![](img/B15439_18_012.png) **convolutional filters** combined in sequence and
     reinforced the importance of depth for strong performance. VGG16 contains 16 convolutional
     and fully connected layers that only perform ![](img/B15439_18_012.png) convolutions
     and ![](img/B15439_18_014.png) pooling (see *Figure 18.5*).
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: ILSVRC 2014的亚军是由牛津大学的视觉几何组（VGG，Simonyan 2015）开发的。它展示了**更小的**连续卷积滤波器的有效性，并强调了深度对于强大性能的重要性。VGG16包含16个卷积和全连接层，仅执行卷积和池化操作（见*图18.5*）。
 - en: VGG16 has **140 million parameters** that increase the computational costs of
     training and inference as well as the memory requirements. However, most parameters
     are in the fully connected layers that were since discovered not to be essential
     so that removing them greatly reduces the number of parameters without negatively
     impacting performance.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: VGG16有**1.4亿个参数**，这增加了训练和推断的计算成本以及内存需求。然而，大多数参数在后来被发现不是必需的全连接层中，因此删除它们大大减少了参数数量，而不会对性能产生负面影响。
 - en: GoogLeNet – fewer parameters through Inception
+  id: totrans-157
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: GoogLeNet – 通过Inception减少参数
 - en: Christian Szegedy at Google reduced the computational costs using more efficient
     CNN implementations to facilitate practical applications at scale. The resulting
     GoogLeNet (Szegedy et al. 2015) won the ILSVRC 2014 with only 4 million parameters
     due to the **Inception module**, compared to AlexNet's 60 million and VGG16's
     140 million.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 谷歌的 Christian Szegedy 使用更高效的 CNN 实现降低了计算成本，以促进规模化的实际应用。由于 **Inception 模块**，GoogLeNet（Szegedy
+    等人，2015）仅具有 400 万参数，而相比之下，AlexNet 具有 6000 万个参数，VGG16 具有 1.4 亿个参数。
 - en: The Inception module builds on the **network-in-network concept** that uses
     ![](img/B15439_18_015.png) convolutions to compress a deep stack of convolutional
     filters and thus reduce the cost of computation. The module uses parallel ![](img/B15439_18_015.png),
     ![](img/B15439_18_017.png), and ![](img/B15439_18_018.png) filters, combining
     the latter two with ![](img/B15439_18_015.png) convolutions to reduce the dimensionality
     of the filters passed in by the previous layer.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: Inception 模块建立在使用 ![](img/B15439_18_015.png) 卷积来压缩深层卷积滤波器堆栈从而降低计算成本的 **网络内网络概念**
+    上。该模块使用并行的 ![](img/B15439_18_015.png)、![](img/B15439_18_017.png) 和 ![](img/B15439_18_018.png)
+    滤波器，将后两者与 ![](img/B15439_18_015.png) 卷积结合起来，以降低前一层传递的滤波器的维度。
 - en: In addition, it uses average pooling instead of fully connected layers on top
     of the convolutional layers to eliminate many of the less impactful parameters.
     There have been several enhanced versions, most recently Inception-v4.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，它使用平均池化代替完全连接的层来消除许多不太重要的参数。最近还有几个增强版本，最新的是 Inception-v4。
 - en: ResNet – shortcut connections beyond human performance
+  id: totrans-161
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: ResNet – 超越人类性能的快捷连接
 - en: The **residual network** **(ResNet)** architecture was developed at Microsoft
     and won the ILSVRC 2015\. It pushed the top-5 error to 3.7 percent, below the
     level of human performance on this task of around 5 percent (He et al. 2015).
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: '**残差网络** **（ResNet）** 结构是在微软开发的，获得了 ILSVRC 2015 奖。它将 top-5 错误推到了 3.7%，低于人类在这项任务上的性能水平，约为
+    5%（He et al. 2015）。'
 - en: It introduces identity shortcut connections that skip several layers and overcome
     some of the challenges of training deep networks, enabling the use of hundreds
     or even over a thousand layers. It also heavily uses batch normalization, which
     was shown to allow higher learning rates and be more forgiving about weight initialization.
     The architecture also omits the fully connected final layers.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 它引入了跳过多个层的身份快捷连接，克服了训练深度网络的一些挑战，使得可以使用数百甚至超过一千个层。它还大量使用批量归一化，据显示可以允许更高的学习速率，并对权重初始化更宽容。该架构还省略了完全连接的最终层。
 - en: 'As mentioned in the last chapter, the training of deep networks faces the notorious
     vanishing gradient challenge: as the gradient propagates to earlier layers, repeated
     multiplication of small weights risks shrinking the gradient toward zero. Hence,
     increasing depth may limit learning.'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如上一章所提到的，深度网络的训练面临着臭名昭著的梯度消失挑战：随着梯度传播到较早的层，小权重的重复乘法会使梯度朝零收缩。因此，增加深度可能会限制学习。
 - en: The shortcut connection that skips two or more layers has become one of the
     most popular developments in CNN architectures and triggered numerous research
     efforts to refine and explain its performance. See the references on GitHub for
     additional information.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 跳过两个或多个层的快捷连接已成为 CNN 架构中最流行的发展之一，并引发了大量研究工作来改进和解释其性能。有关更多信息，请参见 GitHub 上的参考资料。
 - en: Transfer learning with VGG16 in practice
+  id: totrans-166
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在实践中使用 VGG16 进行迁移学习
 - en: Modern CNNs can take weeks to train on multiple GPUs on ImageNet, but fortunately,
     many researchers share their final weights. TensorFlow 2, for example, contains
     pretrained models for several of the reference architectures discussed previously,
     namely VGG16 and its larger version, VGG19, ResNet50, InceptionV3, and InceptionResNetV2,
     as well as MobileNet, DenseNet, NASNet, and MobileNetV2.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 现代 CNN 在多个 GPU 上对 ImageNet 进行训练可能需要数周，但幸运的是，许多研究人员分享他们的最终权重。例如，TensorFlow 2
+    包含了几种先前讨论过的参考架构的预训练模型，即 VGG16 及其更大的版本 VGG19、ResNet50、InceptionV3 和 InceptionResNetV2，以及
+    MobileNet、DenseNet、NASNet 和 MobileNetV2。
 - en: How to extract bottleneck features
+  id: totrans-168
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 如何提取瓶颈特征
 - en: 'The notebook `bottleneck_features.ipynb` illustrates how to download the pretrained
     VGG16 model, either with the final layers to generate predictions or without the
     final layers, as illustrated in *Figure 18.8*, to extract the outputs produced
     by the bottleneck features:'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_08.png)'
+  id: totrans-170
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.8: The VGG16 architecture'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
 - en: 'TensorFlow 2 makes it very straightforward to download and use pretrained models:'
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-173
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'You can use this model for predictions like any other Keras model: we pass
     in seven sample images and obtain class probabilities for each of the 1,000 ImageNet
     categories:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-175
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'To exclude the fully connected layers, just add the keyword `include_top=False`.
     Predictions are now output by the final convolutional layer `block5_pool` and
     match this layer''s shape:'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-177
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: By omitting the fully connected layers and keeping only the convolutional modules,
     we are no longer forced to use a fixed input size for the model such as the original
     ![](img/B15439_18_010.png) ImageNet format. Instead, we can adapt the model to
     arbitrary input sizes.
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: How to fine-tune a pretrained model
+  id: totrans-179
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -973,262 +1305,370 @@
     model and continue training using a new fully-connected set of layers and data
     with a different format (see the notebook `transfer_learning.ipynb` for code examples,
     adapted from a TensorFlow 2 tutorial).
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
 - en: We use the VGG16 weights, pretrained on ImageNet with TensorFlow's built-in
     cats versus dogs images (see the notebook on how to source the dataset).
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
 - en: 'Preprocessing resizes all images to ![](img/B15439_18_021.png) pixels. We indicate
     the new input size as we instantiate the pretrained VGG16 instance and then freeze
     all weights:'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'The shape of the model output for 32 sample images now matches that of the
     last convolutional layer in the headless model:'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'We can append new layers to the headless model using either the Sequential
     or the Functional API. For the Sequential API, adding `GlobalAveragePooling2D`,
     `Dense`, and `Dropout` layers works as follows:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'We set `from_logits=True` for the `BinaryCrossentropy` loss because the model
     provides a linear output. The summary shows how the new model combines the pretrained
     VGG16 convolutional layers and the new final layers:'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: See the notebook for the Functional API version.
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: 'Prior to training the new final layer, the pretrained VGG16 delivers a validation
     accuracy of 48.75 percent. Now we proceed to train the model for 10 epochs as
     follows, adjusting only the final layer weights:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-192
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '10 epochs boost validation accuracy above 94 percent. To fine-tune the model,
     we can unfreeze the VGG16 models and continue training. Note that you should only
     do so after training the new final layers: randomly initialized classification
     layers will likely produce large gradient updates that can eliminate the pretraining
     results.'
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
 - en: 'To unfreeze parts of the model, we select a layer, after which we set the weights
     to `trainable`; in this case, layer 12 of the total 19 layers in the VGG16 architecture:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Now just recompile the model and continue training for up to 50 epochs using
     early stopping, starting in epoch 10 as follows:'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在只需重新编译模型，并使用早停继续进行最多50个时期的训练，从第10个时期开始，如下所示：
 - en: '[PRE17]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '*Figure 18.9* shows how the validation accuracy increases substantially, reaching
     97.89 percent after another 22 epochs:'
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图18.9* 显示了验证准确率如何显著增加，经过另外22个时期后达到97.89％：'
 - en: '![](img/B15439_18_09.png)'
+  id: totrans-199
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_09.png)'
 - en: 'Figure 18.9: Cross-validation performance: accuracy and cross-entropy loss'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.9：交叉验证性能：准确度和交叉熵损失
 - en: Transfer learning is an important technique when training data is limited as
     is very often the case in practice. While cats and dogs are unlikely to produce
     tradeable signals, transfer learning could certainly help improve the accuracy
     of predictions on a relevant alternative dataset, such as the satellite images
     that we'll tackle next.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 当训练数据有限时，迁移学习是一种重要技术，这在实践中经常发生。虽然猫和狗不太可能产生可交易的信号，但迁移学习肯定可以帮助提高对相关替代数据集（例如我们将要处理的卫星图像）的预测准确性。
 - en: Classifying satellite images with transfer learning
+  id: totrans-202
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用迁移学习对卫星图像进行分类
 - en: Satellite images figure prominently among alternative data (see *Chapter 3*,
     *Alternative Data for Finance – Categories and Use Cases*). For instance, commodity
     traders may rely on satellite images to predict the supply of certain crops or
     resources by monitoring, activity on farms, at mining sites, or oil tanker traffic.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 用于替代数据的卫星图像在其中扮演着重要角色（见*第3章*，*金融领域的替代数据 - 类别和用例*）。例如，商品交易商可能依赖卫星图像来预测某些作物或资源的供应，方法是监控农场、矿场或油轮航行的活动。
 - en: The EuroSat dataset
+  id: totrans-204
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: EuroSat 数据集
 - en: 'To illustrate working with this type of data, we load the EuroSat dataset included
     in the TensorFlow 2 datasets (Helber et al. 2019). The EuroSat dataset includes
     around 27,000 images in ![](img/B15439_18_022.png) format that represent 10 different
     types of land uses. *Figure 18.10* displays an example for each label:'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明如何处理这种类型的数据，我们加载了包含在 TensorFlow 2 数据集中的 EuroSat 数据集（Helber等人，2019）。EuroSat
+    数据集包括约27,000张图像，格式为 ![](img/B15439_18_022.png)，代表10种不同类型的土地利用。*图18.10* 显示了每个标签的一个示例：
 - en: '![](img/B15439_18_10.png)'
+  id: totrans-206
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_10.png)'
 - en: 'Figure 18.10: Ten types of land use contained in the dataset'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.10：数据集中包含的十种土地利用类型
 - en: A time series of similar data could be used to track the relative sizes of cultivated,
     industrial, and residential areas or the status of specific crops to predict harvest
     quantities or quality, for example, for wine.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似数据的时间序列可以用来跟踪耕种、工业和住宅区域的相对大小，或者特定作物的状态，以预测收获量或质量，例如葡萄酒。
 - en: Fine-tuning a very deep CNN – DenseNet201
+  id: totrans-209
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 对非常深的CNN进行微调 - DenseNet201
 - en: Huang et al. (2018) developed a new architecture dubbed **densely connected**
     based on the insight that CNNs can be deeper, more accurate, and more efficient
     to train if they contain shorter connections between layers close to the input
     and those close to the output.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 黄等人（2018）根据这样一个洞见开发了一个新的架构，名为**密集连接**，即如果CNN包含接近输入和接近输出的层之间的较短连接，则可以更深，更准确，更容易训练。
 - en: One architecture, labeled **DenseNet201**, connects each layer to every other
     layer in a feedforward fashion. It uses the feature maps of all preceding layers
     as inputs, while each layer's own feature maps become inputs into all subsequent
     layers.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种被标记为**DenseNet201**的架构以前向传播的方式连接每一层到每一层。它使用所有前一层的特征映射作为输入，而每一层的特征映射成为所有后续层的输入。
 - en: 'We download the DenseNet201 architecture from `tensorflow.keras.applications`
     and replace its final layers with the following dense layers interspersed with
     batch normalization to mitigate exploding or vanishing gradients in this very
     deep network with over 700 layers:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从 `tensorflow.keras.applications` 下载 DenseNet201 架构，并用以下稠密层替换其最终层，其中包含批量归一化以减轻这个具有超过700层的非常深层网络中的梯度爆炸或消失：
 - en: '[PRE18]'
+  id: totrans-213
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Model training and results evaluation
+  id: totrans-214
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 模型训练和结果评估
 - en: We use 10 percent of the training images for validation purposes and achieve
     the best out-of-sample classification accuracy of 97.96 percent after 10 epochs.
     This exceeds the performance cited in the original paper for the best-performing
     ResNet-50 architecture with a 90-10 split.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将训练图像的10％用于验证目的，并在10个时期后获得97.96％的最佳外样分类准确度。这超过了原始论文中引用的最佳 ResNet-50 架构的性能，其分割比为90-10。
 - en: '![](img/B15439_18_11.png)'
+  id: totrans-216
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_11.png)'
 - en: 'Figure 18.11: Cross-validation performance'
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 图18.11：交叉验证性能
 - en: There would likely be additional performance gains from augmenting the relatively
     small training set.
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 从相对较小的训练集中进行增强很可能会获得额外的性能提升。
 - en: Object detection and segmentation
+  id: totrans-219
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 目标检测和分割
 - en: 'Image classification is a fundamental computer vision task that requires labeling
     an image based on certain objects it contains. Many practical applications, including
     investment and trading strategies, require additional information:'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 图像分类是一项基本的计算机视觉任务，它要求根据图像中包含的某些对象对图像进行标记。许多实际应用，包括投资和交易策略，都需要额外的信息：
 - en: The **object detection** task requires not only the identification but also
     the spatial location of all objects of interest, typically using bounding boxes.
     Several algorithms have been developed to overcome the inefficiency of brute-force
     sliding-window approaches, including region proposal methods (R-CNN; see for example
     Ren et al. 2015) and the **You Only Look Once** (**YOLO**) real-time object detection
     algorithm (Redmon 2016).
+  id: totrans-221
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**目标检测**任务不仅需要识别所有感兴趣对象，还需要这些对象的空间位置，通常使用边界框。已开发了几种算法来克服暴力滑动窗口方法的低效率，包括区域提议方法（R-CNN；例如，参见
+    Ren 等人 2015）和**你只需要看一次**（**YOLO**）实时目标检测算法（Redmon 2016）。'
 - en: The **object segmentation** task goes a step further and requires a class label
     and an outline of every object in the input image. This may be useful to count
     objects such as oil tankers, individuals, or cars in an image and evaluate a level
     of activity.
+  id: totrans-222
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**对象分割**任务更进一步，需要一个类别标签和输入图像中每个对象的轮廓。这对于计算图像中的物体数量，例如油船、个人或汽车，并评估活动水平可能会有所帮助。'
 - en: '**Semantic segmentation**, also called scene parsing, makes dense predictions
     to assign a class label to each pixel in the image. As a result, the image is
     divided into semantic regions and each pixel is assigned to its enclosing object
     or region.'
+  id: totrans-223
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**语义分割**，也称为场景解析，进行密集预测，为图像中的每个像素分配一个类别标签。因此，图像被分割成语义区域，每个像素被分配到其包围的对象或区域。'
 - en: Object detection requires the ability to distinguish between several classes
     of objects and to decide how many and which of these objects are present in an
     image.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 目标检测需要区分几类对象的能力，并决定图像中存在多少个以及哪些对象。
 - en: Object detection in practice
+  id: totrans-225
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 实践中的目标检测
 - en: 'A prominent example is Ian Goodfellow''s identification of house numbers from
     Google''s **Street View House Numbers** (**SVHN**) dataset (Goodfellow 2014).
     It requires the model to identify the following:'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个著名的例子是 Ian Goodfellow 从 Google 的 **街景房屋号码**（**SVHN**）数据集（Goodfellow 2014）中识别房屋号码。它要求模型识别以下内容：
 - en: How many of up to five digits make up the house number
+  id: totrans-227
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 最多五位数字中有多少位构成门牌号
 - en: The correct digit for each component
+  id: totrans-228
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每个组件的正确数字
 - en: The proper order of the constituent digits
+  id: totrans-229
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 数字构成的正确顺序
 - en: We will show how to preprocess the irregularly shaped source images, adapt the
     VGG16 architecture to produce multiple outputs, and train the final layer, before
     fine-tuning the pretrained weights to address the task.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将展示如何预处理不规则形状的源图像，调整 VGG16 架构以产生多个输出，并在微调预训练权重以解决任务之前，训练最终层。
 - en: Preprocessing the source images
+  id: totrans-231
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 对源图像进行预处理
 - en: The notebook `svhn_preprocessing.ipynb` contains code to produce a simplified,
     cropped dataset that uses bounding box information to create regularly shaped
     ![](img/B15439_18_023.png) images containing the digits; the original images are
     of arbitrary shape (Netzer 2011).
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 笔记本 `svhn_preprocessing.ipynb` 包含用于生成简化的、裁剪的数据集的代码，该数据集使用边界框信息创建包含数字的规则形状的图像；原始图像具有任意形状（Netzer
+    2011）。
 - en: '![](img/B15439_18_12.png)'
+  id: totrans-233
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_12.png)'
 - en: 'Figure 18.12: Cropped sample images of the SVHN dataset'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 18.12：SVHN 数据集的裁剪样本图像
 - en: The SVHN dataset contains house numbers with up to five digits and uses the
     class 10 if a digit is not present. However, since there are very few examples
     with five digits, we limit the images to those including up to four digits only.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: SVHN 数据集包含最多五位数的门牌号，并且如果数字不存在，则使用类别 10。然而，由于包含五位数字的示例非常少，我们将图像限制为仅包含最多四位数字的图像。
 - en: Transfer learning with a custom final layer
+  id: totrans-236
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用自定义最终层的迁移学习
 - en: The notebook `svhn_object_detection.ipynb` illustrates how to apply transfer
     learning to a deep CNN based on the VGG16 architecture, as outlined in the previous
     section. We will describe how to create new final layers that produce several
     outputs to meet the three SVHN task objectives, including one prediction of how
     many digits are present, and one for the value of each digit in the order they
     appear.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: 'The best-performing architecture on the original dataset has eight convolutional
@@ -1237,71 +1677,93 @@
     pretrained on ImageNet weights, remove the layers after the convolutional blocks,
     freeze the weights, and create new dense and predictive layers as follows using
     the Functional API:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-239
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: The prediction layer combines the four-class output for the number of digits
     `n_digits` with four outputs that predict which digit is present at that position.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: Creating a custom loss function and evaluation metrics
+  id: totrans-241
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: The custom output requires us to define a loss function that captures how well
     the model is meeting its objective. We would also like to measure accuracy in
     a way that reflects predictive accuracy tailored to the specific labels.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: 'For the custom loss, we average the cross-entropy over the five categorical
     outputs, namely the number of digits and their respective values:'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-244
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'To measure predictive accuracy, we compare the five predictions with the corresponding
     label values and average the share of correct matches over the batch of samples:'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Finally, we integrate the base and final layers and compile the model with
     the custom loss and accuracy metric as follows:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Fine-tuning the VGG16 weights and final layer
+  id: totrans-249
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: We train the new final layers for 14 periods and continue fine-tuning all VGG16
     weights, as in the previous section, for another 23 epochs (using early stopping
     in both cases).
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
 - en: 'The following charts show the training and validation accuracy and the loss
     over the entire training period. As we unfreeze the VGG16 weights after the initial
     training period, the accuracy drops and then improves, achieving a validation
     performance of 94.52 percent:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_13.png)'
+  id: totrans-252
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.13: Cross-validation performance'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
 - en: See the notebook for additional implementation details and an evaluation of
     the results.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
 - en: Lessons learned
+  id: totrans-255
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1309,6 +1771,7 @@
     However, state-of-the-art performance achieves an error rate of only 1.02 percent
     ([https://benchmarks.ai/svhn](https://benchmarks.ai/svhn)). To get closer, the
     most important step is to increase the amount of training data.
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
 - en: 'There are two easy ways to accomplish this: we can include the larger number
@@ -1316,9 +1779,11 @@
     (see the *AlexNet: reigniting deep learning research* section). The currently
     best-performing approach relies heavily on augmentation learned from data (Cubuk
     2019).'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: CNNs for time-series data – predicting returns
+  id: totrans-258
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -1327,6 +1792,7 @@
     time-series data has a grid-like structure similar to that of images, and CNNs
     have been successfully applied to one-, two- and three-dimensional representations
     of temporal data.
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: The application of CNNs to time series will most likely bear fruit if the data
@@ -1338,6 +1804,7 @@
     Since locality matters, it is important that the data is organized accordingly,
     in contrast to feed-forward networks where shuffling the elements of any dimension
     does not negatively affect the learning process.
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
 - en: In this section, we provide a relatively simple example using a one-dimensional
@@ -1347,9 +1814,11 @@
     achieved good results by formatting multivariate time-series data like images
     to predict returns. We will also develop and test a trading strategy based on
     the signals contained in the predictions.
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: An autoregressive CNN with 1D convolutions
+  id: totrans-262
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1357,104 +1826,136 @@
     asset return model. More specifically, the model receives the most recent 12 months
     of returns and uses a single layer of one-dimensional convolutions to predict
     the subsequent month.
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
 - en: 'The requisite steps are as follows:'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
 - en: Creating the rolling 12 months of lagged returns and corresponding outcomes
+  id: totrans-265
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Defining the model architecture
+  id: totrans-266
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Training the model and evaluating the results
+  id: totrans-267
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: In the following sections, we'll describe each step in turn; the notebook `time_series_prediction`
     contains the code samples for this section.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: Preprocessing the data
+  id: totrans-269
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'First, we''ll select the adjusted close price for all Quandl Wiki stocks since
     2000 as follows:'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-271
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Next, we resample the price data to month-end frequency, compute returns, and
     set monthly returns over 100 percent to missing as they likely represent data
     errors. Then we drop tickers with missing observations, retaining 1,511 stocks
     with 215 observations each:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'To create the rolling series of 12 lagged monthly returns with their corresponding
     outcome, we iterate over rolling 13-month slices and append the transpose of each
     slice to a list after assigning the outcome date to the index. After completing
     the loop, we concatenate the DataFrames in the list as follows:'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-275
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'We end up with over 305,000 pairs of outcomes and lagged returns for the 2001-2017
     period:'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-277
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'When we compute the information coefficient for each lagged return and the
     outcome, we find that only lag 5 is not statistically significant:'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_14.png)'
+  id: totrans-279
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.14: Information coefficient with respect to forward return by lag'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
 - en: Defining the model architecture
+  id: totrans-281
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'Now we''ll define the model architecture using TensorFlow''s Keras interface.
     We combine a one-dimensional convolutional layer with max pooling and batch normalization
     to produce a real-valued scalar output:'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE27]'
+  id: totrans-283
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'The one-dimensional convolution computes the sliding dot product of a (regularized)
     vector of length 4 with each input sequence of length 12, using causal padding
     to maintain the temporal order (see the *How to scan the input: strides and padding*
     section). The resulting 32 feature maps have the same length, 12, as the input
     that max pooling in groups of size 4 reduces to 32 vectors of length 3.'
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
 - en: 'The model outputs the weighted average plus the bias of the flattened and normalized
     single vector of length 96, and has 449 trainable parameters:'
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-286
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: The notebook wraps the model generation and subsequent compilation into a `get_model()`
     function that parametrizes the model configuration to facilitate experimentation.
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
 - en: Model training and performance evaluation
+  id: totrans-288
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1463,6 +1964,7 @@
     we developed in *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*.
     See the notebook for the training loop that follows the pattern demonstrated in
     the previous chapter.
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
 - en: 'We use early stopping after five epochs to simplify the exposition, resulting
@@ -1471,25 +1973,31 @@
     that the model can often only learn very limited amounts of systematic information
     from the past returns. Thus cherry-picking the results yields a cumulative average
     information coefficient of around 4, as shown in *Figure 18.15*:'
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_15.png)'
+  id: totrans-291
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.15: (Biased) out-of-sample information coefficients for best epochs'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
 - en: We'll now proceed to a more complex example of using CNNs for multiple time-series
     data.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
 - en: CNN-TA – clustering time series in 2D format
+  id: totrans-294
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
 - en: To exploit the grid-like structure of time-series data, we can use CNN architectures
     for univariate and multivariate time series. In the latter case, we consider different
     time series as channels, similar to the different color signals.
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
 - en: An alternative approach converts a time series of alpha factors into a two-dimensional
@@ -1498,6 +2006,7 @@
     intervals and uses hierarchical clustering (see *Chapter 13*, *Data-Driven Risk
     Factors and Asset Allocation with Unsupervised Learning*) to locate indicators
     that behave similarly close to each other in a two-dimensional grid.
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
 - en: The authors train a CNN similar to the CIFAR-10 example we used earlier to predict
@@ -1505,15 +2014,18 @@
     to "buy-and-hold" and other models and find that it outperforms all alternatives
     using daily price series for Dow 30 stocks and the nine most-traded ETFs over
     the 2007-2017 time period.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
 - en: In this section, we experiment with this approach using daily US equity price
     data and demonstrate how to compute and convert a similar set of indicators into
     image format. Then we train a CNN to predict daily returns and evaluate a simple
     long-short strategy based on the resulting signals.
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
 - en: Creating technical indicators at different intervals
+  id: totrans-299
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1521,6 +2033,7 @@
     Wiki dataset by dollar volume for rolling five-year periods for 2007-2017\. See
     the notebook `engineer_cnn_features.ipynb` for the code examples in this section
     and some additional implementation details.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
 - en: 'Our features consist of 15 technical indicators and risk factors that we compute
@@ -1528,54 +2041,70 @@
     grid. The following table lists some of the technical indicators; in addition,
     we follow the authors in using the following metrics (see the *Appendix* for additional
     information):'
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
 - en: '**Weighted and exponential moving averages** (**WMA** and **EMA**) of the close
     price'
+  id: totrans-302
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Rate of change** (**ROC**) of the close price'
+  id: totrans-303
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Chande Momentum Oscillator** (**CMO**)'
+  id: totrans-304
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Chaikin A/D Oscillators** (**ADOSC**)'
+  id: totrans-305
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Average Directional Movement Index** (**ADX**)'
+  id: totrans-306
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_16.png)'
+  id: totrans-307
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 8.16: Technical indicators'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
 - en: 'For each indicator, we vary the time period from 6 to 20 to obtain 15 distinct
     measurements. For example, the following code example computes the **relative
     strength index** (**RSI**):'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-310
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'For the **Normalized Average True Range** (**NATR**) that requires several
     inputs, the computation works as follows:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-312
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: See the TA-Lib documentation for further details.
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
 - en: Computing rolling factor betas for different horizons
+  id: totrans-314
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1585,56 +2114,70 @@
     to impact equity returns. We capture these factors by computing the coefficients
     of a rolling OLS regression of a stock''s daily returns on the returns of portfolios
     designed to reflect the underlying drivers:'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
 - en: '**Equity risk premium**: Value-weighted returns of US stocks minus the 1-month
     US Treasury bill rate'
+  id: totrans-316
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Size** (**SMB**): Returns of stocks categorized as **Small** (by market cap)
     **Minus** those of **Big equities**'
+  id: totrans-317
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Value** (**HML**): Returns of stocks with **High** book-to-market value **Minus**
     those with a **Low value**'
+  id: totrans-318
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Investment** (**CMA**): Returns differences for companies with **Conservative**
     investment expenditures **Minus** those with **Aggressive spending**'
+  id: totrans-319
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '**Profitability** (**RMW**): Similarly, return differences for stocks with
     **Robust** profitability **Minus** that with a **Weak** metric.'
+  id: totrans-320
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'We source the data from Kenneth French''s data library using `pandas_datareader`
     (see *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*):'
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-322
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'Next, we apply statsmodels'' `RollingOLS()` to run regressions over windowed
     periods of different lengths, ranging from 15 to 90 days. We set the `params_only`
     parameter on the `.fit()` method to speed up computation and capture the coefficients
     using the `.params` attribute of the fitted `factor_model`:'
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-324
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: Features selecting based on mutual information
+  id: totrans-325
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: The next step is to select the 15 most relevant features from the 20 candidates
     to fill the 15×15 input grid. The code examples for the following steps are in
     the notebook `convert_cnn_features_to_image_format`.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
 - en: 'To this end, we estimate the mutual information for each indicator and the
@@ -1643,23 +2186,30 @@
     scikit-learn provides the `mutual_info_regression()` function that makes this
     straightforward, albeit time-consuming and memory-intensive. To accelerate the
     process, we randomly sample 100,000 observations:'
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-328
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'The left panel in *Figure 18.16* shows the mutual information, averaged across
     the 15 intervals for each indicator. NATR, PPO, and Bollinger Bands are most important
     from this metric''s perspective:'
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_17.png)'
+  id: totrans-330
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.17: Mutual information and two-dimensional grid layout for time series'
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
 - en: Hierarchical feature clustering
+  id: totrans-332
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1668,11 +2218,13 @@
     chapter, CNNs rely on the locality of relevant patterns that is typically found
     in images where nearby pixels are closely related and changes from one pixel to
     the next are often gradual.
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: To organize our indicators in a similar fashion, we will follow Sezer and Ozbayoglu's
     approach of applying hierarchical clustering. The goal is to identify features
     that behave similarly and order the columns and the rows of the grid accordingly.
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
 - en: 'We can build on SciPy''s `pairwise_distance()`, `linkage()`, and `dendrogram()`
@@ -1683,40 +2235,52 @@
     that merges clusters to minimize variance. The function returns the order of the
     leaf nodes in the dendrogram that in turn displays the successive formation of
     larger clusters:'
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE34]'
+  id: totrans-336
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'To obtain the optimized order of technical indicators in the columns and the
     different intervals in the rows, we use NumPy''s `.reshape()` method to ensure
     that the dimension we would like to cluster appears in the columns of the two-dimensional
     array we pass to `cluster_features()`:'
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE35]'
+  id: totrans-338
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: '*Figure 18.18* shows the dendrograms for both the row and column features:'
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_18.png)'
+  id: totrans-340
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.18: Dendrograms for row and column features'
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
 - en: We reorder the features accordingly and store the result as inputs for the CNN
     that we will create in the next step.
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
 - en: Creating and training a convolutional neural network
+  id: totrans-343
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: Now we are ready to design, train, and evaluate a CNN following the steps outlined
     in the previous section. The notebook `cnn_for_trading.ipynb` contains the relevant
     code examples.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
 - en: 'We again closely follow the authors in creating a CNN with 2 convolutional
@@ -1726,44 +2290,57 @@
     50 percent dropout probability to the incoming and outcoming connections to mitigate
     overfitting. The following table summarizes the CNN structure that contains 55,041
     trainable parameters:'
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE36]'
+  id: totrans-346
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: We cross-validate the model with the `MutipleTimeSeriesCV` train and validation
     set index generator introduced in *Chapter 7*, *Linear Models – From Risk Factors
     to Return Forecasts*. We provide 5 years of trading days during the training period
     in batches of 64 random samples and validate using the subsequent 3 months, covering
     the years 2014-2017\.
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: 'We scale the features to the range [-1, 1] and again use NumPy''s `.reshape()`
     method to create the requisite ![](img/Image78145.png) format:'
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE37]'
+  id: totrans-349
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: Training and validation follow the process laid out in *Chapter 17*, *Deep Learning
     for Trading*, relying on checkpointing to store weights after each epoch and generate
     predictions for the best-performing iterations without the need for costly retraining.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
 - en: 'To evaluate the model''s predictive accuracy, we compute the daily **information
     coefficient** (**IC**) for the validation set like so:'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE38]'
+  id: totrans-352
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: We train the model for up to 10 epochs using **stochastic gradient descent**
     with **Nesterov** momentum (see *Chapter 17*, *Deep Learning for Trading*) and
     find that the best performing epochs, 8 and 9, achieve a (low) daily average IC
     of around 0.009.
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
 - en: Assembling the best models to generate tradeable signals
+  id: totrans-354
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1773,20 +2350,26 @@
     example, the relatively short training period underscores that the amount of signals
     in financial time series is low compared to the systematic information contained
     in, for example, image data.
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
 - en: 'The `generate_predictions()` function reloads the model weights and returns
     the forecasts for the target period:'
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE39]'
+  id: totrans-357
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: We store the predictions and proceed to backtest a trading strategy based on
     these daily return forecasts.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
 - en: Backtesting a long-short trading strategy
+  id: totrans-359
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1794,16 +2377,20 @@
     weighted portfolios invested in stocks selected according to the signal quintiles
     using Alphalens (see *Chapter 4*, *Financial Feature Engineering – How to Research
     Alpha Factors*).
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: '*Figure 18.19* shows that for a one-day investment horizon, this naive strategy
     would have earned a bit over four basis points per day during the 2013-2017 period:'
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_19.png)'
+  id: totrans-362
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.19: Alphalens signal quality evaluation'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: We translate this slightly encouraging result into a simple strategy that enters
@@ -1812,15 +2399,19 @@
     with the S&P 500 benchmark over much of the backtesting period (left panel), resulting
     in a 35.6 percent cumulative return and a Sharpe ratio of 0.53 (before transaction
     costs; right panel)
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_18_20.png)'
+  id: totrans-365
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 18.20: Backtest performance in- and out-of-sample'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: Summary and lessons learned
+  id: totrans-367
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1828,12 +2419,14 @@
     series of alpha factors converted into a two-dimensional grid. Experimentation
     with different architectures and training parameters shows that the result is
     not very robust and slight modifications can yield significantly worse performance.
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
 - en: 'Tuning attempts also surface the notorious difficulties in successfully training
     a deep NN, especially when the signal-to-noise ratio is low: too complex a network
     or the wrong optimizer can lead the CNN to a local optimum where it always predicts
     a constant value.'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
 - en: The most important step to improve the results and obtain a performance closer
@@ -1844,6 +2437,7 @@
     to learn local patterns. The choice of *n* indicators and *m* intervals just makes
     it easier to organize the rows and the columns of the two-dimensional grid. Give
     it a shot!
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: Furthermore, the authors take a classification approach to the algorithmically
@@ -1852,9 +2446,11 @@
     chart in *Figure 18.18* suggests that longer holding periods (especially 10 days)
     might work better, so there is also scope for adjusting the strategy accordingly
     or switching to a classification approach.
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-372
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -1863,6 +2459,7 @@
     well on grid-like data. We covered the central operation of convolution or cross-correlation
     that drives the discovery of filters that in turn detect features useful to solve
     the task at hand.
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
 - en: We reviewed several state-of-the-art architectures that are good starting points,
@@ -1870,10 +2467,12 @@
     reduce the otherwise rather computationally and data-intensive training effort.
     We also saw that Keras makes it relatively straightforward to implement and train
     a diverse set of deep CNN architectures.
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
 - en: In the next chapter, we turn our attention to recurrent neural networks that
     are designed specifically for sequential data, such as time-series data, which
     is central to investment and trading.
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
