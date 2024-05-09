@@ -1,0 +1,1369 @@
+- en: Alpha Factor Library
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Throughout this book, we've described how to engineer features from market,
+    fundamental, and alternative data to build **machine learning** (**ML**) models
+    that yield signals for a trading strategy. The smart design of features, including
+    appropriate preprocessing and denoising, is what typically leads to an effective
+    strategy. This appendix synthesizes some of the lessons learned on feature engineering
+    and provides additional information on this important topic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*,
+    summarized the long-standing efforts of academics and practitioners to identify
+    information or variables that help reliably predict asset returns. This research
+    led from the single-factor capital asset pricing model to a "zoo of new factors"
+    (Cochrane, 2011). This *factor zoo* contains hundreds of firm characteristics
+    and security price metrics presented as statistically significant predictors of
+    equity returns in the anomalies literature since 1970 (see a summary in Green,
+    Hand, and Zhang, 2017).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*,
+    categorized factors by the underlying risk they represent and for which an investor
+    would earn a reward above and beyond the market return. These categories include
+    value versus growth, quality, and sentiment, as well as volatility, momentum,
+    and liquidity. Throughout this book, we used numerous metrics to capture these
+    risk factors. This appendix expands on those examples and collects popular indicators
+    so you can use it as a reference or inspiration for your own strategy development.
+    It also shows you how to compute them and includes some steps to evaluate these
+    indicators.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To this end, we'll focus on the broad range of indicators implemented by TA-Lib
+    (see *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*)
+    and the *101 Formulaic Alphas* paper (Kakushadze 2016), which presents real-life
+    quantitative trading factors used in production with an average holding period
+    of 0.6-6.4 days. To facilitate replication, we'll limit this review to indicators
+    that rely on readily available market data. This restriction notwithstanding,
+    the vast and rapidly evolving scope of potentially useful data sources and features
+    implies that this overview is far from comprehensive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Throughout this chapter, we will use *P*[t] for the closing price and *V*[t]
+    for the trading volume of an asset at time *t*. Where necessary, superscripts
+    like ![](img/B15439_A_001.png) or ![](img/B15439_A_002.png) differentiate between
+    open, high, low, or close prices. *r*[t] denotes the simple return for the period
+    return at time *t*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_003.png) and ![](img/B15439_A_004.png) refer to a time series
+    of prices and returns, respectively, from *t-d* to *t*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Common alpha factors implemented in TA-Lib
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The TA-Lib library is widely used to perform technical analysis of financial
+    market data by trading software developers. It includes over 150 popular indicators
+    from multiple categories that range from overlap studies, including moving averages
+    and Bollinger Bands, to statistic functions such as linear regression. The following
+    table summarizes the main categories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Function Group | # Indicators |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Overlap Studies | 17 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Momentum Indicators | 30 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Volume Indicators | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Volatility Indicators | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Price Transform | 4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cycle Indicators | 5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Math Operators | 11 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Math Transform | 15 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Statistic Functions | 9 |'
+  prefs: []
+  type: TYPE_TB
+- en: There are also over 60 functions that aim to recognize candlestick patterns
+    popular with traders that rely on the visual inspection of charts. Given the mixed
+    evidence on their predictive ability (Horton 2009; Marshall, Young, and Rose 2006),
+    and the goal of learning such patterns from data using the ML algorithms covered
+    in this book, we will focus on the categories listed in the preceding table. Specifically,
+    we will focus on moving averages, overlap studies, momentum, volume and liquidity,
+    volatility, and fundamental risk factors in this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See the notebook `common_alpha_factors` for the code examples in this section
+    and additional implementation details regarding TA-Lib indicators. We'll demonstrate
+    how to compute selected indicators for an individual stock, as well as a sample
+    of the 500 most-traded US stocks over the 2007-2016 period (see the notebook `sample_selection`
+    for the preparation of this larger dataset).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A key building block – moving averages
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Numerous indicators allow for calculation using different types of **moving
+    averages** (**MAs**). They make different tradeoffs between smoothing a series
+    and reacting to new developments. You can use them as building blocks for your
+    own indicators or modify the behavior of existing indicators by altering the type
+    of MA used in its construction, as we''ll demonstrate in the next section. The
+    following table lists the available types of MAs, the TA-Lib function to compute
+    them, and the code you can pass to other indicators to select the given type:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Moving Average | Function | Code |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Simple | SMA | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Exponential | EMA | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Weighted | WMA | 2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Double Exponential | DEMA | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Triple Exponential | TEMA | 4 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Triangular | TRIMA | 5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Kaufman Adaptive | KAMA | 6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MESA Adaptive | MAMA | 7 |'
+  prefs: []
+  type: TYPE_TB
+- en: In the remainder of this section, we'll briefly outline their definitions and
+    visualize their different behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simple moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For price series *P*[t] with a window of length *N*, the **simple moving average**
+    (**SMA**) at time *t* weighs each data point within the window equally:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_005.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Exponential moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For price series *P*[t] with a window of length *N*, the **exponential moving
+    average** (**EMA**) at time *t*, EMA[t], is recursively defined as the weighted
+    average of the current price and the most recent previous EMA[t][-1], where the
+    weights ![](img/B15439_22_043.png) and ![](img/B15439_A_007.png) are defined as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_008.png)![](img/B15439_A_009.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Weighted moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'For price series *P*[t] with a window of length *N*, the **weighted moving
+    average** (**WMA**) at time *t* is computed such that the weight of each data
+    point corresponds to its index within the window:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_010.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Double exponential moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **double exponential moving average** (**DEMA**) for a price series *P*[t]
+    at time *t*, DEMA[t], is based on the EMA designed to react faster to changes
+    in price. It is computed as the difference between twice the current EMA and the
+    EMA applied to the current EMA, labeled ![](img/B15439_A_011.png):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_012.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Since the calculation uses EMA[2], DEMA needs ![](img/B15439_A_013.png) samples
+    to start producing values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Triple exponential moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **triple exponential moving average** (**TEMA**) for a price series *P*[t]
+    at time *t*, TEMA[t], is also based on the EMA, yet designed to react even faster
+    to changes in price and indicate short-term price direction. It is computed as
+    the difference between three times the difference between the current EMA and
+    the EMA applied to the current EMA, EMA[2], with the addition of the EMA applied
+    to the EMA[2], labeled EMA[3]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_014.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Since the calculation uses EMA[3], DEMA needs ![](img/B15439_A_015.png) samples
+    to start producing values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Triangular moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **triangular moving average** (**TRIMA**) with window length *N* for a
+    price series *P*[t] at time *t*, TRIMA(*N*)[t], is a weighted average of the last
+    *N* SMA(*N*)[t] values. In other words, it applies the SMA to a time series of
+    SMA values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_016.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Kaufman adaptive moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The computation of the **Kaufman adaptive moving average** (**KAMA**) aims to
+    take into account changes in market volatility. See the notebook for links to
+    resources that explain the details of this slightly more involved computation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MESA adaptive moving average
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The **MESA adaptive moving average** (**MAMA**) is an exponential moving average
+    that adapts to price movement based on the rate change of phase, as measured by
+    the **Hilbert Transform discriminator** (see TA-Lib documentation). In addition
+    to the price series, MAMA accepts two additional parameters, *fastlimit* and *slowlimit*,
+    that control the maximum and minimum alpha values that should be applied to the
+    EMA when calculating MAMA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Visual comparison of moving averages
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '*Figure A.1* illustrates how the behavior of the different MAs differs in terms
+    of smoothing the time series and adapting to recent changes. All the time series
+    are calculated for a 21-day moving window (see the notebook for details and color
+    images):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.1: Comparison of MAs for AAPL closing price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Overlap studies – price and volatility trends
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'TA-Lib includes several indicators aimed at capturing recent trends, as listed
+    in the following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Function | Name |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BBANDS | Bollinger Bands |'
+  prefs: []
+  type: TYPE_TB
+- en: '| HT_TRENDLINE | Hilbert Transform – Instantaneous Trendline |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MAVP | Moving average with variable period |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MA | Moving average |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SAR | Parabolic SAR |'
+  prefs: []
+  type: TYPE_TB
+- en: '| SAREXT | Parabolic SAR – Extended |'
+  prefs: []
+  type: TYPE_TB
+- en: The `MA` and `MAVP` functions are wrappers for the various MAs described in
+    the previous section. We will highlight a few examples in this section; see the
+    notebook for additional information and visualizations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bollinger Bands
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Bollinger Bands combine an MA with an upper band and a lower band representing
+    the moving standard deviation. We can obtain the three time series by providing
+    an input price series, the length of the moving window, the multiplier for the
+    upper and lower bands, and the type of MA, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For a sample of AAPL closing prices for 2012, we can plot the result like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code results in the following plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.2: Bollinger Bands for AAPL close price in 2012'
+  prefs: []
+  type: TYPE_NORMAL
+- en: John Bollinger, who invented the concept, also defined over 20 trading rules
+    based on the relationships between the three lines and the current price (see
+    *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*).
+    For example, a smaller distance between the outer bands implies reduced recent
+    price volatility, which, in turn, is interpreted as greater volatility and price
+    change going forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can standardize the security-specific values of the Bollinger Bands by forming
+    ratios between the upper and lower bands, as well as between each of them and
+    the close price, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following plot displays the resulting normalized time series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.3: Normalized Bollinger Band indicators'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following function can be used with the pandas `.groupby()` and `.apply()`
+    methods to compute the indicators for a larger sample of 500 stocks, as shown
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure A.4* plots the distribution of values for each indicator across the
+    500 stocks (clipped at the 1^(st) and 99^(th) percentiles, hence the spikes in
+    the plots):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.4: Distribution of normalized Bollinger Band indicators'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parabolic SAR
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **parabolic SAR** aims to identify trend reversals. It is a trend-following
+    (lagging) indicator that can be used to set a trailing stop loss or determine
+    entry or exit points. It is usually represented in a price chart as a set of dots
+    near the price bars. Generally, when these dots are above the price, it signals
+    a downward trend; it signals an upward trend when the dots are below the price.
+    The change in the direction of the dots can be interpreted as a trade signal.
+    However, the indicator is less reliable in a flat or range-bound market. It is
+    computed as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_017.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The **extreme point** (**EP**) is a record that's kept during each trend that
+    represents the highest value reached by the price during the current uptrend—or
+    lowest value during a downtrend. During each period, if a new maximum (or minimum)
+    is observed, the EP is updated with that value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The α value represents the acceleration factor and is typically set initially
+    to a value of 0.02\. This factor increases by α each time a new EP is recorded.
+    The rate will then quicken to a point where the SAR converges toward the price.
+    To prevent it from getting too large, a maximum value for the acceleration factor
+    is normally set to 0.20.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can compute and plot it for our sample close price series as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code produces the following plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.5: Parabolic SAR for AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Momentum indicators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '*Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*,
+    introduced **momentum** as one of the best-performing risk factors historically
+    and listed several indicators designed to identify the corresponding price trends.
+    These indicators include the **relative strength index** (**RSI**), as well as
+    **price momentum** and **price acceleration**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Factor | Description | Calculation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Relative strength index (RSI) | RSI compares the magnitude of recent price
+    changes across stocks to identify stocks as overbought or oversold. A high RSI
+    (usually above 70) indicates overbought and a low RSI (typically below 30) indicates
+    oversold. It first computes the average price change for a given number (often
+    14) of prior trading days with rising (![](img/B15439_A_018.png)) and falling
+    prices (![](img/B15439_A_019.png)), respectively. | ![](img/B15439_A_020.png)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Price momentum | This factor computes the total return for a given number
+    of prior trading days d. In the academic literature, it is common to use the last
+    12 months except for the most recent month due to a short-term reversal effect
+    frequently observed. However, shorter periods have also been widely used. | ![](img/B15439_A_021.png)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Price acceleration | Price acceleration calculates the gradient of the price
+    trend using the linear regression coefficient ![](img/B15439_A_022.png) of a time
+    trend on daily prices for a longer and a shorter period, for example, 1 year and
+    3 months of trading days, and compares the change in the slope as a measure of
+    price acceleration. | ![](img/B15439_A_023.png) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'TA-Lib implements 30 momentum indicators; the most important ones are listed
+    in the following table. We will introduce a few selected examples; please see
+    the notebook `common_alpha_factors` for additional information:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Function | Name |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PLUS_DM/MINUS_DM | Plus/Minus Directional Movement |'
+  prefs: []
+  type: TYPE_TB
+- en: '| PLUS_DI/MINUS_DI | Plus/Minus Directional Indicator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| DX | Directional Movement Index |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADX | Average Directional Movement Index |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADXR | Average Directional Movement Index Rating |'
+  prefs: []
+  type: TYPE_TB
+- en: '| APO/PPO | Absolute/Percentage Price Oscillator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AROON/AROONOSC | Aroon/Aroon Oscillator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BOP | Balance of Power |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CCI | Commodity Channel Index |'
+  prefs: []
+  type: TYPE_TB
+- en: '| CMO | Chande Momentum Oscillator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MACD | Moving Average Convergence/Divergence |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MFI | Money Flow Index |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MOM | Momentum |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RSI | Relative Strength Index |'
+  prefs: []
+  type: TYPE_TB
+- en: '| STOCH | Stochastic |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ULTOSC | Ultimate Oscillator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| WILLR | Williams'' %R |'
+  prefs: []
+  type: TYPE_TB
+- en: Several of these indicators are closely related and build on each other, as
+    the following example demonstrates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Average directional movement indicators
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The **average directional movement index** (**ADX**) combines two other indicators,
+    namely the positive and negative directional indicators (`PLUS_DI` and `MINUS_DI`),
+    which, in turn, build on the positive and negative directional movement (`PLUS_DM`
+    and `MINUS_DM`). See the notebook for additional details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Plus/minus directional movement
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'For a price series *P*[t] with daily highs ![](img/B15439_A_024.png) and daily
+    lows ![](img/B15439_A_025.png), the directional movement tracks the absolute size
+    of price moves over a time period *T*, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_026.png)![](img/B15439_A_027.png)![](img/B15439_A_028.png)![](img/B15439_A_029.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can compute and plot this indicator for a 2-year price series of the AAPL
+    stock in 2012-13:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following plot visualizes the resulting time series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.6: PLUS_DM/MINUS_DM for AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Plus/minus directional index
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '`PLUS_DI` and `MINUS_DI` are the simple MAs of `PLUS_DM` and `MINUS_DM`, respectively,
+    each divided by the **average true range** (**ATR**). See the *Volatility indicators*
+    section later in this chapter for more details.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The simple MA is calculated over the given number of periods. The ATR is a smoothed
+    average of the true ranges.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Average directional index
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Finally, the **average directional index** (**ADX**) is the (simple) MA of
+    the absolute value of the difference between `PLUS_DI` and `MINUS_DI`, divided
+    by their sum:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_030.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Its values oscillate in the 0-100 range and are often interpreted as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ADX Value | Trend Strength |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0-25 | Absent or weak trend |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 25-50 | Strong trend |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 50-75 | Very strong trend |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 75-100 | Extremely strong trend |'
+  prefs: []
+  type: TYPE_TB
+- en: 'We compute the ADX time series for our AAPL sample series similar to the previous
+    examples, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following plot visualizes the result over the 2007-2016 period:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.7: ADX for the AAPL stock price series'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Aroon Oscillator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The Aroon indicator measures the time between highs and the time between lows
+    over a time period. It computes an `AROON_UP` and an `AROON_DWN` indicator, as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_031.png)![](img/B15439_A_032.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The Aroon Oscillator is simply the difference between the `AROON_UP` and `AROON_DOWN`
+    indicators and moves within the range from -100 to 100, as shown here for the
+    AAPL price series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.8: Aroon Oscillator for the AAPL stock price series'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Balance of power
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **balance of power** (**BOP**) intends to measure the strength of buyers
+    relative to sellers in the market by assessing the influence of each side on the
+    price. It is computed as the difference between the close and the open price,
+    divided by the difference between the high and the low price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_033.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Commodity channel index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **commodity channel index** (**CCI**) measures the difference between the
+    current *typical* price, computed as the average of current low, high, and close
+    price and the historical average price. A positive (negative) CCI indicates that
+    the price is above (below) the historic average. It is computed as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_034.png)![](img/B15439_A_035.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Moving average convergence divergence
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Moving average convergence divergence** (**MACD**) is a very popular trend-following
+    (lagging) momentum indicator that shows the relationship between two MAs of a
+    security''s price. It is calculated by subtracting the 26-period EMA from the
+    12-period EMA.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The TA-Lib implementation returns the MACD value and its signal line, which
+    is the 9-day EMA of the MACD. In addition, the MACD-Histogram measures the distance
+    between the indicator and its signal line. The following charts show the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_09.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.9: The three MACD series for the AAPL stock price series'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stochastic relative strength index
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The **stochastic relative strength index** (**StochRSI**) is based on the RSI
+    described at the beginning of this section and intends to identify crossovers,
+    as well as overbought and oversold conditions. It compares the distance of the
+    current RSI to the lowest RSI over a given time period *T* to the maximum range
+    of values the RSI has assumed for this period. It is computed as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_036.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The TA-Lib implementation offers more flexibility than the original unsmoothed
+    stochastic RSI version by Chande and Kroll (1993). To calculate the original indicator,
+    keep `timeperiod` and `fastk_period` equal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The return value `fastk` is the unsmoothed RSI. `fastd_period` is used to compute
+    a smoothed StochRSI, which is returned as `fastd`. If you do not care about StochRSI
+    smoothing, just set `fastd_period` to 1 and ignore the `fasytd` output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure A.10* plots the closing price and both the smoothed and unsmoothed
+    stochastic RSI:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_10.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.10: Smoothed and unsmoothed StochRSI series for the AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stochastic oscillator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A stochastic oscillator is a momentum indicator that compares a particular
+    closing price of a security to a range of its prices over a certain period of
+    time. Stochastic oscillators are based on the idea that closing prices should
+    confirm the trend. For Stochastic (STOCH), there are four different lines: *K*^(Fast),
+    *D*^(Fast), *K*^(Slow), and *D*^(Slow). *D* is the signal line usually drawn over
+    its corresponding *K* function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_037.png)![](img/B15439_A_038.png)![](img/B15439_A_039.png)![](img/B15439_A_040.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](img/B15439_A_041.png), ![](img/B15439_A_042.png), and ![](img/B15439_A_041.png)
+    are the extreme values of the last ![](img/B15439_A_044.png) period. ![](img/B15439_A_045.png)
+    and ![](img/B15439_A_046.png) are equivalent when using the same period. We obtain
+    the series shown in *Figure A.11*, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![](img/B15439_A_11.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.11: STOCH series for the AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Ultimate oscillator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The **ultimate oscillator** (**ULTOSC**) measures the average difference between
+    the current close and the previous lowest price over three timeframes—with the
+    default values 7, 14, and 28—to avoid overreacting to short-term price changes
+    and incorporate short-, medium-, and long-term market trends.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It first computes the buying pressure, BP[t], then sums it over the three periods
+    T[1], T[2], and T[3], normalized by the true range (TR[t]):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_047.png)![](img/B15439_A_048.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'ULTOSC is then computed as a weighted average over the three periods, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_049.png)![](img/B15439_A_050.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following plot shows the result of this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_12.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.12: ULTOSC series for the AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Williams %R
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: '**Williams %R**, also known as the **Williams Percent Range**, is a momentum
+    indicator that moves between 0 and -100 and measures overbought and oversold levels
+    to identify entry and exit points. It is similar to the stochastic oscillator
+    and compares the current closing price ![](img/B15439_A_051.png) to the range
+    of highest (![](img/B15439_A_052.png)) and lowest (![](img/B15439_A_053.png))
+    prices over the last *T* periods (typically 14). The indicators are computed as
+    follows, and the result is shown in the following chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_054.png)![](img/B15439_A_13.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.13: WILLR series for the AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Volume and liquidity indicators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Risk factors that focus on volume and liquidity incorporate metrics like turnover,
+    dollar volume, or market capitalization. TA-Lib implements three indicators, the
+    first two of which are closely related:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Function | Name |'
+  prefs: []
+  type: TYPE_TB
+- en: '| AD | Chaikin A/D Line |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ADOSC | Chaikin A/D Oscillator |'
+  prefs: []
+  type: TYPE_TB
+- en: '| OBV | On Balance Volume |'
+  prefs: []
+  type: TYPE_TB
+- en: Also see *Chapter 20*, *Autoencoders for Conditional Risk Factors and Asset
+    Pricing*, where we use the Amihud Illiquidity indicator to measure a rolling average
+    ratio between absolute returns and the dollar volume.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chaikin accumulation/distribution line and oscillator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The **Chaikin advance/decline** (**AD**) or **accumulation/distribution** (**AD**)
+    line is a volume-based indicator designed to measure the cumulative flow of money
+    into and out of an asset. The indicator assumes that the degree of buying or selling
+    pressure can be determined by the location of the close, relative to the high
+    and low for the period. There is buying (selling) pressure when a stock closes
+    in the upper (lower) half of a period's range. The intention is to signal a change
+    in direction when the indicator diverges from the security price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The A/D line is a running total of each period''s **money flow volume** (**MFV**).
+    It is calculated as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compute the **money flow index** (**MFI**) as the relationship of the close
+    to the high-low range
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Multiply the MFI by the period's volume *V*[t] to come up with the MFV
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Obtain the AD line as the running total of the MFV:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_055.png)![](img/B15439_A_056.png)![](img/B15439_A_057.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The **Chaikin A/D oscillator** (**ADOSC**) is the MACD indicator that's applied
+    to the Chaikin AD line. The Chaikin oscillator intends to predict changes in the
+    AD line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is computed as the difference between the 3-day EMA and the 10-day EMA of
+    the AD line. The following chart shows the ADOSC series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_14.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.14: ADOSC series for the AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: On-balance volume
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The **on-balance volume** (**OBV**) indicator is a cumulative momentum indicator
+    that relates volume to price change. It assumes that OBV changes precede price
+    changes because smart money can be seen flowing into the security by a rising
+    OBV. When the public then follows, both the security and OBV will rise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The current OBV[t] is computed by adding (subtracting) the current volume to
+    (from) the last OBV[t][-1] if the security closes higher (lower) than the previous
+    close:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_058.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Volatility indicators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Volatility indicators include stock-specific measures like the rolling (normalized)
+    standard deviation of asset prices and returns. It also includes broader market
+    measures like the Chicago Board Options Exchange's CBOE **volatility index** (**VIX**),
+    which is based on the implied volatility of S&P 500 options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: TA-Lib implements both normalized and averaged versions of the true range indicator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Average true range
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The **average true range** (**ATR**) indicator shows the volatility of the market.
+    It was introduced by Wilder (1978) and has been used as a component of numerous
+    other indicators since. It aims to anticipate changes in trend such that the higher
+    its value, the higher the probability of a trend change; the lower the indicator's
+    value, the weaker the current trend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'ATR is computed as the simple moving average for a period *T* of the **true
+    range** (**TRANGE**), which measures volatility as the absolute value of the largest
+    recent trading range:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_059.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The resulting series is shown in the following plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_15.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.15: ATR series for the AAPL stock price'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normalized average true range
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'TA-Lib also offers a normalized ATR that permits comparisons across assets.
+    The **normalized average true range** (**NATR**) is computed as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_060.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Normalization makes the ATR more relevant for long-term analysis where the price
+    changes substantially and for cross-market or cross-security comparisons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fundamental risk factors
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Commonly used measures of risk include the exposure of asset returns to the
+    returns of portfolios designed to represent fundamental factors. We introduced
+    the five-factor model by Fama and French (2015) and showed how to estimate factor
+    loadings and risk factor premia using two-state Fama-Macbeth regressions in *Chapter
+    7*, *Linear Models – From Risk Factors to Return Forecasts*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To estimate the relationship between the price of security and the forces included
+    in the five-factor model such as firm size, value-versus-growth dynamic, investment
+    policy and profitability, in addition to the broad market, we can use the portfolio
+    returns provided by Kenneth French's data library as exogenous variables in a
+    rolling linear regression.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following example accesses the data using the `pandas_datareader` module
+    (see *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*). It
+    then computes the regression coefficients for windows of 21, 63, and 252 trading
+    days:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The risk factors just described are commonly used and also known as **smart
+    beta factors** (see *Chapter 1*, *Machine Learning for Trading – From Idea to
+    Execution*). In addition, hedge funds have started to resort to alpha factors
+    derived from large-scale data mining exercises, which we'll turn to now.
+  prefs: []
+  type: TYPE_NORMAL
+- en: WorldQuant's quest for formulaic alphas
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We introduced WorldQuant in *Chapter 1*, *Machine Learning for Trading – From
+    Idea to Execution*, as part of a trend toward crowd-sourcing investment strategies.
+    WorldQuant maintains a virtual research center where quants worldwide compete
+    to identify **alphas**. These alphas are trading signals in the form of computational
+    expressions that help predict price movements, just like the common factors described
+    in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: These **formulaic alphas** translate the mechanism to extract the signal from
+    data into code, and they can be developed and tested individually with the goal
+    to integrate their information into a broader automated strategy (Tulchinsky 2019).
+    As stated repeatedly throughout this book, mining for signals in large datasets
+    is prone to multiple testing bias and false discoveries. Regardless of these important
+    caveats, this approach represents a modern alternative to the more conventional
+    features presented in the previous section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Kakushadze (2016) presents 101 examples of such alphas, 80 percent of which
+    were used in a real-world trading system at the time. It defines a range of functions
+    that operate on cross-sectional or time-series data and can be combined, for example,
+    in nested form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The notebook `101_formulaic_alphas` shows how to implement these functions using
+    pandas and NumPy, and also illustrates how to compute around 80 of these formulaic
+    alphas for which we have input data (we lack, for example, accurate historical
+    sector information).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross-sectional and time-series functions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The building blocks of the formulaic alphas proposed by Kakushadze (2016) are
+    relatively simple expressions that compute over longitudinal or cross-sectional
+    data that are readily implemented using pandas and NumPy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The cross-sectional functions include ranking and scaling, as well as the group-wise
+    normalization of returns, where the groups are intended to represent sector information
+    at different levels of granularity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can directly translate the ranking function into a pandas expression, using
+    a DataFrame as an argument in the format *number of period* × *number of tickers*,
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are also several time-series functions that will likely be familiar:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Function | Definition |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_{O}(x, d)` | Operator *O* applied to the time series for the past *d*
+    days; non-integer number of days *d* converted to floor(*d*). |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_lag(x, d)` | Value of *x*, *d* days ago. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_delta(x, d)` | Difference between the value of *x* today and *d* days
+    ago. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_rank(x, d)` | Rank over the past *d* days. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_mean(x, d)` | Simple moving average over the past *d* days. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_weighted_mean(x, d)` | Weighted moving average over the past *d* days
+    with linearly decaying weights *d*, *d* – 1, …, 1 (rescaled to sum up to 1). |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_sum(x, d)` | Rolling sum over the past *d* days. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_product(x, d)` | Rolling product over the past *d* days. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_stddev(x, d)` | Moving standard deviation over the past *d* days. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_max(x, d), ts_min(x, d)` | Rolling maximum/minimum over the past *d*
+    days. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_argmax(x, d), ts_argmin(x, d)` | Day of ts_*max(x, d), ts_min*(*x*, *c*).
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `ts_correlation(x, y, d)` | Correlation of *x* and *y* for the past *d* days.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'These time-series functions are also straightforward to implement using pandas''
+    rolling window functionality. For the rolling weighted mean, for example, we can
+    combine pandas with TA-Lib, as demonstrated in the previous section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To create the rolling correlation function, we provide two DataFrames containing
+    time series for different tickers in the columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: In addition, the expressions use common operators, as we will see as we turn
+    to the formulaic alphas that each combine several of the preceding functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Formulaic alpha expressions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To illustrate the computation of the alpha expressions, we need to create the
+    following input tables using the sample of the 500 most-traded stocks from 2007-2016
+    from the previous section (see the notebook `sample_selection` for details on
+    data preparation). Each table contains columns of time series for individual tickers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Variable | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `returns` | Daily close-to-close returns |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `open`, `close`, `high`, `low`, `volume` | Standard definitions for daily
+    price and volume data |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `vwap` | Daily volume-weighted average price |'
+  prefs: []
+  type: TYPE_TB
+- en: '| adv(d) | Average daily dollar volume for the past *d* days |'
+  prefs: []
+  type: TYPE_TB
+- en: Our data does not include the daily volume-weighted average price required by
+    many alpha expressions. To be able to demonstrate their computation, we very roughly
+    approximate this value using the simple average of the daily open, high, low,
+    and close prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Contrary to the common alphas presented in the previous section, the formulaic
+    alphas do not come with an economic interpretation of the risk exposure they represent.
+    We will now demonstrate a few simply numbered instances.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alpha 001
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The first alpha expression is formulated as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The ternary operator `a ? b : c` executes *b* if *a* evaluates to `true`, and
+    *c* otherwise. Thus, if the daily returns are positive, it squares the 20-day
+    rolling standard deviation; otherwise, it squares the current close price. It
+    then proceeds to rank the assets by the index of the day that shows the maximum
+    for this value.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Using *c* and *r* to represent the close and return inputs, the alpha translates
+    into Python using the previous functions and pandas methods, like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For the 10-year sample of 500 stocks, the distribution of Alpha 001 values
+    and its relationship with one-day forward returns looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_16.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.16: Alpha 001 histogram and scatter plot'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **information coefficient** (**IC**) is fairly low, yet it is statistically
+    significant at -0.0099 and the **mutual information** (**MI**) estimate yields
+    0.0129 (see *Chapter 4*, *Financial Feature Engineering – How to Research Alpha
+    Factors*, and the notebook `101_formulaic_alphas`, for implementation details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alpha 054
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Our second expression is the ratio of the difference between the low and the
+    close price and the low and the high price, each multiplied by the open and close,
+    respectively, raised to the fifth power:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Similarly, the translation into pandas is straightforward. We use `o`, `h`,
+    `l`, and c to represent the DataFrames containing the respective price series
+    for each ticker in the 500 columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, the IC is significant at 0.025, while the MI score is lower at
+    0.005.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will now take a look at how these different types of alpha factors compare
+    from a univariate and a multivariate perspective.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bivariate and multivariate factor evaluation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To evaluate the numerous factors, we rely on the various performance measures
+    introduced in this book, including the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bivariate measures of the signal content of a factor with respect to the one-day
+    forward returns
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Multivariate measures of feature importance for a gradient boosting model trained
+    to predict the one-day forward returns using all factors
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Financial performance of portfolios invested according to factor quantiles using
+    Alphalens
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will first discuss the bivariate metrics and then turn to the multivariate
+    metrics; we will conclude by comparing the results. See the notebook `factor_evaluation`
+    for the relevant code examples and additional exploratory analysis, such as the
+    correlation among the factors, which we'll omit here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Information coefficient and mutual information
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We will use the following bivariate metrics, which we introduced in *Chapter
+    4*, *Financial Feature Engineering – How to Research Alpha Factors*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The IC measured as the Spearman rank correlation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The MI score computed using `mutual_info_regression`, provided by scikit-learn
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The MI score uses a sample of 100,000 observations to limit the computational
+    cost of the nearest neighbor computations. Both metrics are otherwise easy to
+    compute and have been used repeatedly; see the notebook for implementation details.
+    We will see, however, that they can yield quite different results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feature importance and SHAP values
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To measure the predictive relevance of a feature given all other available factors,
+    we can train a LightGBM gradient boosting model with default settings to predict
+    the forward returns using all of the (approximately) 130 factors. The model uses
+    8.5 years of data to train 104 trees using early stopping. We will obtain test
+    predictions for the last year of data, which yield a global IC of 3.40 and a daily
+    average of 2.01.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will then proceed to compute the feature importance and **SHapley Additive
+    exPlanation** (**SHAP**) values, as described in *Chapter 12*, *Boosting Your
+    Trading Strategy*; see the notebook for details. The influence plot in *Figure
+    A.17* highlights how the values of the 20 most important features impact the model''s
+    predictions positively or negatively relative to the model''s default output.
+    In SHAP value terms, alphas 054 and 001 are among the top five factors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_17.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.17: SHAP values for common and formulaic alphas'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, let's compare how the different metrics rate our factors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Comparison – the top 25 features for each metric
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The rank correlation among SHAP values and conventional feature importance measured
+    as the weighted contribution of a feature to the reduction of the model's loss
+    function is high at 0.89\. It is also substantial between SHAP values and both
+    univariate metrics at around 0.5.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Interestingly, though, MI and IC disagree significantly in their feature rankings
+    with a correlation of only 0.16, as shown in the following diagram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_18.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.18: Rank correlation of performance metrics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure A.19* displays the top 25 features according to each metric. Except
+    for the MI score, which prefers the "common" alpha factors, features from both
+    sources are ranked highly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_19.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.19: Top 25 features for each performance metric'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is not immediately apparent why MI disagrees with the other metrics and why
+    few of the features it assigns a high score play a significant role in the gradient
+    boosting model. A possible explanation is that the computation uses only a 10
+    percent sample and the scores appear sensitive to the sample size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Financial performance – Alphalens
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Finally, we mostly care about the value of the trading signals emitted by an
+    alpha factor. As introduced in *Chapter 4*, *Financial Feature Engineering – How
+    to Research Alpha Factors*, and demonstrated repeatedly, Alphalens evaluates factor
+    performance on a standalone basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The notebook `alphalens_analysis` lets you select an individual factor and compute
+    how portfolios invested for a given horizon according to how factor quantile values
+    would have performed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The example in *Figure A.20* shows the result for Alpha 54; while portfolios
+    in the top and bottom quintiles did achieve a 1.5 bps average spread on a daily
+    basis, the cumulative returns of a long-short portfolio were negative:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_A_20.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure A.20: Alphalens performance metric for Alpha 54'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feel free to use the notebook as a template to evaluate the sample factors or
+    others of your own choosing more systematically.
+  prefs: []
+  type: TYPE_NORMAL

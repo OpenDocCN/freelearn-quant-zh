@@ -1,0 +1,1922 @@
+- en: Algorithmic Trading Strategies - Coding Step by Step
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is a complex task to build your own algorithmic trading strategies. A trading
+    platform with numerous components is required to test and run your strategy. Some
+    of these components are the compute engine, real-time data feeds, broker connectivity,
+    blotter, fund manager, clocks, a virtual order-management system, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, you will be using the services provided by AlgoBulls, an algorithmic
+    trading platform ([https://algobulls.com](https://algobulls.com)). This platform
+    provides a Python package called `pyalgotrading` ([https://github.com/algobulls/pyalgotrading](https://github.com/algobulls/pyalgotrading)).
+    You will code your strategy as a Python class by subclassing the `StrategyBase`
+    abstract class provided in the package. The abstract class acts as a template
+    for developing and validating new strategies quickly with minimal effort. You
+    can use the AlgoBulls platform to perform backtesting, paper trading, and real
+    trading on your strategy. The `pyalgotrading` package helps us focus on developing
+    the strategy and takes care of talking to the AlgoBulls platform for execution
+    purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This chapter introduces two strategies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**EMA-Regular-Order strategy**: This strategy is based on the technical indicator
+    exponential moving average. It uses regular orders.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**MACD-Bracket-Order strategy**: This strategy is based on the technical indicator
+    moving average convergence divergence. It uses bracket orders.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Initially, you may find strategy coding a daunting task. Therefore, the coding
+    part is divided into five recipes. Each recipe demonstrates one or more methods
+    enforced by the `StrategyBase` class. The sixth recipe demonstrates how to upload
+    the strategy to the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The skeleton for a strategy looks as shown:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The AlgoBulls core engine is the trading engine powering the AlgoBulls platform.
+    It is responsible for reading your strategies and executing them for backtesting,
+    paper trading, and real trading. The AlgoBulls core engine uses the following
+    flowchart for executing your strategy successfully:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/cb26ef36-c0ba-4d61-b223-d6224f210f67.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In this chapter, we will cover the following recipes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the __init__, initialize, name, and versions_supported methods
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_select_instruments_for_entry
+    method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_enter_position method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_select_instruments_for_exit
+    method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_exit_position method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – uploading the strategy onto the AlgoBulls trading
+    platform
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the __init__, initialize, name, and versions_supported methods
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_select_instruments_for_entry
+    method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_enter_position method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_select_instruments_for_exit
+    method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_exit_position method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – uploading the strategy onto AlgoBulls trading
+    platform
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Technical requirements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'You will need the following to execute the recipes in this chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python 3.7+
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Python packages:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pyalgotrading` (`$ pip install pyalgotrading`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`pyalgostrategypool` (`$ pip install pyalgostrategypool`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`TA-Lib` (`$ pip install TA-Lib`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If you face errors while installing `TA-Lib`, it will mostly be due to missing
+    dependencies. You can follow these instructions to fix the issue:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**For Mac OS X, use the following**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**For Windows, use the following instructions**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can install the latest `TA-Lib` binary from [https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib](https://www.lfd.uci.edu/~gohlke/pythonlibs/#ta-lib)
+    based on your Windows build (32 bit/64 bit) and Python version. So, for example,
+    this link on the site, [TA_Lib‑0.4.18‑cp38‑cp38‑win_amd64.whl](https://download.lfd.uci.edu/pythonlibs/w3jqiv8s/TA_Lib-0.4.18-cp39-cp39-win_amd64.whl),
+    is for `TA-Lib` version 0.4.18 (`TA_Lib-0.4.18`) and Python version 3.8 (`cp38`),
+    and is Windows 64-bit-compatible (`win_amd64`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**For Linux, take the following steps**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Download this `gzip` file—[http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz](http://prdownloads.sourceforge.net/ta-lib/ta-lib-0.4.0-src.tar.gz)—and
+    run the following commands from your Linux Terminal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Extract the downloaded `gzip` file containing the source code for `TA-Lib`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Change your current working directory to the extracted folder:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Run the `configure` command to configure `TA-Lib` for your machine:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Run the `make` command to build `TA-Lib` from the downloaded source code:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Run the `install` command to install built executables and libraries to specific
+    directories on your machine:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: If this doesn't help and you still get errors, please refer to the official
+    `TA-Lib` GitHub page at [https://github.com/mrjbq7/ta-lib#dependencies](https://github.com/mrjbq7/ta-lib#dependencies).
+    The latest Jupyter notebook for this chapter can be found on GitHub at [https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter08](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter08).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code will help you import the necessary modules that are used
+    by all the recipes in this chapter. Please make sure you have followed this step
+    before trying out any of the recipes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the first five recipes, you will create a complete algorithmic trading strategy
+    based on the EMA technical indicator. This strategy is called the **EMA-Regular-Order**
+    strategy and is described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Technical indicators**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`EMA(timeperiod=4)` or `EMA4`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`EMA(timeperiod=9)` or `EMA9`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: While the typical values of the time periods are `4` and `9`, both of the time
+    periods are taken as parameters, so they can be changed at runtime without having
+    to recreate the strategy again. This is discussed more in the first recipe of
+    this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Order attributes**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order transaction type: `BUY` and `SELL`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order type: `Regular`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order code: `INTRADAY`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order variety: `Market`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Strategy algorithm**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Whenever `EMA4` crosses `EMA9` upward, note the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The previous `SHORT` position, if present, should be exited.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `BUY` signal is generated by the strategy and a new `LONG` position should
+    be entered.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Whenever `EMA4` crosses `EMA9` downward, note the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The previous `LONG` position, if present, should be exited.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `SELL` signal is generated by the strategy and a new `SHORT` position should
+    be entered.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will code the entire logic as a single Python class called `StrategyEMARegularOrder`.
+    This class will be a subclass of `StrategyBase` from the `pyalgotrading` package.
+    After uploading `StrategyEMARegularOrder` on the AlgoBulls platform, you can backtest
+    (refer to the first six recipes of [Chapter 9](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml),
+    *Backtesting Strategies*), paper trade (refer to the first five recipes of [Chapter
+    10](0f869a6e-bb6b-4f5f-828e-33ca477c509d.xhtml), *Paper Trading*), and real trade
+    (refer to the first five recipes of [Chapter 11](725b5f38-fffb-46ae-8b5b-8a4667419e3a.xhtml),
+    *Real Trading*) on this strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the seventh to eleventh recipes, you will create a complete algorithmic
+    trading strategy based on the MACD technical indicator. This strategy is called
+    as the **MACD-Bracket-Order** strategy and is described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Technical indicators**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'MACD: This technical indicator has three components: the MACD line, MACD signal,
+    and MACD histogram. We are concerned only with the MACD line and MACD signal components
+    for this strategy.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Order attributes**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order transaction type: `BUY` and `SELL`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order type: `Bracket`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order code: `INTRADAY`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Order variety: `Limit`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Strategy algorithm**:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Whenever the MACD line crosses the MACD signal upward, note the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The previous `SHORT` position, if present, should be exited.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `BUY` signal is generated by the strategy and a new `LONG` position should
+    be entered.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Whenever the MACD line crosses the MACD signal downward, note the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The previous `LONG` position, if present, should be exited.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A `SELL` signal is generated by the strategy and a new `SHORT` position should
+    be entered.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You will code the entire logic as a single Python class, called `StrategyMACDBracketOrder`.
+    This class will be a subclass of `StrategyBase` from the `pyalgotrading` package.
+    After uploading `StrategyMACDBracketOrder` onto the AlgoBulls platform, you can
+    backtest (refer to the seventh to twelfth recipes of [Chapter 9](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml),
+    *Algorithmic Trading – Backtesting*), paper trade (refer to the seventh to twelfth
+    recipes of [Chapter 10](0f869a6e-bb6b-4f5f-828e-33ca477c509d.xhtml), *Algorithmic
+    Trading – **Paper Trading*), and real trade (refer to the seventh to eleventh
+    recipes of [Chapter 11](725b5f38-fffb-46ae-8b5b-8a4667419e3a.xhtml), *Algorithmic
+    Trading – **Real Trading*) on this strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For more information on these topics, please refer to the following corresponding
+    chapters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Technical indicators**: [Chapter 5](16529fe4-d3ea-4017-a6f9-bad85a41d8a0.xhtml),
+    *Computing and Plotting Technical Indicators*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Order attributes**: [Chapter 6](077b54a1-c9c4-424c-912a-11f28db3797f.xhtml),
+    *Placing Regular Orders on the Exchange* and [Chapter 7](d5760c5d-fa09-4008-ab45-5d7d69c4bde9.xhtml),
+    *Placing Bracket and Cover Orders on the Exchange*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You need to set up your account on the AlgoBulls platform ([https://algobulls.com](https://algobulls.com))
+    to get your API token. Setting up an account is free. Using its services might
+    incur charges depending on your usage. You can start with free packages on the
+    site. Refer to *Appendix II* for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the __init__, initialize, name, and versions_supported
+    methods
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'This recipe demonstrates the initial coding of the `StrategyEMARegularOrder`
+    class. The complete class will be coded by the end of the *EMA-Regular-Order strategy
+    – coding the strategy_exit_position method* recipe of this chapter. In this recipe,
+    you will code the following methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`__init__()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`initialize()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`name()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`versions_supported()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To learn more about the EMA technical indicator, please refer to the *Trend
+    indicator – exponential moving average* recipe of [Chapter 5](16529fe4-d3ea-4017-a6f9-bad85a41d8a0.xhtml), *Computing
+    and Plotting Technical Indicators*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `__init__()` and `initialize()` methods
+    during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have the `StrategyBase` and `pyalgotrading` constants in your
+    Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set it up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Create a new class named `StrategyEMARegularOrder`, which will be a subclass
+    from `StrategyBase` and then define the required four methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we create the `StrategyEMARegularOrder` class, subclassed from
+    `StrategyBase`. We define four methods for this class and describe them as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `__init__()` method: This is the first thing to do when you create a new
+    strategy. First, you create this method and call the parent class `__init__()`
+    method using `super()`. This helps the AlgoBulls core engine create the necessary
+    data structures needed for further development of the strategy. Next, you create
+    two new attributes from `self.strategy_parameters`—`self.timeperiod1` and `self.timeperiod2`.
+    `self.strategy_parameters` is a dictionary object available for every strategy
+    subclassed from `StrategyBase`. (The second recipe of [Chapter 8](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml),
+    *Backtesting Strategies*, discusses how these values are passed at runtime to
+    `self.strategy_parameters`.) You will use these parameters as time periods of
+    both the EMAs in the next recipe.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lastly, you create a new attribute, `self.main_order`, which is an empty dictionary.
+    We will use this to save the handles to all the open orders placed during the
+    execution of this strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `initialize()` method: This method is called at the beginning of every
+    market day to initialize any internal variables to their default state. For real
+    trading and paper trading, this method is called once. For multi-day backtesting,
+    this method is called multiple times, once at the beginning of every new trading
+    day. In this method, you initialize `self.main_order` to an empty dictionary.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The `name()` method: This is a static method, which returns the name of this
+    strategy. This is used while availing backtesting, paper trading, and real trading
+    services on this strategy. In this method, you simply return a string, `Exponential
+    Moving Average Regular Order`. You can return any string of your choice.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The `versions_supported()` method: This static method is used for returning
+    the AlgoBulls core engine version for which this strategy has been created. Often,
+    as new upgrades come to the AlgoBulls core engine, some backward-incompatible
+    changes may get introduced. This method helps to ensure this strategy is run on
+    the correct version of the AlgoBulls core engine at all times. In this method,
+    you return the highest available version from the constants module, which at the
+    time of writing this chapter is VERSION_3_2_0.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These four methods are mandatory; they are enforced by the `StrategyBase` base
+    class and cannot be skipped.
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_select_instruments_for_entry
+    method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you continue coding the `StrategyEMARegularOrder` class. Here,
+    you code the `strategy_select_instruments_for_entry()` method, a mandatory method
+    enforced by the `StrategyBase` base class. This method is called by the AlgoBulls
+    core engine on every new candle for backtesting, paper trading, and real trading
+    services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_select_instruments_for_entry()`
+    method during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the preceding recipe to create the `StrategyEMARegularOrder`
+    class before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyEMARegularOrder` class. We need to define two
+    new methods—a method for getting the crossover value between the MACD line and
+    MACD history signals and a method for selecting instruments from `instruments_bucket`
+    for entering a new position based on the computed crossover value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyEMARegularOrder` class. We
+    define two new methods for this class, described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `get_crossover_value()` method: This method takes `instrument` as an argument
+    (along with `self`). This is the financial instrument for which the crossover
+    value has to be computed. You fetch the latest historical data using the `self.get_historical_data()`
+    method and assign it to a new attribute, `hist_data`. We pass `instrument` as
+    the argument to this method. The `hist_data` attribute is a `pandas.DataFrame`
+    object with `timestamp`, `open`, `high`, `low`, `close`, and `volume` columns.
+    The default duration of the fetched historical data is the last 15 days.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You compute EMA on the close of `hist_data` using the `talib.EMA` function,
+    for a time period of `self.timeperiod1`, and assign it to `ema_x`. This data is
+    a `pandas.Series` object. (Refer to the second recipe of [Chapter 5](16529fe4-d3ea-4017-a6f9-bad85a41d8a0.xhtml), *Computing
+    and Plotting of Technical Indicators*, for more details on the computation of
+    EMA.) Similarly, you compute EMA on the close of `hist_data` for a time period
+    of `self.timeperiod2` and assign it to `ema_y`. This return data is again a `pandas.Series`
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You compute the crossover value between `ema_x` and `ema_y` using `self.utils.crossover(ema_x,
+    ema_y)` and assign it to a new attribute, `crossover_value`. The `crossover()`
+    function call works as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It takes two iterables as input. We pass `ema_x` and `ema_y` here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `ema_x` crosses `ema_y` upward, the crossover function returns `1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `ema_x` crosses `ema_y` downward, the crossover function returns `-1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If there is no crossover between `ema_x` and `ema_y`, then the crossover function
+    returns `0`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, you return `crossover_value`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `strategy_select_instruments_for_entry()` method: This method takes two
+    arguments, other than `self`—`candle`, an object of the `CandleTime` type that
+    contains the timestamp of the current candle, and `instruments_bucket`, an object
+    of the `SetInstruments` type that contains all the financial instruments available
+    for creating a new position. We pass this data at the time of strategy execution.
+    You create two empty lists, `selected_instruments_bucket` and `sideband_info_bucket`.
+    Then you run a `for` loop over `instruments_bucket`, and for each instrument,
+    you call `self.get_crossover_value()` and save its value to a new attribute, `crossover_value`.
+    Based on the value of `crossover_value`, you make a decision, as follows:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `crossover_value` is `1`, it means the strategy is giving a `BUY` signal.
+    You do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Append `instrument` to `selected_instruments_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Append an `{''action'': ''BUY''}` dictionary to the `sideband_info_bucket`
+    attribute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `crossover_value` is `-1`, it means the strategy is giving a `SELL` signal.
+    You do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Append `instrument` to `selected_instruments_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Append an `{''action'': ''SELL''}` dictionary to the `sideband_info_bucket`
+    attribute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `crossover_value` is neither `1` nor `-1`, it means the strategy is not giving
+    any signals. You do nothing here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, you return both the attributes: `selected_instruments_bucket` and `sideband_info_bucket`.
+    These attributes may have been populated or may remain as empty lists.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall that the `strategy_select_instruments_for_entry()` method is called for
+    every candle, so the preceding steps are repeated for every new candle. In the
+    appropriate candle, you would get a `BUY` or a `SELL` signal, and in the others,
+    you won't get any signal. Based on the signal, you can place the appropriate order,
+    which is discussed in the next recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `strategy_select_instruments_for_entry()` method is enforced by the `StrategyBase`
+    base class and has to be defined for every strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `get_crossover_value()` method is a helper method, meaning it is not enforced
+    by the `StrategyBase` base class. You may choose not to define this or to define
+    multiple of these helper functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_enter_position method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you continue with the coding of the `StrategyEMARegularOrder`
+    class. Here, you code the `strategy_enter_position()` method, a mandatory method
+    enforced by the `StrategyBase` base class. This method is called by the AlgoBulls
+    core engine every time the `strategy_select_instruments_for_entry` method returns
+    non-empty data. This method may not be called for every new candle for backtesting,
+    paper trading, and real trading services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_enter_position()` method during
+    strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the preceding recipe before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyEMARegularOrder` class. We need to define a method
+    to punch new orders for a given instrument and enter a new position:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyEMARegularOrder` class. We
+    define a new method for this class, `strategy_enter_position()`, described as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method takes three arguments, other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`: An object of the `CandleTime` type that contains the timestamp of
+    the current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instrument`: An object of the `Instrument` type that represents a financial
+    instrument.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sideband_info`: A dictionary object that holds information on trades to be
+    placed for the `instrument` attribute. This object looks like `{''action'': [action_value]}`,
+    where `[action_value]` can be either `''BUY''` or `''SELL''`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You calculate the quantity for order to be placed by multiplying `self.number_of_lots`
+    with `instrument.lot_size` and assign it to a new attribute `qty`. The `self.number_of_lots`
+    attribute holds information on the number of lots to trade, which you can pass
+    while executing this strategy. The `instrument.lot_size` attribute holds `lot_size`
+    for `instrument`, which is a positive integer. For example, if number of lots
+    is passed as 2 and lot size for instrument is 10, then the quantity for the order
+    would be 2 * 10 = 20.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is `{''action'': ''BUY''}`, you place a `Regular` order
+    of the `BUY` transaction type by creating an instance of the `self.broker.BuyOrderRegular`
+    class (the first recipe of [Chapter 6](077b54a1-c9c4-424c-912a-11f28db3797f.xhtml), *Placing
+    Regular Orders on the Exchange*) and assigning its value to `self.main_order[instrument]`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is `{''action'': ''SELL''}`, you place a `Regular` order
+    of the `SELL` transaction type by creating an instance of the `self.broker.SellOrderRegular`
+    class (the first recipe of [Chapter 6](077b54a1-c9c4-424c-912a-11f28db3797f.xhtml),
+    *Placing Regular Orders on the Exchange*) and assigning its value to `self.main_order[instrument]`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In both cases, the `self.main_order dictionary` object holds the `instrument`
+    and `order` instances as a key-value pair. This will be useful later (in the *EMA-Regular-Order
+    strategy – coding the strategy_exit_position method* recipe) for exiting positions
+    created by this method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `self.broker` attribute is replaced by the appropriate broker instance at
+    runtime by the AlgoBulls core engine. So, the same code can work across all the
+    brokers supported by the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_select_instruments_for_exit
+    method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you continue with the coding of the `StrategyEMARegularOrder`
+    class. Here, you code the `strategy_select_instruments_for_exit()` method, a mandatory
+    method enforced by the `StrategyBase` base class. This method is called by the
+    AlgoBulls core engine for every new candle for backtesting, paper trading, and
+    real trading services if there are any open positions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_select_instruments_for_exit()`
+    method during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the preceding recipe before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyEMARegularOrder` class. We need to define a new
+    method for selecting instruments from `instruments_bucket` for exiting an existing
+    position based on the computation of the crossover value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyEMARegularOrder` class. We
+    define a new method for this class, `strategy_select_instruments_for_exit()`,
+    described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method takes two arguments, other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`: An object of the `CandleTime` type that contains the timestamp of
+    the current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instruments_bucket`: An object of the `SetInstruments` type. This object holds
+    financial instruments that have been entered into a position earlier by the `strategy_enter_position()`
+    method.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You create two empty lists, `selected_instruments_bucket` and `sideband_info_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You run a `for` loop over `instruments_bucket`. For each instrument, you check
+    whether there is a position entered for the given instrument using the `'if self.main_order.get(instrument)
+    is not None:'` line. You proceed only if a position exists already.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You call `self.get_crossover_value()` and save its value to a new attribute,
+    `crossover_value`. Based on the value of `crossover_value`, you make a decision,
+    as follows:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `crossover_value` is either `1` or `-1`, it means there has been a crossover.
+    You do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Append the `instrument` attribute to `selected_instruments_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Append an `{''action'': ''EXIT''}` dictionary to the `sideband_info_bucket`
+    attribute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `crossover_value` is neither `1` nor `-1`, it means the strategy is not giving
+    any signal. You do nothing here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, you return both the attributes: `selected_instruments_bucket` and `sideband_info_bucket`.
+    These attributes may have gotten populated or may remain as empty lists.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Recall that the `strategy_select_instruments_for_exit()` method is called for
+    every candle, so the preceding steps are repeated for every new candle. In the
+    appropriate candle, if there is a position, you may get an `EXIT` signal, and
+    in the others, you won't get any signal. Based on the signal, you can exit the
+    position by placing an appropriate order, which is discussed in the next recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – coding the strategy_exit_position method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will continue with the coding of the `StrategyEMARegularOrder`
+    class. Here, you will code the `strategy_exit_position()` method, the last mandatory
+    method enforced by the `StrategyBase` base class. This method is called by the
+    AlgoBulls core engine every time the `strategy_select_instruments_for_exit` method
+    returns non-empty data. By the end of this recipe, you will have completed coding
+    the `StrategyEMARegularOrder` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how AlgoBulls core engine calls the `strategy_select_instruments_for_exit()` method
+    during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the previous recipe before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyEMARegularOrder` class. Define a method to the
+    exit position for a given instrument based on `sideband_info`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyEMARegularOrder` class. We
+    define a new method for this class, `strategy_exit_position()`, described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method takes three arguments, other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`: An object of `CandleTime` type that contains the timestamp of the
+    current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instrument`: An object of `Instrument` type that represents a financial instrument.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sideband_info`: A dictionary object that holds information on trades to be
+    placed for the `instrument` attribute. This object looks like `{''action'': ''EXIT''}`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is `{''action'': ''EXIT''}`, do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You fetch the order using `self.main_order[instrument]` (recall that `self.main_order`
+    is a dictionary that holds instruments and corresponding order instances as key-value
+    pairs.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You exit the position for this order by calling its `exit_position()` method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You reset the value corresponding to the key `instrument` in `self.main_order`
+    as `None`. This indicates that there is no longer a position open corresponding
+    to `instrument`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You return `True`, signaling to the AlgoBulls core engine that a position has
+    been exited for `instrument` in this call.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is not `{''action'': ''EXIT''}`, you return `False`, signaling
+    to the AlgoBulls core engine that no position was not exited for `instrument`
+    in this call.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `self.broker` attribute is replaced by the appropriate broker instance at
+    runtime by the AlgoBulls core engine. So, the same code can work across all the
+    brokers supported by the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You have now completed the coding for the `StrategyEMARegularOrder` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: EMA-Regular-Order strategy – uploading the strategy on the AlgoBulls trading
+    platform
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will upload the strategy class, `StrategyEMARegularOrder`,
+    which you created in the preceding recipes, on the AlgoBulls trading platform.
+    Once it is uploaded, you can perform backtesting, paper trading, and real trading
+    on the same code base.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have set up your account on the AlgoBulls platform ([https://algobulls.com](https://algobulls.com))
+    to get your API token. Setting up an account is free. Using its services might
+    incur charges depending on your usage. You can start with free packages on the
+    site. Refer to *Appendix II* for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We execute the following steps for this recipe:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the necessary modules:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Create a new AlgoBulls connection object:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Fetch the authorization URL:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Log in to the preceding link with your AlgoBulls credentials, fetch your token,
+    and set it here (refer to *Appendix II* for more details):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Before uploading your strategy, you can inspect your strategy code to ensure
+    you are uploading the right strategy:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The complete output is not shown here. Please visit the following link to read
+    the complete output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://github.com/algobulls/pyalgostrategypool/blob/master/pyalgostrategypool/strategy_ema_regular_order.py](https://github.com/algobulls/pyalgostrategypool/blob/master/pyalgostrategypool/strategy_ema_regular_order.py).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Upload `StrategyEMARegularOrder` onto the AlgoBulls platform. This creates
+    a new strategy for your AlgoBulls account:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We import the necessary modules in *step 1*. In *step 2*, an instance of the
+    `AlgoBullsConnection` class is created, named `algobulls_connection`. In *step
+    3*, you get the authorization URL using the `get_authorization_url()` method of
+    the `algobulls_connection` object. You should visit this URL from your web browser
+    to sign in to the AlgoBulls platform and fetch your developer access token. (You
+    can find more details with screenshots in *Appendix II* on fetching the developer
+    access token from the AlgoBulls platform.) You copy the access token and set it
+    in *step 4* using the `set_access_token()` method of `algobulls_connection`. If
+    the token is accepted, a successful connection is set up with the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `StrategyEMARegularOrder` strategy class that we coded in *steps 1* to *5* is
+    also available in the `pyalgostrategypool` package. We import this class in *step
+    1*. Alternatively, you can also save your strategy class in a separate Python
+    module and import it in *step 1* instead of importing it from `pyalgostrategypool`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You upload the `StrategyEMARegularOrder` strategy class using the `upload_strategy()`
+    method of `algobulls_connection` by passing it as a parameter. If the upload is
+    successful, you will get a success message with `strategy_code`, which is a unique
+    string. `strategy_code` can be used later to do everything related to the strategy—for
+    example, editing the strategy, performing backtesting ([Chapter 9](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml),
+    *Algorithmic Trading – Backtesting*), performing paper trading ([Chapter 10](0f869a6e-bb6b-4f5f-828e-33ca477c509d.xhtml),* Algorithmic
+    Trading – **Paper Trading*), and performing real trading ([Chapter 11](725b5f38-fffb-46ae-8b5b-8a4667419e3a.xhtml),* Algorithmic
+    Trading – **Real Trading*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: There's more…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If there are changes done to a strategy after uploading, you can update the
+    strategy on the AlgoBulls platform using the `upload_strategy()` method of `algobulls_connection`
+    with the updated class and `overwrite=True` as arguments. If the changes are uploaded
+    successfully, you will get a success message.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Modify an already-uploaded strategy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiple strategies with the same name (returned by the `name()` method) are
+    not allowed by the AlgoBulls platform. The `overwrite=True` parameter updates
+    an existing strategy with the same name if present. If `overwrite=True` is not
+    passed to the `create_strategy()` method, the default value is `False`, which
+    means it tries to create a new strategy on the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the __init__, initialize, name, and versions_supported
+    methods
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'This recipe demonstrates the initial coding of the `StrategyMACDBracketOrder`
+    class. The complete class will be coded by the end of the eleventh recipe of this
+    chapter. In this recipe, you will code the following methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`__init__()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`initialize()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`name()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`versions_supported()`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To learn more about the MACD technical indicator, please refer to the *Trend
+    indicator – moving average convergence divergence* recipe of [Chapter 5](16529fe4-d3ea-4017-a6f9-bad85a41d8a0.xhtml),
+    *Computing and Plotting Technical Indicators*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `__init__()` and `initialize()` methods
+    during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have the `StrategyBase` and `pyalgotrading` constants in your
+    Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set it up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Create a new class named `StrategyMACDBracketOrder`. Subclass it from `StrategyBase`.
+    Define the required four methods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we will create the `StrategyEMARegularOrder` class, subclassed
+    from `StrategyBase`. We will define four methods for this class, described as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `__init__()` method: This is the first thing you do when you create a new
+    strategy. First, you create this method and call the parent class `__init__()`
+    method using `super()`. This helps the AlgoBulls core engine create the necessary
+    data structures needed for the further development of the strategy. Next, you
+    create six attributes from `self.strategy_parameters`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.fastMA_period`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.slowMA_period`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.signal_period`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.stoploss`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.target`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.trailing_stoploss`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`self.strategy_parameters` is a dictionary object available for every strategy
+    subclassed from `StrategyBase`. (The seventh recipe of [Chapter 9](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml),* Algorithmic
+    Trading – **Backtesting*, discusses how these values are passed at runtime to
+    `self.strategy_parameters`.) These parameters will be used in the next recipe
+    of this chapter as parameters to the MACD technical indicator. Lastly, you create
+    a new attribute, `self.main_order`, an empty dictionary. We will use this for
+    saving the handles to all the open orders placed during the execution of this
+    strategy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `initialize()` method: This method is called at the beginning of every
+    market day to initialize any internal variables to their default state. For real
+    trading and paper trading, this method is called once. For multi-day backtesting,
+    this method is called multiple times, once at the beginning of every new trading
+    day. In this method, you initialize `self.main_order` to an empty dictionary.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The `name()` method: This is a static method that returns the name of this
+    strategy. This is used while utilizing backtesting, paper trading, and real trading
+    services on this strategy. In this method, you simply return a string, `MACD Bracket
+    Order`. You can return any string of your choice in this method.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The `versions_supported()` method: This static method is used for returning
+    the AlgoBulls core engine version for which this strategy has been created. Often,
+    as new upgrades come to the AlgoBulls core engine, some backward-incompatible
+    changes may get introduced. This method helps to ensure this strategy is run on
+    the correct version of the AlgoBulls core engine at all times. In this method,
+    you return the highest available version from the constants module, which at the
+    time of writing this chapter is VERSION_3_2_0.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: These four methods are mandatory; they are enforced by the `StrategyBase` base
+    class and cannot be skipped.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_select_instruments_for_entry
+    method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will continue coding the `StrategyMACDBracketOrder` class.
+    Here, you will code the `strategy_select_instruments_for_entry()` method, a mandatory
+    method enforced by the `StrategyBase` base class. This method is called by the
+    AlgoBulls core engine on every new candle for backtesting, paper trading, and
+    real trading services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_select_instruments_for_entry()`
+    method during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the previous recipe to create the `StrategyMACDBracketOrder`
+    class before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyMACDBracketOrder` class. Define two new methods—a method
+    for getting the crossover value between the MACD line and MACD history signals
+    and a method for selecting instruments from `instruments_bucket` for entering
+    a new position based on the computed crossover value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyMACDBracketOrder` class. We
+    define two new methods for this class, described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `get_crossover_value()` method: This is a helper method. It takes `instrument`
+    as an argument (along with `self`). This is the financial instrument for which
+    the crossover value has to be computed. You fetch the latest historical data using
+    the `self.get_historical_data()` method and assign it to a new attribute, `hist_data`.
+    We pass `instrument` as the argument to this method. The `hist_data` attribute
+    is a `pandas.DataFrame` object with `timestamp`, `open`, `high`, `low`, `close`,
+    and `volume` columns.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The default duration of the fetched historical data is the last 15 days. You
+    compute MACD on the close of `hist_data` using the `talib.MACD` function. It takes
+    the following additional arguments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`fastperiod`: We pass `self.fastMA_period` here.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`slowperiod`: We pass `self.slowMA_period` here.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`signalperiod:` We pass `self.signal_period` here.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'This computed MACD data is a tuple of the `pandas.Series` object, which you
+    assign to `macdline`, `macdsignal`, and `_` (the last object in the tuple is assigned
+    to `_` because it is not required). (Refer to the third recipe in [Chapter 5](16529fe4-d3ea-4017-a6f9-bad85a41d8a0.xhtml),
+    *Computing and Plotting Technical Indicators*, for more details on computation
+    of MACD.) You compute the crossover value between `macdline` and `macdsignal`
+    using `self.utils.crossover(macdline, macdsignal)` and assign it to a new attribute,
+    `crossover_value`. The `crossover()` function call works as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It takes two iterables as input. We pass `macdline` and `macdsignal` here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `macdline` crosses `macdsignal` upward, the crossover function returns `1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `macdline` crosses the `macdsignal` downward, the crossover function returns
+    `-1`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If there is no crossover between `macdline` and `macdsignal`, then the crossover
+    function returns `0`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, you return `crossover_value`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`strategy_select_instruments_for_entry()` method: This method takes two arguments,
+    other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`:  An object of the `CandleTime` type that contains the timestamp of
+    the current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instruments_bucket`: An object of the `SetInstruments` type that contains
+    all the financial instruments available for creating a new position. We pass this
+    data at the time of strategy execution (the second recipe of [Chapter 8](b415aed0-c473-48ba-8e52-5914c7f0de87.xhtml),
+    *Backtesting Strategies*).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You create two empty lists, `selected_instruments_bucket` and `sideband_info_bucket`.
+    You run a `for` loop over `instruments_bucket`. For each instrument, you call
+    `self.get_crossover_value()` and save its value to a new attribute, `crossover_value`.
+    Based on the value of `crossover_value`, you make a decision, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If `crossover_value` is `1`, it means the strategy is giving a `BUY` signal.
+    You do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Append `instrument` to `selected_instruments_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Append an `{''action'': ''BUY''}` dictionary to the `sideband_info_bucket`
+    attribute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `crossover_value` is `-1`, it means the strategy is giving a `SELL` signal.
+    You do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Append `instrument` to `selected_instruments_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Append an `{''action'': ''SELL''}` dictionary to the `sideband_info_bucket`
+    attribute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `crossover_value` is neither `1` nor `-1`, it means the strategy is not giving
+    a signal. You do nothing here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, you return both the attributes: `selected_instruments_bucket` and `sideband_info_bucket`.
+    These attributes may have been populated or may remain as empty lists.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Recall that the `strategy_select_instruments_for_entry()` method is called for
+    every candle, so the preceding steps are repeated for every new candle. In the
+    appropriate candle, you will get a `BUY` or `SELL` signal, and in the others,
+    you won't get any signal. Based on the signal, you can place the appropriate order,
+    which is discussed in the next recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `strategy_select_instruments_for_entry()` method is enforced by the `StrategyBase`
+    base class and has to be defined for every strategy. The `get_crossover_value()`
+    method is a helper method, meaning it is not enforced by the `StrategyBase` base
+    class. You may choose not to define this or to define multiple of these helper
+    functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_enter_position method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will continue with the coding of the `StrategyMACDBracketOrder`
+    class. Here, you will code the `strategy_enter_position()` method, a mandatory
+    method enforced by the `StrategyBase` base class. This method is called by the
+    AlgoBulls core engine every time the `strategy_select_instruments_for_entry()`
+    method returns non-empty data. This method may not be called for every new candle
+    for backtesting, paper trading, and real trading services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_enter_position()` method during
+    strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the previous recipe before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyMACDBracketOrder` class. Define a method to punch
+    new orders for a given instrument and enter a new position:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyMACDBracketOrder` class. We
+    define a new method for this class, `strategy_enter_position()`, described as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method takes three arguments, other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`:  An object of the `CandleTime` type that contains the timestamp of
+    the current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instrument`: An object of the `Instrument` type that represents a financial
+    instrument.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sideband_info`: A dictionary object that holds information on trades to be
+    placed for the `instrument` attribute. This object looks like `{''action'': [action_value]}`,
+    where `[action_value]` can be either `''BUY''` or `''SELL''`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You calculate the quantity for order to be placed by multiplying `self.number_of_lots`
+    with `instrument.lot_size` and assign it to a new attribute qty. The `self.number_of_lots`
+    attribute holds information on the number of lots to trade, which you can pass
+    while executing this strategy. The `instrument.lot_size` attribute holds `lot_size`
+    for `instrument`, which is a positive integer. For example, if number of lots
+    is passed as 2 and lot size for instrument is 10, then the quantity for the order
+    would be 2 * 10 = 20.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is `{''action'': ''BUY''}`, you place a `Bracket` order
+    of the `BUY` transaction type by creating an instance of the `self.broker.BuyOrderBracket` class
+    (refer to the first recipe of [Chapter 7](d5760c5d-fa09-4008-ab45-5d7d69c4bde9.xhtml),
+    *Placing Bracket and Cover Orders on the Exchange*) and assigning its value to
+    `self.main_order[instrument]`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Similarly, if `sideband_info` is `{''action'': ''SELL''}`, you place a `Bracket` order
+    of the `BUY` transaction type by creating an instance of the `self.broker.SellOrderBracket`
+    class (refer to the first recipe of [Chapter 7](d5760c5d-fa09-4008-ab45-5d7d69c4bde9.xhtml), *Placing
+    Bracket and Cover Orders on the Exchange*) and assigning its value to `self.main_order[instrument]`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In both cases, the `self.main_order` dictionary object holds the `instrument`
+    and `order` instances as a key-value pair. This will be useful later (in the *MACD-Bracket-Order
+    strategy – coding the strategy_exit_position method* recipe) for exiting positions
+    created by this method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `self.broker` attribute is replaced by the appropriate broker instance at
+    runtime by the AlgoBulls core engine. So, the same code can work across all the
+    brokers supported by the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_select_instruments_for_exit
+    method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will continue with the coding of the `StrategyMACDBracketOrder`
+    class. Here, you will code the `strategy_select_instruments_for_exit()` method,
+    a mandatory method enforced by the `StrategyBase` base class. This method is called
+    by the AlgoBulls core engine for every new candle for backtesting, paper trading,
+    and real trading services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_select_instruments_for_exit()`
+    method during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the previous recipe before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyMACDBracketOrder` class. Define a new method for
+    selecting instruments from `instruments_bucket` for exiting an existing position
+    based on the computation of the crossover value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyMACDBracketOrder` class. We
+    define a new method for this class, `strategy_select_instruments_for_exit()`,
+    described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method takes two arguments, other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`:  An object of `CandleTime` type that contains the timestamp of the
+    current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instruments_bucket`: An object of `SetInstruments` type. This object holds
+    financial instruments that have been entered into a position earlier by the `strategy_enter_position()`
+    method.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You create two empty lists, `selected_instruments_bucket` and `sideband_info_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You run a `for` loop over `instruments_bucket`. For each instrument, you check
+    whether there is a position entered for the given instrument using the `'if self.main_order.get(instrument)
+    is not None:'` line. You proceed only if a position exists already.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'You call `self.get_crossover_value()` and save its value to a new attribute,
+    `crossover_value`. Based on the value of `crossover_value`, you make a decision,
+    as follows:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `crossover_value` is either `1` or `-1`, it means there has been a crossover.
+    You do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Append the `instrument` attribute to `selected_instruments_bucket`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Append a `{''action'': ''EXIT''}` dictionary to the `sideband_info_bucket`
+    attribute.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If `crossover_value` is neither `1` nor `-1`, it means the strategy is not giving
+    a signal. You do nothing here.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, you return both the attributes, `selected_instruments_bucket` and `sideband_info_bucket`.
+    These attributes may have been populated or may remain as empty lists.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Recall that the `strategy_select_instruments_for_exit()` method is called for
+    every candle, so the preceding steps are repeated for every new candle. In the
+    appropriate candle, if there is a position, you may get an `EXIT` signal, and
+    in the others, you won't get any signal. Based on the signal, you can exit the
+    position by placing an appropriate order, which is discussed in the next recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy – coding the strategy_exit_position method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will continue with the coding of the `StrategyMACDBracketOrder`
+    class. Here, you will code the `strategy_exit_position()` method, the last mandatory
+    method enforced by the `StrategyBase` base class. This method is called by the
+    AlgoBulls core engine every time the `strategy_select_instruments_for_exit` method
+    returns non-empty data. By the end of this recipe, you will have completed coding
+    the `StrategyMACDBracketOrder` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Please refer to the flowchart in the introduction of this chapter to understand
+    how the AlgoBulls core engine calls the `strategy_select_instruments_for_exit()`
+    method during strategy execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have followed the previous recipe before starting this recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Continue coding the `StrategyMACDBracketOrder` class. Define a method to the
+    exit position for a given instrument based on `sideband_info`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this recipe, we continue coding the `StrategyMACDBracketOrder` class. We
+    define a new method for this class, `strategy_exit_position()`, described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This method takes three arguments, other than `self`:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`candle`:  An object of the `CandleTime` type that contains the timestamp of
+    the current candle.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`instrument`: An object of the `Instrument` type that represents a financial
+    instrument.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`sideband_info`: A dictionary object that holds information on trades to be
+    placed for the `instrument` attribute. This object looks like `{''action'': `EXIT`}`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is `{''action'': ''EXIT''}`, do the following:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You fetch the order using `self.main_order[instrument]`. (Recall that `self.main_order`
+    is a dictionary that holds instruments and corresponding order instances as key-value
+    pairs.)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You exit the position for this order by calling its `exit_position()` method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Since it''s a `Bracket` order strategy, there is the possibility for the `target`
+    or `stoploss` order to hit and the position to exit without our strategy knowing
+    it. You can still use the `exit_position()` method to handle these scenarios.
+    The `exit_position()` method works for both of the following exit scenarios:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The position is open and you want to exit it yourself.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The position is already exited by the broker due to the completion of either
+    the `stoploss` order or the `target` order and there is nothing to be done.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You reset the value corresponding to the key `instrument` in `self.main_order`
+    as `None`. This indicates there is no longer a position open corresponding to
+    `instrument`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You return `True`, signaling to the AlgoBulls core engine that a position has
+    been exited for `instrument` in this call.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'If `sideband_info` is not `{''action'': ''EXIT''}`, you return `False`, signaling
+    to the AlgoBulls core engine that no position was exited for `instrument` in this
+    call.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `self.broker` attribute is replaced by the appropriate broker instance at
+    runtime by the AlgoBulls core engine. So, the same code can work across all the
+    brokers supported by the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You have now completed the coding for the `StrategyMACDBracketOrder` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD-Bracket-Order strategy — uploading the strategy on the AlgoBulls trading
+    platform
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, you will upload the strategy class, `StrategyMACDBracketOrder`,
+    which you created in the preceding five recipes, on the AlgoBulls trading platform.
+    Once it is uploaded, you can perform backtesting, paper trading, and real trading
+    on the same code base.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure you have set up your account on the AlgoBulls platform ([https://algobulls.com](https://algobulls.com))
+    to get your API token. Setting up an account is free. Using its services might
+    incur charges depending on your usage. You can start with the free packages on
+    the site. Refer to *Appendix II* for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We execute the following steps for this recipe:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the necessary modules:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Create a new AlgoBulls connection object:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Fetch the authorization URL:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Log in to the preceding link with your AlgoBulls credentials, fetch your token,
+    and set it here (refer to *Appendix II* for more details):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Before uploading your strategy, you can inspect your strategy code to ensure
+    you are uploading the right strategy:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The complete output is not shown here. Please visit the following link to read
+    the complete output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://github.com/algobulls/pyalgostrategypool/blob/master/pyalgostrategypool/strategy_macd_bracket_order.py](https://github.com/algobulls/pyalgostrategypool/blob/master/pyalgostrategypool/strategy_macd_bracket_order.py).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Upload `StrategyMACDBracketOrder` onto the AlgoBulls platform. This creates
+    a new strategy for your AlgoBulls account:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We import the necessary modules in *step 1*. In *step 2*, an instance of the
+    `AlgoBullsConnection` class is created, named `algobulls_connection`. In *step
+    3*, you get the authorization URL using the `get_authorization_url()` method of
+    the `algobulls_connection` object. You should visit this URL from your web browser
+    to sign in to the AlgoBulls platform and fetch your developer access token. (You
+    can find more details with screenshots in *Appendix II* on fetching the developer
+    access token from the AlgoBulls platform.) You copy the access token and set it
+    in *step 4* using the `set_access_token()` method of `algobulls_connection`. If
+    the token is accepted, a successful connection is set up with the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `StrategyMACDBracketOrder` strategy class, which we coded in *step 5*, is
+    also available in the `pyalgostrategypool` package. We import this class in *step
+    1*. Alternatively, you can also save your strategy class in a separate Python
+    module and import it in *step 1* instead of importing it from `pyalgostrategypool`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You upload the `StrategyMACDBracketOrder` strategy class using the `upload_strategy()`
+    method of `algobulls_connection` by passing it as a parameter. If the upload is
+    successful, you will get a success message with `strategy_code`, which is a unique
+    string. `strategy_code` can be used in later chapters to do everything related
+    to the strategy—for example, editing the strategy, performing backtesting, performing
+    paper trading, and performing real trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There's more…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: If there are changes made to a strategy after uploading, you can update the
+    strategy on the AlgoBulls platform using the `upload_strategy()` method of `algobulls_connection`
+    with the updated class and `overwrite=True` as arguments. If the changes are uploaded
+    successfully, you will get a success message.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can modify an already-uploaded strategy as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: Multiple strategies with the same name (returned by the `name()` method) are
+    not allowed by the AlgoBulls platform. The `overwrite=True` parameter updates
+    an existing strategy with the same name if present. If `overwrite=True` is not
+    passed to the `create_strategy()` method, the default value is `False`, which
+    means it tries to create a new strategy on the AlgoBulls platform.
+  prefs: []
+  type: TYPE_NORMAL

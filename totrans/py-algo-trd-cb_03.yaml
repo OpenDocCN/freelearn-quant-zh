@@ -1,0 +1,978 @@
+- en: Fetching Financial Data
+  prefs: []
+  type: TYPE_NORMAL
+- en: Having financial data handy is essential for carrying out algorithmic trading.
+    Financial data can be both static and dynamic in nature. Static financial data
+    is data that doesn't change during trading hours. Static data consists of lists
+    of financial instruments, the attributes of financial instruments, the circuit
+    limits of financial instruments, and the recorded close price of the last trading
+    day. Dynamic financial data is data that may change continuously during trading
+    hours. Dynamic data consists of market depth, the last traded prices, the time
+    and quantity of financial instruments, and the recorded high and low prices of
+    the day. This chapter includes recipes on fetching various types of financial
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is a list of the recipes in this chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fetching the list of financial instruments
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Attributes of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Expiry of financial instruments
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Circuit limits of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The market depth of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The total pending buy quantity of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The total pending sell quantity of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The total volume traded for the day of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The last traded price of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The last traded time of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The last traded quantity of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The recorded open price of the day of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The recorded highest price of the day of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The recorded lowest price of the day of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The recorded close price of the last traded day of a financial instrument
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Technical requirements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'You will need the following to successfully execute the recipes in this chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Python 3.7+
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `pyalgotrading` Python package (`$ pip install pyalgotrading`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The latest Jupyter notebook for this chapter can be found on GitHub at [https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following code will help you set up the broker connection with Zerodha,
+    which will be used in all the recipes in this chapter. Please make sure you have
+    followed these steps before trying out any recipes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first thing needed for setting up connectivity with the broker is getting
+    the API keys. The broker would provide unique keys to each customer, typically
+    as an `api-key` and `api-secret` key pair. These API keys are chargeable, usually
+    on a monthly subscription basis. You need to get your copy of `api-key` and `api-secret`
+    from the broker website before starting this. You can refer to *Appendix I* for
+    more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Execute the following steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the necessary modules:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Get the `api_key` and `api_secret` keys from the broker. These are unique to
+    you and will be used by the broker to identify your Demat account:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You will get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you are running this for the first time and `kiteconnect` is not installed,
+    `pyalgotrading` will automatically install it for you. The final output of *step
+    2* will be a link. Click on the link and log in with your Zerodha credentials.
+    If the authentication is successful, you will see a link in your browser''s address
+    bar similar to this: `https://127.0.0.1/?request_token=<alphanumeric-token>&action=login&status=success`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Copy the alphanumeric-token and paste it in `request_token`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `broker_connection` instance is now ready to perform API calls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `pyalgotrading` package supports multiple brokers and provides a connection
+    object class per broker, with the same methods. It abstracts broker APIs behind
+    a unified interface, so you need not worry about the underlying broker API calls
+    and you can use all the recipes in this chapter as is. Only the procedure to set
+    up the broker connection will vary from broker to broker. You can refer to the pyalgotrading
+    documentation for setting up the broker connection if you are not using Zerodha
+    as your broker. For Zerodha users, the previous steps will suffice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fetching the list of financial instruments
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Financial instruments**, also known as **securities**, are assets that can
+    be traded in an exchange. In an exchange, there can be tens of thousands of financial
+    instruments. The list of financial instruments is static in nature, as it doesn''t
+    change during the live trading hours. Financial instruments may change from time
+    to time, but never within the same day. Having this data handy is the first step
+    for algorithmic trading. This recipe shows how to fetch the list of financial
+    instruments.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` object is available in your Python namespace.
+    Refer to the *Technical requirements* section of this chapter to set it up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and display all the available financial instruments using `broker_connection`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/626ca6dc-58ed-45d4-9899-e550ea867adc.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: This recipe fetches all the available financial instruments using the `get_all_instruments()`
+    method of `broker_connection`, which returns a `pandas.DataFrame` object. This
+    object is assigned to a new attribute, `instruments`, which is displayed in the
+    output. This output may differ for you as new financial instruments are frequently
+    added and existing ones expire regularly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Attributes of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Financial instruments have various attributes that give more insight into the
+    instrument, such as the trading symbol, exchange, segment, tick size, and so on.
+    Some of these attributes are also needed while placing orders. This recipe lists
+    and explains all the attributes supported by the broker. All the attributes are
+    static, meaning they don't change during the live trading hours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `instruments` object is available in your Python namespace. Refer
+    to the *Fetching the list of financial instruments* recipe of this chapter to
+    set it up.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'List all the attributes of a financial instrument provided by the broker:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The *Fetching a list of financial instruments* recipe fetches all the instruments
+    as a `pandas.DataFrame` object. Calling its `columns` attribute returns all the
+    columns available. Each column is an attribute for every financial instrument.
+    You can find more details at [https://kite.trade/docs/connect/v3/market-quotes/#csv-response-columns](https://kite.trade/docs/connect/v3/market-quotes/#csv-response-columns).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expiry of financial instruments
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Financial instruments may or may not have a fixed expiry date. If they do, they
+    are last available for trading on their expiry date. Typically, instruments from
+    a cash segment do not expire, whereas derivative instruments (those from the futures
+    and options segment) have a short validity period, and expire on the given date.
+    This recipe shows both types of instruments and how their expiry date can be fetched.
+    An expiry date is static data, meaning it doesn't change during the live market
+    hours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instruments` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the first recipe of this chapter to set
+    up `instruments`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We execute the following steps for this recipe:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Get an instrument object using `broker_connection`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Check and print whether `instrument1` will expire:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Get another instrument object using `broker_connection`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: You shouldn't get any output here. This implies you have successfully fetched
+    the instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Please note that if you get the following output for this step, even after
+    typing it correctly, please try this step with the latest available NFO-FUT segment
+    script by referring to the table from the output in the *Fetching the list of
+    financial instruments* recipe of this chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: This can happen because the instrument, with `tradingsymbol TATASTEEL20AUGFUT`,
+    was available at the time of writing this book, but has since expired and so isn't
+    available anymore.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Check and print whether `instrument2` will expire:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Print the expiry date of `instrument2`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '*Step 1* uses the `get_instrument()` method of the `BrokerConnectionZerodha`
+    class to fetch an instrument and assign it to a new attribute, `instrument1`.
+    This object is an instance of the `Instrument` class. The two parameters needed
+    to call `get_instrument` are the exchange (`NSE`) and the trading symbol (`TATASTEEL`).
+    In *step 2*, we check whether the instrument will expire using the `will_expire()`
+    method. The output of this step is `False`. We repeat the same procedure in *steps
+    3* and *4*, this time for a different instrument, assigned to a new attribute,
+    `instrument2`, which gives an output of `True` for the `will_expire()` method.
+    This is shown in the output of *step 4*. Finally, in *step 5*, we fetch the expiry
+    date of `instrument2` using the `expiry` attribute.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Circuit limits of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Each financial instrument has a well-defined price band. The instrument price
+    is expected to be within this price band for the day. During the market hours,
+    if the instrument price breaches the band on the upper or lower side, trading
+    may be halted for the instrument by the exchange for a certain time or the entire
+    day. This is done to prevent the sudden rise or fall in an instrument's price
+    within a single day. The upper edge of the price band is known as the **upper
+    circuit limit** and the lower edge of the price band is known as the **lower circuit
+    limit**. This data is static, meaning it doesn't change during the day. However,
+    it can significantly change from one day to another. This recipe helps find the
+    circuit limits for a financial instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the lower and upper circuit limits of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_circuit_limits()` method of the `BrokerConnectionZerodha` class fetches
+    the lower and upper circuit limits as a tuple for the given financial instrument.
+    This method takes an object of the `Instrument` type as a parameter. We use `instrument1`
+    as the parameter here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The market depth of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The market depth of a financial instrument is a chronological list of data on
+    buyers and sellers in the market. The buyers list is a list of prices and their
+    respective quantities at which the buyers are willing to buy the instrument for.
+    Similarly, the sellers list is a list of prices and their respective quantities
+    at which the sellers are willing to sell the instrument for. If you are new to
+    the concept of **market depth**, the explanation in the *How it works…* section
+    of this recipe will give you more clarity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market depth helps in predicting where the price of an instrument is heading.
+    It also helps to understand whether an order with a large quantity can change
+    the price significantly or not. Market depth is dynamic in nature, meaning it
+    changes constantly during the live trading hours. This recipe helps find out the
+    market depth of a financial instrument in real time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the buy market depth and sell market depth of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_market_depth()` method of the `BrokerConnectionZerodha` class fetches
+    the market depth for the given financial instrument. This method takes an object
+    of the `Instrument` type as a parameter. We use `instrument1` as the parameter
+    here. The market depths are shown in separate tables for the **buy side** and
+    the **sell side**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **buy market depth** is a table of five entries or bids, in descending order
+    of price. Each entry indicates an available buyer in the market at that point
+    in time, with the price being offered and the quantity available at that price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **sell market depth** is a table of five entries or bids, in ascending order
+    of price. Each entry indicates an existing seller in the market at that point
+    in time, with the price being offered and the quantity available at that price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When a buyer and seller match, the order is executed at the exchange and the
+    entries are removed from the buy- and sell-side tables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The total pending buy quantity of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The total pending buy quantity for a financial instrument is the sum total of
+    the quantity of all the pending buy orders available at an instant. This data
+    is dynamic in nature and may change at any moment during the live trading hours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the total pending buy quantity of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_total_pending_buy_quantity()` method of the `BrokerConnectionZerodha`
+    class fetches the total buy quantity for the given financial instrument at any
+    given moment. This method takes an object of the `Instrument` type as a parameter.
+    We use `instrument1` as the parameter here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The total pending sell quantity of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The total pending sell quantity for a financial instrument is the sum total
+    of the quantity of all pending sell orders available at an instant. This data
+    is dynamic in nature and may change at any moment during the live trading hours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the total pending sell quantity of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_total_pending_sell_quantity()` method of the `BrokerConnectionZerodha`
+    class fetches the total sell quantity of the given financial instrument at any
+    given moment. This method takes an object of the `Instrument` type as a parameter.
+    We use `instrument1` as the parameter here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The total volume traded for the day of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The total volume traded for a financial instrument is the sum total of all quantities
+    that were traded (bought and sold, but counted once) in the day. For example,
+    if *trader A* buys 10 quantities of stock *X* from *trader B*, while *trader C*
+    sells 20 quantities of the same stock *X* to *trader D*, the total volume traded
+    for *X* would be 10 + 20 = 30\. It won't be 10 + 10 + 20 + 20 = 60 because the
+    contribution of the trade to the total volume is considered only once. This data
+    is dynamic in nature and may increase at any moment during the live trading hours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instruments*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the total traded volume for the day of an instrument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_total_volume_day()` method of the `BrokerConnectionZerodha` class fetches
+    the total traded volume of the given financial instrument at any given moment
+    since the beginning of the day. This method takes an object of the `Instrument` type
+    as a parameter. We use `instrument1` as the parameter here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last traded price of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The **last traded price** (**LTP**) of a financial instrument is the latest
+    price at which an order was executed for that instrument. It is essentially an
+    indicator of the current price at which the instrument can be bought or sold (assuming
+    the liquidity is good). As the description suggests, this data is dynamic in nature
+    and it may change continuously during the live trading hours. This recipe shows
+    how to fetch the LTP of a financial instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the LTP of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_ltp()` method of the `BrokerConnectionZerodha` class fetches the LTP
+    of the given financial instrument at any given moment. This method takes an object
+    of the `Instrument` type as a parameter. We use `instrument1` as the parameter
+    here. The fetched data is of the `float` type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last traded time of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The **last traded time** (**LTT**) of a financial instrument is the latest time
+    at which an order was executed for that instrument. This data is dynamic in nature
+    as it may change continuously during the live trading hours. This recipe helps
+    fetch the LTT of a financial instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the LTT of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_ltt()` method of the `BrokerConnectionZerodha` class fetches the LTT
+    of the given financial instrument at any given moment. This method takes an object
+    of the `Instrument` type as a parameter. We use `instrument1` as the parameter
+    here. The fetched data is an instance of the `datetime.datetime` class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The last traded quantity of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The **last traded quantity** (**LTQ**) of a financial instrument is the quantity
+    that was traded the last time an order was executed for that instrument. This
+    data is dynamic in nature as it may change continuously during the live trading
+    hours. This recipe demonstrates how to fetch the LTQ of a financial instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the LTQ of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_ltq()` method of the `BrokerConnectionZerodha` class fetches the LTQ
+    of the given financial instrument at any given moment. This method takes an object
+    of the `Instrument` type as a parameter. We use `instrument1` as the parameter
+    here. The fetched data is of the `int` type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recorded open price of the day of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Often, trading strategies use the current day opening price of a financial instrument
+    as one of the first qualifying conditions before making decisions to place new
+    trades. Comparing the current day's opening price with the previous day's close
+    price may give a hint as to whether the market price is bound to rise or fall
+    for the current day for an instrument. If the open price is significantly higher
+    than the previous day's close price, the price may continue to rise for the day.
+    Similarly, if the open price is significantly lower than the previous day's close
+    price, the price may continue to fall for the day. The recorded open price data
+    is static in nature, meaning it does not change during the live trading hours.
+    This recipe shows how to fetch the current day's opening price of a financial
+    instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the open price of the day of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_open_price_day()` method of the `BrokerConnectionZerodha` class fetches
+    the open price of the day for the given financial instrument. This method takes
+    an object of the `Instrument` type as a parameter. We use `instrument1` as the
+    parameter here. The fetched data is of the `float` type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recorded highest price of the day of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Often, trading strategies use the current day's highest price of a financial
+    instrument as one of the qualifying conditions before making decisions to place
+    new trades. This data is dynamic in nature as it may change continuously during
+    the live trading hours. This recipe shows how to fetch the current day's highest
+    recorded price of a financial instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the recorded highest price of the day of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output. Your output may differ:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_high_price_day()` method of the `BrokerConnectionZerodha` class fetches
+    the highest recorded price of the day for the given financial instrument. This
+    method takes an object of the `Instrument` type as a parameter. We use `instrument1`
+    as the parameter here. The fetched data is of the `float` type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recorded lowest price of the day of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Often, trading strategies use the current day's lowest price of a financial
+    instrument as one of the qualifying conditions before making decisions to place
+    new trades. This data is dynamic in nature as it may change continuously during
+    the live trading hours. This recipe demonstrates how to fetch the current day's
+    lowest recorded price of a financial instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the recorded lowest price of the day of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_low_price_day()` method of the `BrokerConnectionZerodha` class fetches
+    the lowest recorded price of the day for the given financial instrument. This
+    method takes an object of the `Instrument` type as a parameter. We use `instrument1`
+    as the parameter here. The fetched data is of the `float` type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recorded close price of the last traded day of a financial instrument
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Often, trading strategies use the previous day's closing price of a financial
+    instrument as one of the first qualifying conditions before making decisions to
+    place trades. Comparing the current day's opening price with the previous day’s
+    close price may give a hint as to whether the market price is bound to rise or
+    fall for the current day for an instrument. If the open price is significantly
+    higher than the previous day's close price, the price may continue to rise for
+    the day. Similarly, if the open price is significantly lower than the previous
+    day's close price, the price may continue to fall for the day. The recorded close
+    price data is static in nature, meaning it does not change during the live trading
+    hours. This recipe shows how to fetch the previous day's close price of a financial
+    instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Make sure the `broker_connection` and `instrument1` objects are available in
+    your Python namespace. Refer to the *Technical requirements* section of this chapter
+    to set up `broker_connection`. Refer to the *Attributes of a financial instrument*
+    recipe of this chapter to set up `instrument1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Fetch and print the recorded close price of the last trading day of `instrument1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following output (your output may differ):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The `get_close_price_day()` method of the `BrokerConnectionZerodha` class fetches
+    the close price of the previous trading day for the given financial instrument.
+    This method takes an object of the `Instrument` type as a parameter. We use `instrument1`
+    as the parameter here. The fetched data is of the `float` type.
+  prefs: []
+  type: TYPE_NORMAL

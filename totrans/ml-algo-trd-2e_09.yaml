@@ -1,0 +1,2003 @@
+- en: '9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Time-Series Models for Volatility Forecasts and Statistical Arbitrage
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In *Chapter 7*, *Linear Models – From Risk Factors to Asset Return Forecasts*,
+    we introduced linear models for inference and prediction, starting with static
+    models for a contemporaneous relationship with cross-sectional inputs that have
+    an immediate effect on the output. We presented the **ordinary least squares**
+    (**OLS**) learning algorithm, and saw that it produces unbiased coefficients for
+    a correctly specified model with residuals that are not correlated with the input
+    variables. Adding the assumption that the residuals have constant variance guarantees
+    that OLS produces the smallest mean squared prediction error among unbiased estimators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also encountered panel data that had both cross-sectional and time-series
+    dimensions, when we learned how the Fama-Macbeth regressions estimate the value
+    of risk factors over time and across assets. However, the relationship between
+    returns across time is typically fairly low, so this procedure could largely ignore
+    the time dimension.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Furthermore, we covered the regularized ridge and lasso regression models, which
+    produce biased coefficient estimates but can reduce the mean squared prediction
+    error. These predictive models took a more dynamic perspective and combined historical
+    returns with other inputs to predict forward returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will build dynamic linear models to explicitly represent
+    time and include variables observed at specific intervals or lags. A key characteristic
+    of time-series data is their sequential order: rather than random samples of individual
+    observations, as in the case of cross-sectional data, our data is a single realization
+    of a stochastic process that we cannot repeat.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our goal is to identify systematic patterns in time series that help us predict
+    how the time series will behave in the future. More specifically, we will focus
+    on models that extract signals from a historical sequence of the output and, optionally,
+    other contemporaneous or lagged input variables to predict future values of the
+    output. For example, we might try to predict future returns for a stock using
+    past returns, combined with historical returns of a benchmark or macroeconomic
+    variables. We will focus on linear time-series models before turning to nonlinear models
+    like recurrent or convolutional neural networks in Part 4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Time-series models are very popular given the time dimension inherent to trading.
+    Key applications include the prediction of asset returns and volatility, as well
+    as the identification of the co-movements of asset price series. Time-series data
+    is likely to become more prevalent as an ever-broader array of connected devices
+    collects regular measurements with potential signal content.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will first introduce the tools we can use to diagnose time-series characteristics
+    and to extract features that capture potential patterns. Then, we will cover how
+    to diagnose and achieve time-series stationarity. Next, we will introduce univariate
+    and multivariate time-series models and apply them in order to forecast macro
+    data and volatility patterns. We will conclude with the concept of cointegration
+    and how to apply it to develop a pairs trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In particular, we will cover the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use time-series analysis to prepare and inform the modeling process
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Estimating and diagnosing univariate autoregressive and moving-average models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Building **autoregressive conditional heteroskedasticity** (**ARCH**) models
+    to predict volatility
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to build multivariate vector autoregressive models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using cointegration to develop a pairs trading strategy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can find the code samples for this chapter and links to additional resources
+    in the corresponding directory of the GitHub repository. The notebooks include
+    color versions of the images. For a thorough introduction to the topics of this
+    chapter from an investment perspective, see Tsay (2005) and Fabozzi, Focardi,
+    and Kolm (2010).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tools for diagnostics and feature extraction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A time series is a sequence of values separated by discrete intervals that are
+    typically even spaced (except for missing values). A time series is often modeled
+    as a stochastic process consisting of a collection of random variables, ![](img/B15439_09_001.png),
+    with one variable for each point in time, ![](img/B15439_09_002.png). A univariate
+    time series consists of a single value, *y*, at each point in time, whereas a
+    multivariate time series consists of several observations that can be represented
+    by a vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of periods, ![](img/B15439_09_003.png), between distinct points in
+    time, *t*[i], *t*[j], is called **lag**, with *T*-1 distinct lags for each time
+    series. Just as relationships between different variables at a given point in
+    time is key for cross-sectional models, relationships between data points separated
+    by a given lag are fundamental to analyzing and exploiting patterns in time series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For cross-sectional models, we distinguished between input and output variables,
+    or target and predictors, with the labels *y* and *x*, respectively. In a time-series
+    context, some or all of the lagged values ![](img/B15439_09_004.png) of the outcome
+    *y* play the role of the input or *x* values in the cross-section context.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A time series is called **white noise** if it is a sequence of **independent
+    and identically distributed** (**IID**) random variables, ![](img/B15439_09_005.png),
+    with finite mean and variance. In particular, the series is called a **Gaussian
+    white noise** if the random variables are normally distributed with a mean of
+    zero and a constant variance of ![](img/B15439_09_006.png).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A time series is linear if it can be written as a weighted sum of past disturbances,
+    ![](img/B15439_09_007.png), that are also called innovations and are here assumed
+    to represent white noise, and the mean of the series, ![](img/B15439_04_005.png):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_009.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: A key goal of time-series analysis is to understand the dynamic behavior that
+    is driven by the coefficients, ![](img/B15439_09_010.png). The analysis of time
+    series offers methods tailored to this type of data with the goal of extracting
+    useful patterns that, in turn, help us build predictive models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will introduce the most important tools for this purpose, including the decomposition
+    into key systematic elements, the analysis of autocorrelation, and rolling window
+    statistics such as moving averages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For most of the examples in this chapter, we will work with data provided by
+    the Federal Reserve that you can access using pandas-datareader, which we introduced
+    in *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*. The code
+    examples for this section are available in the notebook `tsa_and_stationarity`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to decompose time-series patterns
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Time-series data typically contains a mix of patterns that can be decomposed
+    into several components. In particular, a time series often combines systematic
+    components like trend, seasonality, and cycles with unsystematic noise. These
+    components can be modeled as a linear combination (for example, when fluctuations
+    do not depend on the level of the series) or in a nonlinear, multiplicative form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Based on the model assumptions, they can also be split up automatically. Statsmodels
+    includes a simple method to split the time series into separate trend, seasonal,
+    and residual components using moving averages. We can apply it to monthly data
+    on industrial manufacturing that contain both a strong trend component and a seasonality
+    component, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 9.1* shows the resulting charts that display the additive components.
+    The residual component would be the focus of subsequent modeling efforts, assuming
+    that the trend and seasonality components are more deterministic and amenable
+    to simple extrapolation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.1: Time-series decomposition into trend, seasonality, and residuals'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are more sophisticated model-based approaches—see, for example, *Chapter
+    6*, *The Machine  Learning Process*, in Hyndman and Athanasopoulos (2018).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Rolling window statistics and moving averages
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Given the sequential ordering of time-series data, it is natural to compute
+    familiar descriptive statistics for periods of a given length. The goal is to
+    detect whether the series is stable or changes over time and obtain a smoothed
+    representation that captures systematic aspects while filtering out the noise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rolling window statistics serve this process: they produce a new time series
+    where each data point represents a summary statistic computed for a certain period
+    of the original data. Moving averages are the most familiar example. The original
+    data points can enter the computation with weights that are equal or, for example,
+    emphasize more recent data points. Exponential moving averages recursively compute
+    weights that decay for data points further in the past. The new data points are
+    typically a summary of all preceding data points, but they can also be computed
+    from a surrounding window.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pandas library includes rolling or expanding windows and allows for various
+    weight distributions. In a second step, you can apply computations to each set
+    of data captured by a window. These computations include built-in functions for
+    individual series, such as the mean or the sum, and the correlation or covariance
+    for several series, as well as user-defined functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We used this functionality to engineer features in *Chapter 4*, *Financial Feature
+    Engineering – How to Research Alpha Factors*, and *Chapter 7*, *Linear Models
+    – From Risk Factors to Return Forecasts*, for example. The moving average and
+    exponential smoothing examples in the following section will also apply these
+    tools.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Early forecasting models included **moving-average models** with exponential
+    weights called **exponential smoothing models**. We will encounter moving averages
+    again as key building blocks for linear time series. Forecasts that rely on exponential
+    smoothing methods use weighted averages of past observations, where the weights
+    decay exponentially as the observations get older. Hence, a more recent observation
+    receives a higher associated weight. These methods are popular for time series
+    that do not have very complicated or abrupt patterns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to measure autocorrelation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Autocorrelation** (also called *serial correlation*) adapts the concept of
+    correlation to the time-series context: just as the correlation coefficient measures
+    the strength of a linear relationship between two variables, the **autocorrelation
+    coefficient**, ![](img/B15439_09_011.png), measures the extent of a linear relationship
+    between time-series values separated by a given lag, *k*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_012.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Hence, we can calculate one autocorrelation coefficient for each of the *T*-1
+    lags in a time series of length *T*. The **autocorrelation function** (**ACF**)
+    computes the correlation coefficients as a function of the lag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The autocorrelation for a lag larger than 1 (that is, between observations more
+    than one timestep apart) reflects both the direct correlation between these observations
+    and the indirect influence of the intervening data points. The **partial autocorrelation**
+    removes this influence and only measures the linear dependence between data points
+    at the given lag distance, *T*. Removing means using the residuals of a linear
+    regression with the outcome *x*[t] and the lagged values *x*[t][-1], *x*[t][-2],
+    …, *x*[T][-1] as features (also known as an *AR*(*T*-1) model, which we'll discuss
+    in the next section on univariate time-series models). The **partial autocorrelation
+    function** (**PACF**) provides all the correlations that result once the effects
+    of a correlation at shorter lags have been removed, as described previously.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are also algorithms that estimate the partial autocorrelation from the
+    sample autocorrelation based on the exact theoretical relationship between the
+    PACF and the ACF.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A **correlogram** is simply a plot of the ACF or PACF for sequential lags, *k*=0,1,...,*n*.
+    It allows us to inspect the correlation structure across lags at one glance (see
+    *Figure 9.3* for an example). The main usage of correlograms is to detect any
+    autocorrelation after the removal of a deterministic trend or seasonality. Both
+    the ACF and the PACF are key diagnostic tools for the design of linear time-series
+    models, and we will review examples of ACF and PACF plots in the following section
+    on time-series transformations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to diagnose and achieve stationarity
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The statistical properties, such as the mean, variance, or autocorrelation,
+    of a **stationary time series** are independent of the period—that is, they don't
+    change over time. Thus, **stationarity** implies that a time series does not have
+    a trend or seasonal effects. Furthermore, it requires that descriptive statistics,
+    such as the mean or the standard deviation, when computed for different rolling
+    windows, are constant or do not change significantly over time. A stationary time
+    series reverts to its mean, and the deviations have a constant amplitude, while
+    short-term movements are always alike in a statistical sense.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More formally, **strict stationarity** requires the joint distribution of any
+    subset of time-series observations to be independent of time with respect to all
+    moments. So, in addition to the mean and variance, higher moments such as skew
+    and kurtosis also need to be constant, irrespective of the lag between different
+    observations. In most applications, such as most time-series models in this chapter
+    that we can use to model asset returns, we limit stationarity to first and second
+    moments so that the time series is covariance stationary with constant mean, variance,
+    and autocorrelation. However, we abandon this assumption when building modeling
+    volatility and explicitly assume the variance to change over time in predictable
+    ways.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that we specifically allow for **dependence between output values at different
+    lags**, just like we want the input data for linear regression to be correlated
+    with the outcome. Stationarity implies that these relationships are stable. Stationarity
+    is a key assumption of classical statistical models. The following two subsections
+    introduce transformations that can help make a time series stationary, as well
+    as how to address the special case of a stochastic trend caused by a unit root.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Transforming a time series to achieve stationarity
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To satisfy the stationarity assumption of many time-series models, we need to
+    transform the original series, often in several steps. Common transformations
+    include the (natural) **logarithm** to convert an exponential growth pattern into
+    a linear trend and stabilize the variance. **Deflation** implies dividing a time
+    series by another series that causes trending behavior, for example, dividing
+    a nominal series by a price index to convert it into a real measure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A series is **trend-stationary** if it reverts to a stable long-run linear trend.
+    It can often be made stationary by fitting a trend line using linear regression
+    and using the residuals. This implies including the time index as an independent
+    variable in a linear regression model, possibly combined with logging or deflating.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In many cases, detrending is not sufficient to make the series stationary. Instead,
+    we need to transform the original data into a series of **period-to-period and/or
+    season-to-season differences**. In other words, we use the result of subtracting
+    neighboring data points or values at seasonal lags from each other. Note that
+    when such differencing is applied to a log-transformed series, the results represent
+    instantaneous growth rates or returns in a financial context.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If a univariate series becomes stationary after differencing *d* times, it is
+    said to be integrated of the order of *d*, or simply integrated if *d*=1\. This
+    behavior is due to unit roots, which we will explain next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Handling instead of how to handle
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Unit roots pose a particular problem for determining the transformation that
+    will render a time series stationary. We will first explain the concept of a unit
+    root before discussing diagnostics tests and solutions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On unit roots and random walks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Time series are often modeled as stochastic processes of the following autoregressive
+    form so that the current value is a weighted sum of past values, plus a random
+    disturbance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_013.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We will explore these models in more detail as the AR building block for ARIMA
+    models in the next section on univariate time-series models. Such a process has
+    a characteristic equation of the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_014.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: If one of the (up to) *p* roots of this polynomial equals 1, then the process
+    is said to have a **unit root**. It will be non-stationary but will not necessarily
+    have a trend. If the remaining roots of the characteristic equation are less than
+    1 in absolute terms, the first difference of the process will be stationary, and
+    the **process is integrated of order 1 or I(1)**. With additional roots larger
+    than 1 in absolute terms, the order of integration is higher and additional differencing
+    will be required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In practice, time series of interest rates or asset prices are often not stationary
+    because there isn''t a price level to which the series reverts. The most prominent
+    example of a non-stationary series is the random walk. Given a time series of
+    prices *p*[t] with starting price *p*[0](for example, a stock''s IPO price) and
+    a white-noise disturbance ![](img/B15439_09_005.png), then a random walk satisfies
+    the following autoregressive relationship:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_016.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Repeated substitution shows that the current value, *p*[t], is the sum of all
+    prior disturbances or innovations, ![](img/B15439_09_005.png), and the initial
+    price, *p*[0]. If the equation includes a constant term, then the random walk
+    is said to have **drift**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The random walk is thus an **autoregressive stochastic process** of the following
+    form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_018.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: It has the characteristic equation ![](img/B15439_09_019.png) with a unit root
+    and is both non-stationary and integrated of order 1\. On the one hand, given
+    the IID nature of ![](img/B15439_09_020.png), the variance of the time series
+    equals ![](img/B15439_09_021.png), which is **not second-order stationary**, and
+    implies that, in principle, the series could assume any value over time. On the
+    other hand, taking the **first difference**, ![](img/B15439_09_022.png), leaves
+    ![](img/B15439_09_023.png), which is **stationary**, given the statistical assumption
+    about ![](img/B15439_09_024.png).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The defining characteristic of a non-stationary series with a unit-root is
+    **long memory**: since current values are the sum of past disturbances, large
+    innovations persist for much longer than for a mean-reverting, stationary series.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to diagnose a unit root
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Statistical unit root tests are a common way to determine objectively whether
+    (additional) differencing is necessary. These are statistical hypothesis tests
+    of stationarity that are designed to determine whether differencing is required.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **augmented Dickey-Fuller test** (**ADF test**) evaluates the null hypothesis
+    that a time-series sample has a unit root against the alternative of stationarity.
+    It regresses the differenced time series on a time trend, the first lag, and all
+    lagged differences, and computes a test statistic from the value of the coefficient
+    on the lagged time-series value. `statsmodels` makes it easy to implement (see
+    the notebook `tsa_and_stationarity`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Formally, the ADF test for a time series, ![](img/B15439_09_025.png), runs
+    the linear regression where ![](img/B15439_09_026.png) is a constant, ![](img/B15439_07_004.png)
+    is a coefficient on a time trend, and *p* refers to the number of lags used in
+    the model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_028.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The constraint ![](img/B15439_09_029.png) implies a random walk, whereas only
+    ![](img/B15439_09_030.png) implies a random walk with drift. The lag order is
+    usually decided using the **Akaike information criterion** (**AIC**) and **Bayesian
+    information criterion** (**BIC**) information criteria introduced in *Chapter 7*,
+    *Linear Models – From Risk Factors to Return Forecasts*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ADF test statistic uses the sample coefficient ![](img/B15439_09_031.png),
+    which, under the null hypothesis of unit-root non-stationarity, equals zero and
+    is negative otherwise. It intends to demonstrate that, for an integrated series,
+    the lagged series value should not provide useful information in predicting the first
+    difference above and beyond lagged differences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to remove unit roots and work with the resulting series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In addition to using the difference between neighboring data points to remove
+    a constant pattern of change, we can apply **seasonal differencing** to remove
+    patterns of seasonal change. This involves taking the difference of values at
+    a lag distance that represents the length of the seasonal pattern. For monthly
+    data, this usually involves differences at lag 12, and for quarterly data, it
+    involves differences at lag 4 to remove both seasonality and linear trend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Identifying the correct transformation and, in particular, the appropriate
+    number and lags for differencing is not always clear-cut. Some **heuristics**
+    have been suggested, which can be summarized as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Lag-1 autocorrelation close to zero or negative, or autocorrelation generally
+    small and patternless: there is no need for higher-order differencing'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Positive autocorrelations up to 10+ lags: the series probably needs higher-order
+    differencing'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Lag-1 autocorrelation < -0.5: the series may be over-differenced'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Slightly over- or under-differencing can be corrected with AR or MA terms (see
+    the next section on univariate time-series models)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Some authors recommend fractional differencing as a more flexible approach to
+    rendering an integrated series stationary, and may be able to keep more information
+    or signal than simple or seasonal differences at discrete intervals. See, for
+    example, *Chapter 5*, *Portfolio Optimization and Performance Evaluation*, in
+    Marcos Lopez de Prado (2018).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Time-series transformations in practice
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The charts in *Figure 9.2* shows time series for the NASDAQ stock index and
+    industrial production for the 30 years through 2017 in their original form, as
+    well as the transformed versions after applying the logarithm and subsequently
+    applying the first and seasonal differences (at lag 12), respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The charts also display the ADF p-value, which allows us to reject the hypothesis
+    of unit-root non-stationarity after all transformations in both cases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.2: Time-series transformations and unit-root test results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can further analyze the relevant time-series characteristics for the transformed
+    series using a Q-Q plot that compares the quantiles of the distribution of the
+    time-series observation to the quantiles of the normal distribution and the correlograms
+    based on the ACF and PACF.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the NASDAQ plots in *Figure 9.3*, we can see that while there is no trend,
+    the variance is not constant but rather shows clustered spikes around periods
+    of market turmoil in the late 1980s, 2001, and 2008\. The Q-Q plot highlights
+    the fat tails of the distribution with extreme values that are more frequent than
+    the normal distribution would suggest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ACF and the PACF show similar patterns, with autocorrelation at several
+    lags appearing to be significant:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.3: Descriptive statistics for transformed NASDAQ Composite index'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the monthly time series on industrial manufacturing production, we can
+    see a large negative outlier following the 2008 crisis, as well as the corresponding
+    skew in the Q-Q plot (see *Figure 9.4*). The autocorrelation is much higher than
+    for the NASDAQ returns and declines smoothly. The PACF shows distinct positive
+    autocorrelation patterns at lags 1 and 13 and significant negative coefficients
+    at lags 3 and 4:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.4: Descriptive statistics for transformed industrial production data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Univariate time-series models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Multiple linear-regression models expressed the variable of interest as a linear
+    combination of the inputs, plus a random disturbance. In contrast, univariate
+    time-series models relate the current value of the time series to a linear combination
+    of lagged values of the series, current noise, and possibly past noise terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While exponential smoothing models are based on a description of the trend
+    and seasonality in the data, **ARIMA models aim to describe the autocorrelations
+    in the data**. ARIMA(*p*, *d*, *q*) models require stationarity and leverage two
+    building blocks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Autoregressive** (**AR**) terms consisting of *p* lagged values of the time
+    series'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Moving average** (**MA**) terms that contain *q* lagged disturbances'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **I** stands for *integrated* because the model can account for unit-root
+    non-stationarity by differentiating the series *d* times. The term autoregression
+    underlines that ARIMA models imply a regression of the time series on its own
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will introduce the ARIMA building blocks, AR and MA models, and explain how
+    to combine them in **autoregressive moving-average** (**ARMA**) models that may
+    account for series integration as ARIMA models or include exogenous variables
+    as **AR(I)MAX** models. Furthermore, we will illustrate how to include seasonal
+    AR and MA terms to extend the toolbox so that it also includes **SARMAX** models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build autoregressive models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'An AR model of order *p* aims to capture the linear dependence between time-series
+    values at different lags and can be written as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_032.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This closely resembles a multiple linear regression on lagged values of *y*[t].
+    This model has the following characteristic equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_033.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The inverses of the solution to this polynomial of degree *p* in *x* are the
+    characteristic roots, and the AR(*p*) process is stationary if all roots are less
+    than 1 in absolute terms, and unstable otherwise. For a stationary series, multistep
+    forecasts will converge to the mean of the series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can estimate the model parameters with the familiar least squares method
+    using the *p*+1, ..., *T* observations to ensure there is data for each lagged
+    term and the outcome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to identify the number of lags
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In practice, the challenge consists of deciding on the appropriate order *p*
+    of lagged terms. The time-series analysis tools for serial correlation, which
+    we discussed in the *How to measure autocorrelation* section, play a key role
+    in making this decision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, a visual inspection of the correlogram often provides helpful
+    clues:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **ACF** estimates the autocorrelation between observations at different
+    lags, which, in turn, results from both direct and indirect linear dependence.
+    Hence, if an AR model of order *k* is the correct model, the ACF will show a significant
+    serial correlation up to lag *k* and, due to the inertia caused by the indirect
+    effects of the linear relationship, will extend to subsequent lags until it eventually
+    trails off as the effect weakens.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **PACF**, in turn, only measures the direct linear relationship between
+    observations a given lag apart so that it will not reflect correlation for lags
+    beyond *k*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to diagnose model fit
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: If the model properly captures the linear dependence across lags, then the residuals
+    should resemble white noise, and the ACF should highlight the absence of significant
+    autocorrelation coefficients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In addition to a residual plot, the **Ljung-Box Q-statistic** allows us to
+    test the hypothesis that the residual series follows white noise. The null hypothesis
+    is that all *m* serial correlation coefficients are zero against the alternative
+    that some coefficients are not. The test statistic is computed from the sample
+    autocorrelation coefficients ![](img/B15439_09_034.png)for different lags *k*
+    and follows a *X*² distribution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_035.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: As we will see, statsmodels provides information about the significance of coefficients
+    for different lags, and insignificant coefficients should be removed. If the Q-statistic
+    rejects the null hypothesis of no autocorrelation, you should consider additional
+    AR terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build moving-average models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'An MA(*q*) model uses *q* past disturbances rather than lagged values of the
+    time series in a regression-like model, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_036.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Since we do not observe the white-noise disturbance values, ![](img/B15439_09_007.png),
+    MA(*q*) is not a regression model like the ones we have seen so far. Rather than
+    using least squares, MA(*q*) models are estimated using **maximum likelihood**
+    (**MLE**), alternatively initializing or estimating the disturbances at the beginning
+    of the series and then recursively and iteratively computing the remainder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MA(*q*) model gets its name from representing each value of *y*[t] as a
+    weighted moving average of the past *q* innovations. In other words, current estimates
+    represent a correction relative to past errors made by the model. The use of moving
+    averages in MA(*q*) models differs from that of exponential smoothing, or the
+    estimation of seasonal time-series components, because an MA(*q*) model aims to
+    forecast future values, as opposed to denoising or estimating the trend cycle
+    of past values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MA(*q*) processes are always stationary because they are the weighted sum of
+    white noise variables that are, themselves, stationary.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to identify the number of lags
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A time series generated by an MA(*q*) process is driven by the residuals of
+    the prior *q* model predictions. Hence, the ACF for the MA(*q*) process will show
+    significant coefficients for values up to lag *q* and then decline sharply because
+    this is how the model assumes the series values have been generated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note how this differs from the AR case we just described, where the PACF would
+    show a similar pattern.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The relationship between the AR and MA models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: An AR(*p*) model can always be expressed as an ![](img/B15439_09_038.png) process
+    using repeated substitution, as in the random walk example in the *How to handle
+    stochastic trends caused by unit roots* section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the coefficients of the MA(*q*) process meet certain size constraints,
+    it also becomes invertible and can be expressed as an ![](img/B15439_09_039.png)
+    process (see Tsay, 2005, for details).
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build ARIMA models and extensions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Autoregressive integrated moving-average—ARIMA(*p*, *d*, *q*)—models combine
+    AR(*p*) and MA(*q*) processes to leverage the complementarity of these building
+    blocks and simplify model development. They do this using a more compact form
+    and reducing the number of parameters, in turn reducing the risk of overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The models also take care of eliminating unit-root non-stationarity by using
+    the *d*^(th) difference of the time-series values. An ARIMA(*p*, 1, *q*) model
+    is the same as using an ARMA(*p*, *q*) model with the first differences of the
+    series. Using *y*'' to denote the original series after non-seasonal differencing
+    *d* times, the ARIMA(*p*, *d*, *q*) model is simply:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_040.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: ARIMA models are also estimated using MLE. Depending on the implementation,
+    higher-order models may generally subsume lower-order models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, up to version 0.11, statsmodels includes all lower-order *p* and
+    *q* terms and does not permit removing coefficients for lags below the highest
+    value. In this case, higher-order models will always fit better. Be careful not
+    to overfit your model to the data by using too many terms. The most recent version,
+    which is 0.11 at the time of writing, added an experimental new ARIMA model with
+    more flexible configuration options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to model differenced series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There are also guidelines for designing the univariate times-series models
+    when using data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A model without differencing assumes that the original series is stationary,
+    including mean-reverting. It normally includes a constant term to allow for a
+    non-zero mean.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A model with one order of differencing assumes that the original series has
+    a constant trend and should thus include a constant term.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A model with two orders of differencing assumes that the original series has
+    a time-varying trend and should not include a constant.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to identify the number of AR and MA terms
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Since AR(*p*) and MA(*q*) terms interact, the information provided by the ACF
+    and PACF is no longer reliable and can only be used as a starting point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditionally, the AIC and BIC information criteria have been used to rely on
+    in-sample fit when selecting the model design. Alternatively, we can rely on out-of-sample
+    tests to cross-validate multiple parameter choices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following summary provides some guidance on how to choose the model order
+    in the case of considering AR and MA models in isolation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The lag beyond which the PACF cuts off is the indicated number of AR terms.
+    If the PACF of the differenced series cuts off sharply and/or the lag-1 autocorrelation
+    is positive, add one or more AR terms.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The lag beyond which the ACF cuts off is the indicated number of MA terms. If
+    the ACF of the differenced series displays a sharp cutoff and/or the lag-1 autocorrelation
+    is negative, consider adding an MA term to the model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: AR and MA terms may cancel out each other's effects, so always try to reduce
+    the number of AR and MA terms by 1 if your model contains both to avoid overfitting,
+    especially if the more complex model requires more than 10 iterations to converge.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the AR coefficients sum to nearly one and suggest a unit root in the AR part
+    of the model, eliminate one AR term and difference the model once (more).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the MA coefficients sum to nearly one and suggest a unit root in the MA part
+    of the model, eliminate one MA term and reduce the order of differencing by one.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Unstable long-term forecasts suggest there may be a unit root in the AR or MA
+    part of the model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Adding features – ARMAX
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'An **autoregressive moving-average model with exogenous inputs** (**ARMAX**)
+    model adds input variables or covariate on the right-hand side of the ARMA time-series
+    model (assuming the series is stationary, so we can skip differencing):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_041.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: This resembles a linear regression model but is quite difficult to interpret.
+    This is because the effect of ![](img/B15439_09_042.png) on *y*[t] is not the
+    effect of an increase in *x*[t] by one unit as in linear regression. Instead,
+    the presence of lagged values of *y*[t] on the right-hand side of the equation
+    implies that the coefficient can only be interpreted, given the lagged values
+    of the response variable, which is hardly intuitive.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding seasonal differencing – SARIMAX
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: For time series with seasonal effects, we can include AR and MA terms that capture
+    the seasonality's periodicity. For instance, when using monthly data and the seasonal
+    effect length is 1 year, the seasonal AR and MA terms would reflect this particular
+    lag length.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ARIMAX(*p*, *d*, *q*) model then becomes a SARIMAX(*p*, *d*, *q*) × (*P*,
+    *D*, *Q*) model, which is a bit more complicated to write out, but the statsmodels
+    documentation (see link on GitHub) provides this information in detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will now build a seasonal ARMA model using macro-data to illustrate its implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to forecast macro fundamentals
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We will build a SARIMAX model for monthly data on an industrial production
+    time series for the 1988-2017 period. As illustrated in the first section on analytical
+    tools, the data has been log-transformed, and we are using seasonal (lag-12) differences.
+    We estimate the model for a range of both ordinary and conventional AR and MA
+    parameters using a rolling window of 10 years of training data, and evaluate the
+    **root mean square error** (**RMSE**) of the 1-step-ahead forecast, as shown in
+    the following simplified code (see the notebook `arima_models` for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We also collect the AIC and BIC criteria, which show a very high rank correlation
+    coefficient of 0.94, with BIC favoring models with slightly fewer parameters than
+    AIC. The best five models by RMSE are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We reestimate a SARIMA(2, 0 ,3) × (1, 0, 0) model, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We obtain the following summary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.5: SARMAX model results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The coefficients are significant, and the Q-statistic rejects the hypothesis
+    of further autocorrelation. The correlogram similarly indicates that we have successfully
+    eliminated the series'' autocorrelation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.6: SARIMAX model diagnostics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to use time-series models to forecast volatility
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A particularly important application for univariate time-series models in finance
+    is the prediction of volatility. This is because it is usually not constant over
+    time, with bouts of volatility clustering together. Changes in variance create
+    challenges for time-series forecasting using the classical ARIMA models that assume
+    stationarity. To address this challenge, we will now model volatility so that
+    we can predict changes in variance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heteroskedasticity is the technical term for changes in a variable's variance.
+    The ARCH model expresses the variance of the error term as a function of the errors
+    in previous periods. More specifically, it assumes that the error variance follows
+    an AR(*p*) model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **generalized autoregressive conditional heteroskedasticity** (**GARCH**)
+    model broadens the scope of ARCH to allow for ARMA models. Time-series forecasting
+    often combines ARIMA models for the expected mean and ARCH/GARCH models for the
+    expected variance of a time series. The 2003 Nobel Prize in Economics was awarded
+    to Robert Engle and Clive Granger for developing this class of models. The former
+    also runs the Volatility Lab at New York University's Stern School ([vlab.stern.nyu.edu](http://vlab.stern.nyu.edu)),
+    which has numerous online examples and tools concerning the models we will discuss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ARCH model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The ARCH(*p*) model is simply an AR(*p*) model that's applied to the variance
+    of the residuals of a time-series model, which makes this variance at time *t*
+    conditional on lagged observations of the variance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, the error terms, ![](img/B15439_09_043.png), are residuals
+    of a linear model, such as ARIMA, on the original time series and are split into
+    a time-dependent standard deviation, ![](img/B15439_09_044.png), and a disturbance,
+    *z*[t], as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_045.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: An ARCH(*p*) model can be estimated using OLS. Engle proposed a method to identify
+    the appropriate ARCH order using the Lagrange multiplier test, which corresponds
+    to the F-test of the hypothesis that all coefficients in linear regression are
+    zero (see *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A key **strength** of the ARCH model is that it produces volatility estimates
+    with positive excess kurtosis — that is, fat tails relative to the normal distribution
+    — which, in turn, is in line with empirical observations about returns. **Weaknesses**
+    include the assumption of the same effect for positive and negative volatility
+    shocks, whereas asset prices tend to respond differently. It also does not explain
+    the variations in volatility and is likely to overpredict volatility because they
+    respond slowly to large, isolated shocks to the return series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a properly specified ARCH model, the standardized residuals (divided by
+    the model estimate for the period of standard deviation) should resemble white
+    noise and can be subjected to a Ljung-Box Q test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generalizing ARCH – the GARCH model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The ARCH model is relatively simple but often requires many parameters to capture
+    the volatility patterns of an asset-return series. The GARCH model applies to
+    a log-return series, *r*[t], with disturbances, ![](img/B15439_09_046.png), that
+    follow a GARCH(*p*, *q*) model if:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_047.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The GARCH(*p*, *q*) model assumes an ARMA(*p*, *q*) model for the variance of
+    the error term, ![](img/B15439_09_048.png).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to ARCH models, the tail distribution of a GARCH(1,1) process is heavier
+    than that of a normal distribution. The model encounters the same weaknesses as
+    the ARCH model. For instance, it responds equally to positive and negative shocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To configure the lag order for ARCH and GARCH models, use the squared residuals
+    of the time series trained to predict the mean of the original series. The residuals
+    are zero-centered so that their squares are also the variance. Then, inspect the
+    ACF and PACF plots of the squared residuals to identify autocorrelation patterns
+    in the variance of the time series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to build a model that forecasts volatility
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The development of a volatility model for an asset-return series consists of
+    four steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Build an ARMA time-series model for the financial time series based on the serial
+    dependence revealed by the ACF and PACF
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Test the residuals of the model for ARCH/GARCH effects, again relying on the
+    ACF and PACF for the series of the squared residual
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Specify a volatility model if serial correlation effects are significant, and
+    jointly estimate the mean and volatility equations
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Check the fitted model carefully and refine it if necessary
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When applying volatility forecasting to return series, the serial dependence
+    may be limited so that a constant mean may be used instead of an ARMA model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `arch` library (see link to the documentation on GitHub) provides several
+    options to estimate volatility-forecasting models. You can model the expected
+    mean as a constant, as an AR(*p*) model, as discussed in the *How to build autoregressive
+    models*, section or as more recent **heterogeneous autoregressive processes**
+    (**HAR**), which use daily (1 day), weekly (5 days), and monthly (22 days) lags
+    to capture the trading frequencies of short-, medium-, and long-term investors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The mean models can be jointly defined and estimated with several conditional
+    heteroskedasticity models that include, in addition to ARCH and GARCH, the **exponential
+    GARCH** (**EGARCH**) model, which allows for asymmetric effects between positive
+    and negative returns, and the **heterogeneous ARCH** (**HARCH**) model, which
+    complements the HAR mean model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will use daily NASDAQ returns from 2000-2020 to demonstrate the usage of
+    a GARCH model (see the notebook `arch_garch_models` for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The rescaled daily return series exhibits only limited autocorrelation, but
+    the squared deviations from the mean do have substantial memory reflected in the
+    slowly decaying ACF and the PACF, which are high for the first two and cut off
+    only after the first six lags:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The function `plot_correlogram` produces the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.7: Daily NASDAQ composite volatility'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Hence, we can estimate a GARCH model to capture the linear relationship of past
+    volatilities. We will use rolling 10-year windows to estimate a GARCH(*p*, *q*)
+    model with *p* and *q* ranging from 1-4 to generate one-step out-of-sample forecasts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then compare the RMSE of the predicted volatility relative to the actual
+    squared deviation of the return from its mean to identify the most predictive
+    model. We are using winsorized data to limit the impact of extreme return values
+    being reflected in the very high positive skew of the volatility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The GARCH(2, 2) model achieves the lowest RMSE (same value as GARCH(4, 2) but
+    with fewer parameters), so we go ahead and estimate this model to inspect the
+    summary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output shows the maximized log-likelihood, as well as the AIC and BIC criteria,
+    which are commonly minimized when selecting models based on in-sample performance
+    (see *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*). It
+    also displays the result for the mean model, which, in this case, is just a constant
+    estimate, as well as the GARCH parameters for the constant omega, the AR parameters,
+    ![](img/B15439_09_049.png), and the MA parameters, ![](img/B15439_09_050.png),
+    all of which are statistically significant:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.8: GARCH Model results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let's now explore models for multiple time series and the concept of cointegration,
+    which will enable a new trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multivariate time-series models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Multivariate time-series models are designed to capture the dynamic of multiple
+    time series simultaneously and leverage dependencies across these series for more
+    reliable predictions. The most comprehensive introduction to this subject is Lütkepohl
+    (2005).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Systems of equations
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Univariate time-series models, like the ARMA approach we just discussed, are
+    limited to statistical relationships between a target variable and its lagged
+    values or lagged disturbances and exogenous series, in the case of ARMAX. In contrast,
+    multivariate time-series models also allow for lagged values of other time series
+    to affect the target. This effect applies to all series, resulting in complex
+    interactions, as illustrated in the following diagram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_09.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.9: Interactions in univariate and multivariate time-series models'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to potentially better forecasting, multivariate time series are
+    also used to gain insights into cross-series dependencies. For example, in economics,
+    multivariate time series are used to understand how policy changes to one variable,
+    such as an interest rate, may affect other variables over different horizons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **impulse-response** function produced by the multivariate model serves
+    this purpose and allows us to simulate how one variable responds to a sudden change
+    in other variables. The concept of **Granger causality** analyzes whether one
+    variable is useful in forecasting another (in the least-squares sense). Furthermore,
+    multivariate time-series models allow for a decomposition of the prediction error
+    variance to analyze how other series contribute.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The vector autoregressive (VAR) model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We will see how the **vector autoregressive VAR(p) model** extends the AR(*p*)
+    model to *k* series by creating a system of *k* equations, where each contains
+    *p* lagged values of all *k* series. In the simplest case, a VAR(1) model for
+    *k*=2 takes the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_051.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This model can be expressed somewhat more concisely in **matrix form**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_052.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The **coefficients** on the lagged values of the output provide information
+    about the dynamics of the series itself, whereas the cross-variable coefficients
+    offer some insight into the interactions across the series. This notation extends
+    to *k* time series and order *p*, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_053.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: VAR(*p*) models also require **stationarity** so that the initial steps from
+    univariate time-series modeling carry over. First, explore the series and determine
+    the necessary transformations. Then, apply the augmented Dickey-Fuller test to
+    verify that the stationarity criterion is met for each series and apply further
+    transformations otherwise. It can be estimated with an OLS conditional on initial
+    information or with MLE, which is the equivalent for normally distributed errors
+    but not otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If some or all of the *k* series are unit-root non-stationary, they may be **cointegrated**
+    (see the next section). This extension of the unit root concept to multiple time
+    series means that a linear combination of two or more series is stationary and,
+    hence, mean-reverting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The VAR model is not equipped to handle this case without differencing; instead,
+    use the **vector error correction model** (**VECM**, Johansen and Juselius 1990).
+    We will further explore cointegration because, if present and assumed to persist,
+    it can be leveraged for a pairs-trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **determination of the lag order** also takes its cues from the ACF and
+    PACF for each series, but is constrained by the fact that the same lag order applies
+    to all series. After model estimation, **residual diagnostics** also call for
+    a result resembling white noise, and model selection can use in-sample information
+    criteria or, if the goal is to use the model for prediction, out-of-sample predictive
+    performance to cross-validate alternative model designs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As mentioned in the univariate case, predictions of the original time series
+    require us to reverse the transformations applied to make a series stationary
+    before training the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the VAR model for macro forecasts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We will extend the univariate example of using a single time series of monthly
+    data on industrial production and add a monthly time series on consumer sentiment,
+    both of which are provided by the Federal Reserve''s data service. We will use
+    the familiar pandas-datareader library to retrieve data from 1970 through 2017:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Log-transforming the industrial production series and seasonal differencing
+    using a lag of 12 for both series yields stationary results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This leaves us with the following series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_10.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.10: Transformed time series: industrial production and consumer sentiment'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To limit the size of the output, we will just estimate a VAR(1) model using
+    the statsmodels `VARMAX` implementation (which allows for optional exogenous variables)
+    with a constant trend using the first 480 observations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This produces the following summary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_11.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.11: VAR(1) model results'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output contains the coefficients for both time-series equations, as outlined
+    in the preceding VAR(1) illustration. statsmodels provides diagnostic plots to
+    check whether the residuals meet the white noise assumptions. This is not exactly
+    the case in this simple example because the variance does not appear to be constant
+    (upper left) and the quantile plot shows differences in the distribution, namely
+    fat tails (lower left):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_12.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.12: statsmodels VAR model diagnostic plot'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can generate out-of-sample predictions as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following visualization of actual and predicted values shows how the prediction
+    lags the actual values and does not capture nonlinear, out-of-sample patterns
+    well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_13.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.13: VAR model predictions versus actuals'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cointegration – time series with a shared trend
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We briefly mentioned cointegration in the previous section on multivariate time-series
+    models. Let's now explain this concept and how to diagnose its presence in more
+    detail before leveraging it for a statistical arbitrage trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have seen how a time series can have a unit root that creates a stochastic
+    trend and makes the time series highly persistent. When we use such an integrated
+    time series in their original, rather than in differenced, form as a feature in
+    a linear regression model, its relationship with the outcome will often appear
+    statistically significant, even though it is not. This phenomenon is called spurious
+    regression (for details, see *Chapter 18*, *CNNs for Financial Time Series and
+    Satellite Images*, in Wooldridge, 2008). Therefore, the recommended solution is
+    to difference the time series so they become stationary before using them in a
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, there is an exception when there are cointegration relationships between
+    the outcome and one or more input variables. To understand the concept of cointegration,
+    let's first remember that the residuals of a regression model are a linear combination
+    of the inputs and the output series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Usually, the residuals of the regression of one integrated time series on one
+    or more such series yields non-stationary residuals that are also integrated,
+    and thus behave like a random walk. However, for some time series, this is not
+    the case: the regression produces coefficients that yield a linear combination
+    of the time series in the form of the residuals that are stationary, even though
+    the individual series are not. Such time series are *cointegrated*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A non-technical example is that of a drunken man on a random walk accompanied
+    by his dog (on a leash). Both trajectories are non-stationary but cointegrated
+    because the dog will occasionally revert to his owner. In the trading context,
+    arbitrage constraints imply cointegration between spot and futures prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other words, a **linear combination of two or more cointegrated series has
+    a stable mean** to which this linear combination reverts. This also applies when
+    the individual series are integrated of a higher order and the linear combination
+    reduces the overall order of integration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Cointegration differs from correlation**: two series can be highly correlated
+    but need not be cointegrated. For example, if two growing series are constant
+    multiples of each other, their correlation will be high, but any linear combination
+    will also grow rather than revert to a stable mean.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Cointegration is very useful: if two or more asset price series tend to revert
+    to a common mean, we can leverage deviations from the trend because they should
+    imply future price moves in the opposite direction. The mathematics behind cointegration
+    is more involved, so we will only focus on the practical aspects; for an in-depth
+    treatment, see Lütkepohl (2005).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will address how we can identify pairs with such a long-term
+    stationary relationship, estimate the expected time for any disequilibrium to
+    correct, and how to utilize these tools to implement and backtest a long-short
+    pairs trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two approaches to testing for cointegration:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Engle-Granger two-step method
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The Johansen test
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We'll discuss each in turn before we show how they help identify cointegrated
+    securities that tend to revert to a common trend, a fact that we can leverage
+    for a statistical arbitrage strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Engle-Granger two-step method
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The **Engle-Granger method** is used to identify cointegration relationships
+    between two series. It involves both of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Regressing one series on another to estimate the stationary long-term relationship
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Applying an ADF unit-root test to the regression residual
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The null hypothesis is that the residuals have a unit root and are integrated;
+    if we can reject it, then we assume that the residuals are stationary and, thus,
+    the series are cointegrated (Engle and Granger 1987).
+  prefs: []
+  type: TYPE_NORMAL
+- en: A key benefit of this approach is that the regression coefficient represents
+    the multiplier that renders the combination stationary, that is, mean-reverting.
+    Unfortunately, the test results will differ, depending on which variable we consider
+    independent, so that we try both ways and then pick the relation with the more
+    negative test statistic that has the lower p-value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another downside is that this test is limited to pairwise relationships. The
+    more complex Johansen procedure can identify significant cointegration among up
+    to a dozen time series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Johansen likelihood-ratio test
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The **Johansen procedure**, in contrast, tests the restrictions imposed by
+    cointegration on a VAR model, as discussed in the previous section. More specifically,
+    after subtracting the target vector from both sides of a generic VAR(*p*) model,
+    we obtain the **error correction model** (**ECM**) formulation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_09_054.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The resulting modified VAR(*p*) equation has only one vector term in levels
+    (*y*[t][-1]) that is not expressed as a difference using the ![](img/B15439_09_055.png)
+    operator. The nature of cointegration depends on the rank of the coefficient matrix
+    ![](img/B15439_09_056.png) of this term (Johansen 1991).
+  prefs: []
+  type: TYPE_NORMAL
+- en: While this equation appears structurally similar to the ADF test setup, there
+    are now several potential constellations of common trends because there are multiple
+    series involved. To identify the number of cointegration relationships, the Johansen
+    test successively tests for an increasing rank of ![](img/B15439_09_057.png),
+    starting at 0 (no cointegration). We will explore the application to the case
+    of two series in the following section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gonzalo and Lee (1998) discuss practical challenges due to misspecified model
+    dynamics and other implementation aspects, including how to combine both test
+    procedures that we will rely on for our sample statistical arbitrage strategy
+    in the next section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Statistical arbitrage with cointegration
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Statistical arbitrage refers to strategies that employ some statistical model
+    or method to take advantage of what appears to be relative mispricing of assets,
+    while maintaining a level of market neutrality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Pairs trading** is a conceptually straightforward strategy that has been
+    employed by algorithmic traders since at least the mid-eighties (Gatev, Goetzmann,
+    and Rouwenhorst 2006). The goal is to find two assets whose prices have historically
+    moved together, track the spread (the difference between their prices), and, once
+    the spread widens, buy the loser that has dropped below the common trend and short
+    the winner. If the relationship persists, the long and/or the short leg will deliver
+    profits as prices converge and the positions are closed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This approach extends to a multivariate context by forming baskets from multiple
+    securities and trading one asset against a basket of two baskets against each
+    other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In practice, the strategy requires two steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Formation phase**: Identify securities that have a long-term mean-reverting
+    relationship. Ideally, the spread should have a high variance to allow for frequent
+    profitable trades while reliably reverting to the common trend.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Trading phase**: Trigger entry and exit trading rules as price movements
+    cause the spread to diverge and converge.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Several approaches to the formation and trading phases have emerged from increasingly
+    active research in this area, across multiple asset classes, over the last several
+    years. The next subsection outlines the key differences before we dive into an
+    example application.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to select and trade comoving asset pairs
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A recent comprehensive survey of pairs trading strategies (Krauss 2017) identified
+    four different methodologies, plus a number of other more recent approaches, including
+    ML-based forecasts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Distance approach**: The oldest and most-studied method identifies candidate
+    pairs with distance metrics like correlation and uses non-parametric thresholds
+    like Bollinger Bands to trigger entry and exit trades. Its computational simplicity
+    allows for large-scale applications with demonstrated profitability across markets
+    and asset classes for extended periods of time since Gatev, et al. (2006). However,
+    performance has decayed more recently.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Cointegration approach**: As outlined previously, this approach relies on
+    an econometric model of a long-term relationship among two or more variables,
+    and allows for statistical tests that promise more reliability than simple distance
+    metrics. Examples in this category use the Engle-Granger and Johansen procedures
+    to identify pairs and baskets of securities, as well as simpler heuristics that
+    aim to capture the concept (Vidyamurthy 2004). Trading rules often resemble the
+    simple thresholds used with distance metrics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Time-series approach**: With a focus on the trading phase, strategies in
+    this category aim to model the spread as a mean-reverting stochastic process and
+    optimize entry and exit rules accordingly (Elliott, Hoek, and Malcolm 2005). It
+    assumes promising pairs have already been identified.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Stochastic control approach**: Similar to the time-series approach, the goal
+    is to optimize trading rules using stochastic control theory to find value and
+    policy functions to arrive at an optimal portfolio (Liu and Timmermann 2013).
+    We will address this type of approach in *Chapter 21*, *Generative Adversarial
+    Networks for Synthetic Time-Series Data*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Other approaches**: Besides pair identification based on unsupervised learning
+    like principal component analysis (see *Chapter 13*, *Data-Driven Risk Factors
+    and Asset Allocation with Unsupervised Learning*) and statistical models like
+    copulas (Patton 2012), machine learning has become popular more recently to identify
+    pairs based on their relative price or return forecasts (Huck 2019). We will cover
+    several ML algorithms that can be used for this purpose and illustrate corresponding
+    multivariate pairs trading strategies in the coming chapters.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'This summary of the various approaches offers barely a glimpse at the flexibility
+    afforded by the design of a pairs trading strategy. In addition to higher-level
+    questions about pair selection and trading rule logic, there are **numerous parameters**
+    that we need **to define for implementation**. These parameters include the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Investment universe to screen for potential pairs or baskets
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Length of the formation period
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Strength of the relationship used to pick tradeable candidates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Degree of deviation from and convergence to their common means to trigger entry
+    or exit trades or to adjust existing positions as spreads fluctuate
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pairs trading in practice
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The **distance approach** identifies pairs using the correlation of (normalized)
+    asset prices or their returns, and is simple and orders of magnitude less computationally
+    intensive than cointegration tests. The notebook `cointegration_test` illustrates
+    this for a sample of ~150 stocks with 4 years of daily data: it takes ~30ms to
+    compute the correlation with the returns of an ETF, compared to 18 seconds for
+    a suite of cointegration tests (using statsmodels) – 600x slower.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **speed advantage** is particularly valuable. This is because the number
+    of potential pairs is the product of the number of candidates to be considered
+    on either side so that evaluating combinations of 100 stocks and 100 ETFs requires
+    comparing 10,000 tests (we'll discuss the challenge of multiple testing bias later).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'On the other hand, distance metrics do not necessarily select the most profitable
+    pairs: correlation is maximized for perfect co-movement, which, in turn, eliminates
+    actual trading opportunities. Empirical studies confirm that the volatility of
+    the price spread of cointegrated pairs is almost twice as high as the volatility
+    of the price spread of distance pairs (Huck and Afawubo 2015).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To balance the **tradeoff between computational cost and the quality of the
+    resulting pairs**, Krauss (2017) recommends a procedure that combines both approaches
+    based on his literature review:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Select pairs with a stable spread that shows little drift to reduce the number
+    of candidates
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Test the remaining pairs with the highest spread variance for cointegration
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This process aims to select cointegrated pairs with lower divergence risk while
+    ensuring more volatile spreads that, in turn, generate higher profit opportunities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A large number of tests introduce **data snooping bias**, as discussed in *Chapter
+    6*, *The Machine Learning Process*: multiple testing is likely to increase the
+    number of false positives that mistakenly reject the null hypothesis of no cointegration.
+    While statistical significance may not be necessary for profitable trading (Chan
+    2008), a study of commodity pairs (Cummins and Bucca 2012) shows that controlling
+    the familywise error rate to improve the tests'' power, according to Romano and
+    Wolf (2010), can lead to better performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the following subsection, we'll take a closer look at how predictive various
+    heuristics for the degree of comovement of asset prices are for the result of
+    cointegration tests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The example code uses a sample of 172 stocks and 138 ETFs traded on the NYSE
+    and NASDAQ, with daily data from 2010 - 2019 provided by Stooq.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The securities represent the largest average dollar volume over the sample period
+    in their respective class; highly correlated and stationary assets have been removed.
+    See the notebook `create_datasets` in the `data` folder of the GitHub repository
+    for instructions on how to obtain the data, and the notebook `cointegration_tests`
+    for the relevant code and additional preprocessing and exploratory details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distance-based heuristics to find cointegrated pairs
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`compute_pair_metrics()` computes the following distance metrics for over 23,000
+    pairs of stocks and **Exchange Traded Funds** (**ETFs**) for 2010-14 and 2015-19:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **drift of the spread**, defined as a linear regression of a time trend
+    on the spread
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **spread's volatility**
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **correlations** between the normalized price series and between their returns
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Low drift and volatility, as well as high correlation, are simple proxies for
+    cointegration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To evaluate the predictive power of these heuristics, we also run **Engle-Granger
+    and Johansen cointegration** tests using statsmodels for the preceding pairs.
+    This takes place in the loop in the second half of `compute_pair_metrics()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We first estimate the optimal number of lags that we need to specify for the
+    Johansen test. For both tests, we assume that the cointegrated series (the spread)
+    may have an intercept different from zero but no trend:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: To check for the **significance of the cointegration tests**, we compare the
+    Johansen trace statistic for rank 0 and 1 to their respective critical values
+    and obtain the Engle-Granger p-value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We follow the recommendation by Gonzalo and Lee (1998), mentioned at the end
+    of the previous section, to apply both tests and accept pairs where they agree.
+    The authors suggest additional due diligence in case of disagreement, which we
+    are going to skip:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: For the over 46,000 pairs across both sample periods, the Johansen test considers
+    3.2 percent of the relationships as significant, while the Engle-Granger considers
+    6.5 percent. They agree on 366 pairs (0.79 percent).
+  prefs: []
+  type: TYPE_NORMAL
+- en: How well do the heuristics predict significant cointegration?
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'When we compare the distributions of the heuristics for series that are cointegrated
+    according to both tests with the remainder that is not, volatility and drift are
+    indeed lower (in absolute terms). *Figure 9.14* shows that the picture is less
+    clear for the two correlation measures:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_14.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.14: The distribution of heuristics, broken down by the significance
+    of both cointegration tests'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To evaluate the predictive accuracy of the heuristics, we first run a logistic
+    regression model with these features to predict significant cointegration. It
+    achieves an **area-under-the-curve** (**AUC**) cross-validation score of 0.815;
+    excluding the correlation metrics, it still scores 0.804\. A decision tree does
+    slightly better at AUC=0.821, with or without the correlation features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Not least due to the strong class imbalance, there are large numbers of false
+    positives: correctly identifying 80 percent of the 366 cointegrated pairs implies
+    over 16,500 false positives, but eliminates almost 30,000 of the candidates. See
+    the notebook `cointegration_tests` for additional detail.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **key takeaway** is that distance heuristics can help screen a large universe
+    more efficiently, but this comes at a cost of missing some cointegrated pairs
+    and still requires substantial testing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preparing the strategy backtest
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we are going to implement a statistical arbitrage strategy
+    based on cointegration for the sample of stocks and ETFs and the 2017-2019 period.
+    Some aspects are simplified to streamline the presentation. See the notebook `statistical_arbitrage_with_cointegrated_pairs`
+    for the code examples and additional detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first generate and store the cointegration tests for all candidate pairs
+    and the resulting trading signals. Then, we backtest a strategy based on these
+    signals, given the computational intensity of the process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Precomputing the cointegration tests
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: First, we run quarterly cointegration tests over a 2-year lookback period on
+    each of the 23,000 potential pairs, Then, we select pairs where both the Johansen
+    and the Engle-Granger tests agree for trading. We should exclude assets that are
+    stationary during the lookback period, but we eliminated assets that are stationary
+    for the entire period, so we skip this step to simplify it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This procedure follows the steps outlined previously; please see the notebook
+    for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 9.15* shows the original stock and ETF series of the two different
+    pairs selected for trading; note the clear presence of a common trend over the
+    sample period:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_15.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.15: Price series for two selected pairs over the sample period'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting entry and exit trades
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Now, we can compute the spread for each candidate pair based on a rolling hedge
+    ratio. We also calculate a **Bollinger Band** because we will consider moves of
+    the spread larger than two rolling standard deviations away from its moving average
+    as **long and short entry signals**, and crossings of the moving average in reverse
+    as exit signals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Smoothing prices with the Kalman filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To this end, we first apply a rolling **Kalman filter** (**KF**) to remove
+    some noise, as demonstrated in *Chapter 4*, *Financial Feature Engineering – How
+    to Research Alpha Factors*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computing the rolling hedge ratio using the Kalman filter
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'To obtain a dynamic hedge ratio, we use the KF for rolling linear regression,
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Estimating the half-life of mean reversion
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'If we view the spread as a mean-reverting stochastic process in continuous
+    time, we can model it as an Ornstein-Uhlenbeck process. The benefit of this perspective
+    is that we gain a formula for the half-life of mean reversion, as an approximation
+    of the time required for the spread to converge again after a deviation (see *Chapter
+    2*, *Market and Fundamental Data – Sources and Techniques*, in Chan 2013 for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: Computing spread and Bollinger Bands
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following function orchestrates the preceding computations and expresses
+    the spread as a z-score that captures deviations from the moving average with
+    a window equal to two half-lives in terms of the rolling standard deviations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Getting entry and exit dates for long and short positions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Finally, we use the set of z-scores to derive trading signals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We enter a long (short) position if the z-score is below (above) two, which
+    implies the spread has moved two rolling standard deviations below (above) the
+    moving average
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We exit trades when the spread crosses the moving average again
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We derive rules on a quarterly basis for the set of pairs that passed the cointegration
+    tests during the prior lookback period but allow pairs to exit during the subsequent
+    3 months.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We again simplify this by dropping pairs that do not close during this 6-month
+    period. Alternatively, we could have handled this using the stop-loss risk management
+    that we included in the strategy (see the next section on backtesting):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Backtesting the strategy using backtrader
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Now, we are ready to formulate our strategy on our backtesting platform, execute
+    it, and evaluate the results. To do so, we need to track our pairs, in addition
+    to individual portfolio positions, and monitor the spread of active and inactive
+    pairs to apply our trading rules.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tracking pairs with a custom DataClass
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To account for active pairs, we define a `dataclass` (introduced in Python
+    3.7—see the Python documentation for details). This data structure, called `Pair`,
+    allows us to store the pair components, their number of shares, and the hedge
+    ratio, and compute the current spread and the return, among other things. See
+    a simplified version in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: Running and evaluating the strategy
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Key implementation aspects include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The daily exit from pairs that have either triggered the exit rule or exceeded
+    a given negative return
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The opening of new long and short positions for pairs whose spreads triggered
+    entry signals
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In addition, we adjust positions to account for the varying number of pairs
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The code for the strategy itself takes up too much space to display here; see
+    the notebook `pairs_trading_backtest` for details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 9.16* shows that, at least for the 2017-2019 period, this simplified
+    strategy had its moments (note that we availed ourselves of some lookahead bias
+    and ignored transaction costs).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Under these lax assumptions, it underperformed the S&P 500 at the beginning
+    and end of the period and was otherwise roughly in line (left panel). It yields
+    an alpha of 0.08 and a negative beta of -0.14 (right panel), with an average Sharpe
+    ratio of 0.75 and a Sortino ratio of 1.05 (central panel):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/15439_09_16.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.16: Strategy performance metrics'
+  prefs: []
+  type: TYPE_NORMAL
+- en: While we should take these performance metrics with a grain of salt, the strategy
+    demonstrates the anatomy of a statistical arbitrage based on cointegration in
+    the form of pairs trading. Let's take a look at a few steps you could take to
+    build on this framework to produce better performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extensions – how to do better
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Cointegration is a very useful concept to identify pairs or groups of stocks
+    that tend to move in unison. Compared to the statistical sophistication of cointegration,
+    we used very simple and static trading rules; the computation on a quarterly basis
+    also distorts the strategy, as the patterns of long and short holdings show (see
+    notebook).
+  prefs: []
+  type: TYPE_NORMAL
+- en: To be successful, you will, at a minimum, need to screen a larger universe and
+    optimize several of the parameters, including the trading rules. Moreover, risk
+    management should account for concentrated positions that arise when certain assets
+    appear relatively often on the same side of a traded pair.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You could also operate with baskets as opposed to individual pairs; however,
+    to address the growing number of candidates, you would likely need to constrain
+    the composition of the baskets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As mentioned in the *Pairs trading – statistical arbitrage with cointegration*
+    section, there are alternatives that aim to predict price movements. In the following
+    chapters, we will explore various machine learning models that aim to predict
+    the absolute size or the direction of price movements for a given investment universe
+    and horizon. Using these forecasts as long and short entry signals is a natural
+    extension or alternative to the pairs trading framework that we studied in this
+    section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we explored linear time-series models for the univariate case
+    of individual series, as well as multivariate models for several interacting series.
+    We encountered applications that predict macro fundamentals, models that forecast
+    asset or portfolio volatility with widespread use in risk management, and multivariate
+    VAR models that capture the dynamics of multiple macro series. We also looked
+    at the concept of cointegration, which underpins the popular pair-trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similar to *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*,
+    we saw how linear models impose a lot of structure, that is, they make strong
+    assumptions that potentially require transformations and extensive testing to
+    verify that these assumptions are met. If they are, model-training and interpretation
+    are straightforward, and the models provide a good baseline that more complex
+    models may be able to improve on. In the next two chapters, we will see two examples
+    of this, namely random forests and gradient boosting models, and we will encounter
+    several more in *Part 4*, which is on deep learning.
+  prefs: []
+  type: TYPE_NORMAL

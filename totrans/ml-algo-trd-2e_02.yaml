@@ -1,0 +1,1635 @@
+- en: '2'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Market and Fundamental Data – Sources and Techniques
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Data has always been an essential driver of trading, and traders have long made
+    efforts to gain an advantage from access to superior information. These efforts
+    date back at least to the rumors that the House of Rothschild benefited handsomely
+    from bond purchases upon advance news about the British victory at Waterloo, which
+    was carried by pigeons across the channel.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Today, investments in faster data access take the shape of the Go West consortium
+    of leading **high-frequency trading** (**HFT**) firms that connects the **Chicago
+    Mercantile Exchange** (**CME**) with Tokyo. The round-trip latency between the
+    CME and the **BATS** (**Better Alternative Trading System**) exchanges in New
+    York has dropped to close to the theoretical limit of eight milliseconds as traders
+    compete to exploit arbitrage opportunities. At the same time, regulators and exchanges
+    have started to introduce speed bumps that slow down trading to limit the adverse
+    effects on competition of uneven access to information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditionally, investors mostly relied on **publicly available market and fundamental
+    data**. Efforts to create or acquire private datasets, for example, through proprietary
+    surveys, were limited. Conventional strategies focus on equity fundamentals and
+    build financial models on reported financials, possibly combined with industry
+    or macro data to project earnings per share and stock prices. Alternatively, they
+    leverage **technical analysis** to extract signals from market data using indicators
+    computed from price and volume information.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Machine learning** (**ML**) algorithms promise to exploit market and fundamental
+    data more efficiently than human-defined rules and heuristics, particularly when
+    combined with **alternative data**, which is the topic of the next chapter. We
+    will illustrate how to apply ML algorithms ranging from linear models to **recurrent
+    neural networks** (**RNNs**) to market and fundamental data and generate tradeable
+    signals.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter introduces market and fundamental data sources and explains how
+    they reflect the environment in which they are created. The details of the **trading
+    environment** matter not only for the proper interpretation of market data but
+    also for the design and execution of your strategy and the implementation of realistic
+    backtesting simulations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also illustrate how to access and work with trading and financial statement
+    data from various sources using Python.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In particular, this chapter will cover the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How market data reflects the structure of the trading environment
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Working with trade and quote data at minute frequency
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Reconstructing an order book from tick data using Nasdaq ITCH
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summarizing tick data using various types of bars
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Working with **eXtensible Business Reporting Language** (**XBRL**)-encoded electronic
+    filings
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Parsing and combining market and fundamental data to create a **price-to-earnings**
+    (**P/E**) series
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to access various market and fundamental data sources using Python
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can find the code samples for this chapter and links to additional resources
+    in the corresponding directory of the GitHub repository. The notebooks include
+    color versions of the images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market data reflects its environment
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Market data is the product of how traders place orders for a financial instrument
+    directly or through intermediaries on one of the numerous marketplaces, how they
+    are processed, and how prices are set by matching demand and supply. As a result,
+    the data reflects the institutional environment of trading venues, including the
+    rules and regulations that govern orders, trade execution, and price formation.
+    See Harris (2003) for a global overview and Jones (2018) for details on the U.S.
+    market.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithmic traders use algorithms, including ML, to analyze the flow of buy
+    and sell orders and the resulting volume and price statistics to extract trade
+    signals that capture insights into, for example, demand-supply dynamics or the
+    behavior of certain market participants.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will first review institutional features that impact the simulation of a
+    trading strategy during a backtest before we start working with actual tick data
+    created by one such environment, namely Nasdaq.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market microstructure – the nuts and bolts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Market microstructure studies how the **institutional environment** affects
+    the trading process and shapes outcomes like price discovery, bid-ask spreads
+    and quotes, intraday trading behavior, and transaction costs (Madhavan 2000; 2002).
+    It is one of the fastest-growing fields of financial research, propelled by the
+    rapid development of algorithmic and electronic trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Today, hedge funds sponsor in-house analysts to track the rapidly evolving,
+    complex details and ensure execution at the best possible market prices and design
+    strategies that exploit market frictions. We will provide only a brief overview
+    of these key concepts before we dive into the data generated by trading. The references
+    contain several sources that treat this subject in great detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to trade – different types of orders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Traders can place various types of buy or sell orders. Some orders guarantee
+    immediate execution, while others may state a price threshold or other conditions
+    that trigger execution. Orders are typically valid for the same trading day unless
+    specified otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A *market order* is intended for immediate execution of the order upon arrival
+    at the trading venue, at the price that prevails at that moment. In contrast,
+    a *limit order* only executes if the market price is higher than the limit for
+    a sell limit order, or lower than the limit for a buy limit order. A *stop order*,
+    in turn, only becomes active when the market price rises above a specified price
+    for a buy stop order, or falls below a specified price for a sell order. A *buy
+    stop order* can be used to limit the losses of short sales. Stop orders may also
+    have limits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Numerous other conditions can be attached to orders. For example, *all or none
+    orders* prevent partial execution; they are filled only if a specified number
+    of shares is available and can be valid for a day or longer. They require special
+    handling and are not visible to market participants. *Fill or kill orders* also
+    prevent partial execution but cancel if not executed immediately. *Immediate or
+    cancel orders* immediately buy or sell the number of shares that are available
+    and cancel the remainder. *Not-held orders* allow the broker to decide on the
+    time and price of execution. Finally, the market on *open/close orders* executes
+    on or near the opening or closing of the market. Partial executions are allowed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Where to trade – from exchanges to dark pools
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Securities trade in highly organized and **regulated exchanges** or with varying
+    degrees of formality in **over-the-counter** (**OTC**) markets. An exchange is
+    a central marketplace where buyers and sellers compete for the lowest ask and
+    highest bid, respectively. Exchange regulations typically impose listing and reporting
+    requirements to create transparency and attract more traders and liquidity. OTC
+    markets, such as the Best Market (OTCQX) or the Venture Market (OTCQB), often
+    have lower regulatory barriers. As a result, they are suitable for a far broader
+    range of securities, including bonds or **American Depositary Receipts** (**ADRs**;
+    equity listed on a foreign exchange, for example, for Nestlé, S.A.).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exchanges may rely on bilateral trading or centralized order-driven systems
+    that match all buy and sell orders according to certain rules. Many exchanges
+    use intermediaries that provide liquidity by making markets in certain securities.
+    These **intermediaries** include dealers that act as principals on their own behalf
+    and brokers that trade as agents on behalf of others. **Price formation** may
+    occur through auctions, such as in the **New York Stock Exchange** (**NYSE**),
+    where the highest bid and lowest offer are matched, or through dealers who buy
+    from sellers and sell to buyers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Back in the day, companies either registered and traded mostly on the NYSE,
+    or they traded on OTC markets like Nasdaq. On the NYSE, a sole **specialist**
+    intermediated trades of a given security. The specialist received buy and sell
+    orders via a broker and tracked limit orders in a central order book. Limit orders
+    were executed with a priority based on price and time. Buy market orders routed
+    to the specialist transacted with the lowest ask (and sell market orders routed
+    to the specialist transacted with the highest bid) in the limit order book, prioritizing
+    earlier limit orders in the case of ties. Access to all orders in the central
+    order book allowed the specialist to publish the best bid, ask prices, and set
+    market prices based on the overall buy-sell imbalance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On Nasdaq, multiple **market makers** facilitated stock trades. Each dealer
+    provided their best bid and ask price to a central quotation system and stood
+    ready to transact the specified number of shares at the specified prices. Traders
+    would route their orders to the market maker with the best quote via their broker.
+    The competition for orders made execution at fair prices very likely. Market makers
+    ensured a fair and orderly market, provided liquidity, and disseminated prices
+    like specialists but only had access to the orders routed to them as opposed to
+    market-wide supply and demand. This fragmentation could create difficulties in
+    identifying fair value market prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Today, **trading has fragmented**; instead of two principal venues in the US,
+    there are more than thirteen displayed trading venues, including exchanges and
+    (unregulated) **alternative trading systems** (**ATSs**) such as **electronic
+    communication networks** (**ECNs**). Each reports trades to the consolidated tape,
+    but at different latencies. To make matters more difficult, the rules of engagement
+    for each venue differ with several different pricing and queuing models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following table lists some of the larger global exchanges and the trading
+    volumes for the 12 months ending 03/2018 in various asset classes, including derivatives.
+    Typically, a minority of financial instruments account for most trading:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Exchange | Stocks |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Market cap (USD mn) | # Listed companies | Volume / day (USD mn) | # Shares
+    / day (''000) | # Options / day (''000) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NYSE | 23,138,626 | 2,294 | 78,410 | 6,122 | 1,546 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Nasdaq — US | 10,375,718 | 2,968 | 65,026 | 7,131 | 2,609 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Japan Exchange Group Inc. | 6,287,739 | 3,618 | 28,397 | 3,361 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shanghai Stock Exchange | 5,022,691 | 1,421 | 34,736 | 9,801 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Euronext | 4,649,073 | 1,240 | 9,410 | 836 | 304 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Hong Kong Exchanges and Clearing | 4,443,082 | 2,186 | 12,031 | 1,174 | 516
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| LSE Group | 3,986,413 | 2,622 | 10,398 | 1,011 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shenzhen Stock Exchange | 3,547,312 | 2,110 | 40,244 | 14,443 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Deutsche Boerse AG | 2,339,092 | 506 | 7,825 | 475 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BSE India Limited | 2,298,179 | 5,439 | 602 | 1,105 |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| National Stock Exchange of India Limited | 2,273,286 | 1,952 | 5,092 | 10,355
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| BATS Global Markets - US |  |  |  |  | 1,243 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Chicago Board Options Exchange |  |  |  |  | 1,811 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| International Securities Exchange |  |  |  |  | 1,204 |'
+  prefs: []
+  type: TYPE_TB
+- en: The ATSs mentioned previously include dozens of **dark pools** that allow traders
+    to execute anonymously. They are estimated to account for 40 percent of all U.S.
+    stock trades in 2017, compared with an estimated 16 percent in 2010\. Dark pools
+    emerged in the 1980s when the SEC allowed brokers to match buyers and sellers
+    of big blocks of shares. The rise of high-frequency electronic trading and the
+    2007 SEC Order Protection rule that intended to spur competition and cut transaction
+    costs through transparency as part of **Regulation National Market System** (**Reg
+    NMS**) drove the growth of dark pools, as traders aimed to avoid the visibility
+    of large trades (Mamudi 2017). Reg NMS also established the **National Best Bid
+    and Offer** (**NBBO**) mandate for brokers to route orders to venues that offer
+    the best price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some ATSs are called dark pools because they do not broadcast pre-trade data,
+    including the presence, price, and amount of buy and sell orders as traditional
+    exchanges are required to do. However, dark pools report information about trades
+    to the **Financial Industry Regulatory Authority** (**FINRA**) after they occur.
+    As a result, dark pools do not contribute to the process of price discovery until
+    after trade execution but provide protection against various HFT strategies outlined
+    in the first chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next section, we will see how market data captures trading activity and
+    reflect the institutional infrastructure in U.S. markets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Working with high-frequency data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Two categories of market data cover the thousands of companies listed on U.S.
+    exchanges that are traded under Reg NMS: the **consolidated feed** combines trade
+    and quote data from each trading venue, whereas each individual exchange offers
+    **proprietary products** with additional activity information for that particular
+    venue.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will first present proprietary order flow data provided
+    by Nasdaq that represents the actual stream of orders, trades, and resulting prices
+    as they occur on a tick-by-tick basis. Then, we will demonstrate how to regularize
+    this continuous stream of data that arrives at irregular intervals into bars of
+    a fixed duration. Finally, we will introduce AlgoSeek's equity minute bar data,
+    which contains consolidated trade and quote information. In each case, we will
+    illustrate how to work with the data using Python so that you can leverage these
+    sources for your trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to work with Nasdaq order book data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The **primary source of market data** is the order book, which updates in real
+    time throughout the day to reflect all trading activity. Exchanges typically offer
+    this data as a real-time service for a fee; however, they may provide some historical
+    data for free.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the United States, stock markets provide quotes in three tiers, namely Level
+    L1, L2, and L3, that offer increasingly granular information and capabilities:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Level 1 (L1)**: Real-time bid- and ask-price information, as available from
+    numerous online sources.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Level 2 (L2)**: Adds information about bid and ask prices by specific market
+    makers as well as the size and time of recent transactions for better insights
+    into the liquidity of a given equity.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Level 3 (L3)**: Adds the ability to enter or change quotes, execute orders,
+    and confirm trades and is available only to market makers and exchange member
+    firms. Access to Level 3 quotes permits registered brokers to meet best execution
+    requirements.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The trading activity is reflected in numerous **messages about orders** sent
+    by market participants. These messages typically conform to the **electronic Financial
+    Information eXchange** (**FIX**) communications protocol for the real-time exchange
+    of securities transactions and market data or a native exchange protocol.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Communicating trades with the FIX protocol
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Just like SWIFT is the message protocol for back-office (for example, in trade-settlement)
+    messaging, the FIX protocol is the **de facto messaging standard** for communication
+    before and during trade executions between exchanges, banks, brokers, clearing
+    firms, and other market participants. Fidelity Investments and Salomon Brothers
+    introduced FIX in 1992 to facilitate the electronic communication between broker-dealers
+    and institutional clients who, until then, exchanged information over the phone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It became popular in global equity markets before expanding into foreign exchange,
+    fixed income and derivatives markets, and further into post-trade to support straight-through
+    processing. Exchanges provide access to FIX messages as a real-time data feed
+    that is **parsed by algorithmic traders** to track market activity and, for example,
+    identify the footprint of market participants and anticipate their next move.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The sequence of messages allows for the **reconstruction of the order book**.
+    The scale of transactions across numerous exchanges creates a large amount (~10
+    TB) of unstructured data that is challenging to process and, hence, can be a source
+    of competitive advantage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The FIX protocol, currently at version 5.0, is a free and open standard with
+    a large community of affiliated industry professionals. It is self-describing,
+    like the more recent XML, and a FIX session is supported by the underlying **Transmission
+    Control Protocol** (**TCP**) layer. The community continually adds new functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The protocol supports pipe-separated key-value pairs, as well as a **tag-based
+    FIXML** syntax. A sample message that requests a server login would look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are a few open source FIX implementations in Python that can be used to
+    formulate and parse FIX messages. The service provider Interactive Brokers offers
+    a FIX-based **computer-to-computer interface** (**CTCI**) for automated trading
+    (refer to the resources section for this chapter in the GitHub repository).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Nasdaq TotalView-ITCH data feed
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While FIX has a dominant market share, exchanges also offer native protocols.
+    Nasdaq offers a TotalView-ITCH **direct data-feed protocol**, which allows subscribers
+    to **track individual orders** for equity instruments from placement to execution
+    or cancellation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Historical records of this data flow permit the reconstruction of the order
+    book that keeps track of the active limit orders for a specific security. The
+    order book reveals the **market depth** throughout the day by listing the number
+    of shares being bid or offered at each price point. It may also identify the market
+    participant responsible for specific buy and sell orders unless they are placed
+    anonymously. Market depth is a key indicator of liquidity and the **potential
+    price impact** of sizable market orders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to matching market and limit orders, Nasdaq also operates **auctions
+    or crosses** that execute a large number of trades at market opening and closing.
+    Crosses are becoming more important as passive investing continues to grow and
+    traders look for opportunities to execute larger blocks of stock. TotalView also
+    disseminates the **Net Order Imbalance Indicator** (**NOII**) for Nasdaq opening
+    and closing crosses and Nasdaq IPO/Halt Cross.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to parse binary order messages
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The ITCH v5.0 specification declares over 20 message types related to system
+    events, stock characteristics, the placement and modification of limit orders,
+    and trade execution. It also contains information about the net order imbalance
+    before the open and closing cross.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Nasdaq offers samples of daily binary files for several months. The GitHub repository
+    for this chapter contains a notebook, `parse_itch_order_flow_messages.ipynb`,
+    that illustrates how to download and parse a sample file of ITCH messages. The
+    notebook `rebuild_nasdaq_order_book.ipynb` then goes on to reconstruct both the
+    executed trades and the order book for any given ticker.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following table shows the frequency of the **most common message types**
+    for the sample file date October 30, 2019:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Message type | Order book impact | Number of messages |'
+  prefs: []
+  type: TYPE_TB
+- en: '| A | New unattributed limit order | 127,214,649 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| D | Order canceled | 123,296,742 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| U | Order canceled and replaced | 25,513,651 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| E | Full or partial execution; possibly multiple messages for the same original
+    order | 7,316,703 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| X | Modified after partial cancellation | 3,568,735 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| F | Add attributed order | 1,423,908 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| P | Trade message (non-cross) | 1,525,363 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| C | Executed in whole or in part at a price different from the initial display
+    price | 129,729 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Q | Cross trade message | 17,775 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'For each message, the **specification** lays out the components and their respective
+    length and data types:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Offset | Length | Value | Notes |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Message type | 0 | 1 | S | System event message. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stock locate | 1 | 2 | Integer | Always 0. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tracking number | 3 | 2 | Integer | Nasdaq internal tracking number. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Timestamp | 5 | 6 | Integer | The number of nanoseconds since midnight. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Order reference number | 11 | 8 | Integer | The unique reference number assigned
+    to the new order at the time of receipt. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Buy/sell indicator | 19 | 1 | Alpha | The type of order being added: B =
+    Buy Order, and S = Sell Order. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Shares | 20 | 4 | Integer | The total number of shares associated with the
+    order being added to the book. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stock | 24 | 8 | Alpha | Stock symbol, right - padded with spaces. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Price | 32 | 4 | Price (4) | The display price of the new order. Refer to
+    *Data Types* in the specification for field processing notes. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Attribution | 36 | 4 | Alpha | The Nasdaq market participant identifier associated
+    with the entered order. |'
+  prefs: []
+  type: TYPE_TB
+- en: Python provides the `struct` module to parse binary data using format strings
+    that identify the message elements by indicating the length and type of the various
+    components of the `byte` string as laid out in the specification.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s walk through the critical steps required to parse the trading messages
+    and reconstruct the order book:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ITCH parser relies on the message specifications provided in the file `message_types.xlsx`
+    (refer to the notebook `parse_itch_order_flow_messages.ipynb` for details). It
+    assembles format strings according to the `formats` dictionary:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The parser translates the message specs into format strings and named tuples
+    that capture the message content:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Fields of the alpha type require postprocessing, as defined in the `format_alpha`
+    function:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The binary file for a single day contains over 300,000,000 messages that are
+    worth over 9 GB. The script appends the parsed result iteratively to a file in
+    the fast HDF5 format to avoid memory constraints. (Refer to the *Efficient data
+    storage with pandas* section later in this chapter for more information on the
+    HDF5 format.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following (simplified) code processes the binary file and produces the
+    parsed orders stored by message type:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Summarizing the trading activity for all 8,500 stocks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As expected, a small number of the 8,500-plus securities traded on this day
+    account for most trades:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 2.1* shows the resulting plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.1: The share of traded value of the 50 most traded securities'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to reconstruct all trades and the order book
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The parsed messages allow us to rebuild the order flow for the given day. The
+    `'R'` message type contains a listing of all stocks traded during a given day,
+    including information about **initial public offerings** (**IPOs**) and trading
+    restrictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Throughout the day, new orders are added, and orders that are executed and canceled
+    are removed from the order book. The proper accounting for messages that reference
+    orders placed on a prior date would require tracking the order book over multiple
+    days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `get_messages()` function illustrates how to collect the orders for a single
+    stock that affects trading. (Refer to the ITCH specification for details about
+    each message.) The code is slightly simplified; refer to the notebook `rebuild_nasdaq_order_book.ipynb`
+    for further details:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Reconstructing successful trades—that is, orders that were executed as opposed
+    to those that were canceled from trade-related message types `C`, `E`, `P`, and
+    `Q`—is relatively straightforward:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The order book keeps track of limit orders, and the various price levels for
+    buy and sell orders constitute the depth of the order book. Reconstructing the
+    order book for a given level of depth requires the following steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `add_orders()` function accumulates sell orders in ascending order and
+    buy orders in descending order for a given timestamp up to the desired level of
+    depth:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We iterate over all ITCH messages and process orders and their replacements
+    as required by the specification:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 2.2* highlights the depth of liquidity at any given point in time using
+    different intensities that visualize the number of orders at different price levels.
+    The left panel shows how the distribution of limit order prices was weighted toward
+    buy orders at higher prices.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The right panel plots the evolution of limit orders and prices throughout the
+    trading day: the dark line tracks the prices for executed trades during market
+    hours, whereas the red and blue dots indicate individual limit orders on a per-minute
+    basis (refer to the notebook for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.2: AAPL market liquidity according to the order book'
+  prefs: []
+  type: TYPE_NORMAL
+- en: From ticks to bars – how to regularize market data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The trade data is indexed by nanoseconds, arrives at irregular intervals, and
+    is very noisy. The **bid-ask bounce**, for instance, causes the price to oscillate
+    between the bid and ask prices when trade initiation alternates between buy and
+    sell market orders. To improve the noise-signal ratio and the statistical properties
+    of the price series, we need to resample and regularize the tick data by aggregating
+    the trading activity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We typically collect the **open (first), high, low, and closing (last) price
+    and volume** (jointly abbreviated as **OHLCV**) for the aggregated period, alongside
+    the **volume-weighted average price** (**VWAP**) and the timestamp associated
+    with the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Refer to the `normalize_tick_data.ipynb` notebook in the folder for this chapter
+    on GitHub for additional details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The raw material – tick bars
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following code generates a plot of the raw tick price and volume data for
+    AAPL:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 2.3* displays the resulting plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.3: Tick bars'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The tick returns are far from normally distributed, as evidenced by the low
+    p-value of `scipy.stats.normaltest`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Plain-vanilla denoising – time bars
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Time bars involve trade aggregation by period. The following code gets the
+    data for the time bars:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can display the result as a price-volume chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code produces *Figure 2.4*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.4: Time bars'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Alternatively, we can represent the data as a candlestick chart using the Bokeh
+    plotting library:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This produces the plot in *Figure 2.5*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.5: Bokeh candlestick plot'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Accounting for order fragmentation – volume bars
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Time bars smooth some of the noise contained in the raw tick data but may fail
+    to account for the fragmentation of orders. Execution-focused algorithmic trading
+    may aim to match the **volume-weighted average price** (**VWAP**) over a given
+    period. This will divide a single order into multiple trades and place orders
+    according to historical patterns. Time bars would treat the same order differently,
+    even though no new information has arrived in the market.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Volume bars offer an alternative by aggregating trade data according to volume.
+    We can accomplish this as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the plot in *Figure 2.6* for the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.6: Volume bars'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Accounting for price changes – dollar bars
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: When asset prices change significantly, or after stock splits, the value of
+    a given amount of shares changes. Volume bars do not correctly reflect this and
+    can hamper the comparison of trading behavior for different periods that reflect
+    such changes. In these cases, the volume bar method should be adjusted to utilize
+    the product of shares and prices to produce dollar bars.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code shows the computation for dollar bars:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The plot looks quite similar to the volume bar since the price has been fairly
+    stable throughout the day:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.7: Dollar bars'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AlgoSeek minute bars – equity quote and trade data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: AlgoSeek provides historical intraday data of the quality previously available
+    only to institutional investors. The AlgoSeek Equity bars provide very detailed
+    intraday quote and trade data in a user-friendly format, which is aimed at making
+    it easy to design and backtest intraday ML-driven strategies. As we will see,
+    the data includes not only OHLCV information but also information on the bid-ask
+    spread and the number of ticks with up and down price moves, among others.
+  prefs: []
+  type: TYPE_NORMAL
+- en: AlgoSeek has been so kind as to provide samples of minute bar data for the Nasdaq
+    100 stocks from 2013-2017 for demonstration purposes and will make a subset of
+    this data available to readers of this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will present the available trade and quote information and
+    show how to process the raw data. In later chapters, we will demonstrate how you
+    can use this data for ML-driven intraday strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From the consolidated feed to minute bars
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: AlgoSeek minute bars are based on data provided by the **Securities Information
+    Processor** (**SIP**), which manages the consolidated feed mentioned at the beginning
+    of this section. You can view the documentation at [https://www.algoseek.com/samples/](https://www.algoseek.com/samples/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The SIP aggregates the best bid and offers quotes from each exchange, as well
+    as the resulting trades and prices. Exchanges are prohibited by law from sending
+    their quotes and trades to direct feeds before sending them to the SIP. Given
+    the fragmented nature of U.S. equity trading, the consolidated feed provides a convenient
+    snapshot of the current state of the market.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More importantly, the SIP acts as the benchmark used by regulators to determine
+    the **National Best Bid and Offer** (**NBBO**) according to Reg NMS. The OHLC
+    bar quote prices are based on the NBBO, and each bid or ask quote price refers
+    to an NBBO price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Every exchange publishes its top-of-book price and the number of shares available
+    at that price. The NBBO changes when a published quote improves the NBBO. Bid/ask
+    quotes persist until there is a change due to trade, price improvement, or the
+    cancelation of the latest bid or ask. While historical OHLC bars are often based
+    on trades during the bar period, NBBO bid/ask quotes may be carried forward from
+    the previous bar until there is a new NBBO event.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'AlgoSeek bars cover the whole trading day, from the opening of the first exchange
+    until the closing of the last exchange. Bars outside regular market hours normally
+    exhibit limited activity. Trading hours, in Eastern Time, are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Premarket: Approximately 04:00:00 (this varies by exchange) to 09:29:59'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Market: 09:30:00 to 16:00:00'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Extended hours: 16:00:01 to 20:00:00'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Quote and trade data fields
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The minute bar data contains up to 54 fields. There are eight fields for the
+    **open**, **high**, **low**, and **close** elements of the bar, namely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The timestamp for the bar and the corresponding trade
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The price and the size for the prevailing bid-ask quote and the relevant trade
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'There are also 14 data points with **volume information** for the bar period:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of shares and corresponding trades
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The trade volumes at or below the bid, between the bid quote and the midpoint,
+    at the midpoint, between the midpoint and the ask quote, and at or above the ask,
+    as well as for crosses
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The number of shares traded with upticks or downticks, that is, when the price
+    rose or fell, as well as when the price did not change, differentiated by the
+    previous direction of price movement
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The AlgoSeek data also contains the number of shares **reported to FINRA** and
+    processed internally at broker-dealers, by dark pools, or OTC. These trades represent
+    volume that is hidden or not publicly available until after the fact.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, the data includes the **volume-weighted average price** (**VWAP**)
+    and minimum and maximum bid-ask spread for the bar period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to process AlgoSeek intraday data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this section, we'll process the AlgoSeek sample data. The `data` directory
+    on GitHub contains instructions on how to download that data from AlgoSeek.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The minute bar data comes in four versions: with and without quote information,
+    and with or without FINRA''s reported volume. There is one zipped folder per day,
+    containing one CSV file per ticker.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code example extracts the trade-only minute bar data into daily
+    `.parquet` files:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can combine the `parquet` files into a single piece of HDF5 storage as follows,
+    yielding 53.8 million records that consume 3.2 GB of memory and covering 5 years
+    and 100 stocks:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can use `plotly` to quickly create an interactive candlestick plot for one
+    day of AAPL data to view in a browser:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 2.8* shows the resulting static image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.8: Plotly candlestick plot'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AlgoSeek also provides adjustment factors to correct pricing and volumes for
+    stock splits, dividends, and other corporate actions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: API access to market data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: There are several options you can use to access market data via an API using
+    Python. We will first present a few sources built into the pandas library and
+    the `yfinance` tool that facilitates the downloading of end-of-day market data
+    and recent fundamental data from Yahoo! Finance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we will briefly introduce the trading platform Quantopian, the data provider
+    Quandl, and the Zipline backtesting library that we will use later in the book,
+    as well as listing several additional options to access various types of market
+    data. The directory `data_providers` on GitHub contains several notebooks that
+    illustrate the usage of these options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remote data access using pandas
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The pandas library enables access to data displayed on websites using the `read_html`
+    function and access to the API endpoints of various data providers through the
+    related `pandas-datareader` library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reading HTML tables
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Downloading the content of one or more HTML tables, such as for the constituents
+    of the S&P 500 index from Wikipedia, works as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: pandas-datareader for market data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: pandas used to facilitate access to data provider APIs directly, but this functionality
+    has moved to the `pandas-datareader` library (refer to the `README` for links
+    to the documentation).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The stability of the APIs varies with provider policies and continues to change.
+    Please consult the documentation for up-to-date information. As of December 2019,
+    at version 0.8.1, the following sources are available:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Source | Scope | Comment |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tiingo | Historical end-of-day prices on equities, mutual funds, and ETF.
+    | Free registration for the API key. Free accounts can access only 500 symbols.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Investor Exchange (IEX) | Historical stock prices are available if traded
+    on IEX. | Requires an API key from IEX Cloud Console. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Alpha Vantage | Historical equity data for daily, weekly, and monthly frequencies,
+    20+ years, and the past 3-5 days of intraday data. It also has FOREX and sector
+    performance data. |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Quandl | Free data sources as listed on their website. |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Fama/French | Risk factor portfolio returns. | Used in *Chapter 7*, *Linear
+    Models – From Risk Factors to Return Forecasts*. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| TSP Fund Data | Mutual fund prices. |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Nasdaq | Latest metadata on traded tickers. |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stooq Index Data | Some equity indices are not available from elsewhere due
+    to licensing issues. |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MOEX | Moscow Exchange historical data. |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The access and retrieval of data follow a similar API for all sources, as illustrated
+    for Yahoo! Finance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: yfinance – scraping data from Yahoo! Finance
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '`yfinance` aims to provide a reliable and fast way to download historical market
+    data from Yahoo! Finance. The library was originally named `fix-yahoo-finance`.
+    The usage of this library is very straightforward; the notebook `yfinance_demo`
+    illustrates the library''s capabilities.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to download end-of-day and intraday prices
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `Ticker` object permits the downloading of various data points scraped
+    from Yahoo''s website:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `.history` method obtains historical prices for various periods, from one
+    day to the maximum available, and at different frequencies, whereas intraday is
+    only available for the last several days. To download adjusted OHLCV data at a
+    one-minute frequency and corporate actions, use:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: The notebook also illustrates how to access quarterly and annual financial statements,
+    sustainability scores, analyst recommendations, and upcoming earnings dates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to download the option chain and prices
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '`yfinance` also provides access to the option expiration dates and prices and
+    other information for various contracts. Using the `ticker` instance from the
+    previous example, we get the expiration dates using:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For any of these dates, we can access the option chain and view details for
+    the various put/call contracts as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The library also permits the use of proxy servers to prevent rate limiting and
+    facilitates the bulk downloading of multiple tickers. The notebook demonstrates
+    the usage of these features as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantopian
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Quantopian is an investment firm that offers a research platform to crowd-source
+    trading algorithms. Registration is free, and members can research trading ideas
+    using a broad variety of data sources. It also offers an environment to backtest
+    the algorithm against historical data, as well as to forward-test it out of sample
+    with live data. It awards investment allocations for top-performing algorithms
+    whose authors are entitled to a 10 percent (at the time of writing) profit share.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Quantopian research platform consists of a Jupyter Notebook environment
+    for research and development for alpha-factor research and performance analysis.
+    There is also an **interactive development environment** (**IDE**) for coding
+    algorithmic strategies and backtesting the result using historical data since
+    2002 with minute-bar frequency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Users can also simulate algorithms with live data, which is known as *paper
+    trading*. Quantopian provides various market datasets, including U.S. equity and
+    futures price and volume data at a one-minute frequency, and U.S. equity corporate
+    fundamentals, and it also integrates numerous alternative datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will dive into the Quantopian platform in much more detail in *Chapter 4*,
+    *Financial Feature Engineering – How to Research Alpha Factors*, and rely on its
+    functionality throughout the book, so feel free to open an account right away.
+    (Refer to the GitHub repository for more details.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zipline
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Zipline is the algorithmic trading library that powers the Quantopian backtesting
+    and live-trading platform. It is also available offline to develop a strategy
+    using a limited number of free data bundles that can be ingested and used to test
+    the performance of trading ideas before porting the result to the online Quantopian
+    platform for paper and live trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zipline requires a custom environment—view the instructions at the beginning
+    of the notebook `zipline_data_demo.ipynb` The following code illustrates how Zipline
+    permits us to access daily stock data for a range of companies. You can run Zipline
+    scripts in the Jupyter Notebook using the magic function of the same name.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, you need to initialize the context with the desired security symbols.
+    We''ll also use a counter variable. Then, Zipline calls `handle_data`, where we
+    use the `data.history()` method to look back a single period and append the data
+    for the last day to a `.csv` file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following plot for the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_09.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.9: Zipline data access'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will explore the capabilities of Zipline, and especially the online Quantopian
+    platform, in more detail in the coming chapters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quandl
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Quandl provides a broad range of data sources, both free and as a subscription,
+    using a Python API. Register and obtain a free API key to make more than 50 calls
+    per day. Quandl data covers multiple asset classes beyond equities and includes
+    FX, fixed income, indexes, futures and options, and commodities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: API usage is straightforward, well-documented, and flexible, with numerous methods
+    beyond single-series downloads, for example, including bulk downloads or metadata searches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following call obtains oil prices from 1986 onward, as quoted by the U.S.
+    Department of Energy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get this plot for the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_10.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.10: Quandl oil price example'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other market data providers
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A broad variety of providers offer market data for various asset classes. Examples
+    in relevant categories include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exchanges derive a growing share of their revenues from an ever-broader range
+    of data services, typically using a subscription.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bloomberg and Thomson Reuters have long been the leading data aggregators with
+    a combined share of over 55 percent in the $28.5 billion financial data market.
+    Smaller rivals, such as FactSet, are growing or emerging, such as money.net, Quandl,
+    Trading Economics, and Barchart.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Specialist data providers abound. One example is LOBSTER, which aggregates Nasdaq
+    order-book data in real time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Free data providers include Alpha Vantage, which offers Python APIs for real-time
+    equity, FX, and cryptocurrency market data, as well as technical indicators.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Crowd-sourced investment firms that provide research platforms with data access
+    include, in addition to Quantopian, Alpha Trading Labs, launched in March 2018,
+    which provides HFT infrastructure and data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to work with fundamental data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Fundamental data pertains to the economic drivers that determine the value
+    of securities. The nature of the data depends on the asset class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For equities and corporate credit, it includes corporate financials, as well
+    as industry and economy-wide data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For government bonds, it includes international macro data and foreign exchange.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For commodities, it includes asset-specific supply-and-demand determinants,
+    such as weather data for crops.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will focus on equity fundamentals for the U.S., where data is easier to access.
+    There are some 13,000+ public companies worldwide that generate 2 million pages
+    of annual reports and more than 30,000 hours of earnings calls. In algorithmic
+    trading, fundamental data and features engineered from this data may be used to
+    derive trading signals directly, for example, as value indicators, and are an
+    essential input for predictive models, including ML models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Financial statement data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Securities and Exchange Commission (SEC) requires U.S. issuers—that is,
+    listed companies and securities, including mutual funds—to file three quarterly
+    financial statements (Form 10-Q) and one annual report (Form 10-K), in addition
+    to various other regulatory filing requirements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since the early 1990s, the SEC made these filings available through its **Electronic
+    Data Gathering, Analysis, and Retrieval** (**EDGAR**) system. They constitute
+    the primary data source for the fundamental analysis of equity and other securities,
+    such as corporate credit, where the value depends on the business prospects and
+    financial health of the issuer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Automated processing – XBRL
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Automated analysis of regulatory filings has become much easier since the SEC
+    introduced **XBRL**, which is a free, open, and global standard for the electronic
+    representation and exchange of business reports. XBRL is based on XML; it relies
+    on taxonomies that define the meaning of the elements of a report and map to tags
+    that highlight the corresponding information in the electronic version of the
+    report. One such taxonomy represents the U.S. **Generally Accepted Accounting
+    Principles** (**GAAP**).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The SEC introduced voluntary XBRL filings in 2005 in response to accounting
+    scandals before requiring this format for all filers as of 2009, and it continues
+    to expand the mandatory coverage to other regulatory filings. The SEC maintains
+    a website that lists the current taxonomies that shape the content of different
+    filings and can be used to extract specific items.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following datasets provide information extracted from EX-101 attachments
+    submitted to the commission in a flattened data format to assist users in consuming
+    data for analysis. The data reflects selected information from the XBRL-tagged
+    financial statements. It currently includes numeric data from the quarterly and
+    annual financial statements, as well as certain additional fields, for example,
+    **Standard Industrial Classification** (**SIC**).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are several avenues to track and access fundamental data reported to
+    the SEC:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As part of the EDGAR **Public Dissemination Service** (**PDS**), electronic
+    feeds of accepted filings are available for a fee.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The SEC updates the RSS feeds, which list the structured disclosure submissions,
+    every 10 minutes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are public index files for the retrieval of all filings through FTP for
+    automated processing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The financial statement (and notes) datasets contain parsed XBRL data from all
+    financial statements and the accompanying notes.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The SEC also publishes log files containing the internet search traffic for
+    EDGAR filings through SEC.gov, albeit with a six month delay.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building a fundamental data time series
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The scope of the data in the financial statement and notes datasets consists
+    of numeric data extracted from the primary financial statements (balance sheet,
+    income statement, cash flows, changes in equity, and comprehensive income) and
+    footnotes on those statements. The available data is from as early as 2009.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting the financial statements and notes dataset
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The following code downloads and extracts all historical filings contained
+    in the **financial statement and notes** (**FSN**) datasets for the given range
+    of quarters (refer to `edgar_xbrl.ipynb` for additional details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The data is fairly large, and to enable faster access than the original text
+    files permit, it is better to convert the text files into a binary, Parquet columnar
+    format (refer to the *Efficient data storage with pandas* section later in this
+    chapter for a performance comparison of various data-storage options that are
+    compatible with pandas DataFrames):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For each quarter, the FSN data is organized into eight file sets that contain
+    information about submissions, numbers, taxonomy tags, presentation, and more.
+    Each dataset consists of rows and fields and is provided as a tab-delimited text
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| File | Dataset | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `SUB` | Submission | Identifies each XBRL submission by company, form, date,
+    and so on |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `TAG` | Tag | Defines and explains each taxonomy tag |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `DIM` | Dimension | Adds detail to numeric and plain text data |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `NUM` | Numeric | One row for each distinct data point in filing |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `TXT` | Plain text | Contains all non-numeric XBRL fields |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `REN` | Rendering | Information for rendering on the SEC website |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `PRE` | Presentation | Details of tag and number presentation in primary
+    statements |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `CAL` | Calculation | Shows the arithmetic relationships among tags |'
+  prefs: []
+  type: TYPE_TB
+- en: Retrieving all quarterly Apple filings
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The submission dataset contains the unique identifiers required to retrieve
+    the filings: the **Central Index Key** (**CIK**) and the **Accession Number**
+    (**adsh**). The following shows some of the information about Apple''s 2018Q1
+    10-Q filing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Using the CIK, we can identify all of the historical quarterly filings available
+    for Apple and combine this information to obtain 26 10-Q forms and 9 annual 10-K
+    forms:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: With the accession number for each filing, we can now rely on the taxonomies
+    to select the appropriate XBRL tags (listed in the `TAG` file) from the `NUM`
+    and `TXT` files to obtain the numerical or textual/footnote data points of interest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, let''s extract all of the numerical data that is available from the
+    19 Apple filings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: Building a price/earnings time series
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In total, the 9 years of filing history provide us with over 28,000 numerical
+    values. We can select a useful field, such as **earnings per diluted share** (**EPS**),
+    that we can combine with market data to calculate the popular **price-to-earnings**
+    (**P/E**) valuation ratio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We do need to take into account, however, that Apple split its stock by 7:1
+    on June 4, 2014, and adjust the earnings per share values before the split to
+    make the earnings comparable to the price data, which, in its *adjusted* form,
+    accounts for these changes. The following code block shows you how to adjust the
+    earnings data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can use Quandl to obtain Apple stock price data since 2009:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we have the data to compute the trailing 12-month P/E ratio for the entire
+    period:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We get the following plot from the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_11.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.11: Trailing P/E ratio from EDGAR filings'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Other fundamental data sources
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are numerous other sources for fundamental data. Many are accessible using
+    the `pandas_datareader` module that was introduced earlier. Additional data is
+    available from certain organizations directly, such as the IMF, the World Bank,
+    or major national statistical agencies around the world (refer to the *references*
+    section on GitHub).
+  prefs: []
+  type: TYPE_NORMAL
+- en: pandas-datareader – macro and industry data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The `pandas-datareader` library facilitates access according to the conventions
+    introduced at the end of the preceding section on market data. It covers APIs
+    for numerous global fundamental macro- and industry-data sources, including the
+    following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Kenneth French''s data library: Market data on portfolios capturing returns
+    on key risk factors like size, value, and momentum factors, disaggregated by industry
+    (refer to *Chapter 4*, *Financial Feature Engineering – How to Research Alpha
+    Factors*)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'St. Louis FED (FRED): Federal Reserve data on the U.S. economy and financial
+    markets'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'World Bank: Global database on long-term, lower-frequency economic and social
+    development and demographics'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'OECD: Similar to the World Bank data for OECD countries'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Enigma: Various datasets, including alternative sources'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Eurostat: EU-focused economic, social, and demographic data'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Efficient data storage with pandas
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We''ll be using many different datasets in this book, and it''s worth comparing
+    the main formats for efficiency and performance. In particular, we''ll compare
+    the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**CSV**: Comma-separated, standard flat text file format.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**HDF5**: Hierarchical data format, developed initially at the National Center
+    for Supercomputing Applications. It is a fast and scalable storage format for
+    numerical data, available in pandas using the PyTables library.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Parquet**: Part of the Apache Hadoop ecosystem, a binary, columnar storage
+    format that provides efficient data compression and encoding and has been developed
+    by Cloudera and Twitter. It is available for pandas through the pyarrow library,
+    led by Wes McKinney, the original author of pandas.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `storage_benchmark.ipynb` notebook compares the performance of the preceding
+    libraries using a test DataFrame that can be configured to contain numerical or
+    text data, or both. For the HDF5 library, we test both the fixed and table formats.
+    The table format allows for queries and can be appended to.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following charts illustrate the read and write performance for 100,000
+    rows with either 1,000 columns of random floats and 1,000 columns of a random
+    10-character string, or just 2,000 float columns (on a log scale):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_02_12.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.12: Storage benchmarks'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The left panel shows that, for purely numerical data, the HDF5 format performs
+    best by far, and the table format also shares with CSV the smallest memory footprint
+    at 1.6 GB. The `fixed` format uses twice as much space, while the `parquet` format
+    uses 2 GB.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For a mix of numerical and text data, Parquet is the best choice for read and
+    write operations. HDF5 has an advantage with *read* in relation to CSV, but it
+    is slower with *write* because it pickles text data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The notebook illustrates how to configure, test, and collect the timing using
+    the `%%timeit` cell magic and, at the same time, demonstrates the usage of the
+    related pandas commands that are required to use these storage formats.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter introduced the market and fundamental data sources that form the
+    backbone of most trading strategies. You learned about the various ways to access
+    this data and how to preprocess the raw information so that you can begin extracting
+    trading signals using the ML techniques that we will be introducing shortly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, before moving on to the design and evaluation of trading
+    strategies and the use of ML models, we need to cover alternative datasets that
+    have emerged in recent years and have been a significant driver of the popularity
+    of ML for algorithmic trading.
+  prefs: []
+  type: TYPE_NORMAL

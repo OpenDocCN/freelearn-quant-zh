@@ -1,0 +1,1074 @@
+- en: '20'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Autoencoders for Conditional Risk Factors and Asset Pricing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter shows how unsupervised learning can leverage deep learning for
+    trading. More specifically, we'll discuss **autoencoders** that have been around
+    for decades but have recently attracted fresh interest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Unsupervised learning** addresses practical ML challenges such as the limited
+    availability of labeled data and the curse of dimensionality, which requires exponentially
+    more samples for successful learning from complex, real-life data with many features.
+    At a conceptual level, unsupervised learning resembles human learning and the
+    development of common sense much more closely than supervised and reinforcement
+    learning, which we''ll cover in the next chapter. It is also called **predictive
+    learning** because it aims to discover structure and regularities from data so
+    that it can predict missing inputs, that is, fill in the blanks from the observed
+    parts.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An **autoencode**r is a **neural network** (**NN**) trained to reproduce the
+    input while learning a new representation of the data, encoded by the parameters
+    of a hidden layer. Autoencoders have long been used for nonlinear dimensionality
+    reduction and manifold learning (see *Chapter 13*, *Data-Driven Risk Factors and
+    Asset Allocation with Unsupervised Learning*). A variety of designs leverage the
+    feedforward, convolutional, and recurrent network architectures we covered in
+    the last three chapters. We will see how autoencoders can underpin a **trading
+    strategy**: we will build a deep neural network that uses an autoencoder to extract
+    risk factors and predict equity returns, conditioned on a range of equity attributes
+    (Gu, Kelly, and Xiu 2020).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, in this chapter you will learn about:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Which types of autoencoders are of practical use and how they work
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Building and training autoencoders using Python
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using autoencoders to extract data-driven risk factors that take into account
+    asset characteristics to predict returns
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: You can find the code samples for this chapter and links to additional resources
+    in the corresponding directory of the GitHub repository. The notebooks include
+    color versions of the images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Autoencoders for nonlinear feature extraction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In *Chapter 17*, *Deep Learning for Trading*, we saw how neural networks succeed
+    at supervised learning by extracting a hierarchical feature representation useful
+    for the given task. **Convolutional neural networks** (**CNNs**), for example,
+    learn and synthesize increasingly complex patterns from grid-like data, for example,
+    to identify or detect objects in an image or to classify time series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An autoencoder, in contrast, is a neural network designed exclusively to learn
+    a **new representation** that encodes the input in a way that helps solve another
+    task. To this end, the training forces the network to reproduce the input. Since
+    autoencoders typically use the same data as input and output, they are also considered
+    an instance of **self-supervised learning**. In the process, the parameters of
+    a hidden layer *h* become the code that represents the input, similar to the word2vec
+    model covered in *Chapter 16*, *Word Embeddings for Earnings Calls and SEC Filings*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'More specifically, the network can be viewed as consisting of an encoder function
+    *h=f(x)* that learns the hidden layer''s parameters from input *x*, and a decoder
+    function g that learns to reconstruct the input from the encoding *h*. Rather
+    than learning the identity function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: which simply copies the input, autoencoders use **constraints** that force the
+    hidden layer to **prioritize which aspects of the data to encod**e. The goal is
+    to obtain a representation of practical value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Autoencoders can also be viewed as a **special case of a feedforward neural
+    network** (see *Chapter 17*, *Deep Learning for Trading*) and can be trained using
+    the same techniques. Just as with other models, excess capacity will lead to overfitting,
+    preventing the autoencoder from producing an informative encoding that generalizes
+    beyond the training samples. See *Chapters 14* and *15* of Goodfellow, Bengio,
+    and Courville (2016) for additional background.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generalizing linear dimensionality reduction
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A traditional use case includes dimensionality reduction, achieved by limiting
+    the size of the hidden layer and thus creating a "bottleneck" so that it performs
+    lossy compression. Such an autoencoder is called **undercomplete**, and the purpose
+    is to learn the most salient properties of the data by minimizing a loss function
+    *L* of the form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: An example loss function that we will explore in the next section is simply
+    the mean squared error evaluated on the pixel values of the input images and their
+    reconstruction. We will also use this loss function to extract risk factors from
+    time series of financial features when we build a conditional autoencoder for
+    trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Undercomplete autoencoders differ from linear dimensionality reduction methods
+    like **principal component analysis** (**PCA**; see *Chapter 13*, *Data-Driven
+    Risk Factors and Asset Allocation with Unsupervised Learning*) when they use **nonlinear
+    activation functions**; otherwise, they learn the same subspace as PCA. They can
+    thus be viewed as a nonlinear generalization of PCA capable of learning a wider
+    range of encodings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 20.1* illustrates the encoder-decoder logic of an undercomplete feedforward
+    autoencoder with three hidden layers: the encoder and decoder have one hidden
+    layer each plus a shared encoder output/decoder input layer containing the encoding.
+    The three hidden layers use nonlinear activation functions, like **rectified linear
+    units** (**ReLU**), *sigmoid*, or *tanh* (see *Chapter 17*, *Deep Learning for
+    Trading*) and have fewer units than the input that the network aims to reconstruct.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_01.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.1: Undercomplete encoder-decoder architecture'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Depending on the task, a simple autoencoder with a single encoder and decoder
+    layer may be adequate. However, **deeper autoencoders** with additional layers
+    can have several advantages, just as for other neural networks. These advantages
+    include the ability to learn more complex encodings, achieve better compression,
+    and do so with less computational effort and fewer training samples, subject to
+    the perennial risk of overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolutional autoencoders for image compression
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As discussed in *Chapter 18*, *CNNs for Financial Time Series and Satellite
+    Images*, fully connected feedforward architectures are not well suited to capture
+    local correlations typical to data with a grid-like structure. Instead, autoencoders
+    can also use convolutional layers to learn a hierarchical feature representation.
+    Convolutional autoencoders leverage convolutions and parameter sharing to learn
+    hierarchical patterns and features irrespective of their location, translation,
+    or changes in size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will illustrate different implementations of convolutional autoencoders for
+    image data below. Alternatively, convolutional autoencoders could be applied to
+    multivariate time series data arranged in a grid-like format as illustrated in
+    *Chapter 18*, *CNNs for Financial Time Series and Satellite Images*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Managing overfitting with regularized autoencoders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The powerful capabilities of neural networks to represent complex functions
+    require tight controls of the capacity of encoders and decoders to extract signals
+    rather than noise so that the encoding is more useful for a downstream task. In
+    other words, when it is too easy for the network to recreate the input, it fails
+    to learn only the most interesting aspects of the data and improve the performance
+    of a machine learning model that uses the encoding as inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Just as for other models with excessive capacity for the given task, **regularization**
+    can help to address the **overfitting** challenge by constraining the autoencoder''s
+    learning process and forcing it to produce a useful representation (see, for instance,
+    *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*, on regularization
+    for linear models, and *Chapter 17*, *Deep Learning for Trading*, for neural networks).
+    Ideally, we could precisely match the model''s capacity to the complexity of the
+    distribution of the data. In practice, the optimal model often combines (limited)
+    excess capacity with appropriate regularization. To this end, we add a sparsity
+    penalty ![](img/B15439_20_003.png) that depends on the weights of the encoding
+    layer *h* to the training objective:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_004.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: A common approach that we explore later in this chapter is the use of **L1 regularization**,
+    which adds a penalty to the loss function in the form of the sum of the absolute
+    values of the weights. The L1 norm results in sparse encodings because it forces
+    the values of parameters to zero if they do not capture independent variation
+    in the data (see *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*).
+    As a result, even overcomplete autoencoders with hidden layers of a higher dimension
+    than the input may be able to learn signal content.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fixing corrupted data with denoising autoencoders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The autoencoders we have discussed so far are designed to reproduce the input
+    despite capacity constraints. An alternative approach trains autoencoders with
+    corrupted inputs ![](img/B15439_20_005.png) to output the desired, original data
+    points. In this case, the autoencoder minimizes a loss *L*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_006.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Corrupted inputs are a different way of preventing the network from learning
+    the identity function and rather extracting the signal or salient features from
+    the data. Denoising autoencoders have been shown to learn the data generating
+    process of the original data and have become popular in generative modeling where
+    the goal is **to learn the probability distribution** that gives rise to the input
+    (Vincent et al., 2008).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Seq2seq autoencoders for time series features
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Recurrent neural networks** (**RNNs**) have been developed for sequential
+    data characterized by longitudinal dependencies between data points, potentially
+    over long ranges (*Chapter 19*, *RNNs for Multivariate Time Series and Sentiment
+    Analysis*). Similarly, sequence-to-sequence (seq2seq) autoencoders aim to learn
+    representations attuned to the nature of data generated in sequence (Srivastava,
+    Mansimov, and Salakhutdinov, 2016).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Seq2seq autoencoders are based on RNN components like **long short-term memory**
+    (**LSTM**) or gated recurrent unit. They learn a representation of sequential
+    data and have been successfully applied to video, text, audio, and time series
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As mentioned in the last chapter, encoder-decoder architectures allow RNNs
+    to process input and output sequences with variable length. These architectures
+    underpin many advances in complex sequence prediction tasks, like speech recognition
+    and text translation, and are being increasingly applied to (financial) time series.
+    At a high level, they work as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The LSTM encoder processes the input sequence step by step to learn a hidden
+    state.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This state becomes a learned representation of the sequence in the form of a fixed-length
+    vector.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The LSTM decoder receives this state as input and uses it to generate the output
+    sequence.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: See references linked on GitHub for examples on building sequence-to-sequence
+    autoencoders to **compress time series data** and **detect anomalies** in time
+    series to allow, for example, regulators to uncover potentially illegal trading
+    activity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generative modeling with variational autoencoders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Variational autoencoders** (**VAE**) were developed more recently (Kingma
+    and Welling, 2014) and focus on generative modeling. In contrast to a discriminative
+    model that learns a predictor given data, a generative model aims to solve the
+    more general problem of learning a joint probability distribution over all variables.
+    If successful, it could simulate how the data is produced in the first place.
+    Learning the data-generating process is very valuable: it reveals underlying causal
+    relationships and supports semi-supervised learning to effectively generalize
+    from a small labeled dataset to a large unlabeled one.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: More specifically, VAEs are designed to learn the latent (meaning *unobserved*)
+    variables of the model responsible for the input data. Note that we encountered
+    latent variables in *Chapter 15*, *Topic Modeling – Summarizing Financial News*,
+    and *Chapter 16*, *Word Embeddings for Earnings Calls and SEC Filings*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Just like the autoencoders discussed so far, VAEs do not let the network learn
+    arbitrary functions as long as it faithfully reproduces the input. Instead, they
+    aim to learn the parameters of a probability distribution that generates the input
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other words, VAEs are generative models because, if successful, you can generate
+    new data points by sampling from the distribution learned by the VAE.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The operation of a VAE is more complex than the autoencoders discussed so far
+    because it involves stochastic backpropagation, that is, taking derivatives of
+    stochastic variables, and the details are beyond the scope of this book. They
+    are able to learn high-capacity input encodings without regularization that are
+    useful because the models aim to maximize the probability of the training data
+    rather than to reproduce the input. For a detailed introduction, see Kingma and
+    Welling (2019).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `variational_autoencoder.ipynb` notebook includes a sample VAE implementation
+    applied to the Fashion MNIST data, adapted from a Keras tutorial by Francois Chollet
+    to work with TensorFlow 2\. The resources linked on GitHub contain a VAE tutorial
+    with references to PyTorch and TensorFlow 2 implementations and many additional
+    references. See Wang et al. (2019) for an application that combines a VAE with
+    an RNN using LSTM and outperforms various benchmark models in futures markets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing autoencoders with TensorFlow 2
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we'll illustrate how to implement several of the autoencoder
+    models introduced in the previous section using the Keras interface of TensorFlow
+    2\. We'll first load and prepare an image dataset that we'll use throughout this
+    section. We will use images instead of financial time series because it makes
+    it easier to visualize the results of the encoding process. The next section shows
+    how to use an autoencoder with financial data as part of a more complex architecture
+    that can serve as the basis for a trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After preparing the data, we'll proceed to build autoencoders using deep feedforward
+    nets, sparsity constraints, and convolutions and apply the latter to denoise images.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to prepare the data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For illustration, we'll use the Fashion MNIST dataset, a modern drop-in replacement
+    for the classic MNIST handwritten digit dataset popularized by Lecun et al. (1998)
+    with LeNet. We also relied on this dataset in *Chapter 13*, *Data-Driven Risk
+    Factors and Asset Allocation with Unsupervised Learning*, on unsupervised learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Keras makes it easy to access the 60,000 training and 10,000 test grayscale
+    samples with a resolution of 28 × 28 pixels:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The data contains clothing items from 10 classes. *Figure 20.2* plots a sample
+    image for each class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.2: Fashion MNIST sample images'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We reshape the data so that each image is represented by a flat one-dimensional
+    pixel vector with 28 × 28 = 784 elements normalized to the range [0, 1]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: One-layer feedforward autoencoder
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We start with a vanilla feedforward autoencoder with a single hidden layer to
+    illustrate the general design approach using the Functional Keras API and establish
+    a performance baseline.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first step is a placeholder for the flattened image vectors with 784 elements:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The encoder part of the model consists of a fully connected layer that learns
+    the new, compressed representation of the input. We use 32 units for a compression
+    ratio of 24.5:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The decoding part reconstructs the compressed data to its original size in
+    a single step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We instantiate the `Model` class with the chained input and output elements
+    that implicitly define the computational graph as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The encoder-decoder computation thus defined uses almost 51,000 parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Functional API allows us to use parts of the model's chain as separate encoder
+    and decoder models that use the autoencoder's parameters learned during training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Defining the encoder
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The encoder just uses the input and hidden layer with about half the total
+    parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will see shortly that, once we train the autoencoder, we can use the encoder
+    to compress the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Defining the decoder
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The decoder consists of the last autoencoder layer, fed by a placeholder for
+    the encoded data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training the model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We compile the model to use the Adam optimizer (see *Chapter 17*, *Deep Learning
+    for Trading*) to minimize the mean squared error between the input data and the
+    reproduction achieved by the autoencoder. To ensure that the autoencoder learns
+    to reproduce the input, we train the model using the same input and output data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluating the results
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Training stops after some 20 epochs with a test RMSE of 0.1121:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To encode data, we use the encoder we just defined like so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The decoder takes the compressed data and reproduces the output according to
+    the autoencoder training results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 20.3* shows 10 original images and their reconstruction by the autoencoder
+    and illustrates the loss after compression:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.3: Sample Fashion MNIST images, original and reconstructed'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feedforward autoencoder with sparsity constraints
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The addition of regularization is fairly straightforward. We can apply it to
+    the dense encoder layer using Keras'' `activity_regularizer` as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The input and decoding layers remain unchanged. In this example with compression
+    of factor 24.5, regularization negatively affects performance with a test RMSE
+    of 0.1229\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep feedforward autoencoder
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To illustrate the benefit of adding depth to the autoencoder, we will build
+    a three-layer feedforward model that successively compresses the input from 784
+    to 128, 64, and 32 units, respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resulting model has over 222,000 parameters, more than four times the capacity
+    of the previous single-layer model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training stops after 45 epochs and results in a 14 percent reduction of the
+    test RMSE to 0.097\. Due to the low resolution, it is difficult to visually note
+    the better reconstruction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Visualizing the encoding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We can use the manifold learning technique **t-distributed Stochastic Neighbor
+    Embedding** (**t-SNE**; see *Chapter 13*, *Data-Driven Risk Factors and Asset
+    Allocation with Unsupervised Learning*) to visualize and assess the quality of
+    the encoding learned by the autoencoder's hidden layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If the encoding is successful in capturing the salient features of the data,
+    then the compressed representation of the data should still reveal a structure
+    aligned with the 10 classes that differentiate the observations. We use the output
+    of the deep encoder we just trained to obtain the 32-dimensional representation
+    of the test set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 20.4* shows that the 10 classes are well separated, suggesting that
+    the encoding is useful as a lower-dimensional representation that preserves the
+    key characteristics of the data (see the `variational_autoencoder.ipynb` notebook
+    for a color version):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.4: t-SNE visualization of the Fashion MNIST autoencoder embedding'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convolutional autoencoders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The insights from *Chapter 18*, *CNNs for Financial Time Series and Satellite
+    Images*, on CNNs suggest we incorporate convolutional layers into the autoencoder
+    to extract information characteristic of the grid-like structure of image data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We define a three-layer encoder that uses 2D convolutions with 32, 16, and
+    8 filters, respectively, ReLU activations, and `''same''` padding to maintain
+    the input size. The resulting encoding size at the third layer is ![](img/B15439_20_007.png),
+    higher than for the previous examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: We also define a matching decoder that reverses the number of filters and uses
+    2D upsampling instead of max pooling to reverse the reduction of the filter sizes.
+    The three-layer autoencoder has 12,785 parameters, a little more than 5 percent
+    of the capacity of the deep autoencoder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Training stops after 67 epochs and results in a further 9 percent reduction
+    in the test RMSE, due to a combination of the ability of convolutional filters
+    to learn more efficiently from image data and the larger encoding size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Denoising autoencoders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The application of an autoencoder to a denoising task only affects the training
+    stage. In this example, we add noise from a standard normal distribution to the
+    Fashion MNIST data while maintaining the pixel values in the range [0, 1] as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We then proceed to train the convolutional autoencoder on noisy inputs, the
+    objective being to learn how to generate the uncorrupted originals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test RMSE after 60 epochs is 0.0931, unsurprisingly higher than before.
+    *Figure 20.5* shows, from top to bottom, the original images as well as the noisy
+    and denoised versions. It illustrates that the autoencoder is successful in producing
+    compressed encodings from the noisy images that are quite similar to those produced
+    from the original images:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.5: Denoising input and output examples'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A conditional autoencoder for trading
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Recent research by Gu, Kelly, and Xiu (GKX, 2019) developed an asset pricing
+    model based on the exposure of securities to risk factors. It builds on the concept
+    of **data-driven risk factors** that we discussed in *Chapter 13*, *Data-Driven
+    Risk Factors and Asset Allocation with Unsupervised Learning*, when introducing
+    PCA as well as the risk factor models covered in *Chapter 4*, *Financial Feature
+    Engineering – How to Research Alpha Factors*. They aim to show that the asset
+    characteristics used by factor models to capture the systematic drivers of "anomalies"
+    are just proxies for the time-varying exposure to risk factors that cannot be
+    directly measured. In this context, anomalies are returns in excess of those explained
+    by the exposure to aggregate market risk (see the discussion of the capital asset
+    pricing model in *Chapter 5*, *Portfolio Optimization and Performance Evaluation*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The **Fama-French factor models** discussed in *Chapter 4* and *Chapter 7*
+    explain returns by specifying risk factors like firm size based on empirical observations
+    of differences in average stock returns beyond those due to aggregate market risk.
+    Given such **specific risk factors**, these models are able to measure the reward
+    an investor receives for taking on factor risk using portfolios designed accordingly:
+    sort stocks by size, buy the smallest quintile, sell the largest quintile, and
+    compute the return. The observed risk factor return then allows linear regression
+    to estimate the sensitivity of assets to these factors (called **factor loadings**),
+    which in turn helps to predict the returns of (many) assets based on forecasts
+    of (far fewer) factor returns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast, GKX treat **risk factors as latent, or non-observable**, drivers
+    of covariance among a number of assets large enough to prevent investors from
+    avoiding exposure through diversification. Therefore, investors require a reward
+    that adjusts like any price to achieve equilibrium, providing in turn an economic
+    rationale for return differences that are no longer anomalous. In this view, risk
+    factors are purely statistical in nature while the underlying economic forces
+    can be of arbitrary and varying origin.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In another recent paper (Kelly, Pruitt, and Su, 2019), Kelly—who teaches finance
+    at Yale, works with AQR, and is one of the pioneers in applying ML to trading—and
+    his coauthors developed a linear model dubbed **Instrumented Principal Component
+    Analysis** (IPCA) to **estimate latent risk factors and the assets' factor loadings
+    from data**. IPCA extends PCA to include asset characteristics as covariates and
+    produce time-varying factor loadings. (See *Chapter 13*, *Data-Driven Risk Factors
+    and Asset Allocation with Unsupervised Learning*, for coverage of PCA.) By conditioning
+    asset exposure to factors on observable asset characteristics, IPCA aims to answer
+    whether there is a set of common latent risk factors that explain an observed
+    anomaly rather than whether there is a specific observable factor that can do
+    so.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GKX creates a **conditional autoencoder architecture** to reflect the nonlinear
+    nature of return dynamics ignored by the linear Fama-French models and the IPCA
+    approach. The result is a deep neural network that simultaneously learns the premia
+    on a given number of unobservable factors using an autoencoder, and the factor
+    loadings for a large universe of equities based on a broad range of time-varying
+    asset characteristics using a feedforward network. The model succeeds in explaining
+    and predicting asset returns. It demonstrates a relationship that is both statistically
+    and economically significant, yielding an attractive Sharpe ratio when translated
+    into a long-short decile spread strategy similar to the examples we have used
+    throughout this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we'll create a simplified version of this model to demonstrate
+    how you can **leverage autoencoders to generate tradeable signals**. To this end,
+    we'll build a new dataset of close to 4,000 US stocks over the 1990-2019 period
+    using yfinance, because it provides some additional information that facilitates
+    the computation of the asset characteristics. We'll take a few shortcuts, such
+    as using fewer assets and only the most important characteristics. We'll also
+    omit some implementation details to simplify the exposition. We'll highlight the
+    most important differences so that you can enhance the model accordingly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We'll first show how to prepare the data before we explain, build, and train
+    the model and evaluate its predictive performance. Please see the above references
+    for additional background on the theory and implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sourcing stock prices and metadata information
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The GKX reference implementation uses stock price and firm characteristic data
+    for over 30,000 US equities from the Center for Research in Security Prices (CRSP)
+    from 1957-2016 at a monthly frequency. It computes 94 metrics that include a broad
+    range of asset attributes suggested as predictive of returns in previous academic
+    research and listed in Green, Hand, and Zhang (2017), who set out to verify these
+    claims.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Since we do not have access to the high-quality but costly CRSP data, we leverage
+    yfinance (see *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*)
+    to download price and metadata from Yahoo Finance. There are downsides to choosing
+    free data, including:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The lack of quality control regarding adjustments
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Survivorship bias because we cannot get data for stocks that are no longer listed
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A smaller scope in terms of both the number of equities and the length of their
+    history
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `build_us_stock_dataset.ipynb` notebook contains the relevant code examples
+    for this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To obtain the data, we get a list of the 8,882 currently traded symbols from
+    NASDAQ using pandas-datareader (see *Chapter 2*, *Market and Fundamental Data
+    – Sources and Techniques*):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We remove ETFs and create yfinance `Ticker()` objects for the remainder:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Each ticker''s `.info` attribute contains data points scraped from Yahoo Finance,
+    ranging from the outstanding number of shares and other fundamentals to the latest
+    market capitalization; coverage varies by security:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: For the tickers with metadata, we download both adjusted and unadjusted prices,
+    the latter including corporate actions like stock splits and dividend payments
+    that we could use to create a Zipline bundle for strategy backtesting (see *Chapter
+    8*, *The ML4T Workflow – From Model to Strategy Backtesting*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We get adjusted OHLCV data on 4,314 stocks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Absent any quality control regarding the underlying price data and the adjustments
+    for stock splits, we remove equities with suspicious values such as daily returns
+    above 100 percent or below -100 percent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: This removes around 10 percent of the tickers, leaving us with close to 3,900
+    assets for the 1990-2019 period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Computing predictive asset characteristics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'GKX tested 94 asset attributes based on Green et al. (2017) and identified
+    the 20 most influential metrics while asserting that feature importance drops
+    off quickly thereafter. The top 20 stock characteristics fall into three categories,
+    namely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Price trend**, including (industry) momentum, short- and long-term reversal,
+    or the recent maximum return'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Liquidity,** such as turnover, dollar volume, or market capitalization'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Risk measures**, for instance, total and idiosyncratic return volatility
+    or market beta'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Of these 20, we limit the analysis to 16 for which we have or can approximate
+    the relevant inputs. The `conditional_autoencoder_for_trading_data.ipynb` notebook
+    demonstrates how to calculate the relevant metrics. We highlight a few examples
+    in this section; see also the *Appendix*, *Alpha Factor Library*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some metrics require information like sector, market cap, and outstanding shares,
+    so we limit our stock price dataset to the securities with relevant metadata:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We run our analysis at a weekly instead of monthly return frequency to compensate
+    for the 50 percent shorter time period and around 80 percent lower number of stocks.
+    We obtain weekly returns as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Most metrics are fairly straightforward to compute. **Stock momentum**, the
+    11-month cumulative stock returns ending 1 month before the current date, can
+    be derived as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The **Amihud Illiquidity** measure is the ratio of a stock''s absolute returns
+    relative to its dollar volume, measured as a rolling 21-day average:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Idiosyncratic volatility** is measured as the standard deviation of a regression
+    of residuals of weekly returns on the returns of equally weighted market index
+    returns for the prior three years. We compute this computationally intensive metric
+    using `statsmodels`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For the **market beta**, we can use statsmodels'' `RollingOLS` class with the
+    weekly asset returns as outcome and the equal-weighted index as input:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We end up with around 3 million observations on 16 metrics for some 3,800 securities
+    over the 1990-2019 period. *Figure 20.6* displays a histogram of the number of
+    stock returns per week (the left panel) and boxplots outlining the distribution
+    of the number of observations for each characteristic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_06.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.6: Number of tickers over time and per - stock characteristic'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To limit the influence of outliers, we follow GKX and rank-normalize the characteristics
+    to the [-1, 1] interval:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Since the neural network cannot handle missing data, we set missing values to
+    -2, which lies outside the range for both weekly returns and the characteristics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The authors apply additional methods to avoid overweighting microcap stocks
+    like market-value-weighted least-squares regression. They also adjust for data-snooping
+    biases by factoring in conservative reporting lags for the characteristics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating the conditional autoencoder architecture
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The conditional autoencoder proposed by GKX allows for time-varying return distributions
+    that take into account changing asset characteristics. To this end, the authors
+    extend standard autoencoder architectures that we discussed in the first section
+    of this chapter to allow for features to shape the encoding.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 20.7* illustrates the architecture that models the outcome (asset returns,
+    top) as a function of both asset characteristics (left input) and, again, individual
+    asset returns (right input). The authors allow for asset returns to be individual
+    stock returns or portfolios that are formed from the stocks in the sample based
+    on the asset characteristics, similar to the Fama-French factor portfolios we
+    discussed in *Chapter 4*, *Financial Feature Engineering – How to Research Alpha
+    Factors*, and summarized in the introduction to this section (hence the dotted
+    lines from stocks to portfolios in the lower-right box). We will use individual
+    stock returns; see GKX for details on how and why to use portfolios instead.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.7: Conditional autoencoder architecture designed by GKX'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The **feedforward neural network** on the left side of the conditional autoencoder
+    models the *K* factor loadings (beta output) of *N* individual stocks as a function
+    of their *P* characteristics (input). In our case, *N* is around 3,800 and *P*
+    equals 16\. The authors experiment with up to three hidden layers with 32, 16,
+    and 8 units, respectively, and find two layers to perform best. Due to the smaller
+    number of characteristics, we only use a similar layer and find 8 units most effective.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The right side of this architecture is a traditional autoencoder when used with
+    individual asset returns as inputs because it maps *N* asset returns onto themselves.
+    The authors use it in this way to measure how well the derived factors explain
+    contemporaneous returns. In addition, they use the autoencoder to predict future
+    returns by using input returns from period *t*-1 with output returns from period
+    t. We will focus on the use of the architecture for prediction, underlining that
+    autoencoders are a special case of a feedforward neural network as mentioned in
+    the first section of this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model output is the dot product of the ![](img/B15439_20_008.png) factor
+    loadings on the left with the ![](img/B15439_20_009.png) factor premia on the
+    right. The authors experiment with values of *K* in the range 2-6, similar to
+    established factor models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To create this architecture using TensorFlow 2, we use the Functional Keras
+    API and define a `make_model()` function that automates the model compilation
+    process as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: We follow the authors in using batch normalization and compile the model to
+    use mean squared error for this regression task and the Adam optimizer. This model
+    has 12,418 parameters (see the notebook).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The authors use additional regularization techniques such as L1 penalties on
+    network weights and combine the results of various networks with the same architecture
+    but using different random seeds. They also use early stopping.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We cross-validate using 20 years for training and predict the following year
+    of weekly returns with five folds corresponding to the years 2015-2019\. We evaluate
+    combinations of numbers of factors *K* from 2 to 6 and 8, 16, or 32 hidden layer
+    units by computing the **information coefficient** (**IC**) for the validation
+    set as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 20.8* plots the validation IC averaged over the five annual folds by
+    epoch for the five-factor count and three hidden-layer size combinations. The
+    upper panel shows the IC across the 52 weeks and the lower panel shows the average
+    weekly IC (see the notebook for the color version):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.8: Cross-validation performance for all factor and hidden-layer size
+    combinations'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The results suggest that more factors and fewer hidden layer units work better;
+    in particular, four and six factors with eight units perform best with overall
+    IC values in the range of 0.02-0.03\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To evaluate the economic significance of the model's predictive performance,
+    we generate predictions for a four-factor model with eight units trained for 15
+    epochs. Then we use Alphalens to compute the spreads between equal-weighted portfolios
+    invested by a quintile of the predictions for each point in time, while ignoring
+    transaction costs (see the `alphalens_analysis.ipynb` notebook).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 20.9* shows the mean spread for holding periods from 5 to 21 days.
+    For the shorter end that also reflects the prediction horizon, the spread between
+    the bottom and the top decile is around 10 basis points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_09.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.9: Mean period-wise spread by prediction quintile'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To evaluate how the predictive performance might translate into returns over
+    time, we lot the cumulative returns of similarly invested portfolios, as well
+    as the cumulative return for a long-short portfolio invested in the top and bottom
+    half, respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/B15439_20_10.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 20.10: Cumulative returns of quintile-based and long-short portfolios'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The results show significant spreads between quintile portfolios and positive
+    cumulative returns for the broader-based long-short portfolio over time. This
+    supports the hypothesis that the conditional autoencoder model could contribute
+    to a profitable trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lessons learned and next steps
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The conditional autoencoder combines a nonlinear version of the data-driven
+    risk factors we explored using PCA in *Chapter 13*, *Data-Driven Risk Factors
+    and Asset Allocation with Unsupervised Learning*, with the risk factor approach
+    to modeling returns discussed in *Chapter 4* and *Chapter 7*. It illustrates how
+    deep neural network architectures can be flexibly adapted to various tasks as
+    well as the fluid boundary between autoencoders and feedforward neural networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The numerous simplifications from the data source to the architecture point
+    to several avenues for improvements. Besides sourcing more data of better quality
+    that also allows the computation of additional characteristics, the following
+    modifications are a starting point—there are certainly many more:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Experiment with **data frequencies** other than weekly and forecast horizons
+    other than annual, where shorter periods will also increase the amount of training
+    data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modify the **model architecture**, especially if using more data, which might
+    reverse the finding that an even smaller hidden layer would estimate better factor
+    loadings
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we introduced how unsupervised learning leverages deep learning.
+    Autoencoders learn sophisticated, nonlinear feature representations that are capable
+    of significantly compressing complex data while losing little information. As
+    a result, they are very useful to counter the curse of dimensionality associated
+    with rich datasets that have many features, especially common datasets with alternative
+    data. We also saw how to implement various types of autoencoders using TensorFlow
+    2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most importantly, we implemented recent academic research that extracts data-driven
+    risk factors from data to predict returns. Different from our linear approach
+    to this challenge in *Chapter 13*, *Data-Driven Risk Factors and Asset Allocation
+    with Unsupervised Learning*, autoencoders capture nonlinear relationships. Moreover,
+    the flexibility of deep learning allowed us to incorporate numerous key asset
+    characteristics to model more sensitive factors that helped predict returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we focus on generative adversarial networks, which have
+    often been called one of the most exciting recent developments in artificial intelligence,
+    and see how they are capable of creating synthetic training data.
+  prefs: []
+  type: TYPE_NORMAL
