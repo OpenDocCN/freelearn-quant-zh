@@ -1,612 +1,917 @@
 - en: '*Chapter 6*: Statistical Estimation, Inference, and Prediction'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '*第 6 章*：统计估计、推断和预测'
 - en: In this chapter, we introduce four key statistical libraries in Python—`statsmodels`,
     `pmdarima`, `fbprophet`, and `scikitlearn`—by outlining key examples. These libraries
     are used to model time series and provide their forecast values, along with confidence
     intervals. In addition, we demonstrate how to use a classification model to predict
     percentage changes of a time series.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们通过概述关键示例来介绍 Python 中的四个主要统计库—`statsmodels`、`pmdarima`、`fbprophet` 和 `scikitlearn`。这些库用于对时间序列建模并提供它们的预测值，以及置信区间。此外，我们演示了如何使用分类模型来预测时间序列的百分比变化。
 - en: 'For this, we are going to cover the following use cases:'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，我们将涵盖以下使用案例：
 - en: Introduction to statsmodels
+  id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: statsmodels 介绍
 - en: Using a **Seasonal Auto-Regressive Integrated Moving Average with eXogenous
     factors** (**SARIMAX**) time-series model with pmdarima
+  id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用具有外生因素的**季节性自回归综合移动平均**（**SARIMAX**）时间序列模型与 pmdarima
 - en: Time series forecasting with Facebook's Prophet library
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用 Facebook 的 Prophet 库进行时间序列预测
 - en: Introduction to scikit-learn regression and classification
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: scikit-learn 回归和分类介绍
 - en: Technical requirements
+  id: totrans-7
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 技术要求
 - en: The Python code used in this chapter is available in the `Chapter06 folder`
     in the book's code repository.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章使用的 Python 代码可在书籍的代码存储库的 `Chapter06 文件夹` 中找到。
 - en: Introduction to statsmodels
+  id: totrans-9
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: statsmodels 介绍
 - en: statsmodels is a Python library that allows us to explore data, perform statistical
     tests, and estimate statistical models.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: statsmodels 是一个 Python 库，允许我们探索数据、执行统计检验并估计统计模型。
 - en: This chapter focuses on statsmodels' modeling, analysis, and forecasting of
     time series.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章重点介绍了 statsmodels 对时间序列的建模、分析和预测。
 - en: Normal distribution test with Q-Q plots
+  id: totrans-12
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用 Q-Q 图进行正态分布检验
 - en: An underlying assumption of many statistical learning techniques is that the
     observations/fields are normally distributed.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多统计学习技术的一个基本假设是观测值/字段是正态分布的。
 - en: While there are many robust statistical tests for normal distributions, an intuitive
     visual method is known as a **quantile-quantile plot** (**Q-Q plot**). If a sample
     is normally distributed, its Q-Q plot is a straight line.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然有许多用于正态分布的健壮统计检验方法，但一种直观的视觉方法被称为**分位数-分位数图**（**Q-Q 图**）。如果一个样本是正态分布的，它的 Q-Q
+    图是一条直线。
 - en: 'In the following code block, the `statsmodels.graphics.api.qqplot(...)` method
     is used to check if a `numpy.random.uniform(...)` distribution is normally distributed:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的代码块中，使用 `statsmodels.graphics.api.qqplot(...)` 方法来检查 `numpy.random.uniform(...)`
+    分布是否是正态分布：
 - en: '[PRE0]'
+  id: totrans-16
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'The resulting plot depicted in the following screenshot shows a non-linear
     relationship between the two distributions, which was expected since we used a
     uniform distribution:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果显示的图示了两个分布之间的非线性关系，这是预期的，因为我们使用了均匀分布：
 - en: '![Figure 6.1 – Q-Q plot for a dataset generated from a uniform distribution](img/Figure_6.1_B15029.jpg)'
+  id: totrans-18
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.1 – 从均匀分布生成的数据集的 Q-Q 图](img/Figure_6.1_B15029.jpg)'
 - en: Figure 6.1 – Q-Q plot for a dataset generated from a uniform distribution
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.1 – 从均匀分布生成的数据集的 Q-Q 图
 - en: 'In the following code block, we repeat the test, but this time with a `numpy.random.exponential(...)`
     distribution as our sample distribution:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的代码块中，我们重复测试，但这次使用 `numpy.random.exponential(...)` 分布作为我们的样本分布：
 - en: '[PRE1]'
+  id: totrans-21
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'The resulting Q-Q plot again confirms a non-normal relationship between the
     two distributions, as illustrated in the following screenshot:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果显示的 Q-Q 图再次证实了两个分布之间的非正态关系，如下截图所示：
 - en: '![Figure 6.2 – Q-Q plot for a dataset generated from an exponential distribution](img/Figure_6.2_B15029.jpg)'
+  id: totrans-23
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.2 – 从指数分布生成的数据集的 Q-Q 图](img/Figure_6.2_B15029.jpg)'
 - en: Figure 6.2 – Q-Q plot for a dataset generated from an exponential distribution
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.2 – 从指数分布生成的数据集的 Q-Q 图
 - en: 'Finally, we will pick out 10,000 samples from a normal distribution using the
     `numpy.random.normal(...)` method and use `qqplot(...)` to observe them, as illustrated
     in the following code snippet:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们将从正态分布中挑选出 10,000 个样本，使用 `numpy.random.normal(...)` 方法，并使用 `qqplot(...)`
+    进行观察，如下代码片段所示：
 - en: '[PRE2]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'The result is a plot with a linear relationship as expected, as illustrated
     in the following screenshot:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是如预期的线性关系的图示，如下截图所示：
 - en: '![Figure 6.3 – Q-Q plot for 10,000 samples sampled from a standard normal distribution](img/Figure_6.3_B15029.jpg)'
+  id: totrans-28
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.3 – 从标准正态分布抽取的 10,000 个样本的 Q-Q 图](img/Figure_6.3_B15029.jpg)'
 - en: Figure 6.3 – Q-Q plot for 10,000 samples sampled from a standard normal distribution
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.3 – 从标准正态分布中采样的10,000个样本的Q-Q图
 - en: Q-Q plots are used for comparison between two probability distributions—with
     one of them most often being a normal distribution—by plotting their quantiles
     against one another. The preceding examples demonstrate how easy it is to test
     visually for normal distribution.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: Q-Q图用于比较两个概率分布——其中一个最常见的是正态分布——通过将它们的分位数相互绘制来绘制它们之间的比较。前面的例子演示了通过视觉测试正态分布是多么容易。
 - en: Time series modeling with statsmodels
+  id: totrans-31
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用statsmodels进行时间序列建模
 - en: A time series is a sequence of numerical data points in time order.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列是按时间顺序排列的一系列数值数据点。
 - en: A crucial part of working with time series data involves working with dates
     and times.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 处理时间序列数据的一个关键部分涉及处理日期和时间。
 - en: The `statsmodels.api.tsa.datetools` model provides some basic methods for generating
     and parsing dates and date ranges, such as `dates_from_range(...)`.
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: '`statsmodels.api.tsa.datetools`模块提供了一些基本方法来生成和解析日期和日期范围，例如`dates_from_range(...)`。'
 - en: 'In the following code snippet, we generate 12 `datetime.datetime` objects using
     a `length=12` parameter and starting from `2010` with a yearly frequency:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 在以下代码片段中，我们使用`length=12`参数从`2010`年开始以年度频率生成了12个`datetime.datetime`对象：
 - en: '[PRE3]'
+  id: totrans-36
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'That yields the following list of `datetime` objects:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 这导致了以下`datetime`对象列表：
 - en: '[PRE4]'
+  id: totrans-38
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'The frequency of dates in the `dates_from_range(...)` method can be specified
     by the start date and a special format, where the `m1` suffix means first month
     and monthly frequency, and `q1` means first quarter and quarterly frequency, as
     illustrated in the following code snippet:'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 在`dates_from_range(...)`方法中，日期的频率可以通过开始日期和一个特殊的格式来指定，其中`m1`后缀表示第一个月和月频率，`q1`表示第一个季度和季度频率，如下面的代码片段所示：
 - en: '[PRE5]'
+  id: totrans-40
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'That yields the following list of `datetime` objects with monthly frequency:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 这导致了以下月频率的`datetime`对象列表：
 - en: '[PRE6]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Let's now perform an **Error, Trend, Seasonality** (**ETS**) analysis of a time
     series.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们对一个时间序列执行**Error, Trend, Seasonality** (**ETS**)分析。
 - en: ETS analysis of a time series
+  id: totrans-44
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 时间序列的ETS分析
 - en: 'The ETS analysis of a time series breaks down the data into three different
     components, as follows:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列的ETS分析将数据分解为三个不同的组件，如下所示：
 - en: The **trend** component captures the overall trend of the time series.
+  id: totrans-46
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**趋势**（trend）组件捕获了时间序列的总体趋势。'
 - en: The **seasonality** component captures cyclical/seasonal changes.
+  id: totrans-47
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**季节性**（seasonality）组件捕获了周期性/季节性变化。'
 - en: The **error** component captures noise in the data that could not be captured
     with the other two components.
+  id: totrans-48
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**误差**（error）组件捕获了数据中无法用其他两个组件捕获的噪声。'
 - en: 'Let''s generate 20 years of monthly dates as an index to the Pandas DataFrame
     dataset using the `datetools.dates_from_range(...)` method, as follows:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用`datetools.dates_from_range(...)`方法生成20年的月度日期作为Pandas DataFrame数据集的索引，如下所示：
 - en: '[PRE7]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'The result is the following DataFrame with a `Price` field that is composed
     of ETS components:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是以下包含ETS组件的`Price`字段的DataFrame：
 - en: '[PRE8]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Let''s visualize the time series dataset that we generated, as follows:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们可视化我们生成的时间序列数据集，如下所示：
 - en: '[PRE9]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'The resulting time series dataset has an apparent linearly increasing trend
     with seasonal components mixed in, as illustrated in the following screenshot:'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的时间序列数据集具有明显的线性增长趋势，其中夹杂着季节性组件，如下截图所示：
 - en: '![Figure 6.4 – Plot displaying synthetic prices with ETS components](img/Figure_6.4_B15029.jpg)'
+  id: totrans-56
   prefs: []
   type: TYPE_IMG
+  zh: '![图6.4 – 显示具有ETS组件的合成价格的图表](img/Figure_6.4_B15029.jpg)'
 - en: Figure 6.4 – Plot displaying synthetic prices with ETS components
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.4 – 显示具有ETS组件的合成价格的图表
 - en: In the preceding screenshot, we do see the seasonality component very clearly—the
     oscillation up and down from the median value. We also see the error noise since
     the oscillations are not perfect. Finally, we see that the values are increasing—the
     trend component.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一张截图中，我们清楚地看到了季节性组件——从中位数值上下波动。我们还看到了误差噪声，因为波动不是完美的。最后，我们看到数值正在增加——趋势组件。
 - en: The Hodrick-Prescott filter
+  id: totrans-59
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: Hodrick-Prescott滤波器
 - en: The `statsmodels`, this is implemented as `statsmodels.api.tsa.filters.hpfilter(...)`.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 在`statsmodels`中，这被实现为`statsmodels.api.tsa.filters.hpfilter(...)`。
 - en: 'Let''s use it with a `lamb=129600` smoothing parameter to perform the decomposition
     (the value `129600` is the recommended value for monthly data). We use a pair
     of series values returned to generate a DataFrame with `Price`, `hp_cycle`, and
     `hp_trend` fields to represent the price, the seasonal component, and the trend
     components, as illustrated in the following code snippet:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用 `lamb=129600` 平滑参数进行分解（值 `129600` 是月度数据的推荐值）。我们使用返回的一对系列值生成一个 DataFrame，其中包含
+    `Price`、`hp_cycle` 和 `hp_trend` 字段，以表示价格、季节性组件和趋势组件，如下面的代码片段所示：
 - en: '[PRE10]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The `decomp` DataFrame contains the following data:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: '`decomp` DataFrame 包含以下数据：'
 - en: '[PRE11]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: In the next section, we will look at the `UnobservedComponents` model.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一节中，我们将查看 `UnobservedComponents` 模型。
 - en: UnobservedComponents model
+  id: totrans-66
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: UnobservedComponents 模型
 - en: Another way of breaking down a time series into ETS components is to use a `statsmodels.api.tsa.UnobservedComponents`
     object.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 将时间序列分解为 ETS 组件的另一种方法是使用 `statsmodels.api.tsa.UnobservedComponents` 对象。
 - en: 'The `UnobservedComponentsResults.summary(...)` method generates statistics
     for the model, as follows:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: '`UnobservedComponentsResults.summary(...)` 方法生成模型的统计信息，如下所示：'
 - en: '[PRE12]'
+  id: totrans-69
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'The output contains details about the model, as illustrated in the following
     code block:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出包含模型的详细信息，如下所示的代码块所示：
 - en: '[PRE13]'
+  id: totrans-71
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'We can access the ETS/cyclical components using the `resid`, `cycle.smoothed`,
     and `level.smoothed` attributes and add them to the `decomp` DataFrame, as follows:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用 `resid`、`cycle.smoothed` 和 `level.smoothed` 属性访问 ETS/周期性组件，并将它们添加到 `decomp`
+    DataFrame 中，如下所示：
 - en: '[PRE14]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'The `decomp` DataFrame has the following new columns containing the `Cycle`,
     `Trend`, and `Error` terms from the `UnobservedComponents` model:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: '`decomp` DataFrame 现在包含以下新列，其中包含来自 `UnobservedComponents` 模型的 `Cycle`、`Trend`
+    和 `Error` 项：'
 - en: '[PRE15]'
+  id: totrans-75
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Next, we will look at the `statsmodel.tsa.seasonal.seasonal_decompose(…)` method.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将查看 `statsmodel.tsa.seasonal.seasonal_decompose(…)` 方法。
 - en: statsmodels.tsa.seasonal.seasonal_decompose(...) method
+  id: totrans-77
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: '`statsmodels.tsa.seasonal.seasonal_decompose(...)` 方法'
 - en: Another way to perform ETS decomposition is by using the `statsmodels.tsa.seasonal.seasonal_decompose(...)`
     method.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行 ETS 分解的另一种方法是使用 `statsmodels.tsa.seasonal.seasonal_decompose(...)` 方法。
 - en: 'The following code block uses an additive model by specifying a `model=''additive''`
     parameter and adds `SDC_Cycle`, `SDC_Trend`, and `SDC_Error` columns to the `decomp`
     DataFrame by accessing the `season`, `trend`, and `resid` attributes in the `DecomposeResult`
     object:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的代码块使用加法模型，通过指定 `model='additive'` 参数，并且通过访问 `DecomposeResult` 对象中的 `season`、`trend`
+    和 `resid` 属性，将 `SDC_Cycle`、`SDC_Trend` 和 `SDC_Error` 列添加到 `decomp` DataFrame 中：
 - en: '[PRE16]'
+  id: totrans-80
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'The `decomp` DataFrame now has three additional fields with values, as shown
     in the following code block:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: '`decomp` DataFrame 现在有了三个附加字段及其值，如下面的代码块所示：'
 - en: '[PRE17]'
+  id: totrans-82
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Next, we will plot the various results we got from the preceding sections.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将绘制前面各节得到的各种结果。
 - en: Plotting of the results of HP filter, the UnobservedComponents model, and the
     seasonal_decompose method
+  id: totrans-84
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 绘制 HP 过滤器结果、UnobservedComponents 模型和 seasonal_decompose 方法的结果
 - en: 'Let''s plot the trend components extracted from the `HP` filter, the `UnobservedComponents`
     model, and the `seasonal_decompose` method, as follows:'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们绘制从 `HP` 过滤器、`UnobservedComponents` 模型和 `seasonal_decompose` 方法中提取的趋势组件，如下所示：
 - en: '[PRE18]'
+  id: totrans-86
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'That gives us the following plot, with the trend components plotted next to
     the original price. All three models did a good job in identifying the overall
     increasing trend, with the `seasonal_decompose(...)` method capturing some non-linear/cyclical
     trend components, in addition to the overall linearly increasing trend:'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 这给我们提供了以下图表，趋势组件与原始价格并排绘制。所有三个模型都很好地识别了总体上升的趋势，`seasonal_decompose(...)` 方法捕捉到了一些非线性/周期性的趋势组件，除了总体上线性增长的趋势之外：
 - en: '![Figure 6.5 – Plot showing trend components extracted from different ETS decomposition
     methods](img/Figure_6.5_B15029.jpg)'
+  id: totrans-88
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.5 - 显示从不同 ETS 分解方法中提取的趋势组件](img/Figure_6.5_B15029.jpg)'
 - en: Figure 6.5 – Plot showing trend components extracted from different ETS decomposition
     methods
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.5 - 显示从不同 ETS 分解方法中提取的趋势组件
 - en: 'The following code block plots the cycle/seasonal components obtained from
     the three models:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面的代码块绘制了从三个模型中获取的循环/季节性组件：
 - en: '[PRE19]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'The following result shows that the `seasonal_decompose(...)` method generates
     seasonal components with very small fluctuations, and that is because some part
     of the seasonal components was built into the trend plot we saw before:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下结果显示，`seasonal_decompose(...)` 方法生成了具有非常小波动的季节性组件，这是因为一些季节性组件的部分已经内置到我们之前看到的趋势图中：
 - en: '![Figure 6.6 – Plot showing cyclical/seasonal components extracted by different
     ETS decomposition methods](img/Figure_6.6_B15029.jpg)'
+  id: totrans-93
   prefs: []
   type: TYPE_IMG
+  zh: '![图6.6 - 显示通过不同ETS分解方法提取的周期/季节性组件的图表](img/Figure_6.6_B15029.jpg)'
 - en: Figure 6.6 – Plot showing cyclical/seasonal components extracted by different
     ETS decomposition methods
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.6 - 显示通过不同ETS分解方法提取的周期/季节性组件的图表
 - en: 'Finally, we will visualize the error terms in the `UnobservedComponents` and
     `seasonal_decompose` methods, as follows:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们将通过使用差分方法将我们的数据集可视化为一个平稳数据集，如下所示：
 - en: '[PRE20]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'The output is shown in the following screenshot:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出如下屏幕截图所示：
 - en: '![Figure 6.7 – Plot displaying error terms from different ETS decomposition
     models](img/Figure_6.7_B15029.jpg)'
+  id: totrans-98
   prefs: []
   type: TYPE_IMG
+  zh: '![图6.7 - 显示来自不同ETS分解模型的误差项的图表](img/Figure_6.7_B15029.jpg)'
 - en: Figure 6.7 – Plot displaying error terms from different ETS decomposition models
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.7 - 显示来自不同ETS分解模型的误差项的图表
 - en: The plot shown in the preceding screenshot demonstrates that the error terms
     oscillate around `0` and that they have no clear trend.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面屏幕截图中显示的图表显示了误差项围绕`0`振荡，并且它们没有明显的趋势。
 - en: Augmented Dickey-Fuller test for stationarity of a time series
+  id: totrans-101
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 时间序列的平稳的增广迪基-富勒测试
 - en: Stationary time series are time series whose statistical properties such as
     mean, variance, and autocorrelation are constant over time. Many statistical forecasting
     models assume that time series datasets can be transformed into stationary datasets
     by some mathematical operations, such as differencing.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 平稳时间序列是指其统计属性，如均值、方差和自相关在时间上保持恒定。许多统计预测模型假设时间序列数据集可以通过一些数学操作（如差分）转换为平稳数据集。
 - en: An **Augmented Dickey-Fuller** (**ADF**) test is used to check if a dataset
     is stationary or not—it computes the likelihood that a dataset is not stationary,
     and when that probability (*p-value*) is very low, we can conclude that the dataset
     is stationary. We will look at the detailed steps in the following sections.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 增广迪基-富勒（**ADF**）测试用于检查数据集是否平稳 - 它计算数据集不平稳的可能性，当该概率（*p值*）非常低时，我们可以得出结论数据集是平稳的。我们将在以下章节中详细介绍详细步骤。
 - en: Step 1 – ADF test on the prices
+  id: totrans-104
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第一步 - 对价格进行ADF测试
 - en: 'Let''s check for stationarity, as well as converting our dataset into a stationary
     dataset by using a differencing method. We start with the `statsmodels.tsa.stattools.adfuller(...)`
     method, as illustrated in the following code snippet:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们检查平稳性，并通过使用差分方法将我们的数据集转换为一个平稳数据集。我们从`statsmodels.tsa.stattools.adfuller（...）`方法开始，如以下代码片段所示：
 - en: '[PRE21]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'That outputs the following values when applied to the `Price` field. The `Test`
     statistic is a positive value and the p-value is 98%, meaning there is strong
     evidence that the `Price` field is not stationary. We knew this was expected,
     since the `Price` field has strong trend and seasonality components in it:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 将其应用于`Price`字段时，输出如下值。 `Test`统计量为正值，p值为98％，这意味着有强有力的证据表明`Price`字段不是平稳的。我们知道这是预期的，因为`Price`字段中有强趋势和季节性组件：
 - en: '[PRE22]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: Step 2 – First differencing on prices
+  id: totrans-109
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第二步 - 对价格进行第一阶差分
 - en: Next, we apply a **first differencing** transformation; this finds the first
     difference from one observation to the next one. If we difference the differenced
     dataset again, that yields a **second difference**, and so on.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们应用**第一阶差分**转换；这从一个观测到下一个观测中找到第一个差异。如果我们再次对差分数据集进行差分，则会产生**第二阶差分**，依此类推。
 - en: 'We store the first-differenced `pandas.Series` dataset in the `price_diff`
     variable, as shown in the following code block:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将一阶差分的`pandas.Series`数据集存储在`price_diff`变量中，如下面的代码块所示：
 - en: '[PRE23]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'That dataset contains the following values:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 该数据集包含以下数值：
 - en: '[PRE24]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: Step 3 – ADF test on the differenced prices
+  id: totrans-115
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 第三步 - 对价格进行差分的ADF测试
 - en: 'Now, we rerun the ADF test on this transformed dataset to check for stationarity,
     as follows:'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们对转换后的数据集重新运行ADF测试，以检查是否具有平稳性，如下所示：
 - en: '[PRE25]'
+  id: totrans-117
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'The test statistic now has a large negative value (values under -4 have a very
     high likelihood of being stationary). The probability of not being stationary
     now reduces to an extremely low value, indicating that the transformed dataset
     is stationary, as illustrated in the following code snippet:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，测试统计量具有较大的负值（值小于-4的值具有非常高的平稳性可能性）。现在不平稳的概率现在降低到极低的值，表明转换后的数据集是平稳的，如以下代码片段所示：
 - en: '[PRE26]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Autocorrelation and partial autocorrelation of a time series
+  id: totrans-120
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 时间序列的自相关和偏自相关
 - en: Autocorrelation or serial correlation is the correlation of an observation—a
     delayed copy of itself—as a function of delay. It measures if the currently observed
     value has any relationship to the value in the future/past.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 自相关或串行相关是观察值与延迟副本自身的关联性。它衡量当前观察值是否与未来/过去的值有关系。
 - en: 'In our dataset with a clear linear trend and some seasonal components, the
     autocorrelation slowly decreases as the number of lags increases, but for smaller
     lag values the dataset has high autocorrelation values due to the large overall
     linear trend. The `statsmodels.graphics.tsaplots.plot_acf(...)` method plots the
     autocorrelation of the `Price` field with lag values ranging from `0` to `100`,
     as illustrated in the following code snippet:'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们具有明显线性趋势和一些季节性组分的数据集中，随着滞后数的增加，自相关缓慢减小，但对于较小的滞后值，由于总体线性趋势较大，数据集具有较高的自相关值。`statsmodels.graphics.tsaplots.plot_acf(...)`
+    方法绘制了`Price`字段与滞后值从`0`到`100`的自相关，如下代码片段所示：
 - en: '[PRE27]'
+  id: totrans-123
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'The result indicates that autocorrelation remains relatively strong up to lag
     values of around 36, where it dips below 0.5\. This is illustrated in the following
     screenshot:'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果表明，自相关在约 36 的滞后值附近仍然相对较强，在这里它低于 0.5。如下截图所示：
 - en: '![Figure 6.8 – Autocorrelation plot showing autocorrelation against different
     lag values](img/Figure_6.8_B15029.jpg)'
+  id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.8 – 自相关图显示自相关与不同滞后值的关系](img/Figure_6.8_B15029.jpg)'
 - en: Figure 6.8 – Autocorrelation plot showing autocorrelation against different
     lag values
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.8 – 自相关图显示自相关与不同滞后值的关系
 - en: 'The `statsmodels.graphics.tsaplots.plot_pacf(…)` method lets us plot the partial
     autocorrelation values against different lag values. The difference between autocorrelation
     and partial autocorrelation is that with partial autocorrelation, only the correlation
     between that observation and the previous observation that lag periods is used,
     and correlation effects from lower lag-value terms are removed. This method is
     shown in the following code snippet:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: '`statsmodels.graphics.tsaplots.plot_pacf(…)` 方法让我们可以绘制偏自相关值与不同滞后值之间的关系图。自相关和偏自相关的区别在于，偏自相关只使用与前一个滞后期观测值的相关性，并且消除了低滞后值的相关性效应。该方法在以下代码片段中显示：'
 - en: '[PRE28]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'The output can be seen in the following screenshot:'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出结果如下截图所示：
 - en: '![Figure 6.9 – Partial autocorrelation plot showing partial autocorrelations
     against lag values](img/Figure_6.9_B15029.jpg)'
+  id: totrans-130
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.9 – 偏自相关图显示偏自相关与滞后值的关系](img/Figure_6.9_B15029.jpg)'
 - en: Figure 6.9 – Partial autocorrelation plot showing partial autocorrelations against
     lag values
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.9 – 偏自相关图显示偏自相关与滞后值的关系
 - en: The plot shown in the preceding screenshot drops in autocorrelation sharply
     after the first two lag terms and then seasonally varies from positive to negative
     values every 10 lag terms.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的截图中显示的图形在前两个滞后项之后急剧下降，并且在每 10 个滞后项之后季节性地从正值变为负值。
 - en: ARIMA time series model
+  id: totrans-133
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: ARIMA 时间序列模型
 - en: The **Auto-Regressive Integrated Moving Average** (**ARIMA**) model is one of
     the most well-known time series modeling and forecasting models available. It
     is used to predict time series data for time series with correlated data points.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: '**自回归积分滑动平均**（**ARIMA**）模型是最知名的时间序列建模和预测模型之一。它用于预测具有相关数据点的时间序列数据。'
 - en: 'The ARIMA model is composed of three components, outlined as follows:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: ARIMA 模型由三个组成部分组成，如下所述：
 - en: '`p` parameter, specifying the number of lags to use. For our case based on
     the autocorrelation plots, we will specify `p=36` when modeling the `Price` series
     with ARIMA.'
+  id: totrans-136
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`p` 参数，指定要使用的滞后数。根据自相关图，当对`Price`系列进行 ARIMA 建模时，我们将指定 `p=36`。'
 - en: '`d` parameter, specifying the order of differencing to perform, which in our
     case will be `d=1`. As we saw in the *Augmented Dickey-Fuller test for stationarity
     of a time series* section, the first-order differencing led to a stationary dataset.'
+  id: totrans-137
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`d` 参数，指定要执行的差分阶数，在我们的情况下将是 `d=1`。正如我们在*时间序列的增广迪基-富勒检验稳定性*部分所看到的，一阶差分导致了一个稳定的数据集。'
 - en: '`q`, which is the size of the MA window. In our case, we will set this parameter
     based on the partial autocorrelation plots and use a value of `q=2` because of
     the sharp drop-off in partial autocorrelation past the lag value of `1`.'
+  id: totrans-138
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`q`，即 MA 窗口的大小。在我们的情况下，我们将根据偏自相关图设置此参数，并使用 `q=2` 的值，因为在滞后值为 `1` 之后，偏自相关急剧下降。'
 - en: In statsmodels, the `statsmodels.tsa.arima.model.ARIMA` model builds a time
     series as an ARIMA model. Using an `order=(36, 1, 2)` parameter, we specify `p=36`,
     `d=1`, and `q=2`. Then, we call the `ARIMA.fit(...)` method to fit the model to
     our `Price` series, and call the `ARIMA.summary(...)` method to output information
     about the fitted ARIMA model.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: 'Some other packages—for example, `pmdarima`—offer `auto_arima` methods that
     find the ARIMA models by themselves, as illustrated in the following code snippet:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-141
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'The following output describes fitting parameters:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-143
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Using the `statsmodels.tsa.arima.ARIMAResults.predict(...)` method, we can
     use the fitted model to predict values over the specified start and end datetime
     indices (in this case, the entire dataset). We will save the predicted prices
     in the `PredPrice` field for comparison later. The code can be seen in the following
     snippet:'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-145
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'The result adds the new column with the predicted prices, as follows:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-147
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Now, we will plot the original `Price` and the `PredPrice` fields in the following
     code block to visually compare the two:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'The predicted prices are quite accurate, and that is because the specified
     parameters (`p`, `d`, `q`) were precise. The result can be seen in the following
     screenshot:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
 - en: '![Figure 6.10 – Plot comparing the original price and the price predicted by
     an ARIMA (36, 1, 2) model](img/Figure_6.10_B15029.jpg)'
+  id: totrans-151
   prefs: []
   type: TYPE_IMG
 - en: Figure 6.10 – Plot comparing the original price and the price predicted by an
     ARIMA (36, 1, 2) model
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
 - en: 'Let''s use this fitted model to forecast values for dates out in the future.
@@ -614,292 +919,433 @@
     datetime indices and no data (which will be filled in with `NaN` values) using
     the `datetools.dates_from_range(...)` method and the `pandas.DataFrame.append(...)`
     method, as follows:'
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE34]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Then, we can call the `ARIMAResults.predict(...)` method again to generate
     predicted prices for the entire time series and thus forecast onto the new dates
     we added, as follows:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE35]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'The following code block plots the last 100 observations from the `extended_dataset`
     DataFrame:'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE36]'
+  id: totrans-158
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'And that yields a plot with the forecasted `PredPrice` values, as illustrated
     in the following screenshot:'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
 - en: '![Figure 6.11 – Historical and predicted prices forecasted by the ARIMA model](img/Figure_6.11_B15029.jpg)'
+  id: totrans-160
   prefs: []
   type: TYPE_IMG
 - en: Figure 6.11 – Historical and predicted prices forecasted by the ARIMA model
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: In the plot shown in the preceding screenshot, the predicted prices visibly
     follow the trend of past prices.
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
 - en: Using a SARIMAX time series model with pmdarima
+  id: totrans-163
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: '**SARIMA** is an extension of the ARIMA model for univariate time series with
     a seasonal component.'
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
 - en: '**SARIMAX** is, then, the name of the model, which also supports **exogenous**
     variables.'
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
 - en: 'These are the three ARIMA parameters:'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
 - en: '`p` = trend auto-regressive order'
+  id: totrans-167
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`d` = trend difference order'
+  id: totrans-168
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`q` = trend MA order'
+  id: totrans-169
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'In addition to the preceding parameters, SARIMA introduces four more, as follows:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
 - en: '`P` = seasonal auto-regressive order'
+  id: totrans-171
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '`D` = seasonal difference order'
+  id: totrans-172
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`D` = 季节性差分阶数。'
 - en: '`Q` = seasonal MA order'
+  id: totrans-173
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`Q` = 季节性MA阶数。'
 - en: '`m` = the length of a single seasonal period in the number of time steps'
+  id: totrans-174
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`m` = 单个季节周期的长度，以时间步数表示。'
 - en: To find these parameters manually can be time-consuming, and it may be advantageous
     to use an auto-ARIMA model.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 手动查找这些参数可能会耗费时间，使用自动ARIMA模型可能更有优势。
 - en: In Python, auto-ARIMA modeling is provided by the `pmdarima` library. Its documentation
     is available at [http://alkaline-ml.com/pmdarima/index.html](http://alkaline-ml.com/pmdarima/index.html).
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Python中，auto-ARIMA建模由 `pmdarima` 库提供。其文档可在 [http://alkaline-ml.com/pmdarima/index.html](http://alkaline-ml.com/pmdarima/index.html)
+    上找到。
 - en: 'The installation is straightforward, as can be seen here:'
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 安装很简单，如下所示：
 - en: '[PRE37]'
+  id: totrans-178
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'The auto-ARIMA model attempts to automatically discover the SARIMAX parameters
     by conducting various statistical tests, as illustrated here:'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 自动ARIMA模型试图通过进行各种统计测试来自动发现SARIMAX参数，如下所示：
 - en: '![Figure 6.12 – Table of the various statistical tests](img/Figure_6.12_B15029.jpg)'
+  id: totrans-180
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.12 – 各种统计检验的表格](img/Figure_6.12_B15029.jpg)'
 - en: Figure 6.12 – Table of the various statistical tests
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.12 – 各种统计检验的表格。
 - en: Once we find the optimal `d` value, the auto-ARIMA model searches for the best
     fitting model within the ranges defined by `start_p`, `max_p`, `start_q`, and
     `max_q`. If the `seasonal` parameter is enabled, once we determine the optimal
     `D` value we use a similar procedure to find `P` and `Q`.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦找到最佳的 `d` 值，auto-ARIMA 模型将在由 `start_p`、`max_p`、`start_q` 和 `max_q` 定义的范围内搜索最适合的模型。如果启用了
+    `seasonal` 参数，则一旦确定最佳的 `D` 值，我们就会使用类似的程序来找到 `P` 和 `Q`。
 - en: The best model is determined by minimizing the value of the information criterion
     (**Akaike information criterion** (**AIC**), **Corrected AIC**, **Bayesian information
     criterion** (**BIC**), **Hannan-Quinn information criterion** (**HQC**), or **out-of-bag**
     (**OOB**)—for validation scoring—respectively).
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 最佳模型通过最小化信息准则的值确定（**阿卡奇信息准则** (**AIC**), **校正AIC**, **贝叶斯信息准则** (**BIC**), **Hannan-Quinn信息准则**
+    (**HQC**), 或 **袋外** (**OOB**)—用于验证评分—分别）。
 - en: If no suitable model is found, auto-ARIMA returns a `ValueError` output.
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果未找到合适的模型，auto-ARIMA 将返回 `ValueError` 输出。
 - en: Let's use auto-ARIMA with the previous dataset. The time series has a clear
     seasonality component with a periodicity of 12.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用前面的数据集进行自动ARIMA。时间序列具有明显的季节性分量，周期为12。
 - en: 'Notice in the following code block that we generate 95% confidence intervals
     for the predicted values, which is very useful for trading rules—for example,
     sell if the price is above the upper confidence interval value:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意下面的代码块中，我们为预测值生成了95%的置信区间，这对于交易规则非常有用，例如，如果价格高于上限置信区间值，则卖出：
 - en: '[PRE38]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'The output is shown here:'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出如下所示：
 - en: '![Figure 6.13 – SARIMAX result statistics from auto-ARIMA](img/Figure_6.13_B15029.jpg)'
+  id: totrans-189
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.13 – SARIMAX结果来自自动ARIMA](img/Figure_6.13_B15029.jpg)'
 - en: Figure 6.13 – SARIMAX result statistics from auto-ARIMA
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.13 – SARIMAX 结果来自自动ARIMA的统计数据。
 - en: 'The plot is shown in the following screenshot:'
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 图中显示如下的截图：
 - en: '![Figure 6.14 – Historical and predicted price forecasted by the auto-ARIMA
     model](img/Figure_6.14_B15029.jpg)'
+  id: totrans-192
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.14 – 自动ARIMA模型预测的历史和预测价格预测](img/Figure_6.14_B15029.jpg)'
 - en: Figure 6.14 – Historical and predicted price forecasted by the auto-ARIMA model
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.14 – 自动ARIMA模型预测的历史和预测价格预测。
 - en: 'The output also includes the predicted prices, as follows:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出还包括预测价格，如下所示：
 - en: '[PRE39]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'In addition, the output provides the confidence intervals for each predicted
     price, as follows:'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 另外，输出提供了每个预测价格的置信区间，如下所示：
 - en: '[PRE40]'
+  id: totrans-197
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: We will now see time series forecasting with Facebook's Prophet library.
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将看到使用Facebook的Prophet库进行时间序列预测。
 - en: Time series forecasting with Facebook's Prophet library
+  id: totrans-199
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用Facebook的Prophet库进行时间序列预测。
 - en: Facebook Prophet is a Python library used for forecasting univariate time series
     with strong support for seasonality and holiday effects. It is especially suitable
     for time series with frequent changes of trends and is robust enough to handle
     outliers.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: Facebook Prophet 是一个用于预测单变量时间序列的Python库，对季节性和节假日效应提供了强大的支持。它特别适用于具有频繁变化趋势的时间序列，并且足够强大以处理异常值。
 - en: 'More specifically, the `Prophet` model is an additive regression model with
     the following attributes:'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，`Prophet` 模型是一个具有以下属性的加法回归模型：
 - en: Piecewise linear or logistic growth trend
+  id: totrans-202
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分段线性或逻辑增长趋势。
 - en: Yearly seasonal component modeled with a Fourier series
+  id: totrans-203
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 年度季节性分量采用傅里叶级数模拟。
 - en: Weekly seasonal component modeled with dummy variables
+  id: totrans-204
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 用虚拟变量建模的每周季节性分量。
 - en: A user-provided list of holidays
+  id: totrans-205
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 用户提供的节假日列表
 - en: 'Installation of `Prophet` is more complicated, since it requires a compiler.
     The easiest way to install it is by using Anaconda, as follows:'
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Prophet` 的安装更加复杂，因为它需要编译器。 安装它的最简单方法是使用 Anaconda，如下所示：'
 - en: '[PRE41]'
+  id: totrans-207
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: The accompanying Git repository contains the `conda` environment set up with
     `Prophet`.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 附带的 Git 存储库包含了带有 `Prophet` 的 `conda` 环境设置。
 - en: The `Prophet` library requires the input DataFrame to include two columns—`ds`
     for date, and `y` for the value.
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Prophet` 库要求输入的 DataFrame 包含两列—`ds` 代表日期，`y` 代表值。'
 - en: 'Let''s fit the `Prophet` model onto the previous dataset. Notice in the following
     code snippet that we explicitly tell `Prophet` we wish to receive monthly predictions
     (`freq=''M''`):'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将 `Prophet` 模型拟合到以前的数据集中。请注意在以下代码片段中，我们明确告诉 `Prophet` 我们希望获得每月的预测值 (`freq='M'`)：
 - en: '[PRE42]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'The predicted values are very similar to the SARIMAX model, as can be seen
     here:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 预测值与 SARIMAX 模型非常相似，可以在此处看到：
 - en: '![Figure 6.15 – The Prophet library''s output includes prediction values, along
     with the model components'' values](img/Figure_6.15_B15029.jpg)'
+  id: totrans-213
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.15 – Prophet 库的输出包括预测值，以及模型组件的值](img/Figure_6.15_B15029.jpg)'
 - en: Figure 6.15 – The Prophet library's output includes prediction values, along
     with the model components' values
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.15 – Prophet 库的输出包括预测值，以及模型组件的值
 - en: The predicted values are stored in the `yhat` column with the `yhat_lower` and
     `yhat_upper` confidence intervals.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 预测值存储在 `yhat` 列中，其中包含了 `yhat_lower` 和 `yhat_upper` 置信区间。
 - en: '`Prophet` does produce charts of Prophet components, which is useful for understanding
     the model''s prediction powers. A trend component chart can be seen here:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: '`Prophet` 确实生成了 Prophet 组件的图表，这对于理解模型的预测能力非常有用。 一个趋势组件图表可以在这里看到：'
 - en: '![Figure 6.16 – The trend component chart of the Prophet model](img/Figure_6.16_B15029.jpg)'
+  id: totrans-217
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.16 – Prophet 模型的趋势组件图表](img/Figure_6.16_B15029.jpg)'
 - en: Figure 6.16 – The trend component chart of the Prophet model
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.16 – Prophet 模型的趋势组件图表
 - en: 'The following screenshot shows the yearly seasonality output:'
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下截图显示了年度季节性的输出：
 - en: '![Figure 6.17 – The yearly seasonality component chart of the Prophet model](img/Figure_6.17_B15029.jpg)'
+  id: totrans-220
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.17 – Prophet 模型的年度季节性组件图表](img/Figure_6.17_B15029.jpg)'
 - en: Figure 6.17 – The yearly seasonality component chart of the Prophet model
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.17 – Prophet 模型的年度季节性组件图表
 - en: 'Here is the output of the forecast chart:'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是预测图表的输出：
 - en: '![Figure 6.18 – The forecast chart of the Prophet model along with the confidence
     intervals](img/Figure_6.18_B15029.jpg)'
+  id: totrans-223
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.18 – Prophet 模型的预测图表及置信区间](img/Figure_6.18_B15029.jpg)'
 - en: Figure 6.18 – The forecast chart of the Prophet model along with the confidence
     intervals
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.18 – Prophet 模型的预测图表及置信区间
 - en: Each time series model is slightly different and is best suited for different
     classes of time series. In general, however, the `Prophet` model is very robust
     and easiest to use in most scenarios.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个时间序列模型都略有不同，并且最适合不同类别的时间序列。 但总的来说，`Prophet` 模型非常稳健，并且在大多数情况下最容易使用。
 - en: Introduction to scikit-learn regression and classification
+  id: totrans-226
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: scikit-learn 回归和分类简介
 - en: scikit-learn is a Python *supervised* and *unsupervised* machine learning library
     built on top of the `numpy` and `scipy` libraries.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: '`scikit-learn` 是一个基于`numpy`和`scipy`库构建的Python *监督* 和 *无监督* 机器学习库。'
 - en: Let's demonstrate how to forecast price changes on a dataset with `RidgeCV`
     regression and classification using scikit-learn.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们演示如何使用 `scikit-learn` 中的 `RidgeCV` 回归和分类来预测价格变化。
 - en: Generating the dataset
+  id: totrans-229
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 生成数据集
 - en: 'Let''s start by generating the dataset for the following examples—a Pandas
     DataFrame containing daily data for 20 years with `BookPressure`, `TradePressure`,
     `RelativeValue`, and `Microstructure` fields to represent some synthetic trading
@@ -909,233 +1355,363 @@
     noise. The `Price` field represents the actual price of the instrument generated
     using the `pandas.Series.cumsum(...)` method. The code can be seen in the following
     snippet:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们从生成以下示例所需的数据集开始—一个包含了20年每日数据的 Pandas DataFrame，其中包含了`BookPressure`、`TradePressure`、`RelativeValue`和`Microstructure`字段来表示一些基于该数据集构建的合成交易信号（也被称为`PriceChange`字段代表我们试图预测的价格每日变化（也被称为`PriceChange`字段一个线性函数，并带有一些随机权重和一些随机噪声。`Price`字段代表使用`pandas.Series.cumsum(...)`方法生成的工具的实际价格。
+    以下代码段中可以看到代码：
 - en: '[PRE43]'
+  id: totrans-231
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'Let''s quickly inspect the true weights assigned to our four features, as follows:'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们快速检查分配给我们四个特征的真实权重，如下所示：
 - en: '[PRE44]'
+  id: totrans-233
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'Let''s also inspect the DataFrame containing all the data, as follows:'
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们还检查包含所有数据的DataFrame，如下所示：
 - en: '[PRE45]'
+  id: totrans-235
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'Let''s visually inspect the `Price` field, as follows:'
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们视觉检查`Price`字段，如下所示：
 - en: '[PRE46]'
+  id: totrans-237
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'The plot shows the following realistic-looking price evolution over 20 years:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 图中显示了20年来以下逼真的价格演变：
 - en: '![Figure 6.19 – Price plot for the synthetically generated dataset](img/Figure_6.19_B15029.jpg)'
+  id: totrans-239
   prefs: []
   type: TYPE_IMG
+  zh: '![图6.19 – 合成数据集的价格图](img/Figure_6.19_B15029.jpg)'
 - en: Figure 6.19 – Price plot for the synthetically generated dataset
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.19 – 合成数据集的价格图
 - en: 'Let''s display a scatter matrix of all columns but the `Price` column, as follows:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们显示除`Price`列之外的所有列的散点矩阵，如下所示：
 - en: '[PRE47]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'The output is shown here:'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出如下所示：
 - en: '![Figure 6.20 – Scatter matrix for the synthetically generated dataset](img/Figure_6.20_B15029.jpg)'
+  id: totrans-244
   prefs: []
   type: TYPE_IMG
+  zh: '![图6.20 – 合成数据集的散点矩阵](img/Figure_6.20_B15029.jpg)'
 - en: Figure 6.20 – Scatter matrix for the synthetically generated dataset
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.20 – 合成数据集的散点矩阵
 - en: The scatter matrix shows that there is a strong relationship between `PriceChange`
     and `TradePressure`.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 散点矩阵显示`PriceChange`与`TradePressure`之间存在强关系。
 - en: Running RidgeCV regression on the dataset
+  id: totrans-247
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在数据集上运行RidgeCV回归
 - en: Let's use a scikit-learn regression method to fit a linear regression model
     to our dataset. We will use the four features to try to fit to and predict the
     `PriceChange` field.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用scikit-learn回归方法将线性回归模型拟合到我们的数据集。我们将使用四个特征尝试拟合和预测`PriceChange`字段。
 - en: 'First, we collect the features and target into a DataFrame and a Series, as
     follows:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们将特征和目标收集到一个DataFrame和一个Series中，如下所示：
 - en: '[PRE48]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'We will use `sklearn.linear_model.RidgeCV`, a linear regression model with
     L2 regularization (an L2 norm penalty factor to avoid overfitting) that uses cross-validation
     to learn the optimal coefficients. We will use the `sklearn.linear_model.RidgeCV.fit(...)`
     method to fit the target values using the features. The code is shown in the following
     snippet:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用`sklearn.linear_model.RidgeCV`，一个带有L2正则化的线性回归模型（使用L2范数惩罚因子以避免过拟合），该模型使用交叉验证学习最佳系数。我们将使用`sklearn.linear_model.RidgeCV.fit(...)`方法使用特征拟合目标值。代码如下所示：
 - en: '[PRE49]'
+  id: totrans-252
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'The result is a `RidgeCV` object, as can be seen here:'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是一个`RidgeCV`对象，如下所示：
 - en: '[PRE50]'
+  id: totrans-254
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'We can access the weights/coefficients learned by the `Ridge` model using the
     `RidgeCV.coef_` attribute and compare it with the actual coefficients, as follows:'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用`RidgeCV.coef_`属性访问`Ridge`模型学到的权重/系数，并将其与实际系数进行比较，如下所示：
 - en: '[PRE51]'
+  id: totrans-256
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'It seems the coefficients learned by the model are very close to the true weights,
     with some errors on each one of them, as can be seen in the following code snippet:'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型学到的系数似乎非常接近真实权重，每个系数都有一些误差，如下所示：
 - en: '[PRE52]'
+  id: totrans-258
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: 'The `RidgeCV.score(...)` method returns the R2 score, representing the accuracy
     of a fitted model, as follows:'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RidgeCV.score(...)`方法返回R2分数，表示拟合模型的准确性，如下所示：'
 - en: '[PRE53]'
+  id: totrans-260
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: 'That returns the following R2 score with a maximum value of 1, so this model
     fits the data quite well:'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 这返回以下R2分数，最大值为1，因此该模型相当适合数据：
 - en: '[PRE54]'
+  id: totrans-262
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'The `RidgeCV.predict(...)` method outputs the predicted price change values,
     which we combine with the `pandas.Series.cumsum(...)` method to generate the predicted
     price series, and then save it in the `PredPrice` field, as follows:'
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RidgeCV.predict(...)`方法输出预测的价格变化值，我们将其与`pandas.Series.cumsum(...)`方法相结合，生成预测的价格系列，然后将其保存在`PredPrice`字段中，如下所示：'
 - en: '[PRE55]'
+  id: totrans-264
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: 'That adds a new column to our DataFrame, as shown here:'
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将在我们的DataFrame中添加一个新列，如下所示：
 - en: '[PRE56]'
+  id: totrans-266
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: 'In the following code block, the true `Price` field is plotted alongside the
     predicted `PredPrice` field:'
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 在以下代码块中，将真实的`Price`字段与预测的`PredPrice`字段一起绘制：
 - en: '[PRE57]'
+  id: totrans-268
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'The plot generated, as shown in the following screenshot, reveals that `PredPrice`
     mostly tracks `Price`, with some prediction errors during some time periods:'
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 生成的图表，如下截图所示，显示`PredPrice`大部分时间都跟踪`Price`，但在某些时间段会出现预测误差：
 - en: '![Figure 6.21 – Plot comparing the original price and the predicted price from
     a Ridge regression model](img/Figure_6.21_B15029.jpg)'
+  id: totrans-270
   prefs: []
   type: TYPE_IMG
+  zh: '![图6.21 – 原始价格与Ridge回归模型预测价格的比较图](img/Figure_6.21_B15029.jpg)'
 - en: Figure 6.21 – Plot comparing the original price and the predicted price from
     a Ridge regression model
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
+  zh: 图6.21 – 原始价格与Ridge回归模型预测价格的比较图
 - en: 'We can zoom in to the first quarter of 2010 to inspect the prediction errors,
     as follows:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以缩小到2010年第一季度，检查预测误差，如下所示：
 - en: '[PRE58]'
+  id: totrans-273
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'This yields the following plot, displaying the differences between `Price`
     and `PredPrice` for that period:'
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 这产生了下面的图表，显示了那段时间内 `Price` 和 `PredPrice` 之间的差异：
 - en: '![Figure 6.22 – Plot comparing the original and predicted price from a Ridge
     regression model for 2010 Q1](img/Figure_6.22_B15029.jpg)'
+  id: totrans-275
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.22 – 比较 2010 年第一季度岭回归模型的原始价格和预测价格](img/Figure_6.22_B15029.jpg)'
 - en: Figure 6.22 – Plot comparing the original and predicted price from a Ridge regression
     model for 2010 Q1
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.22 – 比较 2010 年第一季度岭回归模型的原始价格和预测价格的图表
 - en: 'We can compute the prediction errors and plot them using a density plot, as
     shown in the following code snippet:'
+  id: totrans-277
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以计算预测误差并使用密度图绘制它们，如下代码片段所示：
 - en: '[PRE59]'
+  id: totrans-278
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'This generates the plot shown in the following screenshot, displaying the distribution
     of errors:'
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 这生成了下面截图中显示的图表，展示了错误的分布：
 - en: '![Figure 6.23 – Plot displaying the distribution of prediction errors for the
     Ridge regression model](img/Figure_6.23_B15029.jpg)'
+  id: totrans-280
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.23 – 显示岭回归模型预测误差分布](img/Figure_6.23_B15029.jpg)'
 - en: Figure 6.23 – Plot displaying the distribution of prediction errors for the
     Ridge regression model
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.23 – 显示岭回归模型预测误差分布的图表
 - en: The error plot displayed in the preceding screenshot shows that there is no
     strong bias in the errors.
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面截图显示的错误图表表明错误没有明显的偏差。
 - en: Running a classification method on the dataset
+  id: totrans-283
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在数据集上运行分类方法
 - en: Let's demonstrate scikit-learn's classification methods.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们演示 scikit-learn 的分类方法。
 - en: 'First, we need to create discrete categorical target labels for the classification
     model to predict. We assign `-2`, `-1`, `0`, `1`, and `2` numeric labels to these
     conditions respectively and save the discrete target labels in the `target_discrete
     pandas.Series` object, as follows:'
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要为分类模型创建离散分类目标标签以进行预测。我们分别给这些条件分配 `-2`、`-1`、`0`、`1` 和 `2` 数值标签，并将离散目标标签保存在
+    `target_discrete pandas.Series` 对象中，如下所示：
 - en: '[PRE60]'
+  id: totrans-286
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: 'The result is shown here:'
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果显示如下：
 - en: '[PRE61]'
+  id: totrans-288
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: 'We can visualize the distribution of the five labels by using the following
     code:'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用以下代码可视化五个标签的分布：
 - en: '[PRE62]'
+  id: totrans-290
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: 'The result is a plot of frequency of occurrence of the five labels, as shown
     in the following screenshot:'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是一个频率图，如下截图所示，显示了五个标签的出现频率：
 - en: '![Figure 6.24 – Frequency distribution of our discrete target-price change-label
     values [-2, -1, 0, 1, 2]](img/Figure_6.24_B15029.jpg)'
+  id: totrans-292
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.24 – 我们的离散目标-价格变化标签值 [-2, -1, 0, 1, 2] 的频率分布](img/Figure_6.24_B15029.jpg)'
 - en: Figure 6.24 – Frequency distribution of our discrete target-price change-label
     values [-2, -1, 0, 1, 2]
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.24 – 我们的离散目标-价格变化标签值 [-2, -1, 0, 1, 2] 的频率分布
 - en: 'For the classification, we use an ensemble of decision tree classifiers provided
     by `sklearn.ensemble.RandomForestClassifier`. Random forest is a classifier that
     uses the bagging ensemble method and builds a forest of decision trees by training
@@ -1143,94 +1719,149 @@
     original dataset. Using a `max_depth=5` parameter, we limit the height of each
     tree to reduce overfitting and then call the `RandomForestClassifier.fit(...)`
     method to fit the model, as follows:'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于分类，我们使用 `sklearn.ensemble.RandomForestClassifier` 提供的决策树分类器集合。随机森林是一种使用装袋集成方法的分类器，并通过对从原始数据集中进行带替换的随机抽样生成的数据集训练每棵树来构建决策树森林。使用
+    `max_depth=5` 参数，我们限制了每棵树的高度以减少过拟合，然后调用 `RandomForestClassifier.fit(...)` 方法来拟合模型，如下所示：
 - en: '[PRE63]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: 'This builds the following `RandomForestClassifier` fitted model:'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 这构建了以下 `RandomForestClassifier` 拟合模型：
 - en: '[PRE64]'
+  id: totrans-297
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: 'The `RandomForestClassifier.score(...)` method returns the mean accuracy of
     the predictions compared to the `True` labels, as follows:'
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: '`RandomForestClassifier.score(...)` 方法返回预测与`True`标签的平均准确度，如下所示：'
 - en: '[PRE65]'
+  id: totrans-299
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: 'As we can see here, the accuracy score is 83.5%, which is excellent:'
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在这里看到的，准确度分数为 83.5%，非常好：
 - en: '[PRE66]'
+  id: totrans-301
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'We add the `DiscretePriceChange` and `PredDiscretePriceChange` fields to the
     DataFrame to hold the true labels and the predicted labels using the `RandomForestClassifier.predict(...)`
     method, as follows:'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们向 DataFrame 添加 `DiscretePriceChange` 和 `PredDiscretePriceChange` 字段，以保存使用
+    `RandomForestClassifier.predict(...)` 方法的真实标签和预测标签，如下所示：
 - en: '[PRE67]'
+  id: totrans-303
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'The result is the following DataFrame with the two additional fields:'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果如下 DataFrame，带有两个额外的字段：
 - en: '[PRE68]'
+  id: totrans-305
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: 'In the following code block, we plot two fields for the first quarter of 2010:'
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的代码块中，我们绘制了 2010 年第一季度的两个字段：
 - en: '[PRE69]'
+  id: totrans-307
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: 'That yields a plot, as shown in the following screenshot, with some dislocations
     between the `True` and predicted labels:'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: 这产生了一个图表，如下截图所示，其中`True`和预测标签之间存在一些错位：
 - en: '![Figure 6.25 – Comparison of original and predicted discrete price-change
     labels from the RandomForest classification model for 2010 Q1](img/Figure_6.25_B15029.jpg)'
+  id: totrans-309
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.25 – 2010 年 Q1 的 RandomForest 分类模型原始和预测离散价格变动标签的比较](img/Figure_6.25_B15029.jpg)'
 - en: Figure 6.25 – Comparison of original and predicted discrete price-change labels
     from the RandomForest classification model for 2010 Q1
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.25 – 2010 年 Q1 的 RandomForest 分类模型原始和预测离散价格变动标签的比较
 - en: 'We can compute and plot the distribution of the `ClassificationErrors` DataFrame
     with the following code:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用以下代码计算和绘制`ClassificationErrors` DataFrame的分布：
 - en: '[PRE70]'
+  id: totrans-312
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: 'This yields the following error distribution:'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 这产生了以下误差分布：
 - en: '![Figure 6.26 – Plot of distribution of classification errors from the RandomForest
     classifier model](img/Figure_6.26_B15029.jpg)'
+  id: totrans-314
   prefs: []
   type: TYPE_IMG
+  zh: '![图 6.26 – RandomForest 分类器模型分类错误分布图](img/Figure_6.26_B15029.jpg)'
 - en: Figure 6.26 – Plot of distribution of classification errors from the RandomForest
     classifier model
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 6.26 – RandomForest 分类器模型分类错误分布图
 - en: The classification errors are again without bias and are negligible.
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 分类错误再次没有偏差，可以忽略不计。
 - en: Summary
+  id: totrans-317
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: All advanced trading algorithms use statistical models, whether for a direct
     trading rule or just for deciding when to enter/leave trading. In this chapter,
     we have covered the four key statistical libraries for Python—`statsmodels`, `pmdarima`,
     `fbprophet`, and `scikitlearn`.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有先进的交易算法都使用统计模型，无论是用于直接交易规则还是只是决定何时进入/离开交易。在本章中，我们涵盖了 Python 的四个关键统计库——`statsmodels`、`pmdarima`、`fbprophet`
+    和 `scikitlearn`。
 - en: In the next chapter, we discuss how to import key financial and economic data
     into Python.
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将讨论如何将关键的金融和经济数据导入到Python中。
