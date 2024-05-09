@@ -193,6 +193,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**连续词袋**（**CBOW**）模型使用上下文词向量的平均值作为输入来预测目标词，因此它们的顺序并不重要。CBOW 训练速度更快，对于频繁出现的术语可能略微更准确，但对不常见的词注意力较少。'
 - en: The **skip-gram** (**SG**) model, in contrast, uses the target word to predict
     words sampled from the context. It works well with small datasets and finds good
     representations even for rare words or phrases.
@@ -200,14 +201,17 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 相反，**跳字**（**SG**）模型使用目标词来预测从上下文中采样的词。它在小型数据集上表现良好，并且即使对于罕见的词或短语也能找到良好的表示。
 - en: '![](img/B15439_16_01.png)'
   id: totrans-27
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_16_01.png)'
 - en: 'Figure 16.1: Continuous-bag-of-words versus skip-gram processing logic'
   id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 16.1：连续词袋与跳字处理逻辑
 - en: The model receives an embedding vector as input and computes the dot product
     with another embedding vector. Note that, assuming normed vectors, the dot product
     is maximized (in absolute terms) when vectors are equal, and minimized when they
@@ -215,12 +219,14 @@
   id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 模型接收一个嵌入向量作为输入，并与另一个嵌入向量计算点积。请注意，假设向量已被规范化，则当向量相等时点积被最大化（绝对值），当它们正交时则被最小化。
 - en: During training, the **backpropagation algorithm** adjusts the embedding weights
     in response to the loss computed by an objective function based on classification
     errors. We will see in the next section how word2vec computes the loss.
   id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 在训练期间，**反向传播算法**根据基于分类错误的目标函数计算的损失调整嵌入权重。我们将在下一节中看到 word2vec 如何计算损失。
 - en: Training proceeds by sliding the **context window** over the documents, typically
     segmented into sentences. Each complete iteration over the corpus is called an
     **epoch**. Depending on the data, several dozen epochs may be necessary for vector
@@ -228,17 +234,20 @@
   id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练通过在文档上滑动**上下文窗口**进行，通常被分段为句子。对语料库的每次完整迭代称为一个**时代**。根据数据，可能需要几十个时代才能使向量质量收敛。
 - en: The skip-gram model implicitly factorizes a word-context matrix that contains
     the pointwise mutual information of the respective word and context pairs (Levy
     and Goldberg, 2014).
   id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 跳字模型隐式因式分解一个包含各个单词和上下文对的点间互信息的词-上下文矩阵（Levy 和 Goldberg，2014）。
 - en: Model objective – simplifying the softmax
   id: totrans-33
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 模型目标 – 简化 softmax
 - en: 'Word2vec models aim to predict a single word out of a potentially very large
     vocabulary. Neural networks often use the softmax function as an output unit in
     the final layer to implement the multiclass objective because it maps an arbitrary
@@ -248,10 +257,13 @@
   id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: Word2vec 模型旨在预测一个潜在非常庞大的词汇中的单个词。神经网络通常在最后一层使用 softmax 函数作为输出单元实现多类目标，因为它将任意数量的实值映射到相等数量的概率。softmax
+    函数定义如下，其中 *h* 指代嵌入，*v* 指代输入向量，*c* 是单词 *w* 的上下文：
 - en: '![](img/B15439_16_001.png)'
   id: totrans-35
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_16_001.png)'
 - en: 'However, the softmax complexity scales with the number of classes because the
     denominator requires computing the dot product for all words in the vocabulary
     to standardize the probabilities. Word2vec gains efficiency by using a modified
@@ -259,6 +271,8 @@
   id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，由于 softmax 的复杂度与类别数量成比例，因为分母需要计算整个词汇表中所有单词的点积以标准化概率。Word2vec 通过使用 softmax
+    的修改版本或基于采样的逼近来提高效率：
 - en: The **hierarchical softmax** organizes the vocabulary as a binary tree with
     words as leaf nodes. The unique path to each node can be used to compute the word
     probability (Morin and Bengio, 2005).
@@ -266,6 +280,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**分层 softmax** 将词汇组织为具有单词作为叶节点的二叉树。到达每个节点的唯一路径可用于计算单词概率（Morin 和 Bengio，2005）。'
 - en: '**Noise contrastive estimation** (**NCE**) samples out-of-context "noise words"
     and approximates the multiclass task by a binary classification problem. The NCE
     derivative approaches the softmax gradient as the number of samples increases,
@@ -275,6 +290,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**噪声对比估计**（**NCE**）对上下文之外的“噪声词”进行采样，并将多类任务近似为二元分类问题。随着样本数量的增加，NCE 导数逼近 softmax
+    梯度，但仅需 25 个样本即可获得与 softmax 相似的收敛速度增加 45 倍的收敛速度（Mnih 和 Kavukcuoglu，2013）。'
 - en: '**Negative sampling** (**NEG**) omits the noise word samples to approximate
     NCE and directly maximizes the probability of the target word. Hence, NEG optimizes
     the semantic quality of embedding vectors (similar vectors for similar usage)
@@ -641,11 +658,13 @@
   id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将使用金融新闻训练和评估领域特定的嵌入。我们首先展示了如何为这项任务预处理数据，然后演示了第一节中概述的 skip-gram 架构的工作原理，并最终可视化结果。我们还将介绍替代的更快的训练方法。
 - en: Preprocessing – sentence detection and n-grams
   id: totrans-102
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 预处理 - 句子检测和 n-gram
 - en: To illustrate the word2vec network architecture, we'll use the financial news
     dataset with over 125,000 relevant articles that we introduced in *Chapter 15*,
     *Topic Modeling – Summarizing Financial News*, on topic modeling. We'll load the
@@ -655,12 +674,16 @@
   id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明 word2vec 网络架构，我们将使用包含超过 12 万 5 千篇相关文章的金融新闻数据集，该数据集我们在第 15 章 *主题建模 - 总结金融新闻*
+    中介绍了。我们将按照该章节中的 `lda_financial_news.ipynb` 笔记本中概述的方式加载数据。`financial_news_preprocessing.ipynb`
+    笔记本包含了本节的代码示例。
 - en: 'We use spaCy''s built-in **sentence boundary detection** to split each article
     into sentences, remove less informative items, such as numbers and punctuation,
     and keep the result if it is between 6 and 99 tokens long:'
   id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用 spaCy 内置的**句子边界检测**来将每篇文章分割成句子，去除较少信息的项目，例如数字和标点符号，并保留结果（如果长度在 6 到 99 个标记之间）：
 - en: '[PRE2]'
   id: totrans-105
   prefs: []
@@ -670,6 +693,7 @@
   id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们最终得到了 243 万个句子，平均每个句子包含 15 个标记。
 - en: Next, we create n-grams to capture composite terms. Gensim lets us identify
     n-grams based on the relative frequency of joint versus individual occurrence
     of the components. The `Phrases` module scores the tokens, and the `Phraser` class
@@ -677,11 +701,14 @@
   id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们创建 n-gram 来捕捉复合术语。 Gensim 允许我们根据组件的联合与个别出现的相对频率来识别 n-gram。`Phrases` 模块对标记进行评分，并且
+    `Phraser` 类相应地转换文本数据。
 - en: 'It transforms our list of sentences into a new dataset that we can write to
     file as follows:'
   id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 它将我们的句子列表转换为一个新的数据集，我们可以按如下方式写入文件：
 - en: '[PRE3]'
   id: totrans-109
   prefs: []
@@ -695,11 +722,14 @@
   id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 该笔记本演示了如何使用 2-gram 文件作为输入来重复此过程以创建 3-gram。我们最终得到了大约 2 万 5 千个 2-gram 和 1 万 5
+    千个 3-或 4-gram。检查结果显示，得分最高的术语是公司或个人的名称，这表明我们可能需要加强我们的初始清洁标准。有关数据集的其他详细信息，请参阅笔记本。
 - en: The skip-gram architecture in TensorFlow 2
   id: totrans-111
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: TensorFlow 2 中的 skip-gram 架构
 - en: In this section, we will illustrate how to build a word2vec model using the
     Keras interface of TensorFlow 2 that we will introduce in much more detail in
     the next chapter. The `financial_news_word2vec_tensorflow` notebook contains the
@@ -707,12 +737,15 @@
   id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将演示如何使用 TensorFlow 2 的 Keras 接口构建一个 word2vec 模型，我们将在下一章中更详细地介绍。`financial_news_word2vec_tensorflow`
+    笔记本包含了代码示例和其他实现细节。
 - en: 'We start by tokenizing the documents and assigning a unique ID to each item
     in the vocabulary. First, we sample a subset of the sentences created in the previous
     section to limit the training time:'
   id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先对文档进行标记化，并为词汇表中的每个项目分配唯一的 ID。首先，我们从上一节创建的句子中抽样一部分来限制训练时间：
 - en: '[PRE4]'
   id: totrans-114
   prefs: []
@@ -723,26 +756,31 @@
   id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要至少 10 次出现在语料库中，保留包含 31,300 个标记的词汇表，并从以下步骤开始：
 - en: Extract the top *n* most common words to learn embeddings.
   id: totrans-116
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提取前 *n* 个最常见的单词以学习嵌入。
 - en: Index these *n* words with unique integers.
   id: totrans-117
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用唯一整数索引这些 *n* 个单词。
 - en: 'Create an `{index: word}` dictionary.'
   id: totrans-118
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '创建一个 `{index: word}` 字典。'
 - en: 'Replace the *n* words with their index, and a dummy value `''UNK''` elsewhere:'
   id: totrans-119
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 用它们的索引替换 *n* 个词，并在其他地方使用虚拟值 `'UNK'`：
 - en: '[PRE5]'
   id: totrans-120
   prefs:
@@ -754,11 +792,13 @@
   id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们最终得到了 1740 万个标记和接近 6 万个标记的词汇表，包括长达 3 个词的组合。词汇表涵盖了大约 72.5% 的类比。
 - en: Noise-contrastive estimation – creating validation samples
   id: totrans-122
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 噪声对比估计 - 创建验证样本
 - en: 'Keras includes a `make_sampling_table` method that allows us to create a training
     set as pairs of context and noise words with corresponding labels, sampled according
     to their corpus frequencies. A lower factor increases the probability of selecting
@@ -1282,49 +1322,58 @@
   id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用类比来评估不同参数设置的影响。以下结果非常突出（请参阅`models`文件夹中的详细结果）：
 - en: Negative sampling outperforms the hierarchical softmax, while also training
     faster.
   id: totrans-207
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 负采样优于分层softmax，同时训练速度更快。
 - en: The skip-gram architecture outperforms CBOW.
   id: totrans-208
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: skip-gram架构优于CBOW。
 - en: Different `min_count` settings have a smaller impact; the midpoint of 50 performs
     best.
   id: totrans-209
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不同的`min_count`设置影响较小；中间值50的性能最佳。
 - en: 'Further experiments with the best-performing skip-gram model using negative
     sampling and a `min_count` of 50 show the following:'
   id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用负采样和`min_count`为50的性能最佳的skip-gram模型进行进一步实验，结果如下：
 - en: Context windows smaller than 5 reduce performance.
   id: totrans-211
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 小于5的上下文窗口减少了性能。
 - en: A higher negative sampling rate improves performance at the expense of slower training.
   id: totrans-212
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 更高的负采样率提高了性能，但训练速度较慢。
 - en: Larger vectors improve performance, with a `size` of 600 yielding the best accuracy
     at 38.5 percent.
   id: totrans-213
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 更大的向量提高了性能，大小为600的向量在38.5%的准确率时表现最佳。
 - en: Sentiment analysis using doc2vec embeddings
   id: totrans-214
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用doc2vec嵌入进行情感分析
 - en: Text classification requires combining multiple word embeddings. A common approach
     is to average the embedding vectors for each word in the document. This uses information
     from all embeddings and effectively uses vector addition to arrive at a different
@@ -1333,6 +1382,7 @@
   id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 文本分类需要组合多个单词嵌入。常见方法是对文档中每个单词的嵌入向量进行平均。这使用了所有嵌入的信息，并有效地使用向量加法到达嵌入空间中的不同位置。然而，有关单词顺序的相关信息丢失了。
 - en: 'In contrast, the document embedding model, doc2vec, developed by the word2vec
     authors shortly after publishing their original contribution, produces embeddings
     for pieces of text like a paragraph or a product review directly. Similar to word2vec,
@@ -1340,6 +1390,7 @@
   id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 相反，由word2vec作者在发布其原始贡献后不久开发的文档嵌入模型doc2vec直接为文本片段（如段落或产品评论）生成嵌入。与word2vec类似，doc2vec也有两种变体：
 - en: The **distributed bag of words** (**DBOW**) model corresponds to the word2vec
     CBOW model. The document vectors result from training a network on the synthetic
     task of predicting a target word based on both the context word vectors and the
@@ -1348,6 +1399,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**分布式词袋**（**DBOW**）模型对应于word2vec的CBOW模型。文档向量是通过训练网络来预测目标词，该网络基于上下文单词向量和文档的文档向量的合成任务。'
 - en: The **distributed memory** (**DM**) model corresponds to the word2wec skip-gram
     architecture. The doc vectors result from training a neural net to predict a target
     word using the full document's doc vector.
@@ -1355,6 +1407,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**分布式记忆**（**DM**）模型对应于word2vec的skip-gram架构。文档向量是通过训练神经网络使用整个文档的文档向量来预测目标词而产生的。'
 - en: Gensim's `Doc2Vec` class implements this algorithm. We'll illustrate the use
     of doc2vec by applying it to the Yelp sentiment dataset that we introduced in
     *Chapter 14*. To speed up training, we limit the data to a stratified random sample
@@ -1363,17 +1416,20 @@
   id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: Gensim的`Doc2Vec`类实现了这个算法。我们将通过将其应用于我们在*第14章*中介绍的Yelp情感数据集来说明doc2vec的用法。为了加快训练速度，我们将数据限制为具有相关星级评分的50万Yelp评论的分层随机样本。`doc2vec_yelp_sentiment`笔记本包含了本节的代码示例。
 - en: Creating doc2vec input from Yelp sentiment data
   id: totrans-220
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 从Yelp情感数据创建doc2vec输入
 - en: 'We load the combined Yelp dataset containing 6 million reviews, as created
     in *Chapter 14*, *Text Data for Trading – Sentiment Analysis*, and sample 100,000
     reviews for each star rating:'
   id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们加载了包含600万条评论的合并Yelp数据集，如*第14章*，*用于交易的文本数据-情感分析*中所创建的，并对每个星级评分的评论进行了10万次采样：
 - en: '[PRE23]'
   id: totrans-222
   prefs: []
@@ -1383,6 +1439,7 @@
   id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用nltk的`RegexpTokenizer`进行简单快速的文本清洗：
 - en: '[PRE24]'
   id: totrans-224
   prefs: []
@@ -1394,12 +1451,14 @@
   id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们过滤掉长度小于10个标记的评论后，我们还剩下485,825个样本。*图16.6*的左面板显示了每个评论的标记数量的分布。
 - en: 'The `gensim.models.Doc2Vec` class processes documents in the `TaggedDocument`
     format that contains the tokenized documents alongside a unique tag that permits
     the document vectors to be accessed after training:'
   id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: '`gensim.models.Doc2Vec`类以`TaggedDocument`格式处理文档，其中包含标记化的文档以及一个唯一的标记，允许在训练后访问文档向量：'
 - en: '[PRE25]'
   id: totrans-227
   prefs: []
