@@ -1984,6 +1984,7 @@
   id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8.8：带有模型训练的 Zipline 回测流程图
 - en: The goal is to roughly replicate the ridge regression daily return predictions
     we used earlier and generated in *Chapter 7,* *Linear Models – From Risk Factors
     to Return Forecasts*. We will, however, use a few additional pipeline factors
@@ -1992,17 +1993,21 @@
   id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 目标是大致复制我们之前使用的岭回归每日收益预测，并在*第7章*，*线性模型 - 从风险因子到收益预测*中生成的。 但是，我们将使用一些额外的管道因子来说明它们的用法。
+    主要的新元素是一个`CustomFactor`，它接收特征并将它们作为输入用于训练模型并生成预测。
 - en: Preparing the features – how to define pipeline factors
   id: totrans-274
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 准备特征 - 如何定义管道因子
 - en: To create a **pipeline factor**, we need one or more input variables, a `window_length`
     that indicates the number of most recent data points for each input and security,
     and the computation we want to conduct.
   id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 要创建一个**管道因子**，我们需要一个或多个输入变量，一个指示每个输入和证券的最新数据点数量的`window_length`，以及我们想要执行的计算。
 - en: 'A linear price trend that we estimate using linear regression (see *Chapter
     7,* *Linear Models – From Risk Factors to Return Forecasts*) works as follows:
     we use the 252 latest close prices to compute the regression coefficient on a
@@ -2010,6 +2015,7 @@
   id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用线性回归估计的线性价格趋势（见*第7章*，*线性模型 - 从风险因子到收益预测*）的工作方式如下：我们使用最新的252个收盘价格来计算线性时间趋势的回归系数：
 - en: '[PRE23]'
   id: totrans-277
   prefs: []
@@ -2021,17 +2027,20 @@
   id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用10个自定义和内置因子作为我们模型的特征，以捕获动量和波动性等风险因子（有关详情，请参见笔记本 `ml4t_with_zipline`）。 接下来，我们将设计一个`CustomFactor`来训练我们的模型。
 - en: How to design a custom ML factor
   id: totrans-279
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何设计自定义 ML 因子
 - en: 'Our `CustomFactor`, called `ML`, will have `StandardScaler` and a **stochastic
     gradient descent** (**SGD**) implementation of ridge regression as instance attributes,
     and we will train the model 3 days a week:'
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的`CustomFactor`，称为`ML`，将具有`StandardScaler`和随机梯度下降的**岭回归**（**SGD**）实现作为实例属性，并且我们将每周训练3天：
 - en: '[PRE24]'
   id: totrans-281
   prefs: []
@@ -2042,6 +2051,7 @@
   id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: '`compute`方法生成预测（解决潜在的缺失值），但首先检查是否应该训练模型：'
 - en: '[PRE25]'
   id: totrans-283
   prefs: []
@@ -2054,6 +2064,7 @@
   id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: '`_train_model`方法是这个谜题的核心。 它移动回报并将结果的向前回报与因子特征对齐，同时在过程中删除缺失值。 它将剩余的数据点进行缩放，并训练线性`SGDRegressor`：'
 - en: '[PRE26]'
   id: totrans-285
   prefs: []
@@ -2064,6 +2075,7 @@
   id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: '`make_ml_pipeline()`函数预处理并将结果、特征和模型部分合并为一个具有预测列的管道：'
 - en: '[PRE27]'
   id: totrans-287
   prefs: []
@@ -2074,11 +2086,13 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在回测期间跟踪模型性能
 - en: 'We obtain new predictions using the `before_trading_start()` function, which
     runs every morning before the market opens:'
   id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用`before_trading_start()`函数获取新的预测，该函数在市场开盘前每天早晨运行：
 - en: '[PRE28]'
   id: totrans-290
   prefs: []
@@ -2090,6 +2104,7 @@
   id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: '`evaluate_predictions`确切地做到了这一点：它跟踪我们模型过去的预测，并在相关的时间范围内实现收益时对其进行评估（在我们的示例中，是第二天）：'
 - en: '[PRE29]'
   id: totrans-292
   prefs: []
@@ -2100,14 +2115,17 @@
   id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还每天记录评估结果，以便在回测后进行审查：
 - en: '![](img/B15439_08_09.png)'
   id: totrans-294
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_08_09.png)'
 - en: 'Figure 8.9: Model out-of-sample performance'
   id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8.9：模型外样本性能
 - en: 'The following plots summarize the backtest performance in terms of the cumulative
     returns and the rolling SR. The results have improved relative to the previous
     example (due to a different feature set), yet the model still underperforms the
@@ -2115,14 +2133,17 @@
   id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图表总结了回测性能，以累积收益和滚动 SR 为指标。 与之前的示例相比，结果有所改善（由于不同的特征集），但自2016年中期以来，模型仍然表现不佳：
 - en: '![](img/B15439_08_10.png)'
   id: totrans-297
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_08_10.png)'
 - en: 'Figure 8.10: Zipline backtest performance with model training'
   id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 图8.10：使用模型训练的 Zipline 回测性能
 - en: Please see the notebook for additional details on how we define a universe,
     run the backtest, and rebalance and analyze the results using pyfolio.
   id: totrans-299
