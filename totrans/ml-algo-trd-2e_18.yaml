@@ -2135,6 +2135,8 @@
   id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种方法将一系列 alpha 因子转换为二维格式，以利用 CNN 检测局部模式的能力。Sezer 和 Ozbayoglu（2018）提出了**CNN-TA**，它计算不同间隔的
+    15 个技术指标，并使用分层聚类（参见 *第 13 章*，*数据驱动的风险因素和基于无监督学习的资产配置*）在二维网格中定位行为相似的指标。
 - en: The authors train a CNN similar to the CIFAR-10 example we used earlier to predict
     whether to buy, hold, or sell an asset on a given day. They compare the CNN performance
     to "buy-and-hold" and other models and find that it outperforms all alternatives
@@ -2143,6 +2145,8 @@
   id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 作者训练了一个类似于我们之前使用的 CIFAR-10 示例的 CNN，以预测在给定日期购买、持有或出售资产。他们将 CNN 的性能与“买入并持有”及其他模型进行比较，并发现它在使用道琼斯
+    30 只股票和 2007-2017 年间交易最多的九只 ETF 的每日价格序列时胜过了所有的替代方案。
 - en: In this section, we experiment with this approach using daily US equity price
     data and demonstrate how to compute and convert a similar set of indicators into
     image format. Then we train a CNN to predict daily returns and evaluate a simple
@@ -2150,11 +2154,13 @@
   id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们使用每日美国股票价格数据尝试这种方法，并演示如何计算并转换类似一组指标为图像格式。然后，我们训练一个 CNN 来预测每日回报，并根据结果信号评估一个简单的多空策略。
 - en: Creating technical indicators at different intervals
   id: totrans-299
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 在不同间隔创建技术指标
 - en: We first select a universe of the 500 most-traded US stocks from the Quandl
     Wiki dataset by dollar volume for rolling five-year periods for 2007-2017\. See
     the notebook `engineer_cnn_features.ipynb` for the code examples in this section
@@ -2162,6 +2168,7 @@
   id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先从 Quandl Wiki 数据集中按美元交易额选取了 2007-2017 年滚动五年期的 500 只美国股票的宇宙。有关本节中的代码示例和一些额外的实现细节，请参阅笔记本`engineer_cnn_features.ipynb`。
 - en: 'Our features consist of 15 technical indicators and risk factors that we compute
     for 15 different intervals and then arrange them in a ![](img/B15439_18_024.png)
     grid. The following table lists some of the technical indicators; in addition,
@@ -2170,46 +2177,56 @@
   id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的特征包括 15 个技术指标和风险因子，我们计算这些指标以获取 15 个不同的间隔，然后将它们排列在一个![](img/B15439_18_024.png)
+    网格中。以下表列出了一些技术指标；此外，我们还使用以下度量标准（请参见 *附录*以获取更多信息）。
 - en: '**Weighted and exponential moving averages** (**WMA** and **EMA**) of the close
     price'
   id: totrans-302
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**加权和指数移动平均线**（**WMA** 和 **EMA**）的收盘价'
 - en: '**Rate of change** (**ROC**) of the close price'
   id: totrans-303
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**收盘价变化率**（**ROC**）'
 - en: '**Chande Momentum Oscillator** (**CMO**)'
   id: totrans-304
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Chande 动量振荡器**（**CMO**）'
 - en: '**Chaikin A/D Oscillators** (**ADOSC**)'
   id: totrans-305
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Chaikin A/D 振荡器**（**ADOSC**）'
 - en: '**Average Directional Movement Index** (**ADX**)'
   id: totrans-306
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**平均方向运动指数**（**ADX**）'
 - en: '![](img/B15439_18_16.png)'
   id: totrans-307
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_18_16.png)'
 - en: 'Figure 8.16: Technical indicators'
   id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 8.16：技术指标
 - en: 'For each indicator, we vary the time period from 6 to 20 to obtain 15 distinct
     measurements. For example, the following code example computes the **relative
     strength index** (**RSI**):'
   id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于每个指标，我们将时间段从 6 变化到 20 以获取 15 个不同的测量。例如，以下代码示例计算**相对强度指数**（**RSI**）：
 - en: '[PRE29]'
   id: totrans-310
   prefs: []
@@ -2220,6 +2237,7 @@
   id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于需要多个输入的**归一化平均真实波幅**（**NATR**），计算如下：
 - en: '[PRE30]'
   id: totrans-312
   prefs: []
@@ -2229,11 +2247,13 @@
   id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关更多详细信息，请参阅 TA-Lib 文档。
 - en: Computing rolling factor betas for different horizons
   id: totrans-314
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 计算不同时间范围的滚动因子贝塔
 - en: 'We also use **five Fama-French risk factors** (**Fama** and French, 2015; see
     *Chapter 4*, *Financial Feature Engineering – How to Research Alpha Factors*).
     They reflect the sensitivity of a stock''s returns to factors consistently demonstrated
@@ -2243,6 +2263,8 @@
   id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还使用**五个法玛-法rench风险因子**（Fama 和 French，2015；参见 *第 4 章*，*金融特征工程-如何研究 Alpha 因子*）。它们反映了股票回报对被证明对股票回报产生影响的因素的敏感性。我们通过计算股票每日回报与旨在反映底层驱动因素的投资组合回报之间的滚动
+    OLS 回归系数来捕获这些因素：
 - en: '**Equity risk premium**: Value-weighted returns of US stocks minus the 1-month
     US Treasury bill rate'
   id: totrans-316

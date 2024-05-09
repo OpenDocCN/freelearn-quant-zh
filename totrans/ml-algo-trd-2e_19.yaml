@@ -1,8 +1,10 @@
 - en: '19'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: RNNs for Multivariate Time Series and Sentiment Analysis
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -11,18 +13,21 @@
     data, especially images, but also time series. This chapter introduces **recurrent
     neural networks** (**RNNs**) that specialize in sequential data where patterns
     evolve over time and learning typically requires memory of preceding data points.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
 - en: '**Feedforward neural networks** (**FFNNs**) treat the feature vectors for each
     sample as independent and identically distributed. Consequently, they do not take
     prior data points into account when evaluating the current observation. In other
     words, they have no memory.'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
 - en: 'The one- and two-dimensional convolutional filters used by CNNs can extract
     features that are a function of what is typically a small number of neighboring
     data points. However, they only allow shallow parameter-sharing: each output results
     from applying the same filter to the relevant time steps and features.'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
 - en: The major innovation of the RNN model is that each output is a function of both
@@ -34,6 +39,7 @@
     units** (**GRUs**), which aim to overcome the challenge of vanishing gradients
     associated with learning long-range dependencies, where errors need to be propagated
     over many connections.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
 - en: Successful RNN use cases include various tasks that require mapping one or more
@@ -45,45 +51,57 @@
     Filings*, to classify the sentiment expressed in documents. Finally, we will use
     the most informative sections of SEC filings to learn word embeddings and predict
     returns around filing dates.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
 - en: 'More specifically, in this chapter, you will learn about the following:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
 - en: How recurrent connections allow RNNs to memorize patterns and model a hidden state
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Unrolling and analyzing the computational graph of RNNs
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: How gated units learn to regulate RNN memory from data to enable long-range
     dependencies
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Designing and training RNNs for univariate and multivariate time series in Python
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: How to learn word embeddings or use pretrained word vectors for sentiment analysis
     with RNNs
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Building a bidirectional RNN to predict stock returns using custom word embeddings
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: You can find the code examples and additional resources in the GitHub repository's
     directory for this chapter.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在本章的GitHub存储库目录中找到代码示例和其他资源。
 - en: How recurrent neural nets work
+  id: totrans-15
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 递归神经网络的工作原理
 - en: RNNs assume that the input data has been generated as a sequence such that previous
     data points impact the current observation and are relevant for predicting subsequent
     values. Thus, they allow more complex input-output relationships than FFNNs and
@@ -92,286 +110,392 @@
     where the input, the output, or both, are best represented as a sequence of vectors.
     For a good overview, refer to *Chapter 10* in Goodfellow, Bengio, and Courville
     (2016).
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: RNN假定输入数据已经生成为一个序列，以便以前的数据点影响当前观察结果，并且对预测后续值具有相关性。因此，它们可以对比FFNN和CNN更复杂的输入输出关系进行建模，后者设计为使用给定数量的计算步骤将一个输入向量映射到一个输出向量。相反，RNN可以对最佳表示为向量序列的任务的数据进行建模，其中输入、输出或两者都是序列。有关概述，请参阅Goodfellow、Bengio和Courville（2016）的*第10章*。
 - en: 'The diagram in *Figure 19.1*, inspired by Andrew Karpathy''s 2015 blog post
     *The Unreasonable Effectiveness of Recurrent Neural Networks* (see GitHub for
     a link), illustrates mappings from input to output vectors using nonlinear transformations
     carried out by one or more neural network layers:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图19.1*中的图表灵感来自Andrew Karpathy的2015年博客文章*递归神经网络的不合理有效性*（请参阅GitHub获取链接），它说明了通过一个或多个神经网络层进行的非线性转换从输入到输出向量的映射：'
 - en: '![](img/B15439_19_01.png)'
+  id: totrans-18
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_01.png)'
 - en: 'Figure 19.1: Various types of sequence-to-sequence models'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.1：各种类型的序列到序列模型
 - en: The left panel shows a one-to-one mapping between vectors of fixed sizes, typical
     for FFNs and CNNs covered in the last two chapters. The other three panels show
     various RNN applications that map input vectors to output vectors by applying
     a recurrent transformation to the new input and the state produced by the previous
     iteration. The *x* input vectors to an RNN are also called **context**.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 左侧面板显示了固定大小向量之间的一对一映射，这在上述最后两章中涵盖的FFN和CNN中很典型。其他三个面板显示了通过对新输入和上一次迭代产生的状态应用循环转换将输入向量映射到输出向量的各种RNN应用。输入到RNN的*x*向量也称为**上下文**。
 - en: 'The vectors are time-indexed, as usually required by trading-related applications,
     but they could also be labeled by a different set of sequential values. Generic
     sequence-to-sequence mapping tasks and sample applications include:'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些向量是按时间索引的，通常是交易相关应用所需，但它们也可以由不同的顺序值标记。通用的序列到序列映射任务和示例应用包括：
 - en: '**One-to-many**: Image captioning, for example, takes a single vector of pixels
     (as in the previous chapter) and maps it to a sequence of words.'
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**一对多**：例如，图像字幕生成接受单个像素向量（与上一章节中相同）并将其映射到一系列单词。'
 - en: '**Many-to-one**: Sentiment analysis takes a sequence of words or tokens (see
     *Chapter 14*, *Text Data for Trading – Sentiment Analysis*) and maps it to an
     output scalar or vector.'
+  id: totrans-23
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**多对一**：情感分析接受一系列单词或标记（参见*第14章*，*用于交易的文本数据 - 情感分析*）并将其映射到一个输出标量或向量。'
 - en: '**Many-to-many**: Machine translation or labeling of video frame map sequences
     of input vectors to sequences of output vectors, either in a synchronized (as
     shown) or asynchronous fashion. Multistep prediction of multivariate time series
     also maps several input vectors to several output vectors.'
+  id: totrans-24
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**多对多**：机器翻译或视频帧标记将输入向量序列映射到输出向量序列，无论是同步（如所示）还是异步方式。多变量时间序列的多步预测也将几个输入向量映射到几个输出向量。'
 - en: Note that input and output sequences can be of arbitrary lengths because the
     recurrent transformation that is fixed but learned from the data can be applied
     as many times as needed.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，输入和输出序列可以是任意长度的，因为从数据中学习的固定但学习的循环转换可以应用任意次数。
 - en: Just as CNNs easily scale to large images and some CNNs can process images of
     variable size, RNNs scale to much longer sequences than networks not tailored
     to sequence-based tasks. Most RNNs can also process sequences of variable length.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如CNN能轻松扩展到大尺寸图像，而且一些CNN可以处理可变大小的图像，RNN能够扩展到比不适用于基于序列任务的网络更长的序列。大多数RNN也可以处理可变长度的序列。
 - en: Unfolding a computational graph with cycles
+  id: totrans-27
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 展开具有循环的计算图
 - en: RNNs are called recurrent because they apply the same transformations to every
     element of a sequence in a way that the RNN's output depends on the outcomes of
     prior iterations. As a result, RNNs maintain an **internal state** that captures
     information about previous elements in the sequence, just like memory.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: RNN 被称为循环的，因为它们以一种方式将相同的转换应用于序列的每个元素，RNN 的输出取决于先前迭代的结果。因此，RNN 保持一个**内部状态**，它捕获了序列中以前元素的信息，就像内存一样。
 - en: '*Figure 19.2* shows the **computational graph** implied by a single hidden
     RNN unit that learns two weight matrices during training:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 19.2*显示了在训练期间学习两个权重矩阵的单个隐藏 RNN 单元暗示的**计算图**：'
 - en: '*W*[hh]: applied to the previous hidden state, *h*[t-1]'
+  id: totrans-30
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*W*[hh]：应用于前一个隐藏状态 *h*[t-1]'
 - en: '*W*[hx]: applied to the current input, *x*[t]'
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*W*[hx]：应用于当前输入 *x*[t]'
 - en: 'The RNN''s output, *y*[t], is a nonlinear transformation of the sum of the
     two matrix multiplications using, for example, the tanh or ReLU activation functions:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: RNN 的输出 *y*[t] 是使用诸如 tanh 或 ReLU 激活函数的两个矩阵乘法之和的非线性转换：
 - en: '![](img/B15439_19_001.png)![](img/B15439_19_02.png)'
+  id: totrans-33
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_001.png)![](img/B15439_19_02.png)'
 - en: 'Figure 19.2: Recurrent and unrolled view of the computational graph of an RNN
     with a single hidden unit'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 19.2：具有单个隐藏单元的 RNN 的计算图的循环和展开视图
 - en: The right side of the equation shows the effect of unrolling the recurrent relationship
     depicted in the right panel of the figure. It highlights the repeated linear algebra
     transformations and the resulting hidden state that combines information from
     past sequence elements with the current input, or context. An alternative formulation
     connects the context vector to the first hidden state only; we will outline additional
     options to modify this baseline architecture in the subsequent section.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 方程的右侧显示了展开在图右侧面板中所示的循环关系的影响。它突出显示了重复的线性代数转换以及将来自过去序列元素的信息与当前输入或上下文相结合的隐藏状态。另一种表述将上下文向量连接到仅第一个隐藏状态；我们将概述修改此基线架构的其他选项。
 - en: Backpropagation through time
+  id: totrans-36
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 时间反向传播
 - en: The unrolled computational graph in the preceding figure highlights that the
     learning process necessarily encompasses all time steps of the given input sequence.
     The backpropagation algorithm that updates the weights during training involves
     a forward pass from left to right along with the unrolled computational graph,
     followed by a backward pass in the opposite direction.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前述图中展开的计算图突出显示了学习过程必然涵盖给定输入序列的所有时间步。在训练期间更新权重的反向传播算法涉及沿着展开的计算图进行从左到右的前向传递，然后沿相反方向进行后向传递。
 - en: As discussed in *Chapter 17*, *Deep Learning for Trading*, the backpropagation
     algorithm evaluates a loss function and computes its gradient with respect to
     the parameters to update the weights accordingly. In the RNN context, backpropagation
     runs from right to left in the computational graph, updating the parameters from
     the final time step all the way to the initial time step. Therefore, the algorithm
     is called **backpropagation through time** (Werbos 1990).
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如在*第 17 章*“交易的深度学习”中所讨论的那样，反向传播算法评估损失函数并计算其相对于参数的梯度，以相应地更新权重。在 RNN 上下文中，反向传播从计算图的右侧向左侧运行，从最终时间步更新参数一直到初始时间步。因此，该算法被称为**时间反向传播**（Werbos
+    1990）。
 - en: It highlights both the power of an RNN to model long-range dependencies by sharing
     parameters across an arbitrary number of sequence elements while maintaining a
     corresponding state. On the other hand, it is computationally quite expensive,
     and the computations for each time step cannot be parallelized due to its inherently
     sequential nature.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 它突出了 RNN 通过在任意数量的序列元素之间共享参数来建模长程依赖关系的能力，同时保持相应的状态。另一方面，由于其固有的顺序性质，它的计算成本相当高，每个时间步的计算都无法并行化。
 - en: Alternative RNN architectures
+  id: totrans-40
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 替代 RNN 架构
 - en: Just like the FFNN and CNN architectures we covered in the previous two chapters,
     RNNs can be optimized in a variety of ways to capture the dynamic relationship
     between input and output data.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 就像我们在前两章中介绍的 FFNN 和 CNN 架构一样，RNN 可以通过各种方式进行优化，以捕捉输入和输出数据之间的动态关系。
 - en: In addition to modifying the recurrent connections between the hidden states,
     alternative approaches include recurrent output relationships, bidirectional RNNs,
     and encoder-decoder architectures. Refer to GitHub for background references to
     complement this brief summary.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了修改隐藏状态之间的重复连接之外，替代方法还包括重复输出关系、双向循环神经网络和编码器-解码器架构。请参阅GitHub获取背景参考，以补充本简要摘要。
 - en: Output recurrence and teacher forcing
+  id: totrans-43
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 输出重复和教师强迫
 - en: One way to reduce the computational complexity of hidden state recurrences is
     to connect a unit's hidden state to the prior unit's output rather than its hidden
     state. The resulting RNN has a lower capacity than the architecture discussed
     previously, but different time steps are now decoupled and can be trained in parallel.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 减少隐藏状态重复计算复杂性的一种方法是将单元的隐藏状态连接到前一个单元的输出而不是其隐藏状态。由此产生的RNN的容量低于前面讨论的架构，但是不同的时间步骤现在是解耦的，可以并行训练。
 - en: However, to successfully learn relevant past information, the training output
     samples need to reflect this information so that backpropagation can adjust the
     network parameters accordingly. To the extent that asset returns are independent
     of their lagged values, financial data may not meet this requirement. The use
     of previous outcome values alongside the input vectors is called **teacher forcing**
     (Williams and Zipser, 1989).
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，要成功学习相关的过去信息，训练输出样本需要反映这些信息，以便通过反向传播调整网络参数。在资产回报与它们的滞后值无关的程度上，金融数据可能不符合此要求。沿着输入向量一起使用先前的结果值被称为**教师强迫**（Williams和Zipser，1989年）。
 - en: Connections from the output to the subsequent hidden state can also be used
     in combination with hidden recurrence. However, training requires backpropagation
     through time and cannot be run in parallel.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出到后续隐藏状态的连接也可以与隐藏循环结合使用。然而，训练需要通过时间反向传播，并且不能并行运行。
 - en: Bidirectional RNNs
+  id: totrans-47
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 双向循环神经网络
 - en: For some tasks, it can be realistic and beneficial for the output to depend
     not only on past sequence elements, but also on future elements (Schuster and
     Paliwal, 1997). Machine translation or speech and handwriting recognition are
     examples where subsequent sequence elements are both informative and realistically
     available to disambiguate competing outputs.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一些任务来说，使输出不仅依赖于过去的序列元素，而且还依赖于未来元素可以是现实的和有益的（Schuster和Paliwal，1997年）。机器翻译或语音和手写识别是其中一些例子，后续序列元素既具有信息量又实际可用于消除竞争性输出的歧义。
 - en: For a one-dimensional sequence, **bidirectional RNNs** combine an RNN that moves
     forward with another RNN that scans the sequence in the opposite direction. As
     a result, the output comes to depend on both the future and the past of the sequence.
     Applications in the natural language and music domains (Sigtia et al., 2014) have
     been very successful (see *Chapter 16*, *Word Embeddings for Earnings Calls and
     SEC Filings*, and the last example in this chapter using SEC filings).
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一维序列，**双向循环神经网络**结合了向前移动的RNN和向后扫描序列的另一个RNN。因此，输出将取决于序列的过去和未来。在自然语言和音乐领域的应用（Sigtia等，2014年）非常成功（见*第16章*，*Word
+    Embeddings for Earnings Calls and SEC Filings*，以及本章最后一个使用SEC文件的示例）。
 - en: Bidirectional RNNs can also be used with two-dimensional image data. In this
     case, one pair of RNNs performs the forward and backward processing of the sequence
     in each dimension.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 双向循环神经网络也可以与二维图像数据一起使用。在这种情况下，一对RNN在每个维度中执行序列的前向和后向处理。
 - en: Encoder-decoder architectures, attention, and transformers
+  id: totrans-51
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 编码器-解码器架构、注意力和变压器
 - en: The architectures discussed so far assumed that the input and output sequences
     have equal length. Encoder-decoder architectures, also called **sequence-to-sequence**
     (**seq2seq**) architectures, relax this assumption and have become very popular
     for machine translation and other applications with this characteristic (Prabhavalkar
     et al., 2017).
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止讨论的架构假设输入和输出序列具有相等的长度。编码器-解码器架构，也称为**序列到序列**（**seq2seq**）架构，放宽了这一假设，并且已经成为具有这种特征的机器翻译和其他应用非常流行的架构（Prabhavalkar等，2017年）。
 - en: The **encoder** is an RNN that maps the input space to a different space, also
     called **latent space**, whereas the **decoder** function is a complementary RNN
     that maps the encoded input to the target space (Cho et al., 2014). In the next
     chapter, we will cover autoencoders that learn a feature representation in an
     unsupervised setting using a variety of deep learning architectures.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: '**编码器**是将输入空间映射到不同空间，也称为**潜在空间**的RNN，而**解码器**功能是将编码后的输入映射到目标空间（Cho等人，2014年）。在下一章中，我们将介绍使用各种深度学习架构在无监督设置中学习特征表示的自动编码器。'
 - en: Encoder and decoder RNNs are trained jointly so that the input of the final
     encoder hidden state becomes the input to the decoder, which, in turn, learns
     to match the training samples.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 编码器和解码器RNN是联合训练的，以使最终编码器隐藏状态的输入成为解码器的输入，后者又学习匹配训练样本。
 - en: The **attention mechanism** addresses a limitation of using fixed-size encoder
     inputs when input sequences themselves vary in size. The mechanism converts raw
     text data into a distributed representation (see *Chapter 16*, *Word Embeddings
     for Earnings Calls and SEC Filings*), stores the result, and uses a weighted average
     of these feature vectors as context. The weights are learned by the model and
     alternate between putting more weight or attention to different elements of the input.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意力机制**解决了使用固定大小的编码器输入时的限制，当输入序列本身变化时。该机制将原始文本数据转换为分布式表示（见*第16章*，*用于财报电话和SEC备案的词嵌入*），存储结果，并使用这些特征向量的加权平均值作为上下文。模型通过学习来学习权重，并且在不同的输入元素之间交替放置更多的权重或关注'
 - en: A recent **transformer** architecture dispenses with recurrence and convolutions
     and exclusively relies on this attention mechanism to learn input-output mappings.
     It has achieved superior quality on machine translation tasks while requiring
     much less time for training, not least because it can be parallelized (Vaswani
     et al., 2017).
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近的**transformer**架构放弃了重复和卷积，完全依赖于这种注意力机制来学习输入输出映射。它在机器翻译任务上取得了卓越的质量，同时需要更少的训练时间，部分原因是它可以并行化（Vaswani等人，2017年）。
 - en: How to design deep RNNs
+  id: totrans-57
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何设计深度RNNs
 - en: The **unrolled computational graph** in *Figure 19.2* shows that each transformation
     involves a linear matrix operation followed by a nonlinear transformation that
     could be jointly represented by a single network layer.
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 19.2*中的**展开的计算图**显示，每个转换都涉及线性矩阵操作，然后是一个非线性变换，可以共同由单个网络层表示。'
 - en: 'In the two preceding chapters, we saw how adding depth allows FFNNs, and CNNs
     in particular, to learn more useful hierarchical representations. RNNs also benefit
     from decomposing the input-output mapping into multiple layers. For RNNs, this
     mapping typically transforms:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前两章中，我们看到增加深度允许FFNNs，特别是CNNs，学习更有用的分层表示。RNNs也从将输入输出映射分解为多个层次中受益。对于RNNs，此映射通常转换为：
 - en: The input and the prior hidden state into the current hidden state
+  id: totrans-60
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将当前隐藏状态的输入和先前隐藏状态传入当前隐藏状态
 - en: The hidden state into the output
+  id: totrans-61
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将隐藏状态传入输出
 - en: A common approach is to **stack recurrent layers** on top of each other so that
     they learn a hierarchical temporal representation of the input data. This means
     that a lower layer may capture higher-frequency patterns, synthesized by a higher
     layer into lower-frequency characteristics that prove useful for the classification
     or regression task. We will demonstrate this approach in the next section.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种常见的方法是在彼此之上**堆叠循环层**，以便它们学习输入数据的分层时间表示。这意味着较低层可能捕获较高频率的模式，由较高层合成为对于分类或回归任务有用的低频特征。我们将在下一节中演示这种方法。
 - en: Less popular alternatives include adding layers to the connections from input
     to the hidden state, between hidden states, or from the hidden state to the output.
     These designs employ skip connections to avoid a situation where the shortest
     path between time steps increases and training becomes more difficult.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 不太流行的替代方案包括在输入到隐藏状态的连接上添加层，隐藏状态之间的连接，或从隐藏状态到输出的连接。这些设计使用跳过连接来避免时间步长之间最短路径增加并且训练变得更加困难的情况。
 - en: The challenge of learning long-range dependencies
+  id: totrans-64
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 学习长程依赖的挑战
 - en: In theory, RNNs can make use of information in arbitrarily long sequences. However,
     in practice, they are limited to looking back only a few steps. More specifically,
     RNNs struggle to derive useful context information from time steps far apart from
     the current observation (Hochreiter et al., 2001).
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 理论上，RNN可以利用任意长的序列中的信息。然而，在实践中，它们仅限于查看几个步骤。更具体地说，RNN难以从远离当前观察的时间步中获得有用的上下文信息（Hochreiter等，2001）。
 - en: The fundamental problem is the impact of repeated multiplication on gradients
     during backpropagation over many time steps. As a result, the **gradients tend
     to either vanish** and decrease toward zero (the typical case), **or explode**
     and grow toward infinity (less frequent, but rendering optimization very difficult).
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 根本问题是在反向传播过程中在许多时间步骤上对梯度的重复乘法的影响。结果，**梯度往往会消失**并朝零减小（典型情况），**或者爆炸**并朝无穷大增长（较少发生，但使优化变得非常困难）。
 - en: Even if parameters allow stability and the network is able to store memories,
     long-term interactions will receive exponentially smaller weights due to the multiplication
     of many Jacobians, the matrices containing the gradient information. Experiments
     have shown that stochastic gradient descent faces serious challenges in training
     RNNs for sequences with only 10 or 20 elements.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使参数允许稳定性并且网络能够存储记忆，由于许多雅各比矩阵的乘法，长期交互的权重将指数级地变小，这些矩阵包含梯度信息。实验表明，随机梯度下降在仅具有10或20个元素的序列上训练RNN面临严重挑战。
 - en: Several RNN design techniques have been introduced to address this challenge,
     including **echo state networks** (Jaeger, 2001) and **leaky units** (Hihi and
     Bengio, 1996). The latter operate at different time scales, focusing part of the
@@ -379,8 +503,10 @@
     deliberately learn and combine different aspects from the data. Other strategies
     include connections that skip time steps or units that integrate signals from
     different frequencies.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 已经引入了几种RNN设计技术来解决这一挑战，包括**回声状态网络**（Jaeger，2001）和**渗漏单元**（Hihi和Bengio，1996）。后者在不同的时间尺度上运行，将模型的一部分集中在更高频率的表示上，另一部分集中在更低频率的表示上，以有意识地从数据中学习和组合不同的方面。其他策略包括跳过时间步的连接或集成来自不同频率的信号的单元。
 - en: The most successful approaches use gated units that are trained to regulate
     how much past information a unit maintains in its current state and when to reset
     or forget this information. As a result, they are able to learn dependencies over
@@ -389,12 +515,16 @@
     by Chung et al. (2014) finds both units superior to simpler recurrent units such
     as tanh units, while performing equally well on various speech and music modeling
     tasks.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 最成功的方法使用被训练来调节单元在当前状态中保持多少过去信息以及何时重置或忘记这些信息的门控单元。因此，它们能够在数百个时间步长上学习依赖关系。最流行的例子包括**长短期记忆**（**LSTM**）单元和**门控循环单元**（**GRUs**）。Chung等人（2014）的实证比较发现，这两种单元都优于简单的循环单元，如双曲正切单元，并且在各种语音和音乐建模任务上表现同样出色。
 - en: Long short-term memory – learning how much to forget
+  id: totrans-70
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 长短期记忆 - 学会忘记多少
 - en: RNNs with an LSTM architecture have more complex units that maintain an internal
     state. They contain gates to keep track of dependencies between elements of the
     input sequence and regulate the cell's state accordingly. These gates recurrently
@@ -402,275 +532,400 @@
     aim to address the problem of vanishing and exploding gradients due to the repeated
     multiplication of possibly very small or very large values by letting gradients
     pass through unchanged (Hochreiter and Schmidhuber, 1996).
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 具有LSTM结构的RNN拥有更复杂的单元，这些单元保持内部状态。它们包含门来跟踪输入序列元素之间的依赖关系，并相应调整单元的状态。这些门之间以循环方式连接，而不是我们之前遇到的隐藏单元。它们旨在通过让梯度无变化地通过以解决由于可能非常小或非常大的值的重复乘法而导致的梯度消失和梯度爆炸的问题（Hochreiter和Schmidhuber，1996）。
 - en: 'The diagram in *Figure 19.3* shows the information flow for an unrolled LSTM
     unit and outlines its typical gating mechanism:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图19.3*中的图示显示了未展开的LSTM单元的信息流，并概述了其典型的门控机制：'
 - en: '![](img/B15439_19_03.png)'
+  id: totrans-73
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_03.png)'
 - en: 'Figure 19.3: Information flow through an unrolled LSTM cell'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.3：通过展开的LSTM单元的信息流
 - en: 'A typical LSTM unit combines **four parameterized layers** that interact with
     each other and the cell state by transforming and passing along vectors. These
     layers usually involve an input gate, an output gate, and a forget gate, but there
     are variations that may have additional gates or lack some of these mechanisms.
     The white nodes in *Figure 19.4* identify element-wise operations, and the gray
     elements represent layers with weight and bias parameters learned during training:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个典型的 LSTM 单元结合了**四个参数化层**，这些层相互作用并通过转换和传递向量来与细胞状态交互。这些层通常涉及输入门、输出门和遗忘门，但也有可能有额外的门或缺少其中一些机制的变体。图
+    *19.4* 中的白色节点标识逐元素操作，灰色元素表示在训练期间学习的具有权重和偏差参数的层：
 - en: '![](img/B15439_19_04.png)'
+  id: totrans-76
   prefs: []
   type: TYPE_IMG
+  zh: '![img/B15439_19_04.png](img/B15439_19_04.png)'
 - en: 'Figure 19.4: The logic of, and math behind, an LSTM cell'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 *19.4*：LSTM 单元的逻辑和数学原理
 - en: 'The **cell state**, *c*, passes along the horizontal connection at the top
     of the cell. The cell state''s interaction with the various gates leads to a series
     of recurrent decisions:'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 细胞状态 *c* 沿着细胞顶部的水平连接传递。细胞状态与各种门的交互导致一系列的循环决策：
 - en: The **forget gate** controls how much of the cell's state should be voided to
     regulate the network's memory. It receives the prior hidden state, *h*[t-1], and
     the current input, *x*[t], as inputs, computes a sigmoid activation, and multiplies
     the resulting value, *f*[t], which has been normalized to the [0, 1] range, by
     the cell state, reducing or keeping it accordingly.
+  id: totrans-79
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**遗忘门** 控制应该清空多少细胞状态以调节网络的记忆。它接收先前的隐藏状态，*h*[t-1]，和当前的输入，*x*[t]，作为输入，计算一个 sigmoid
+    激活，并将结果值 *f*[t]（已归一化为 [0, 1] 范围）与细胞状态相乘，相应地减少或保持它。'
 - en: The **input gate** also computes a sigmoid activation from *h*[t-1] and *x*[t]
     that produces update candidates. A *tan*[h] activation in the range from [-1,
     1] multiplies the update candidates, *u*[t], and, depending on the resulting sign,
     adds or subtracts the result from the cell state.
+  id: totrans-80
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**输入门** 也从 *h*[t-1] 和 *x*[t] 计算一个 sigmoid 激活，产生更新候选值。在 [-1, 1] 范围内的 *tan*[h]
+    激活会乘以更新候选值 *u*[t]，并根据结果的符号将其加或减到细胞状态中。'
 - en: The **output gate** filters the updated cell state using a sigmoid activation,
     *o*[t], and multiplies it by the cell state normalized to the range [-1, 1] using
     a *tan*[h] activation.
+  id: totrans-81
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**输出门** 使用 sigmoid 激活 *o*[t] 过滤更新的细胞状态，并使用 *tan*[h] 激活将其乘以归一化到 [-1, 1] 范围的细胞状态。'
 - en: Gated recurrent units
+  id: totrans-82
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 门控循环单元
 - en: GRUs simplify LSTM units by omitting the output gate. They have been shown to
     achieve similar performance on certain language modeling tasks, but do better
     on smaller datasets.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: GRUs通过省略输出门简化了LSTM单元。已经证明它们在某些语言建模任务上能够达到类似的性能，但在较小的数据集上表现更好。
 - en: GRUs aim for each recurrent unit to adaptively capture dependencies of different
     time scales. Similar to the LSTM unit, the GRU has gating units that modulate
     the flow of information inside the unit but discard separate memory cells (see
     references on GitHub for additional details).
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: GRUs旨在使每个循环单元自适应地捕获不同时间尺度的依赖关系。与LSTM单元类似，GRU具有调节单元内信息流的门控单元，但丢弃了单独的记忆单元（有关更多细节，请参阅GitHub上的参考资料）。
 - en: RNNs for time series with TensorFlow 2
+  id: totrans-85
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 TensorFlow 2 进行时间序列的 RNN
 - en: In this section, we illustrate how to build recurrent neural nets using the
     TensorFlow 2 library for various scenarios. The first set of models includes the
     regression and classification of univariate and multivariate time series. The
     second set of tasks focuses on text data for sentiment analysis using text data
     converted to word embeddings (see *Chapter 16*, *Word Embeddings for Earnings
     Calls and SEC Filings*).
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们说明如何使用 TensorFlow 2 库构建各种场景的循环神经网络。第一组模型包括对单变量和多变量时间序列进行回归和分类。第二组任务侧重于文本数据，用于情感分析，使用转换为词嵌入的文本数据（参见
+    *第 16 章*，*用于收益电话和 SEC 提交的词嵌入*）。
 - en: More specifically, we'll first demonstrate how to prepare time-series data to
     predict the next value for **univariate time series** with a single LSTM layer
     to predict stock index values.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，我们将首先演示如何准备时间序列数据，使用单个 LSTM 层预测**单变量时间序列**的下一个值来预测股票指数值。
 - en: Next, we'll build a **deep RNN** with three distinct inputs to classify asset
     price movements. To this end, we'll combine a two-layer, **stacked LSTM** with
     learned **embeddings** and one-hot encoded categorical data. Finally, we will
     demonstrate how to model **multivariate time series** using an RNN.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将构建一个具有三个不同输入的**深度循环神经网络（RNN）**来分类资产价格的变动。为此，我们将结合一个具有两层的**堆叠LSTM**，学习的**嵌入**和独热编码的分类数据。最后，我们将演示如何使用RNN建模**多变量时间序列**。
 - en: Univariate regression – predicting the S&P 500
+  id: totrans-89
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 单变量回归–预测标准普尔500
 - en: In this subsection, we will forecast the S&P 500 index values (refer to the
     `univariate_time_series_regression` notebook for implementation details).
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本小节中，我们将预测标准普尔500指数的值（有关实现细节，请参阅`univariate_time_series_regression`笔记本）。
 - en: 'We''ll obtain data for 2010-2019 from the Federal Reserve Bank''s Data Service
     (FRED; see *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*):'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将从联邦储备银行的数据服务（FRED；请参阅*第2章*，*市场和基本数据–来源和技术*）获取2010-2019年的数据：
 - en: '[PRE0]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'We preprocess the data by scaling it to the [0, 1] interval using scikit-learn''s
     `MinMaxScaler()` class:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过使用scikit-learn的`MinMaxScaler()`类将数据缩放到[0, 1]区间来预处理数据：
 - en: '[PRE1]'
+  id: totrans-94
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: How to get time series data into shape for an RNN
+  id: totrans-95
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何为RNN整理时间序列数据的形状
 - en: We generate sequences of 63 consecutive trading days, approximately three months,
     and use a single LSTM layer with 20 hidden units to predict the scaled index value
     one time step ahead.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们生成63个连续交易日的序列，大约三个月，并使用具有20个隐藏单元的单个LSTM层预测一步的缩放指数值。
 - en: 'The input to every LSTM layer must have three dimensions, namely:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个LSTM层的输入必须具有三个维度，即：
 - en: '**Batch size**: One sequence is one sample. A batch contains one or more samples.'
+  id: totrans-98
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**批量大小**：一个序列是一个样本。一个批次包含一个或多个样本。'
 - en: '**Time steps**: One time step is a single observation in the sample.'
+  id: totrans-99
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**时间步长**：一个时间步是样本中的一个单独观察。'
 - en: '**Features**: One feature is one observation at a time step.'
+  id: totrans-100
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**特征**：一个特征是一个时间步的一个观察。'
 - en: 'The following figure visualizes the shape of the input tensor:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图可视化了输入张量的形状：
 - en: '![](img/B15439_19_05.png)'
+  id: totrans-102
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_05.png)'
 - en: 'Figure 19.5: The three dimensions of an RNN input tensor'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.5：RNN输入张量的三个维度
 - en: 'Our S&P 500 sample has 2,463 observations or time steps. We will create overlapping
     sequences using a window of 63 observations each. Using a simpler window of size
     *T* = 5 to illustrate this autoregressive sequence pattern, we obtain input-output
     pairs where each output is associated with its first five lags, as shown in the
     following table:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的S&P 500样本有2,463个观测值或时间步长。我们将使用每个窗口为63个观测值的重叠序列。使用大小为*T* = 5的更简单的窗口来说明这种自回归序列模式，我们获得了每个输出与其前五个滞后相关联的输入输出对，如下表所示：
 - en: '![](img/B15439_19_06.png)'
+  id: totrans-105
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_06.png)'
 - en: 'Figure 19.6: Input-output pairs with a T=5 size window'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.6：具有T=5大小窗口的输入输出对
 - en: 'We can use the `create_univariate_rnn_data()` function to stack the overlapping
     sequences that we select using a rolling window:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用`create_univariate_rnn_data()`函数堆叠我们使用滚动窗口选择的重叠序列：
 - en: '[PRE2]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'We apply this function to the rescaled stock index using `window_size=63` to
     obtain a two-dimensional dataset with a shape of the number of samples x the number
     of time steps:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用`window_size=63`对经过缩放的股票指数应用此函数以获得具有样本数量x时间步长数量的二维数据集的形状：
 - en: '[PRE3]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'We will use data from 2019 as our test set and reshape the features to add
     a requisite third dimension:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用2019年的数据作为我们的测试集，并重塑特征以添加必要的第三维：
 - en: '[PRE4]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: How to define a two-layer RNN with a single LSTM layer
+  id: totrans-113
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何定义具有单个LSTM层的两层RNN
 - en: 'Now that we have created autoregressive input/output pairs from our time series
     and split the pairs into training and test sets, we can define our RNN architecture.
     The Keras interface of TensorFlow 2 makes it very straightforward to build an
     RNN with two hidden layers with the following specifications:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们已经从时间序列创建了自回归输入/输出对并将这些对分成训练集和测试集，我们可以定义我们的RNN架构了。TensorFlow 2的Keras接口使得构建具有以下规格的两个隐藏层的RNN非常简单：
 - en: '**Layer 1**: An LSTM module with 10 hidden units (with `input_shape = (window_size,1)`;
     we will define `batch_size` in the omitted first dimension during training)'
+  id: totrans-115
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**层 1**：具有10个隐藏单元的LSTM模块（带有`input_shape = (window_size,1)`；在训练期间我们将在省略的第一维中定义`batch_size`）'
 - en: '**Layer 2**: A fully connected module with a single unit and linear activation'
+  id: totrans-116
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**层 2**：具有单个单元和线性激活的完全连接模块'
 - en: '**Loss**: `mean_squared_error` to match the regression objective'
+  id: totrans-117
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**损失**：`mean_squared_error`以匹配回归目标'
 - en: 'Just a few lines of code create the computational graph:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 只需几行代码就可以创建计算图：
 - en: '[PRE5]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'The summary shows that the model has 491 parameters:'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE6]'
+  id: totrans-121
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Training and evaluating the model
+  id: totrans-122
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'We train the model using the RMSProp optimizer recommended for RNN with default
     settings and compile the model with `mean_squared_error` for this regression problem:'
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE7]'
+  id: totrans-124
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'We define an `EarlyStopping` callback and train the model for 500 episodes:'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-126
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Training stops after 138 epochs. The loss history in *Figure 19.7* shows the
     5-epoch rolling average of the training and validation RMSE, highlights the best
     epoch, and shows that the loss is 0.998 percent:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '![](img/B15439_19_07.png)'
+  id: totrans-129
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.7: Cross-validation performance'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
 - en: Re-scaling the predictions
+  id: totrans-131
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'We use the `inverse_transform()` method of `MinMaxScaler()` to rescale the
     model predictions to the original S&P 500 range of values:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-133
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The four plots in *Figure 19.8* illustrate the forecast performance based on
     the rescaled predictions that track the 2019 out-of-sample S&P 500 data with a
     test **information coefficient** (**IC**) of 0.9889:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_19_08.png)'
+  id: totrans-135
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.8: RNN performance on S&P 500 predictions'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
 - en: Stacked LSTM – predicting price moves and returns
+  id: totrans-137
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -679,116 +934,155 @@
     for implementation details). Furthermore, we will include features that are not
     sequential in nature, namely, indicator variables identifying the equity and the
     month.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
 - en: '*Figure 19.9* outlines the architecture that illustrates how to combine different
     data sources in a single deep neural network. For example, instead of, or in addition
     to, one-hot encoded months, you could add technical or fundamental features:'
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_19_09.png)'
+  id: totrans-140
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.9: Stacked LSTM architecture with additional features'
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
 - en: Preparing the data – how to create weekly stock returns
+  id: totrans-142
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'We load the Quandl adjusted stock price data (see instructions on GitHub on
     how to obtain the source data) as follows (refer to the `build_dataset.ipynb`
     notebook):'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-144
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'We start by generating weekly returns for close to 2,500 stocks with complete
     data for the 2008-17 period:'
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-146
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'We create and stack rolling sequences of 52 weekly returns for each ticker
     and week as follows:'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-148
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'We winsorize outliers at the 1 and 99 percentile level and create a binary
     label that indicates whether the weekly return was positive:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-150
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'As a result, we obtain 1.16 million observations on over 2,400 stocks with
     52 weeks of lagged returns each (plus the label):'
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-152
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Now we are ready to create the additional features, split the data into training
     and test sets, and bring them into the three-dimensional format required for the
     LSTM.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
 - en: How to create multiple inputs in RNN format
+  id: totrans-154
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'This example illustrates how to combine several input data sources, namely:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
 - en: Rolling sequences of 52 weeks of lagged returns
+  id: totrans-156
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: One-hot encoded indicator variables for each of the 12 months
+  id: totrans-157
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: Integer-encoded values for the tickers
+  id: totrans-158
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: 'The following code generates the two additional features:'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Next, we create a training set covering the 2009-2016 period and a separate
     test set with data for 2017, the last full year with data:'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-162
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'For training and test datasets, we generate a list containing the three input
     arrays as shown in *Figure 19.9*:'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
 - en: The lagged return series (using the format described in *Figure 19.5*)
+  id: totrans-164
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The integer-encoded stock ticker as a one-dimensional array
+  id: totrans-165
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The month dummies as a two-dimensional array with one column per month
+  id: totrans-166
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-167
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: How to define the architecture using Keras' Functional API
+  id: totrans-168
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -796,54 +1090,69 @@
     outlined at the beginning of this section with multiple inputs (or several outputs,
     as in the SVHN example in *Chapter 18*, *CNNs for Financial Time Series and Satellite
     Images*). This example illustrates a network with three inputs:'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
 - en: '**Two stacked LSTM layers** with 25 and 10 units, respectively'
+  id: totrans-170
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: An **embedding layer** that learns a 10-dimensional real-valued representation
     of the equities
+  id: totrans-171
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: A **one-hot encoded** representation of the month
+  id: totrans-172
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: 'We begin by defining the three inputs with their respective shapes:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'To define **stacked LSTM layers**, we set the `return_sequences` keyword for
     the first layer to `True`. This ensures that the first layer produces an output
     in the expected three-dimensional input format. Note that we also use dropout
     regularization and how the Functional API passes the tensor outputs from one layer
     to the subsequent layer''s input:'
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-176
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: The TensorFlow 2 guide for RNNs highlights the fact that GPU support is only
     available when using the default values for most LSTM settings ([https://www.tensorflow.org/guide/keras/rnn](https://www.tensorflow.org/guide/keras/rnn)).
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
 - en: 'The **embedding layer** requires:'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
 - en: The `input_dim` keyword, which defines how many embeddings the layer will learn
+  id: totrans-179
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The `output_dim` keyword, which defines the size of the embedding
+  id: totrans-180
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
 - en: The `input_length` parameter, which sets the number of elements passed to the
     layer (here, only one ticker per sample)
+  id: totrans-181
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
@@ -852,85 +1161,114 @@
     outcome. We''ll choose a five-dimensional embedding for the roughly 2,500 ticker
     values to combine the embedding layer with the LSTM layer and the month dummies
     we need to reshape (or flatten) it:'
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-183
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Now we can concatenate the three tensors, followed by `BatchNormalization`:'
+  id: totrans-184
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-185
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'The fully connected final layers learn a mapping from these stacked LSTM layers,
     ticker embeddings, and month indicators to the binary outcome that reflects a
     positive or negative return over the following week. We formulate the complete
     RNN by defining its inputs and outputs with the implicit data flow we just defined:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'The summary lays out this slightly more sophisticated architecture with 16,984
     parameters:'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'We compile the model using the recommended RMSProp optimizer with default settings
     and compute the AUC metric that we''ll use for early stopping:'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-191
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'We train the model for 50 epochs by using early stopping:'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-193
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'The following plots show that training stops after 8 epochs, each of which
     takes around three minutes on a single GPU. It results in a test AUC of 0.6816
     and a test accuracy of 0.6193 for the best model:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_19_10.png)'
+  id: totrans-195
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.10: Stacked LSTM classification—cross-validation performance'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
 - en: The IC for the test prediction and actual weekly returns is 0.32.
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
 - en: Predicting returns instead of directional price moves
+  id: totrans-198
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: The `stacked_lstm_with_feature_embeddings_regression.ipynb` notebook illustrates
     how to adapt the model to the regression task of predicting returns rather than
     binary price changes.
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
 - en: 'The required changes are minor; just do the following:'
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
 - en: Select the `fwd_returns` outcome instead of the binary `label`.
+  id: totrans-201
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Convert the model output to linear (the default) instead of `sigmoid`.
+  id: totrans-202
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Update the loss to mean squared error (and early stopping references).
+  id: totrans-203
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: Remove or update optional metrics to match the regression task.
+  id: totrans-204
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
@@ -940,15 +1278,19 @@
     period while significant at the 1 percent level. The average weekly return differential
     between the equities in the top and bottom quintiles of predicted returns is slightly
     above 20 basis points:'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_19_11.png)'
+  id: totrans-206
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.11: Stacked LSTM regression—out-of-sample performance'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
 - en: Multivariate time-series regression for macro data
+  id: totrans-208
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -957,9 +1299,11 @@
     to the **vector autoregressive** (**VAR**) models we covered in *Chapter 9*, *Time-Series
     Models for Volatility Forecasts and Statistical Arbitrage*. Refer to the `multivariate_timeseries`
     notebook for implementation details.
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
 - en: Loading sentiment and industrial production data
+  id: totrans-210
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -967,12 +1311,16 @@
     the same dataset we used for the VAR example. It has monthly observations over
     40 years on consumer sentiment and industrial production from the Federal Reserve''s
     FRED service:'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE27]'
+  id: totrans-212
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: Making the data stationary and adjusting the scale
+  id: totrans-213
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -981,128 +1329,184 @@
     Models for Volatility Forecasts and Statistical Arbitrage* for details). We also
     rescale it to the [0, 1] range to ensure that the network gives both series equal
     weight during training:'
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-215
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: '*Figure 19.12* displays the original and transformed macro time series:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_19_12.png)'
+  id: totrans-217
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.12: Original and transformed time series'
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
 - en: Creating multivariate RNN inputs
+  id: totrans-219
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'The `create_multivariate_rnn_data()` function transforms a dataset of several
     time series into the three-dimensional shape required by TensorFlow''s RNN layers,
     formed as `n_samples × window_size × n_series`:'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: '`create_multivariate_rnn_data()`函数将包含多个时间序列的数据集转换为TensorFlow的RNN层所需的三维形状，形状为`n_samples
+    × window_size × n_series`：'
 - en: '[PRE29]'
+  id: totrans-221
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'A `window_size` value of 18 ensures that the entries in the second dimension
     are the lagged 18 months of the respective output variable. We thus obtain the
     RNN model inputs for each of the two features as follows:'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: '`window_size`值为18，确保第二维中的条目是相应输出变量的滞后18个月。因此，我们获得了每个特征的RNN模型输入如下：'
 - en: '[PRE30]'
+  id: totrans-223
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Finally, we split our data into a training and a test set, using the last 24
     months to test the out-of-sample performance:'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们将数据分为训练集和测试集，使用最后24个月来测试外样本性能：
 - en: '[PRE31]'
+  id: totrans-225
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: Defining and training the model
+  id: totrans-226
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 定义和训练模型
 - en: Given the relatively small dataset, we use a simpler RNN architecture than in
     the previous example. It has a single LSTM layer with 12 units, followed by a
     fully connected layer with 6 units. The output layer has two units, one for each
     time series.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 鉴于数据集相对较小，我们使用比前一个示例更简单的RNN架构。它具有一个具有12个单元的LSTM层，后跟具有6个单元的完全连接层。输出层有两个单元，分别用于每个时间序列。
 - en: 'We compile using mean absolute loss and the recommended RMSProp optimizer:'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用均方绝对损失和推荐的RMSProp优化器进行编译：
 - en: '[PRE32]'
+  id: totrans-229
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'The model still has 812 parameters, compared to 10 for the `VAR(1, 1)` model
     from *Chapter 9**, Time-Series Models for Volatility Forecasts and Statistical
     Arbitrage*:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模型仍然具有812个参数，而*第9章*《时间序列模型用于波动率预测和统计套利》中的`VAR(1,1)`模型只有10个参数：
 - en: '[PRE33]'
+  id: totrans-231
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'We train for 100 epochs with a `batch_size` of 20 using early stopping:'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用批处理大小为20进行100个周期的训练，使用提前停止：
 - en: '[PRE34]'
+  id: totrans-233
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: Training stops early after 62 epochs, yielding a test MAE of 0.034, an almost
     25 percent improvement over the test MAE for the VAR model of 0.043 on the same
     task.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 在经过62个周期后，训练提前停止，测试MAE为0.034，比相同任务的VAR模型的测试MAE提高了近25％，为0.043。
 - en: However, the two results are not fully comparable because the RNN produces 18
     1-step-ahead forecasts whereas the VAR model uses its own predictions as input
     for its out-of-sample forecast. You may want to tweak the VAR setup to obtain
     comparable forecasts and compare the performance.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 但是，这两个结果并不完全可比，因为RNN生成了18个1步预测，而VAR模型使用其自身的预测作为其外样本预测的输入。您可能需要调整VAR设置以获得可比较的预测并比较性能。
 - en: '*Figure 19.13* highlights training and validation errors, and the out-of-sample
     predictions for both series:'
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图19.13*突出显示了训练和验证误差，以及两个系列的外样本预测：'
 - en: '![](img/B15439_19_13.png)'
+  id: totrans-237
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_13.png)'
 - en: 'Figure 19.13: Cross-validation and test results for RNNs with multiple macro
     series'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.13：具有多个宏观系列的RNN的交叉验证和测试结果
 - en: RNNs for text data
+  id: totrans-239
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 用于文本数据的RNN
 - en: RNNs are commonly applied to various natural language processing tasks, from
     machine translation to sentiment analysis, that we already encountered in Part
     3 of this book. In this section, we will illustrate how to apply an RNN to text
     data to detect positive or negative sentiment (easily extensible to a finer-grained
     sentiment scale) and to predict stock returns.
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: RNN通常应用于各种自然语言处理任务，从机器翻译到情感分析，我们在本书第3部分已经遇到过。在本节中，我们将说明如何将RNN应用于文本数据以检测正面或负面情感（可轻松扩展为更细粒度的情感评分），以及预测股票回报。
 - en: More specifically, we'll use word embeddings to represent the tokens in the
     documents. We covered word embeddings in *Chapter 16*, *Word Embeddings for Earnings
     Calls and SEC Filings*. They are an excellent technique for converting a token
     into a dense, real-value vector because the relative location of words in the
     embedding space encodes useful semantic aspects of how they are used in the training
     documents.
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 具体来说，我们将使用单词嵌入来表示文档中的标记。我们在*第16章*《用于收入电话和SEC文件的单词嵌入》中介绍了单词嵌入。它们是将标记转换为密集的实值向量的绝佳技术，因为单词在嵌入空间中的相对位置编码了它们在训练文档中的有用语义方面。
 - en: We saw in the previous stacked RNN example that TensorFlow has a built-in embedding
     layer that allows us to train vector representations specific to the task at hand.
     Alternatively, we can use pretrained vectors. We'll demonstrate both approaches
     in the following three sections.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在前面的堆叠RNN示例中看到，TensorFlow具有内置的嵌入层，允许我们训练特定于手头任务的向量表示。或者，我们可以使用预训练的向量。我们将在以下三个部分中演示这两种方法。
 - en: LSTM with embeddings for sentiment classification
+  id: totrans-243
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 具有情感分类嵌入的LSTM
 - en: This example shows how to learn custom embedding vectors while training an RNN
     on the classification task. This differs from the word2vec model that learns vectors
     while optimizing predictions of neighboring tokens, resulting in their ability
@@ -1110,184 +1514,261 @@
     Embeddings for Earnings Calls and SEC Filings*). Learning word vectors with the
     goal of predicting sentiment implies that embeddings will reflect how a token
     relates to the outcomes it is associated with.
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个例子展示了如何在分类任务中训练 RNN 来学习自定义的嵌入向量。这与 word2vec 模型不同，后者在优化相邻标记的预测时学习向量，从而能够捕捉单词之间某些语义关系（参见
+    *第16章*，*用于盈利电话和SEC文件的单词嵌入*）。学习预测情感的词向量意味着嵌入将反映出一个标记与其相关联的结果之间的关系。
 - en: Loading the IMDB movie review data
+  id: totrans-245
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 加载 IMDB 电影评论数据
 - en: To keep the data manageable, we will illustrate this use case with the IMDB
     reviews dataset, which contains 50,000 positive and negative movie reviews, evenly
     split into a training set and a test set, with balanced labels in each dataset.
     The vocabulary consists of 88,586 tokens. Alternatively, you could use the much
     larger Yelp review data (after converting the text into numerical sequences; see
     the next section on using pretrained embeddings or TensorFlow 2 docs).
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了使数据易于处理，我们将使用 IMDB 评论数据集来说明这个用例，该数据集包含 50,000 条正面和负面电影评论，均匀分布在一个训练集和一个测试集中，并且每个数据集中的标签都是平衡的。词汇表包含
+    88,586 个标记。或者，您可以使用规模更大的 Yelp 评论数据（将文本转换为数值序列后；请参阅下一节关于使用预训练嵌入或 TensorFlow 2 文档）。
 - en: 'The dataset is bundled into TensorFlow and can be loaded so that each review
     is represented as an integer-encoded sequence. We can limit the vocabulary to
     `num_words` while filtering out frequent and likely less informative words using
     `skip_top` as well as sentences longer than `maxlen`. We can also choose the `oov_char`
     value, which represents tokens we chose to exclude from the vocabulary on frequency
     grounds:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据集已经捆绑到 TensorFlow 中，并可以加载，以便每个评论表示为整数编码的序列。我们可以通过使用 `skip_top` 过滤掉频繁和可能不太信息丰富的单词，以及长度超过
+    `maxlen` 的句子，来限制词汇量至 `num_words`。我们还可以选择 `oov_char` 值，它代表了我们基于频率排除词汇表的标记：
 - en: '[PRE35]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'In the second step, convert the lists of integers into fixed-size arrays that
     we can stack and provide as an input to our RNN. The `pad_sequence` function produces
     arrays of equal length, truncated and padded to conform to `maxlen`:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 在第二步中，将整数列表转换为固定大小的数组，我们可以堆叠并提供作为输入到我们的 RNN。`pad_sequence` 函数生成相等长度的数组，截断并填充以符合
+    `maxlen`：
 - en: '[PRE36]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: Defining embedding and the RNN architecture
+  id: totrans-251
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 定义嵌入和 RNN 架构
 - en: 'Now we can set up our RNN architecture. The first layer learns the word embeddings.
     We define the embedding dimensions as before, using the following:'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以设置我们的 RNN 架构了。第一层学习单词嵌入。我们使用以下内容定义嵌入维度，与以前一样：
 - en: The `input_dim` keyword, which sets the number of tokens that we need to embed
+  id: totrans-253
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`input_dim` 关键字设置了我们需要嵌入的标记数量'
 - en: The `output_dim` keyword, which defines the size of each embedding
+  id: totrans-254
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`output_dim` 关键字定义了每个嵌入的大小。'
 - en: The `input_len` parameter, which specifies how long each input sequence is going
     to be
+  id: totrans-255
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`input_len` 参数指定每个输入序列的长度'
 - en: 'Note that we are using GRU units this time that train faster and perform better
     on smaller amounts of data. We are also using recurrent dropout for regularization:'
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，这次我们使用的是 GRU 单元，它们训练更快，对少量数据表现更好。我们还使用了循环丢失以进行正则化：
 - en: '[PRE37]'
+  id: totrans-257
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'The resulting model has over 2 million trainable parameters:'
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果模型具有超过 200 万个可训练参数：
 - en: '[PRE38]'
+  id: totrans-259
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'We compile the model to use the AUC metric and train with early stopping:'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们编译模型以使用 AUC 指标，并使用提前停止训练：
 - en: '[PRE39]'
+  id: totrans-261
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'Training stops after 12 epochs, and we recover the weights for the best models
     to find a high test AUC of 0.9393:'
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 12 个时期后停止训练，并恢复最佳模型的权重，找到高达 0.9393 的高测试 AUC：
 - en: '[PRE40]'
+  id: totrans-263
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: '*Figure 19.14* displays the cross-validation performance in terms of accuracy
     and AUC:'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图19.14*显示了交叉验证性能，包括准确度和 AUC：'
 - en: '![](img/B15439_19_14.png)'
+  id: totrans-265
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_14.png)'
 - en: 'Figure 19.14: Cross-validation for RNN using IMDB data with custom embeddings'
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.14：使用自定义嵌入对 IMDB 数据进行 RNN 的交叉验证
 - en: Sentiment analysis with pretrained word vectors
+  id: totrans-267
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 预训练的词向量进行情感分析
 - en: In *Chapter 16*, *Word Embeddings for Earnings Calls and SEC Filings*, we discussed
     how to learn domain-specific word embeddings. Word2vec and related learning algorithms
     produce high-quality word vectors but require large datasets. Hence, it is common
     that research groups share word vectors trained on large datasets, similar to
     the weights for pretrained deep learning models that we encountered in the section
     on transfer learning in the previous chapter.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
 - en: We are now going to illustrate how to use pretrained **global vectors for word
     representation** (**GloVe**) provided by the Stanford NLP group with the IMDB
     review dataset (refer to GitHub for references and the `sentiment_analysis_pretrained_embeddings`
     notebook for implementation details).
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
 - en: Preprocessing the text data
+  id: totrans-270
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'We are going to load the IMDB dataset from the source to manually preprocess
     it (see the notebook). TensorFlow provides a `Tokenizer`, which we''ll use to
     convert the text documents to integer-encoded sequences:'
+  id: totrans-271
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE41]'
+  id: totrans-272
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'We also use the `pad_sequences` function to convert the list of lists (of unequal
     length) to stacked sets of padded and truncated arrays for both the training and
     test data:'
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE42]'
+  id: totrans-274
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: Loading the pretrained GloVe embeddings
+  id: totrans-275
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'We downloaded and unzipped the GloVe data to the location indicated in the
     code and will now create a dictionary that maps GloVe tokens to 100-dimensional,
     real-valued vectors:'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE43]'
+  id: totrans-277
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'There are around 340,000 word vectors that we use to create an embedding matrix
     that matches the vocabulary so that the RNN can access embeddings by the token
     index:'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE44]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: Defining the architecture with frozen weights
+  id: totrans-280
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
 - en: 'The difference with the RNN setup in the previous example is that we are going
     to pass the embedding matrix to the embedding layer and set it to *not trainable*
     so that the weights remain fixed during training:'
+  id: totrans-281
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE45]'
+  id: totrans-282
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'From here on, we proceed as before. Training continues for 32 epochs, as shown
     in *Figure 19.15*, and we obtain a test AUC score of 0.9106\. This is slightly
     worse than our result in the previous sections where we learned custom embedding
     for this domain, underscoring the value of training your own word embeddings:'
+  id: totrans-283
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/B15439_19_15.png)'
+  id: totrans-284
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 19.15: Cross-validation and test results for RNNs with multiple macro
     series'
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
 - en: You may want to apply these techniques to the larger financial text datasets
     that we used in Part 3.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
 - en: Predicting returns from SEC filing embeddings
+  id: totrans-287
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1299,18 +1780,24 @@
     for Earnings Calls and SEC Filings*, to learn word embeddings tailored to predicting
     the return of the ticker associated with the disclosures from before publication
     to one week after.
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
 - en: The `sec_filings_return_prediction` notebook contains the code examples for
     this section. See the `sec_preprocessing` notebook in *Chapter 16*, *Word Embeddings
     for Earnings Calls and SEC Filings*, and instructions in the data folder on GitHub
     on how to obtain the data.
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sec_filings_return_prediction` 笔记本包含本节的代码示例。请参阅 *第 16 章*，*盈利电话和美国证券交易委员会申报文件的词嵌入*
+    中的 `sec_preprocessing` 笔记本，并查看 GitHub 上数据文件夹中的说明以获取数据。'
 - en: Source stock price data using yfinance
+  id: totrans-290
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 使用 yfinance 获取源股票价格数据
 - en: 'There are 22,631 filings for the period 2013-16\. We use yfinance to obtain
     stock price data for the related 6,630 tickers because it achieves higher coverage
     than Quandl''s WIKI Data. We use the ticker symbol and filing date from the filing
@@ -1318,20 +1805,30 @@
     to download daily adjusted stock prices for three months before and one month
     after the filing data as follows, capturing both the price data and unsuccessful
     tickers in the process:'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 2013-16 期间有 22,631 份文件。我们使用 yfinance 获取了相关 6,630 个股票的股票价格数据，因为它比 Quandl 的 WIKI
+    数据具有更高的覆盖率。我们使用文件索引（请参阅 *第 16 章*，*盈利电话和美国证券交易委员会申报文件的词嵌入*）中的股票符号和申报日期下载申报日期前三个月和后一个月的每日调整股票价格，以获取价格数据和未成功的股票：
 - en: '[PRE46]'
+  id: totrans-292
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: We obtain data on 3,954 tickers and source prices for a few hundred missing
     tickers using the Quandl Wiki data (see the notebook) and end up with 16,758 filings
     for 4,762 symbols.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们获取了 3,954 个股票的数据，并使用 Quandl Wiki 数据获取了几百个缺失股票的价格（请参阅笔记本），最终得到了 4,762 个符号的
+    16,758 份文件。
 - en: Preprocessing SEC filing data
+  id: totrans-294
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 预处理 SEC 申报数据
 - en: 'Compared to product reviews, financial text documents tend to be longer and
     have a more formal structure. In addition, in this case, we rely on data sourced
     from EDGAR that requires parsing of the XBRL source (see *Chapter 2*, *Market
@@ -1339,47 +1836,67 @@
     material other than the desired sections. We take several steps during preprocessing
     to address outliers and format the text data as integer sequences of equal length,
     as required by the model that we will build in the next section:'
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 与产品评论相比，金融文本文档往往更长，结构更为正式。此外，在这种情况下，我们依赖于来自 EDGAR 的数据，该数据需要解析 XBRL 源（请参阅 *第
+    2 章*，*市场和基本数据-来源和技术*），可能存在包含除所需部分以外的其他材料的错误。我们在预处理过程中采取了几个步骤来处理异常值，并将文本数据格式化为模型所需的相等长度的整数序列：
 - en: Remove all sentences that contain fewer than 5 or more than 50 tokens; this
     affects approximately. 5 percent of sentences.
+  id: totrans-296
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 删除所有包含少于 5 个或多于 50 个令牌的句子；这影响约百分之 5 的句子。
 - en: Create 28,599 bigrams, 10,032 trigrams, and 2,372 n-grams with 4 elements.
+  id: totrans-297
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建了 28,599 个二元组，10,032 个三元组和 2,372 个具有 4 个元素的 n 元组。
 - en: Convert filings to a sequence of integers that represent the token frequency
     rank, removing filings with fewer than 100 tokens and truncating sequences at
     20,000 elements.
+  id: totrans-298
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将文件转换为表示令牌频率排名的整数序列，删除少于 100 个令牌的文件，并将序列截断为 20,000 个元素。
 - en: '*Figure 19.16* highlights some corpus statistics for the remaining 16,538 filings
     with 179,214,369 tokens, around 204,206 of which are unique. The left panel shows
     the token frequency distribution on a log-log scale; the most frequent terms,
     "million," "business," "company," and "products" occur more than 1 million times
     each. As usual, there is a very long tail, with 60 percent of tokens occurring
     fewer than 25 times.'
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 19.16* 强调了剩余的 16,538 份文件的一些语料库统计信息，共有 179,214,369 个令牌，其中约有 204,206 个是唯一的。左面板显示了以对数-对数尺度表示的令牌频率分布；最常见的术语，“百万”，“业务”，“公司”和“产品”每个都出现了超过
+    100 万次。通常情况下，有一个非常长的尾巴，其中 60% 的令牌出现次数少于 25 次。'
 - en: 'The central panel shows the distribution of the sentence lengths with a mode
     of around 10 tokens. Finally, the right panel shows the distribution of the filing
     length with a peak at 20,000 due to truncation:'
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 中央面板显示了约为 10 个令牌的句子长度的分布。最后，右侧面板显示了约为 20,000 的申报长度的分布，由于截断而呈现高峰：
 - en: '![](img/B15439_19_16.png)'
+  id: totrans-301
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_16.png)'
 - en: 'Figure 19.16: Cross-validation and test results for RNNs with multiple macro
     series'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 19.16: 具有多个宏观系列的 RNN 的交叉验证和测试结果'
 - en: Preparing data for the RNN model
+  id: totrans-303
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 为 RNN 模型准备数据
 - en: Now we need an outcome for our model to predict. We'll compute (somewhat arbitrarily)
     five-day forward returns for the day of filing (or the day before if there are
     no prices for that date), assuming that filing occurred after market hours. Clearly,
@@ -1387,114 +1904,170 @@
     emphasized in *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*,
     and *Chapter 3*, *Alternative Data for Finance – Categories and Use Cases*. We'll
     ignore this issue as the hidden cost of using free data.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们需要一个模型预测的结果。我们将计算（在某种程度上是任意的）文件当天（如果没有该日期的价格，则为前一天）的五天后回报，假设申报发生在市场闭市后。显然，这种假设可能是错误的，强调了第2章*市场和基本数据-来源和技术*和第3章*金融替代数据-类别和用例*中强调的**即时数据**的必要性。我们将忽略使用免费数据的隐藏成本问题。
 - en: 'We compute the forward returns as follows, removing outliers with weekly returns
     below 50 or above 100 percent:'
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们计算正向回报如下，删除周回报低于50或高于100％的异常值：
 - en: '[PRE47]'
+  id: totrans-306
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: 'This leaves us with 16,355 data points. Now we combine these outcomes with
     their matching filing sequences and convert the list of returns to a NumPy array:'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 这给我们留下了16,355个数据点。现在我们将这些结果与它们的匹配的申报序列组合起来，并将回报列表转换为NumPy数组：
 - en: '[PRE48]'
+  id: totrans-308
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'Finally, we create a 90:10 training/test split and use the `pad_sequences`
     function introduced in the first example in this section to generate fixed-length
     sequences of 20,000 elements each:'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们创建一个90:10的训练/测试分割，并使用本节中第一个示例中引入的`pad_sequences`函数生成每个长度为20,000的固定长度序列：
 - en: '[PRE49]'
+  id: totrans-310
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: Building, training, and evaluating the RNN model
+  id: totrans-311
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 构建、训练和评估RNN模型
 - en: 'Now we can define our RNN architecture. The first layer learns the word embeddings.
     We define the embedding dimensions as previously, setting the following:'
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以定义我们的RNN架构。第一层学习单词嵌入。我们将嵌入维度如前所述设置如下：
 - en: The `input_dim` keyword to the size of the vocabulary
+  id: totrans-313
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`input_dim`关键字到词汇表的大小'
 - en: The `output_dim` keyword to the size of each embedding
+  id: totrans-314
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`output_dim`关键词到每个嵌入的大小'
 - en: The `input_length` parameter to how long each input sequence is going to be
+  id: totrans-315
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`input_length`参数是每个输入序列将要多长'
 - en: 'For the recurrent layer, we use a bidirectional GRU unit that scans the text
     both forward and backward and concatenates the resulting output. We also add batch
     normalization and dropout for regularization with a five-unit dense layer before
     the linear output:'
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于递归层，我们使用双向GRU单元扫描文本向前和向后，并连接生成的输出。我们还在线性输出之前添加了五个单位的稠密层的批归一化和dropout进行正则化：
 - en: '[PRE50]'
+  id: totrans-317
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'The resulting model has over 2.5 million trainable parameters:'
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果模型有超过250万个可训练参数：
 - en: '[PRE51]'
+  id: totrans-319
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'We compile using the Adam optimizer, targeting the mean squared loss for this
     regression task while also tracking the square root of the loss and the mean absolute
     error as optional metrics:'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用Adam优化器进行编译，针对这个回归任务的均方损失，同时跟踪损失的平方根和绝对误差的均值作为可选指标：
 - en: '[PRE52]'
+  id: totrans-321
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: 'With early stopping, we train for up to 100 epochs on batches of 32 observations
     each:'
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用提前停止，我们每次对32个观测值的批次进行最多100个时期的训练：
 - en: '[PRE53]'
+  id: totrans-323
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: The mean absolute error improves for only 4 epochs, as shown in the left panel
     of *Figure 19.17:*
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
+  zh: 均方误差仅在4个时期内改善，如*图19.17*左侧面板所示：
 - en: '![](img/B15439_19_17.png)'
+  id: totrans-325
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_19_17.png)'
 - en: 'Figure 19.17: Cross-validation test results for RNNs using SEC filings to predict
     weekly returns'
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
+  zh: 图19.17：使用SEC申报预测每周回报的RNN的交叉验证测试结果
 - en: 'On the test set, the best model achieves a highly significant IC of 6.02:'
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
+  zh: 在测试集上，最佳模型达到了高度显著的IC值为6.02：
 - en: '[PRE54]'
+  id: totrans-328
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: Lessons learned and next steps
+  id: totrans-329
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 吸取的教训和下一步
 - en: The model is capable of generating return predictions that are significantly
     better than chance using only text data. There are both caveats that suggest taking
     the results with a grain of salt and reasons to believe we could improve on the
     result of this experiment.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 该模型能够仅使用文本数据生成显著优于随机的回报预测。既有一些警告表明应谨慎对待结果，也有理由相信我们可以改进这个实验的结果。
 - en: On the one hand, the quality of both the stock price data and the parsed SEC
     filings is far from perfect. It's unclear whether price data issues bias the results
     positively or negatively, but they certainly increase the margin of error. More
     careful parsing and cleaning of the SEC filings would most likely improve the
     results by removing noise.
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 一方面，股价数据和解析后的SEC申报的质量都远非完美。尚不清楚价格数据问题是否会积极或消极地偏向结果，但它们肯定会增加误差边际。更加仔细地解析和清理SEC申报很可能会通过消除噪音来改善结果。
 - en: On the other hand, there are numerous optimizations that may well improve the
     result. Starting with the text input, we did not attempt to parse the filing content
     beyond selecting certain sections; there may be value in removing boilerplate
@@ -1504,14 +2077,17 @@
     prediction horizon. Furthermore, there are multiple aspects of the model architecture
     that we could refine, from the size of the embeddings to the number and size of
     layers and the degree of regularization.
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
 - en: Most fundamentally, we could combine the text input with a richer set of complementary
     features, as demonstrated in the previous section, using stacked LSTM with multiple
     inputs. Finally, we would certainly want a larger set of filings.
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
 - en: Summary
+  id: totrans-334
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -1519,6 +2095,7 @@
     to sequential data. We covered how RNNs work, analyzed the computational graph,
     and saw how RNNs enable parameter-sharing over numerous steps to capture long-range
     dependencies that FFNNs and CNNs are not well suited for.
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
 - en: We also reviewed the challenges of vanishing and exploding gradients and saw
@@ -1526,10 +2103,12 @@
     over hundreds of time steps. Finally, we applied RNNs to challenges common in
     algorithmic trading, such as predicting univariate and multivariate time series
     and sentiment analysis using SEC filings.
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
 - en: In the next chapter, we will introduce unsupervised deep learning techniques
     like autoencoders and generative adversarial networks and their applications to
     investment and trading strategies.
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
