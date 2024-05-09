@@ -1,8 +1,10 @@
 - en: '9'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: Time-Series Models for Volatility Forecasts and Statistical Arbitrage
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -14,6 +16,7 @@
     a correctly specified model with residuals that are not correlated with the input
     variables. Adding the assumption that the residuals have constant variance guarantees
     that OLS produces the smallest mean squared prediction error among unbiased estimators.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
 - en: We also encountered panel data that had both cross-sectional and time-series
@@ -21,12 +24,14 @@
     of risk factors over time and across assets. However, the relationship between
     returns across time is typically fairly low, so this procedure could largely ignore
     the time dimension.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
 - en: Furthermore, we covered the regularized ridge and lasso regression models, which
     produce biased coefficient estimates but can reduce the mean squared prediction
     error. These predictive models took a more dynamic perspective and combined historical
     returns with other inputs to predict forward returns.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
 - en: 'In this chapter, we will build dynamic linear models to explicitly represent
@@ -34,6 +39,7 @@
     of time-series data is their sequential order: rather than random samples of individual
     observations, as in the case of cross-sectional data, our data is a single realization
     of a stochastic process that we cannot repeat.'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
 - en: Our goal is to identify systematic patterns in time series that help us predict
@@ -44,6 +50,7 @@
     past returns, combined with historical returns of a benchmark or macroeconomic
     variables. We will focus on linear time-series models before turning to nonlinear models
     like recurrent or convolutional neural networks in Part 4.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
 - en: Time-series models are very popular given the time dimension inherent to trading.
@@ -51,6 +58,7 @@
     as the identification of the co-movements of asset price series. Time-series data
     is likely to become more prevalent as an ever-broader array of connected devices
     collects regular measurements with potential signal content.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
 - en: We will first introduce the tools we can use to diagnose time-series characteristics
@@ -59,43 +67,61 @@
     and multivariate time-series models and apply them in order to forecast macro
     data and volatility patterns. We will conclude with the concept of cointegration
     and how to apply it to develop a pairs trading strategy.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先介绍可以用来诊断时间序列特征和提取捕捉潜在模式的特征的工具。然后，我们将介绍如何诊断和实现时间序列平稳性。接下来，我们将介绍单变量和多变量时间序列模型，并将其应用于预测宏观数据和波动性模式。最后，我们将介绍协整概念以及如何将其应用于开发配对交易策略。
 - en: 'In particular, we will cover the following topics:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 具体来说，我们将涵盖以下主题：
 - en: How to use time-series analysis to prepare and inform the modeling process
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用时间序列分析来准备和指导建模过程
 - en: Estimating and diagnosing univariate autoregressive and moving-average models
+  id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 估计和诊断单变量自回归和移动平均模型
 - en: Building **autoregressive conditional heteroskedasticity** (**ARCH**) models
     to predict volatility
+  id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 构建**自回归条件异方差**（**ARCH**）模型以预测波动性
 - en: How to build multivariate vector autoregressive models
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何构建多元向量自回归模型
 - en: Using cointegration to develop a pairs trading strategy
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用协整来开发配对交易策略
 - en: You can find the code samples for this chapter and links to additional resources
     in the corresponding directory of the GitHub repository. The notebooks include
     color versions of the images. For a thorough introduction to the topics of this
     chapter from an investment perspective, see Tsay (2005) and Fabozzi, Focardi,
     and Kolm (2010).
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以在GitHub仓库的相应目录中找到本章的代码示例和其他资源链接。这些笔记本包含了图片的彩色版本。关于本章主题的投资角度的全面介绍，请参阅Tsay（2005年）和Fabozzi、Focardi和Kolm（2010年）。
 - en: Tools for diagnostics and feature extraction
+  id: totrans-16
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 诊断和特征提取工具
 - en: A time series is a sequence of values separated by discrete intervals that are
     typically even spaced (except for missing values). A time series is often modeled
     as a stochastic process consisting of a collection of random variables, ![](img/B15439_09_001.png),
@@ -103,100 +129,139 @@
     time series consists of a single value, *y*, at each point in time, whereas a
     multivariate time series consists of several observations that can be represented
     by a vector.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列是一系列以离散间隔分隔的值，通常是均匀间隔的（除了缺失值）。时间序列通常被建模为一个随机过程，由一组随机变量，![](img/B15439_09_001.png)，组成，每个时间点有一个变量，![](img/B15439_09_002.png)。单变量时间序列由每个时间点上的单个值*y*组成，而多变量时间序列由可以用向量表示的多个观察值组成。
 - en: The number of periods, ![](img/B15439_09_003.png), between distinct points in
     time, *t*[i], *t*[j], is called **lag**, with *T*-1 distinct lags for each time
     series. Just as relationships between different variables at a given point in
     time is key for cross-sectional models, relationships between data points separated
     by a given lag are fundamental to analyzing and exploiting patterns in time series.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 两个不同时间点*t*[i]、*t*[j]之间的周期数，![](img/B15439_09_003.png)，称为**滞后**，每个时间序列有*T*-1个不同的滞后。正如交叉模型中不同变量在给定时间点的关系对于横截面模型至关重要一样，分隔给定滞后的数据点之间的关系对于分析和利用时间序列中的模式至关重要。
 - en: For cross-sectional models, we distinguished between input and output variables,
     or target and predictors, with the labels *y* and *x*, respectively. In a time-series
     context, some or all of the lagged values ![](img/B15439_09_004.png) of the outcome
     *y* play the role of the input or *x* values in the cross-section context.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于横截面模型，我们用标签*y*和*x*来区分输入和输出变量，或目标和预测变量。在时间序列的情况下，结果*y*的一些或所有滞后值扮演横截面情况下输入或*x*值的角色。
 - en: A time series is called **white noise** if it is a sequence of **independent
     and identically distributed** (**IID**) random variables, ![](img/B15439_09_005.png),
     with finite mean and variance. In particular, the series is called a **Gaussian
     white noise** if the random variables are normally distributed with a mean of
     zero and a constant variance of ![](img/B15439_09_006.png).
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果一个时间序列是**独立同分布**（**IID**）的随机变量序列，且具有有限均值和方差，则称其为**白噪声**。特别地，如果这个序列的随机变量服从均值为零、方差为常数的正态分布，则称其为**高斯白噪声**。
 - en: 'A time series is linear if it can be written as a weighted sum of past disturbances,
     ![](img/B15439_09_007.png), that are also called innovations and are here assumed
     to represent white noise, and the mean of the series, ![](img/B15439_04_005.png):'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果时间序列可以写成过去扰动的加权和，![](img/B15439_09_007.png)，也称为创新，并且在此假定为代表白噪声的扰动序列的平均值，那么时间序列是线性的：
 - en: '![](img/B15439_09_009.png)'
+  id: totrans-22
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_009.png)'
 - en: A key goal of time-series analysis is to understand the dynamic behavior that
     is driven by the coefficients, ![](img/B15439_09_010.png). The analysis of time
     series offers methods tailored to this type of data with the goal of extracting
     useful patterns that, in turn, help us build predictive models.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列分析的一个关键目标是了解由系数驱动的动态行为，![](img/B15439_09_010.png)。时间序列分析提供了针对这种类型数据量身定制的方法，目的是提取有用的模式，进而帮助我们建立预测模型。
 - en: We will introduce the most important tools for this purpose, including the decomposition
     into key systematic elements, the analysis of autocorrelation, and rolling window
     statistics such as moving averages.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将介绍实现这一目的的最重要工具，包括分解为关键的系统元素、自相关分析以及滚动窗口统计，如移动平均值。
 - en: For most of the examples in this chapter, we will work with data provided by
     the Federal Reserve that you can access using pandas-datareader, which we introduced
     in *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*. The code
     examples for this section are available in the notebook `tsa_and_stationarity`.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于本章中的大多数示例，我们将使用联邦储备提供的数据，您可以使用我们在 *第 2 章*，*市场和基本数据-来源和技术* 中介绍的 pandas-datareader
+    访问。本节的代码示例在笔记本 `tsa_and_stationarity` 中可用。
 - en: How to decompose time-series patterns
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何分解时间序列模式
 - en: Time-series data typically contains a mix of patterns that can be decomposed
     into several components. In particular, a time series often combines systematic
     components like trend, seasonality, and cycles with unsystematic noise. These
     components can be modeled as a linear combination (for example, when fluctuations
     do not depend on the level of the series) or in a nonlinear, multiplicative form.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列数据通常包含多种模式，可以将其分解为几个组件。特别是，时间序列通常将趋势、季节性和周期性等系统性组件与非系统性噪声结合在一起。这些组件可以建模为线性组合（例如，当波动不依赖于系列水平时）或非线性乘法形式。
 - en: 'Based on the model assumptions, they can also be split up automatically. Statsmodels
     includes a simple method to split the time series into separate trend, seasonal,
     and residual components using moving averages. We can apply it to monthly data
     on industrial manufacturing that contain both a strong trend component and a seasonality
     component, as follows:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据模型假设，它们也可以自动拆分。Statsmodels 包括一种简单的方法，使用移动平均值将时间序列拆分为单独的趋势、季节性和残差组件。我们可以将其应用于包含强趋势组件和季节性组件的月度工业制造数据，如下所示：
 - en: '[PRE0]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: '*Figure 9.1* shows the resulting charts that display the additive components.
     The residual component would be the focus of subsequent modeling efforts, assuming
     that the trend and seasonality components are more deterministic and amenable
     to simple extrapolation:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 9.1* 显示了显示加法组件的结果图表。残差组件将成为后续建模工作的重点，假设趋势和季节性组件更具确定性并且更易于简单外推：'
 - en: '![](img/15439_09_01.png)'
+  id: totrans-31
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_01.png)'
 - en: 'Figure 9.1: Time-series decomposition into trend, seasonality, and residuals'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.1：时间序列分解为趋势、季节性和残差
 - en: There are more sophisticated model-based approaches—see, for example, *Chapter
     6*, *The Machine  Learning Process*, in Hyndman and Athanasopoulos (2018).
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有更复杂的基于模型的方法，例如 Hyndman 和 Athanasopoulos（2018）中的 *第 6 章*，*机器学习过程*。
 - en: Rolling window statistics and moving averages
+  id: totrans-34
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 滚动窗口统计和移动平均线
 - en: Given the sequential ordering of time-series data, it is natural to compute
     familiar descriptive statistics for periods of a given length. The goal is to
     detect whether the series is stable or changes over time and obtain a smoothed
     representation that captures systematic aspects while filtering out the noise.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 鉴于时间序列数据的顺序排列，自然而然地可以计算给定长度期间的熟悉描述性统计。目标是检测系列是否稳定或随时间变化，并获得捕获系统方面的平滑表示，同时过滤噪声。
 - en: 'Rolling window statistics serve this process: they produce a new time series
     where each data point represents a summary statistic computed for a certain period
     of the original data. Moving averages are the most familiar example. The original
@@ -205,22 +270,28 @@
     weights that decay for data points further in the past. The new data points are
     typically a summary of all preceding data points, but they can also be computed
     from a surrounding window.'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 滚动窗口统计信息服务于此过程：它们生成一个新的时间序列，其中每个数据点代表原始数据的一定期间内的摘要统计量。移动平均是最熟悉的例子。原始数据点可以以相等的权重进入计算，也可以，例如，强调更近期的数据点。指数移动平均递归地计算权重，这些权重对于更早的数据点衰减。新数据点通常是所有先前数据点的摘要，但也可以从周围的窗口计算得出。
 - en: The pandas library includes rolling or expanding windows and allows for various
     weight distributions. In a second step, you can apply computations to each set
     of data captured by a window. These computations include built-in functions for
     individual series, such as the mean or the sum, and the correlation or covariance
     for several series, as well as user-defined functions.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: Pandas 库包括滚动或扩展窗口，并允许使用各种权重分布。在第二步中，您可以对每个窗口捕获的数据集应用计算。这些计算包括用于单个系列的内置函数，如均值或总和，以及用于多个系列的相关性或协方差，以及用户定义的函数。
 - en: We used this functionality to engineer features in *Chapter 4*, *Financial Feature
     Engineering – How to Research Alpha Factors*, and *Chapter 7*, *Linear Models
     – From Risk Factors to Return Forecasts*, for example. The moving average and
     exponential smoothing examples in the following section will also apply these
     tools.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在*第 4 章*、*金融特征工程 - 如何研究阿尔法因子*和*第 7 章*、*线性模型 - 从风险因素到收益预测*中使用了这个功能来设计特征。例如，下一节中的移动平均和指数平滑示例也将应用这些工具。
 - en: Early forecasting models included **moving-average models** with exponential
     weights called **exponential smoothing models**. We will encounter moving averages
     again as key building blocks for linear time series. Forecasts that rely on exponential
@@ -228,27 +299,37 @@
     decay exponentially as the observations get older. Hence, a more recent observation
     receives a higher associated weight. These methods are popular for time series
     that do not have very complicated or abrupt patterns.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 早期的预测模型包括带有指数权重的**移动平均模型**，称为**指数平滑模型**。我们将再次遇到移动平均作为线性时间序列的关键构建模块。依赖指数平滑方法的预测使用过去观察值的加权平均值，其中权重随着观察值变老而指数衰减。因此，较近期的观察值会获得较高的相关权重。这些方法在时间序列没有非常复杂或突然的模式时很受欢迎。
 - en: How to measure autocorrelation
+  id: totrans-40
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何测量自相关
 - en: '**Autocorrelation** (also called *serial correlation*) adapts the concept of
     correlation to the time-series context: just as the correlation coefficient measures
     the strength of a linear relationship between two variables, the **autocorrelation
     coefficient**, ![](img/B15439_09_011.png), measures the extent of a linear relationship
     between time-series values separated by a given lag, *k*:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: '**自相关**（也称为*串行相关*）将相关性的概念应用到时间序列的背景下：就像相关系数衡量两个变量之间线性关系的强度一样，**自相关系数**，![](img/B15439_09_011.png)，衡量了相隔给定滞后时间*k*的时间序列值之间的线性关系的程度：'
 - en: '![](img/B15439_09_012.png)'
+  id: totrans-42
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_012.png)'
 - en: Hence, we can calculate one autocorrelation coefficient for each of the *T*-1
     lags in a time series of length *T*. The **autocorrelation function** (**ACF**)
     computes the correlation coefficients as a function of the lag.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们可以计算时间序列的*T*-1个滞后期中的每个自相关系数。**自相关函数**（**ACF**）将相关系数作为滞后期的函数计算。
 - en: The autocorrelation for a lag larger than 1 (that is, between observations more
     than one timestep apart) reflects both the direct correlation between these observations
     and the indirect influence of the intervening data points. The **partial autocorrelation**
@@ -259,13 +340,17 @@
     in the next section on univariate time-series models). The **partial autocorrelation
     function** (**PACF**) provides all the correlations that result once the effects
     of a correlation at shorter lags have been removed, as described previously.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 超过1个滞后（即，两个观察值相隔超过一个时间步长）的自相关反映了这些观察值之间的直接相关性以及介于其间数据点的间接影响。**偏自相关**消除了这种影响，仅测量给定滞后距离*T*处数据点之间的线性依赖关系。消除意味着使用线性回归的残差，其中结果*x*[t]和滞后值*x*[t][-1]、*x*[t][-2]，…，*x*[T][-1]作为特征（也称为*AR*(*T*-1)模型，我们将在下一节关于单变量时间序列模型中讨论此模型）。**偏自相关函数**（**PACF**）提供了一旦较短滞后的相关性效应被消除后所得到的所有相关性，如前述所述。
 - en: There are also algorithms that estimate the partial autocorrelation from the
     sample autocorrelation based on the exact theoretical relationship between the
     PACF and the ACF.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 还有一些算法根据样本自相关来估计偏自相关，这些算法基于PACF和ACF之间的精确理论关系。
 - en: A **correlogram** is simply a plot of the ACF or PACF for sequential lags, *k*=0,1,...,*n*.
     It allows us to inspect the correlation structure across lags at one glance (see
     *Figure 9.3* for an example). The main usage of correlograms is to detect any
@@ -273,12 +358,16 @@
     the ACF and the PACF are key diagnostic tools for the design of linear time-series
     models, and we will review examples of ACF and PACF plots in the following section
     on time-series transformations.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: '**自相关图**简单地是顺序滞后*k*=0,1,...,*n*的ACF或PACF的图。它允许我们一眼看出不同滞后的相关结构（有关示例，请参见*图9.3*）。自相关图的主要用途是在去除确定性趋势或季节性后检测任何自相关性。ACF和PACF都是线性时间序列模型设计的关键诊断工具，我们将在下一节关于时间序列变换的示例中回顾ACF和PACF图。'
 - en: How to diagnose and achieve stationarity
+  id: totrans-47
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 如何诊断和实现平稳性
 - en: The statistical properties, such as the mean, variance, or autocorrelation,
     of a **stationary time series** are independent of the period—that is, they don't
     change over time. Thus, **stationarity** implies that a time series does not have
@@ -287,8 +376,10 @@
     windows, are constant or do not change significantly over time. A stationary time
     series reverts to its mean, and the deviations have a constant amplitude, while
     short-term movements are always alike in a statistical sense.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: '**平稳时间序列**的统计特性，如均值、方差或自相关，与周期无关—即，它们随时间不变。因此，**平稳性**意味着时间序列没有趋势或季节效应。此外，它要求在不同滚动窗口计算的描述性统计量，如均值或标准差，是恒定的或随时间变化不显著。平稳时间序列会回归到其均值，并且偏差具有恒定的振幅，而短期波动在统计意义上始终是相同的。'
 - en: More formally, **strict stationarity** requires the joint distribution of any
     subset of time-series observations to be independent of time with respect to all
     moments. So, in addition to the mean and variance, higher moments such as skew
@@ -299,76 +390,104 @@
     and autocorrelation. However, we abandon this assumption when building modeling
     volatility and explicitly assume the variance to change over time in predictable
     ways.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 更正式地说，**严格平稳性**要求时间序列观测的任何子集的联合分布在所有时刻上都与时间无关。因此，除了均值和方差外，高阶矩如偏度和峰度也需要保持恒定，而不受不同观测值之间滞后的影响。在大多数应用中，例如本章中大多数可用于建模资产收益率的时间序列模型中，我们将平稳性限制在一阶和二阶矩上，使得时间序列具有恒定的均值、方差和自相关性。然而，在构建建模波动率时，我们放弃了这一假设，并明确假设方差会以可预测的方式随时间变化。
 - en: Note that we specifically allow for **dependence between output values at different
     lags**, just like we want the input data for linear regression to be correlated
     with the outcome. Stationarity implies that these relationships are stable. Stationarity
     is a key assumption of classical statistical models. The following two subsections
     introduce transformations that can help make a time series stationary, as well
     as how to address the special case of a stochastic trend caused by a unit root.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们特别允许输出值在不同滞后期之间存在**依赖关系**，就像我们希望线性回归的输入数据与结果相关一样。平稳性意味着这些关系是稳定的。平稳性是经典统计模型的关键假设。下面的两个小节介绍了可以帮助使时间序列平稳的转换，以及如何处理由单位根引起的随机趋势的特殊情况。
 - en: Transforming a time series to achieve stationarity
+  id: totrans-51
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 转换时间序列以实现平稳性
 - en: To satisfy the stationarity assumption of many time-series models, we need to
     transform the original series, often in several steps. Common transformations
     include the (natural) **logarithm** to convert an exponential growth pattern into
     a linear trend and stabilize the variance. **Deflation** implies dividing a time
     series by another series that causes trending behavior, for example, dividing
     a nominal series by a price index to convert it into a real measure.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了满足许多时间序列模型的平稳性假设，我们需要对原始序列进行转换，通常需要几个步骤。常见的转换包括（自然）**对数**，将指数增长模式转换为线性趋势并稳定方差。**通货紧缩**意味着将一个时间序列除以另一个导致趋势行为的序列，例如，将一个名义序列除以一个价格指数以将其转换为实际度量。
 - en: A series is **trend-stationary** if it reverts to a stable long-run linear trend.
     It can often be made stationary by fitting a trend line using linear regression
     and using the residuals. This implies including the time index as an independent
     variable in a linear regression model, possibly combined with logging or deflating.
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果一个序列是**趋势稳定**的，那么它将恢复到一个稳定的长期线性趋势。通常可以通过使用线性回归拟合趋势线并使用残差来使其平稳。这意味着在线性回归模型中包括时间指数作为独立变量，可能结合对数化或通货紧缩。
 - en: In many cases, detrending is not sufficient to make the series stationary. Instead,
     we need to transform the original data into a series of **period-to-period and/or
     season-to-season differences**. In other words, we use the result of subtracting
     neighboring data points or values at seasonal lags from each other. Note that
     when such differencing is applied to a log-transformed series, the results represent
     instantaneous growth rates or returns in a financial context.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 在许多情况下，去趋势化不足以使序列平稳。相反，我们需要将原始数据转换为一系列**周期间和/或季节间差异**。换句话说，我们使用相邻数据点或季节滞后的值相减的结果。请注意，当这种差分应用于对数变换序列时，结果代表的是金融背景下的瞬时增长率或收益率。
 - en: If a univariate series becomes stationary after differencing *d* times, it is
     said to be integrated of the order of *d*, or simply integrated if *d*=1\. This
     behavior is due to unit roots, which we will explain next.
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果单变量序列经过*d*次差分后变得平稳，就称为*d*阶整合，或者简称为一阶整合如果*d*=1。这种行为是由单位根引起的，接下来我们将解释。
 - en: Handling instead of how to handle
+  id: totrans-56
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 处理而不是如何处理
 - en: Unit roots pose a particular problem for determining the transformation that
     will render a time series stationary. We will first explain the concept of a unit
     root before discussing diagnostics tests and solutions.
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 单位根对确定使时间序列平稳的转换方法构成特殊问题。在讨论诊断测试和解决方案之前，我们将首先解释单位根的概念。
 - en: On unit roots and random walks
+  id: totrans-58
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 关于单位根和随机游走
 - en: 'Time series are often modeled as stochastic processes of the following autoregressive
     form so that the current value is a weighted sum of past values, plus a random
     disturbance:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列经常被建模为以下自回归形式的随机过程，以使当前值成为过去值的加权和，再加上一个随机扰动：
 - en: '![](img/B15439_09_013.png)'
+  id: totrans-60
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_013.png)'
 - en: 'We will explore these models in more detail as the AR building block for ARIMA
     models in the next section on univariate time-series models. Such a process has
     a characteristic equation of the following form:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一节中，我们将更详细地探讨这些模型作为ARIMA模型中AR的构建块的单变量时间序列模型。这样的过程具有以下形式的特征方程：
 - en: '![](img/B15439_09_014.png)'
+  id: totrans-62
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_014.png)'
 - en: If one of the (up to) *p* roots of this polynomial equals 1, then the process
     is said to have a **unit root**. It will be non-stationary but will not necessarily
     have a trend. If the remaining roots of the characteristic equation are less than
@@ -376,32 +495,45 @@
     the **process is integrated of order 1 or I(1)**. With additional roots larger
     than 1 in absolute terms, the order of integration is higher and additional differencing
     will be required.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这个多项式的（最多）*p*个根之一等于1，则过程被称为具有**单位根**。它将是非平稳的，但不一定会有趋势。如果特征方程的剩余根的绝对值小于1，则该过程的一阶差分将是平稳的，并且**过程是一阶整合的或I(1)**。如果额外的根的绝对值大于1，则积分阶数更高，并且需要额外的差分。
 - en: 'In practice, time series of interest rates or asset prices are often not stationary
     because there isn''t a price level to which the series reverts. The most prominent
     example of a non-stationary series is the random walk. Given a time series of
     prices *p*[t] with starting price *p*[0](for example, a stock''s IPO price) and
     a white-noise disturbance ![](img/B15439_09_005.png), then a random walk satisfies
     the following autoregressive relationship:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实践中，利率或资产价格的时间序列通常不是平稳的，因为没有价格水平可供系列回归到。非平稳序列的最突出例子是随机漫步。给定具有初始价格 *p*[0]（例如，股票的IPO价格）和白噪声扰动
+    ![](img/B15439_09_005.png) 的价格时间序列 *p*[t]，随机漫步满足以下自回归关系：
 - en: '![](img/B15439_09_016.png)'
+  id: totrans-65
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_016.png)'
 - en: Repeated substitution shows that the current value, *p*[t], is the sum of all
     prior disturbances or innovations, ![](img/B15439_09_005.png), and the initial
     price, *p*[0]. If the equation includes a constant term, then the random walk
     is said to have **drift**.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 重复替换表明当前值 *p*[t] 是所有先前扰动或创新，![](img/B15439_09_005.png)，以及初始价格 *p*[0] 的总和。如果方程包括一个常数项，那么随机漫步被认为有**漂移**。
 - en: 'The random walk is thus an **autoregressive stochastic process** of the following
     form:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 随机漫步因此是以下形式的**自回归随机过程**：
 - en: '![](img/B15439_09_018.png)'
+  id: totrans-68
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_018.png)'
 - en: It has the characteristic equation ![](img/B15439_09_019.png) with a unit root
     and is both non-stationary and integrated of order 1\. On the one hand, given
     the IID nature of ![](img/B15439_09_020.png), the variance of the time series
@@ -410,293 +542,420 @@
     other hand, taking the **first difference**, ![](img/B15439_09_022.png), leaves
     ![](img/B15439_09_023.png), which is **stationary**, given the statistical assumption
     about ![](img/B15439_09_024.png).
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 它的特征方程为 ![](img/B15439_09_019.png)，具有单位根，既是非平稳的，也是一阶整合的。一方面，鉴于 ![](img/B15439_09_020.png)
+    的IID特性，时间序列的方差等于 ![](img/B15439_09_021.png)，这是**不是二阶平稳的**，这意味着原则上，该序列可以随时间取任何值。另一方面，**进行第一阶差分**，得到
+    ![](img/B15439_09_022.png)，留下了 **平稳的**序列 ![](img/B15439_09_023.png)，鉴于对 ![](img/B15439_09_024.png)
+    的统计假设。
 - en: 'The defining characteristic of a non-stationary series with a unit-root is
     **long memory**: since current values are the sum of past disturbances, large
     innovations persist for much longer than for a mean-reverting, stationary series.'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 具有单位根的非平稳序列的定义特征是**长期记忆**：由于当前值是过去扰动的总和，大的创新比均值回归、平稳序列持续时间更长。
 - en: How to diagnose a unit root
+  id: totrans-71
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何诊断单位根
 - en: Statistical unit root tests are a common way to determine objectively whether
     (additional) differencing is necessary. These are statistical hypothesis tests
     of stationarity that are designed to determine whether differencing is required.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 统计单位根检验是一种确定是否需要（额外）差分的常见方法。这些是用于确定是否需要差分的平稳性的统计假设检验。
 - en: The **augmented Dickey-Fuller test** (**ADF test**) evaluates the null hypothesis
     that a time-series sample has a unit root against the alternative of stationarity.
     It regresses the differenced time series on a time trend, the first lag, and all
     lagged differences, and computes a test statistic from the value of the coefficient
     on the lagged time-series value. `statsmodels` makes it easy to implement (see
     the notebook `tsa_and_stationarity`).
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: '**增广的迪基-富勒检验**（**ADF检验**）评估一个时间序列样本是否具有单位根的零假设，对立假设是平稳性。它将差分时间序列回归到时间趋势、第一滞后和所有滞后差分上，并从滞后时间序列值的系数值计算出一个检验统计量。`statsmodels`使其易于实现（参见笔记本`tsa_and_stationarity`）。'
 - en: 'Formally, the ADF test for a time series, ![](img/B15439_09_025.png), runs
     the linear regression where ![](img/B15439_09_026.png) is a constant, ![](img/B15439_07_004.png)
     is a coefficient on a time trend, and *p* refers to the number of lags used in
     the model:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 形式上，对于一个时间序列的ADF检验，![](img/B15439_09_025.png)，进行线性回归，其中 ![](img/B15439_09_026.png)
+    是一个常数，![](img/B15439_07_004.png) 是时间趋势上的系数，*p* 指的是模型中使用的滞后数：
 - en: '![](img/B15439_09_028.png)'
+  id: totrans-75
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_028.png)'
 - en: The constraint ![](img/B15439_09_029.png) implies a random walk, whereas only
     ![](img/B15439_09_030.png) implies a random walk with drift. The lag order is
     usually decided using the **Akaike information criterion** (**AIC**) and **Bayesian
     information criterion** (**BIC**) information criteria introduced in *Chapter 7*,
     *Linear Models – From Risk Factors to Return Forecasts*.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 约束 ![](img/B15439_09_029.png) 意味着一个随机游走，而仅有 ![](img/B15439_09_030.png) 意味着一个带漂移的随机游走。滞后阶数通常使用**赤池信息准则**（**AIC**）和**贝叶斯信息准则**（**BIC**）信息准则来决定，这些准则在
+    *第 7 章*，*线性模型 - 从风险因素到回报预测* 中介绍。
 - en: The ADF test statistic uses the sample coefficient ![](img/B15439_09_031.png),
     which, under the null hypothesis of unit-root non-stationarity, equals zero and
     is negative otherwise. It intends to demonstrate that, for an integrated series,
     the lagged series value should not provide useful information in predicting the first
     difference above and beyond lagged differences.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: ADF检验统计量使用样本系数 ![](img/B15439_09_031.png)，在单位根非平稳的零假设下，该系数为零，在其他情况下为负。其意图在于证明，对于一个积分序列，滞后序列值不应提供有用信息来预测超过滞后差异的一阶差异。
 - en: How to remove unit roots and work with the resulting series
+  id: totrans-78
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何去除单位根并处理得到的序列
 - en: In addition to using the difference between neighboring data points to remove
     a constant pattern of change, we can apply **seasonal differencing** to remove
     patterns of seasonal change. This involves taking the difference of values at
     a lag distance that represents the length of the seasonal pattern. For monthly
     data, this usually involves differences at lag 12, and for quarterly data, it
     involves differences at lag 4 to remove both seasonality and linear trend.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了使用相邻数据点之间的差异来消除恒定变化模式外，我们还可以应用**季节性差分**来消除季节性变化模式。这涉及到在代表季节模式长度的滞后距离处取值的差异。对于月度数据，这通常涉及到滞后 12，而对于季度数据，它涉及到滞后 4，以消除季节性和线性趋势。
 - en: 'Identifying the correct transformation and, in particular, the appropriate
     number and lags for differencing is not always clear-cut. Some **heuristics**
     have been suggested, which can be summarized as follows:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 确定正确的转换，特别是适当的差分数量和滞后数，并不总是一目了然的。一些**启发式方法**已经被提出，可以总结如下：
 - en: 'Lag-1 autocorrelation close to zero or negative, or autocorrelation generally
     small and patternless: there is no need for higher-order differencing'
+  id: totrans-81
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 滞后一期自相关接近零或为负，或者自相关普遍较小且无规律：无需进行更高阶的差分处理
 - en: 'Positive autocorrelations up to 10+ lags: the series probably needs higher-order
     differencing'
+  id: totrans-82
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 正自相关延伸至 10+ 滞后：该序列可能需要更高阶的差分
 - en: 'Lag-1 autocorrelation < -0.5: the series may be over-differenced'
+  id: totrans-83
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 滞后一期自相关 < -0.5：该序列可能存在过度差分
 - en: Slightly over- or under-differencing can be corrected with AR or MA terms (see
     the next section on univariate time-series models)
+  id: totrans-84
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 轻微的过度或不足的差分可以通过AR或MA项进行校正（请参阅下一节关于单变量时间序列模型）
 - en: Some authors recommend fractional differencing as a more flexible approach to
     rendering an integrated series stationary, and may be able to keep more information
     or signal than simple or seasonal differences at discrete intervals. See, for
     example, *Chapter 5*, *Portfolio Optimization and Performance Evaluation*, in
     Marcos Lopez de Prado (2018).
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些作者建议使用分数差分作为使积分序列变得平稳的更灵活的方法，并且可能能够保留比简单或季节性差分在离散间隔更多的信息或信号。例如，参见 Marcos Lopez
+    de Prado（2018）的 *第 5 章*，*投资组合优化和绩效评估*。
 - en: Time-series transformations in practice
+  id: totrans-86
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 实践中的时间序列变换
 - en: The charts in *Figure 9.2* shows time series for the NASDAQ stock index and
     industrial production for the 30 years through 2017 in their original form, as
     well as the transformed versions after applying the logarithm and subsequently
     applying the first and seasonal differences (at lag 12), respectively.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 9.2* 中的图表显示了纳斯达克股票指数和工业生产的时间序列，经过对数变换和随后的应用第一次和季节性差分（在滞后 12 处），分别展示了它们的原始形式以及变换后的版本，跨越
+    2017 年的 30 年时间。'
 - en: 'The charts also display the ADF p-value, which allows us to reject the hypothesis
     of unit-root non-stationarity after all transformations in both cases:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 图表还显示了 ADF p 值，这使我们能够在两种情况下拒绝单位根非平稳性的假设：
 - en: '![](img/15439_09_02.png)'
+  id: totrans-89
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_02.png)'
 - en: 'Figure 9.2: Time-series transformations and unit-root test results'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.2：时间序列转换和单位根检验结果
 - en: We can further analyze the relevant time-series characteristics for the transformed
     series using a Q-Q plot that compares the quantiles of the distribution of the
     time-series observation to the quantiles of the normal distribution and the correlograms
     based on the ACF and PACF.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以进一步分析使用 Q-Q 图和基于 ACF 和 PACF 的自相关图的转换系列的相关时间序列特征的特征。
 - en: For the NASDAQ plots in *Figure 9.3*, we can see that while there is no trend,
     the variance is not constant but rather shows clustered spikes around periods
     of market turmoil in the late 1980s, 2001, and 2008\. The Q-Q plot highlights
     the fat tails of the distribution with extreme values that are more frequent than
     the normal distribution would suggest.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于*图 9.3*中的NASDAQ图表，我们可以看到虽然没有趋势，但方差不是恒定的，而是在1980年代末、2001年和2008年的市场动荡期间显示出集中的尖峰。Q-Q
+    图突出了分布的厚尾，极端值比正态分布所暗示的更频繁。
 - en: 'The ACF and the PACF show similar patterns, with autocorrelation at several
     lags appearing to be significant:'
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: ACF 和 PACF 显示类似的模式，几个滞后的自相关显得显著：
 - en: '![](img/15439_09_03.png)'
+  id: totrans-94
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_03.png)'
 - en: 'Figure 9.3: Descriptive statistics for transformed NASDAQ Composite index'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.3：转换后的NASDAQ综合指数的描述统计
 - en: 'For the monthly time series on industrial manufacturing production, we can
     see a large negative outlier following the 2008 crisis, as well as the corresponding
     skew in the Q-Q plot (see *Figure 9.4*). The autocorrelation is much higher than
     for the NASDAQ returns and declines smoothly. The PACF shows distinct positive
     autocorrelation patterns at lags 1 and 13 and significant negative coefficients
     at lags 3 and 4:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于工业制造生产的月度时间序列，我们可以看到在2008年危机后有一个大的负异常值，以及Q-Q 图中相应的偏度（见*图 9.4*）。自相关远高于NASDAQ收益，并且平稳下降。PACF
+    在滞后 1 和 13 处显示出明显的正自相关模式，并在滞后 3 和 4 处显示出显著的负系数：
 - en: '![](img/15439_09_04.png)'
+  id: totrans-97
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_04.png)'
 - en: 'Figure 9.4: Descriptive statistics for transformed industrial production data'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.4：转换后的工业生产数据的描述统计
 - en: Univariate time-series models
+  id: totrans-99
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 单变量时间序列模型
 - en: Multiple linear-regression models expressed the variable of interest as a linear
     combination of the inputs, plus a random disturbance. In contrast, univariate
     time-series models relate the current value of the time series to a linear combination
     of lagged values of the series, current noise, and possibly past noise terms.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 多元线性回归模型将感兴趣的变量表示为输入的线性组合，加上一个随机扰动。相比之下，单变量时间序列模型将时间序列的当前值与系列滞后值的线性组合、当前噪声以及可能的过去噪声项相关联。
 - en: 'While exponential smoothing models are based on a description of the trend
     and seasonality in the data, **ARIMA models aim to describe the autocorrelations
     in the data**. ARIMA(*p*, *d*, *q*) models require stationarity and leverage two
     building blocks:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管指数平滑模型基于对数据中趋势和季节性的描述，但**ARIMA 模型旨在描述数据中的自相关性**。ARIMA(*p*, *d*, *q*) 模型需要平稳性，并利用两个构建块：
 - en: '**Autoregressive** (**AR**) terms consisting of *p* lagged values of the time
     series'
+  id: totrans-102
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**自回归**（**AR**）项包含时间序列的*p*滞后值'
 - en: '**Moving average** (**MA**) terms that contain *q* lagged disturbances'
+  id: totrans-103
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 包含*q*滞后扰动的**移动平均**（**MA**）项
 - en: The **I** stands for *integrated* because the model can account for unit-root
     non-stationarity by differentiating the series *d* times. The term autoregression
     underlines that ARIMA models imply a regression of the time series on its own
     values.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: '**I** 代表 *integrated*，因为模型可以通过对系列进行*d*次差分来考虑单位根非平稳性。自回归一词强调了 ARIMA 模型意味着时间序列对其自身值的回归。'
 - en: We will introduce the ARIMA building blocks, AR and MA models, and explain how
     to combine them in **autoregressive moving-average** (**ARMA**) models that may
     account for series integration as ARIMA models or include exogenous variables
     as **AR(I)MAX** models. Furthermore, we will illustrate how to include seasonal
     AR and MA terms to extend the toolbox so that it also includes **SARMAX** models.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将介绍ARIMA的构建模块，AR和MA模型，并解释如何将它们组合成可以像ARIMA模型那样考虑序列积分，或者包含外生变量像**AR(I)MAX**模型那样的**自回归移动平均**(**ARMA**)模型。此外，我们将说明如何包含季节性AR和MA项以扩展工具箱，使其还包括**SARMAX**模型。
 - en: How to build autoregressive models
+  id: totrans-106
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何构建自回归模型
 - en: 'An AR model of order *p* aims to capture the linear dependence between time-series
     values at different lags and can be written as follows:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '*p*阶AR模型旨在捕捉不同滞后时期时间序列值之间的线性相关性，可以写成如下形式：'
 - en: '![](img/B15439_09_032.png)'
+  id: totrans-108
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_032.png)'
 - en: 'This closely resembles a multiple linear regression on lagged values of *y*[t].
     This model has the following characteristic equation:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 这与对*y*[t]的滞后值进行多元线性回归非常相似。该模型具有以下特征方程：
 - en: '![](img/B15439_09_033.png)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_033.png)'
 - en: The inverses of the solution to this polynomial of degree *p* in *x* are the
     characteristic roots, and the AR(*p*) process is stationary if all roots are less
     than 1 in absolute terms, and unstable otherwise. For a stationary series, multistep
     forecasts will converge to the mean of the series.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 解这个关于*x*的*p*次多项式的倒数是特征根，如果所有根的绝对值都小于1，则AR(*p*)过程是稳定的，否则不稳定。对于稳定的序列，多步预测将收敛于序列的均值。
 - en: We can estimate the model parameters with the familiar least squares method
     using the *p*+1, ..., *T* observations to ensure there is data for each lagged
     term and the outcome.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用熟悉的最小二乘法估计模型参数，使用*p*+1，...，*T*的观测数据确保每个滞后项和结果都有数据。
 - en: How to identify the number of lags
+  id: totrans-113
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何确定滞后数量
 - en: In practice, the challenge consists of deciding on the appropriate order *p*
     of lagged terms. The time-series analysis tools for serial correlation, which
     we discussed in the *How to measure autocorrelation* section, play a key role
     in making this decision.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实践中，挑战在于确定滞后项的适当阶*p*。我们在*如何测量自相关性*部分讨论过的串行相关性时间序列分析工具在做出这一决定方面起着关键作用。
 - en: 'More specifically, a visual inspection of the correlogram often provides helpful
     clues:'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，对自相关图的目视检查通常提供了有用的线索：
 - en: The **ACF** estimates the autocorrelation between observations at different
     lags, which, in turn, results from both direct and indirect linear dependence.
     Hence, if an AR model of order *k* is the correct model, the ACF will show a significant
     serial correlation up to lag *k* and, due to the inertia caused by the indirect
     effects of the linear relationship, will extend to subsequent lags until it eventually
     trails off as the effect weakens.
+  id: totrans-116
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**ACF**估计不同滞后时期观测值之间的自相关性，其结果既来自直接线性相关性，也来自间接线性相关性。因此，如果*p*阶AR模型是正确的模型，自相关函数将显示出直至滞后*k*的显著串行相关性，并且由于线性关系间接效应所造成的惯性，将延伸到随后的滞后直至最终随着效应的减弱而消失。'
 - en: The **PACF**, in turn, only measures the direct linear relationship between
     observations a given lag apart so that it will not reflect correlation for lags
     beyond *k*.
+  id: totrans-117
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**PACF**只测量了给定滞后间隔的观测值之间的直接线性关系，因此不会反映超过*k*的滞后的相关性。'
 - en: How to diagnose model fit
+  id: totrans-118
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何诊断模型拟合度
 - en: If the model properly captures the linear dependence across lags, then the residuals
     should resemble white noise, and the ACF should highlight the absence of significant
     autocorrelation coefficients.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果模型正确捕捉了滞后间的线性依赖关系，则残差应类似于白噪声，而自相关函数应突出显示出显著的自相关系数的缺失。
 - en: 'In addition to a residual plot, the **Ljung-Box Q-statistic** allows us to
     test the hypothesis that the residual series follows white noise. The null hypothesis
     is that all *m* serial correlation coefficients are zero against the alternative
     that some coefficients are not. The test statistic is computed from the sample
     autocorrelation coefficients ![](img/B15439_09_034.png)for different lags *k*
     and follows a *X*² distribution:'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了残差图外，**Ljung-Box Q统计量**还允许我们测试残差序列是否符合白噪声的假设。零假设是所有*m*个序列相关系数都为零，而备择假设是某些系数不为零。检验统计量是根据不同滞后*k*的样本自相关系数![](img/B15439_09_034.png)计算的，并且遵循*X*²分布：
 - en: '![](img/B15439_09_035.png)'
+  id: totrans-121
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_035.png)'
 - en: As we will see, statsmodels provides information about the significance of coefficients
     for different lags, and insignificant coefficients should be removed. If the Q-statistic
     rejects the null hypothesis of no autocorrelation, you should consider additional
     AR terms.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们将看到的，statsmodels 提供了关于不同滞后的系数显著性的信息，不显著的系数应该被移除。如果 Q 统计拒绝无自相关的零假设，你应该考虑额外的
+    AR 项。
 - en: How to build moving-average models
+  id: totrans-123
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何构建移动平均模型
 - en: 'An MA(*q*) model uses *q* past disturbances rather than lagged values of the
     time series in a regression-like model, as follows:'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: MA(*q*) 模型使用 *q* 个过去扰动，而不是时间序列的滞后值，作为回归模型的一部分，如下所示：
 - en: '![](img/B15439_09_036.png)'
+  id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_036.png)'
 - en: Since we do not observe the white-noise disturbance values, ![](img/B15439_09_007.png),
     MA(*q*) is not a regression model like the ones we have seen so far. Rather than
     using least squares, MA(*q*) models are estimated using **maximum likelihood**
     (**MLE**), alternatively initializing or estimating the disturbances at the beginning
     of the series and then recursively and iteratively computing the remainder.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们没有观察到白噪声扰动值，![](img/B15439_09_007.png)，MA(*q*) 不像我们迄今为止看到的那样是一个回归模型。MA(*q*)
+    模型不是使用最小二乘法估计的，而是使用**最大似然估计**（**MLE**），或者在系列开始时初始化或估计扰动，然后递归和迭代地计算剩余值。
 - en: The MA(*q*) model gets its name from representing each value of *y*[t] as a
     weighted moving average of the past *q* innovations. In other words, current estimates
     represent a correction relative to past errors made by the model. The use of moving
@@ -704,188 +963,267 @@
     estimation of seasonal time-series components, because an MA(*q*) model aims to
     forecast future values, as opposed to denoising or estimating the trend cycle
     of past values.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: MA(*q*) 模型得名于将 *y*[t] 的每个值表示为过去 *q* 个创新的加权移动平均值。换句话说，当前的估计值表示相对于模型过去错误的修正。MA(*q*)
+    模型中使用移动平均值的方式与指数平滑或季节时间序列成分的估计不同，因为 MA(*q*) 模型旨在预测未来值，而不是去噪声或估计过去值的趋势周期。
 - en: MA(*q*) processes are always stationary because they are the weighted sum of
     white noise variables that are, themselves, stationary.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: MA(*q*) 过程总是平稳的，因为它们是白噪声变量的加权和，这些变量本身就是平稳的。
 - en: How to identify the number of lags
+  id: totrans-129
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何确定滞后数
 - en: A time series generated by an MA(*q*) process is driven by the residuals of
     the prior *q* model predictions. Hence, the ACF for the MA(*q*) process will show
     significant coefficients for values up to lag *q* and then decline sharply because
     this is how the model assumes the series values have been generated.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 由 MA(*q*) 过程生成的时间序列由前 *q* 个模型预测的残差驱动。因此，MA(*q*) 过程的 ACF 将显示出直到滞后 *q* 的值的显著系数，然后急剧下降，因为这是模型假定系列值被生成的方式。
 - en: Note how this differs from the AR case we just described, where the PACF would
     show a similar pattern.
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意这与我们刚刚描述的 AR 情况不同，那里 PACF 会显示类似的模式。
 - en: The relationship between the AR and MA models
+  id: totrans-132
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: AR 和 MA 模型之间的关系
 - en: An AR(*p*) model can always be expressed as an ![](img/B15439_09_038.png) process
     using repeated substitution, as in the random walk example in the *How to handle
     stochastic trends caused by unit roots* section.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 无论何时，都可以使用重复替换的方法将 AR(*p*) 模型表示为一个 ![](img/B15439_09_038.png) 过程，例如“如何处理由单位根引起的随机趋势”部分中的随机游走示例。
 - en: When the coefficients of the MA(*q*) process meet certain size constraints,
     it also becomes invertible and can be expressed as an ![](img/B15439_09_039.png)
     process (see Tsay, 2005, for details).
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 当 MA(*q*) 过程的系数满足一定的大小约束时，它也变得可逆，并且可以表示为一个 ![](img/B15439_09_039.png) 过程（详见Tsay，2005年）。
 - en: How to build ARIMA models and extensions
+  id: totrans-135
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何构建 ARIMA 模型及其扩展
 - en: Autoregressive integrated moving-average—ARIMA(*p*, *d*, *q*)—models combine
     AR(*p*) and MA(*q*) processes to leverage the complementarity of these building
     blocks and simplify model development. They do this using a more compact form
     and reducing the number of parameters, in turn reducing the risk of overfitting.
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 自回归积分滑动平均—ARIMA(*p*, *d*, *q*)—模型结合了 AR(*p*) 和 MA(*q*) 过程，以利用这些基本模型的互补性并简化模型开发。它们使用更紧凑的形式并减少参数数量，进而减少过度拟合的风险。
 - en: 'The models also take care of eliminating unit-root non-stationarity by using
     the *d*^(th) difference of the time-series values. An ARIMA(*p*, 1, *q*) model
     is the same as using an ARMA(*p*, *q*) model with the first differences of the
     series. Using *y*'' to denote the original series after non-seasonal differencing
     *d* times, the ARIMA(*p*, *d*, *q*) model is simply:'
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些模型还通过使用时间序列值的*d*^(th)差分来消除单位根的非平稳性。一个ARIMA(*p*, 1, *q*)模型相当于使用序列的第一阶差分的ARMA(*p*,
+    *q*)模型。用*y*'表示非季节性差分*d*次后的原始序列，ARIMA(*p*, *d*, *q*)模型简单地表示为：
 - en: '![](img/B15439_09_040.png)'
+  id: totrans-138
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_040.png)'
 - en: ARIMA models are also estimated using MLE. Depending on the implementation,
     higher-order models may generally subsume lower-order models.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: ARIMA模型也使用MLE进行估计。根据实现方式，更高阶的模型可能一般包含较低阶的模型。
 - en: For example, up to version 0.11, statsmodels includes all lower-order *p* and
     *q* terms and does not permit removing coefficients for lags below the highest
     value. In this case, higher-order models will always fit better. Be careful not
     to overfit your model to the data by using too many terms. The most recent version,
     which is 0.11 at the time of writing, added an experimental new ARIMA model with
     more flexible configuration options.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，截至版本0.11，statsmodels包括所有低阶*p*和*q*项，并且不允许删除低于最高值的滞后的系数。在这种情况下，更高阶的模型将始终拟合得更好。使用太多项不要使模型过度拟合数据。在撰写时，最新版本为0.11，增加了一个带有更灵活配置选项的实验性新ARIMA模型。
 - en: How to model differenced series
+  id: totrans-141
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何对差分序列建模
 - en: 'There are also guidelines for designing the univariate times-series models
     when using data:'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用数据设计单变量时间序列模型时也有一些指导方针：
 - en: A model without differencing assumes that the original series is stationary,
     including mean-reverting. It normally includes a constant term to allow for a
     non-zero mean.
+  id: totrans-143
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 没有差分的模型假设原始序列是平稳的，包括均值回归。它通常包括一个常数项，以允许非零均值。
 - en: A model with one order of differencing assumes that the original series has
     a constant trend and should thus include a constant term.
+  id: totrans-144
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个一阶差分的模型假设原始序列具有恒定的趋势，因此应包括一个常数项。
 - en: A model with two orders of differencing assumes that the original series has
     a time-varying trend and should not include a constant.
+  id: totrans-145
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个两阶差分的模型假设原始序列具有时间变化的趋势，并且不应包括一个常数。
 - en: How to identify the number of AR and MA terms
+  id: totrans-146
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何确定AR和MA项的数量
 - en: Since AR(*p*) and MA(*q*) terms interact, the information provided by the ACF
     and PACF is no longer reliable and can only be used as a starting point.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于AR(*p*)和MA(*q*)项相互作用，ACF和PACF提供的信息不再可靠，只能用作起点。
 - en: Traditionally, the AIC and BIC information criteria have been used to rely on
     in-sample fit when selecting the model design. Alternatively, we can rely on out-of-sample
     tests to cross-validate multiple parameter choices.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 传统上，AIC和BIC信息准则被用于在选择模型设计时依赖样本内拟合。或者，我们可以依赖样本外测试来交叉验证多个参数选择。
 - en: 'The following summary provides some guidance on how to choose the model order
     in the case of considering AR and MA models in isolation:'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 在考虑AR和MA模型时，以下摘要提供了如何选择模型阶数的一些指导：
 - en: The lag beyond which the PACF cuts off is the indicated number of AR terms.
     If the PACF of the differenced series cuts off sharply and/or the lag-1 autocorrelation
     is positive, add one or more AR terms.
+  id: totrans-150
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: PACF截断的滞后阶数是表示AR项的数量。如果差分序列的PACF显示出明显的截断和/或滞后1的自相关为正，则添加一个或多个AR项。
 - en: The lag beyond which the ACF cuts off is the indicated number of MA terms. If
     the ACF of the differenced series displays a sharp cutoff and/or the lag-1 autocorrelation
     is negative, consider adding an MA term to the model.
+  id: totrans-151
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: ACF截断的滞后阶数是表示MA项的数量。如果差分序列的ACF显示出明显的截断和/或滞后1的自相关为负，则考虑将MA项添加到模型中。
 - en: AR and MA terms may cancel out each other's effects, so always try to reduce
     the number of AR and MA terms by 1 if your model contains both to avoid overfitting,
     especially if the more complex model requires more than 10 iterations to converge.
+  id: totrans-152
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: AR和MA项可能会抵消彼此的影响，因此，如果您的模型同时包含两者，请始终尝试将AR和MA项的数量减少1，以避免过度拟合，特别是如果更复杂的模型需要超过10次迭代才能收敛。
 - en: If the AR coefficients sum to nearly one and suggest a unit root in the AR part
     of the model, eliminate one AR term and difference the model once (more).
+  id: totrans-153
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果AR系数之和接近于1，并且建议模型的AR部分存在单位根，则消除一个AR项并再次进行差分。
 - en: If the MA coefficients sum to nearly one and suggest a unit root in the MA part
     of the model, eliminate one MA term and reduce the order of differencing by one.
+  id: totrans-154
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如果 MA 系数总和接近于一，并且暗示模型的 MA 部分存在单位根，则删除一个 MA 项并将差分阶数减少一个。
 - en: Unstable long-term forecasts suggest there may be a unit root in the AR or MA
     part of the model.
+  id: totrans-155
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 不稳定的长期预测表明模型的 AR 或 MA 部分可能存在单位根。
 - en: Adding features – ARMAX
+  id: totrans-156
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加特征 – ARMAX
 - en: 'An **autoregressive moving-average model with exogenous inputs** (**ARMAX**)
     model adds input variables or covariate on the right-hand side of the ARMA time-series
     model (assuming the series is stationary, so we can skip differencing):'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 具有外生输入的自回归滑动平均模型（**ARMAX**）模型在 ARMA 时间序列模型的右侧添加输入变量或协变量（假设系列是平稳的，所以我们可以跳过差分）：
 - en: '![](img/B15439_09_041.png)'
+  id: totrans-158
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_041.png)'
 - en: This resembles a linear regression model but is quite difficult to interpret.
     This is because the effect of ![](img/B15439_09_042.png) on *y*[t] is not the
     effect of an increase in *x*[t] by one unit as in linear regression. Instead,
     the presence of lagged values of *y*[t] on the right-hand side of the equation
     implies that the coefficient can only be interpreted, given the lagged values
     of the response variable, which is hardly intuitive.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 这类似于线性回归模型，但解释起来相当困难。这是因为![](img/B15439_09_042.png)对*y*[t]的影响并不是*x*[t]增加一个单位所产生的影响，如线性回归中那样。相反，方程右侧的*y*[t]的滞后值的存在意味着只有在给定响应变量的滞后值的情况下，系数才能被解释，这几乎是不直观的。
 - en: Adding seasonal differencing – SARIMAX
+  id: totrans-160
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加季节差分 – SARIMAX
 - en: For time series with seasonal effects, we can include AR and MA terms that capture
     the seasonality's periodicity. For instance, when using monthly data and the seasonal
     effect length is 1 year, the seasonal AR and MA terms would reflect this particular
     lag length.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于具有季节效应的时间序列，我们可以包括捕捉季节性周期性的AR和MA项。例如，当使用月度数据且季节效应长度为 1 年时，季节性 AR 和 MA 项将反映这个特定的滞后长度。
 - en: The ARIMAX(*p*, *d*, *q*) model then becomes a SARIMAX(*p*, *d*, *q*) × (*P*,
     *D*, *Q*) model, which is a bit more complicated to write out, but the statsmodels
     documentation (see link on GitHub) provides this information in detail.
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后 ARIMAX(*p*, *d*, *q*) 模型变成了 SARIMAX(*p*, *d*, *q*) × (*P*, *D*, *Q*) 模型，这个写法略显复杂，但
+    statsmodels 文档（GitHub 上的链接）详细提供了这些信息。
 - en: We will now build a seasonal ARMA model using macro-data to illustrate its implementation.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在将使用宏观数据构建一个季节性 ARMA 模型，以说明其实现过程。
 - en: How to forecast macro fundamentals
+  id: totrans-164
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何预测宏观基本面
 - en: 'We will build a SARIMAX model for monthly data on an industrial production
     time series for the 1988-2017 period. As illustrated in the first section on analytical
     tools, the data has been log-transformed, and we are using seasonal (lag-12) differences.
@@ -893,63 +1231,96 @@
     parameters using a rolling window of 10 years of training data, and evaluate the
     **root mean square error** (**RMSE**) of the 1-step-ahead forecast, as shown in
     the following simplified code (see the notebook `arima_models` for details):'
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将为 1988-2017 年期间的工业生产时间序列构建一个月度数据的 SARIMAX 模型。如在分析工具的第一节中所示，数据已经进行了对数变换，并且我们使用了季节性（滞后
+    12 个月）差分。我们对一系列普通和常规的 AR 和 MA 参数进行估计，使用了 10 年的训练数据的滚动窗口，并评估了 1 步预测的**均方根误差**（**RMSE**），如下所示的简化代码（详细信息请参见笔记本`arima_models`）：
 - en: '[PRE1]'
+  id: totrans-166
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'We also collect the AIC and BIC criteria, which show a very high rank correlation
     coefficient of 0.94, with BIC favoring models with slightly fewer parameters than
     AIC. The best five models by RMSE are:'
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还收集了 AIC 和 BIC 准则，显示出 0.94 的非常高的秩相关系数，其中 BIC 更倾向于比 AIC 稍少参数的模型。根据 RMSE 最佳的五个模型是：
 - en: '[PRE2]'
+  id: totrans-168
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'We reestimate a SARIMA(2, 0 ,3) × (1, 0, 0) model, as follows:'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们重新估计 SARIMA(2, 0 ,3) × (1, 0, 0) 模型，如下所示：
 - en: '[PRE3]'
+  id: totrans-170
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'We obtain the following summary:'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下总结：
 - en: '![](img/15439_09_05.png)'
+  id: totrans-172
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_05.png)'
 - en: 'Figure 9.5: SARMAX model results'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.5：SARMAX 模型结果
 - en: 'The coefficients are significant, and the Q-statistic rejects the hypothesis
     of further autocorrelation. The correlogram similarly indicates that we have successfully
     eliminated the series'' autocorrelation:'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 系数是显著的，并且 Q 统计量拒绝了进一步自相关的假设。相关图表同样表明我们已成功消除了序列的自相关：
 - en: '![](img/15439_09_06.png)'
+  id: totrans-175
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_06.png)'
 - en: 'Figure 9.6: SARIMAX model diagnostics'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.6：SARIMAX 模型诊断
 - en: How to use time-series models to forecast volatility
+  id: totrans-177
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何使用时间序列模型预测波动率
 - en: A particularly important application for univariate time-series models in finance
     is the prediction of volatility. This is because it is usually not constant over
     time, with bouts of volatility clustering together. Changes in variance create
     challenges for time-series forecasting using the classical ARIMA models that assume
     stationarity. To address this challenge, we will now model volatility so that
     we can predict changes in variance.
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 在金融领域中，单变量时间序列模型的一个特别重要的应用是对波动性进行预测。这是因为波动性通常随时间而变化，并且会出现波动性集聚的情况。方差的变化给使用经典的假设平稳的
+    ARIMA 模型进行时间序列预测带来了挑战。为了解决这一挑战，我们现在将对波动性进行建模，以便我们可以预测方差的变化。
 - en: Heteroskedasticity is the technical term for changes in a variable's variance.
     The ARCH model expresses the variance of the error term as a function of the errors
     in previous periods. More specifically, it assumes that the error variance follows
     an AR(*p*) model.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: '**异方差性** 是指变量方差的变化的技术术语。ARCH 模型将误差项的方差表示为前期误差的函数。更具体地说，它假设误差方差遵循一个 AR(*p*)
+    模型。'
 - en: The **generalized autoregressive conditional heteroskedasticity** (**GARCH**)
     model broadens the scope of ARCH to allow for ARMA models. Time-series forecasting
     often combines ARIMA models for the expected mean and ARCH/GARCH models for the
@@ -957,32 +1328,46 @@
     to Robert Engle and Clive Granger for developing this class of models. The former
     also runs the Volatility Lab at New York University's Stern School ([vlab.stern.nyu.edu](http://vlab.stern.nyu.edu)),
     which has numerous online examples and tools concerning the models we will discuss.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: '**广义自回归条件异方差** (**GARCH**) 模型扩展了 ARCH 的范围，以允许 ARMA 模型。时间序列预测通常将 ARIMA 模型用于期望均值，并将
+    ARCH/GARCH 模型用于时间序列的预期方差。2003 年诺贝尔经济学奖授予了罗伯特·恩格尔和克莱夫·格兰杰，因为他们开发了这一类模型。前者还在纽约大学斯特恩商学院经营着波动率实验室（[vlab.stern.nyu.edu](http://vlab.stern.nyu.edu)），该实验室有许多关于我们将讨论的模型的在线示例和工具。'
 - en: The ARCH model
+  id: totrans-181
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: ARCH 模型
 - en: The ARCH(*p*) model is simply an AR(*p*) model that's applied to the variance
     of the residuals of a time-series model, which makes this variance at time *t*
     conditional on lagged observations of the variance.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: ARCH(*p*) 模型简单地是应用于时间序列模型残差方差的 AR(*p*) 模型，这使得在时期 *t* 的方差条件于滞后观测的方差。
 - en: 'More specifically, the error terms, ![](img/B15439_09_043.png), are residuals
     of a linear model, such as ARIMA, on the original time series and are split into
     a time-dependent standard deviation, ![](img/B15439_09_044.png), and a disturbance,
     *z*[t], as follows:'
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，误差项，![](img/B15439_09_043.png)，是原始时间序列上的线性模型（如 ARIMA）的残差，被分为一个时间相关的标准差，![](img/B15439_09_044.png)，和一个扰动，*z*[t]，如下所示：
 - en: '![](img/B15439_09_045.png)'
+  id: totrans-184
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_045.png)'
 - en: An ARCH(*p*) model can be estimated using OLS. Engle proposed a method to identify
     the appropriate ARCH order using the Lagrange multiplier test, which corresponds
     to the F-test of the hypothesis that all coefficients in linear regression are
     zero (see *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*).
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: ARCH(*p*) 模型可以使用 OLS 进行估计。恩格尔提出了一种方法来使用拉格朗日乘数检验来确定适当的 ARCH 阶数，该检验对应于线性回归中所有系数为零的假设的
+    F 检验（见 *第 7 章*，*线性模型 - 从风险因素到收益预测*）。
 - en: A key **strength** of the ARCH model is that it produces volatility estimates
     with positive excess kurtosis — that is, fat tails relative to the normal distribution
     — which, in turn, is in line with empirical observations about returns. **Weaknesses**
@@ -990,135 +1375,196 @@
     shocks, whereas asset prices tend to respond differently. It also does not explain
     the variations in volatility and is likely to overpredict volatility because they
     respond slowly to large, isolated shocks to the return series.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: ARCH 模型的一个关键**优点**是，它产生具有正超额峰度的波动性估计 —— 即，相对于正态分布的 fat tails —— 这与有关收益的实证观察相一致。**缺点**包括假设正面和负面波动性冲击具有相同的效应，而资产价格往往会有不同的反应。它也不能解释波动性的变化，并且可能会过度预测波动性，因为它们对收益序列的大规模、孤立的冲击反应迟缓。
 - en: For a properly specified ARCH model, the standardized residuals (divided by
     the model estimate for the period of standard deviation) should resemble white
     noise and can be subjected to a Ljung-Box Q test.
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一个正确规范的 ARCH 模型，标准化残差（除以该时期标准差的模型估计值）应该类似于白噪声，并且可以进行 Ljung-Box Q 检验。
 - en: Generalizing ARCH – the GARCH model
+  id: totrans-188
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 推广 ARCH —— GARCH 模型
 - en: 'The ARCH model is relatively simple but often requires many parameters to capture
     the volatility patterns of an asset-return series. The GARCH model applies to
     a log-return series, *r*[t], with disturbances, ![](img/B15439_09_046.png), that
     follow a GARCH(*p*, *q*) model if:'
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: ARCH 模型相对简单，但通常需要许多参数来捕捉资产回报序列的波动率模式。GARCH 模型适用于对数回报序列，*r*[t]，具有扰动项，如图所示：![](img/B15439_09_046.png)，如果：
 - en: '![](img/B15439_09_047.png)'
+  id: totrans-190
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_047.png)'
 - en: The GARCH(*p*, *q*) model assumes an ARMA(*p*, *q*) model for the variance of
     the error term, ![](img/B15439_09_048.png).
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: GARCH(*p*, *q*) 模型假设误差项方差的 ARMA(*p*, *q*) 模型，如图所示：![](img/B15439_09_048.png)。
 - en: Similar to ARCH models, the tail distribution of a GARCH(1,1) process is heavier
     than that of a normal distribution. The model encounters the same weaknesses as
     the ARCH model. For instance, it responds equally to positive and negative shocks.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 与 ARCH 模型类似，GARCH(1,1) 过程的尾部分布比正态分布更重。该模型遇到与 ARCH 模型相同的弱点。例如，它对正面和负面冲击的反应相同。
 - en: To configure the lag order for ARCH and GARCH models, use the squared residuals
     of the time series trained to predict the mean of the original series. The residuals
     are zero-centered so that their squares are also the variance. Then, inspect the
     ACF and PACF plots of the squared residuals to identify autocorrelation patterns
     in the variance of the time series.
+  id: totrans-193
   prefs: []
   type: TYPE_NORMAL
+  zh: 要为 ARCH 和 GARCH 模型配置滞后阶数，请使用训练好的时间序列的平均预测的平方残差。残差被零中心化，以便它们的平方也是方差。然后，检查平方残差的
+    ACF 和 PACF 图，以识别时间序列方差的自相关模式。
 - en: How to build a model that forecasts volatility
+  id: totrans-194
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 如何构建一个预测波动率的模型
 - en: 'The development of a volatility model for an asset-return series consists of
     four steps:'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 资产回报序列的波动率模型开发包括四个步骤：
 - en: Build an ARMA time-series model for the financial time series based on the serial
     dependence revealed by the ACF and PACF
+  id: totrans-196
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 基于 ACF 和 PACF 显示的序列依赖性，为金融时间序列构建 ARMA 时间序列模型
 - en: Test the residuals of the model for ARCH/GARCH effects, again relying on the
     ACF and PACF for the series of the squared residual
+  id: totrans-197
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 再次依赖于序列的 ACF 和 PACF 来测试 ARCH/GARCH 效应的模型残差
 - en: Specify a volatility model if serial correlation effects are significant, and
     jointly estimate the mean and volatility equations
+  id: totrans-198
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果序列相关效应显著，则指定波动率模型，并联合估计平均值和波动率方程
 - en: Check the fitted model carefully and refine it if necessary
+  id: totrans-199
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 仔细检查拟合的模型，并在必要时进行调整
 - en: When applying volatility forecasting to return series, the serial dependence
     may be limited so that a constant mean may be used instead of an ARMA model.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 当将波动率预测应用于回报序列时，序列依赖性可能有限，因此可以使用恒定均值而不是 ARMA 模型。
 - en: The `arch` library (see link to the documentation on GitHub) provides several
     options to estimate volatility-forecasting models. You can model the expected
     mean as a constant, as an AR(*p*) model, as discussed in the *How to build autoregressive
     models*, section or as more recent **heterogeneous autoregressive processes**
     (**HAR**), which use daily (1 day), weekly (5 days), and monthly (22 days) lags
     to capture the trading frequencies of short-, medium-, and long-term investors.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: '`arch` 库（参见 GitHub 上的文档链接）提供了几种选项来估计波动率预测模型。您可以将预期平均值建模为恒定值，如 *如何构建自回归模型* 部分中讨论的
+    AR(*p*) 模型，或者作为更近期的**异质自回归过程** (**HAR**)，它使用每日（1 天）、每周（5 天）和每月（22 天）滞后来捕捉短期、中期和长期投资者的交易频率。'
 - en: The mean models can be jointly defined and estimated with several conditional
     heteroskedasticity models that include, in addition to ARCH and GARCH, the **exponential
     GARCH** (**EGARCH**) model, which allows for asymmetric effects between positive
     and negative returns, and the **heterogeneous ARCH** (**HARCH**) model, which
     complements the HAR mean model.
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 平均模型可以与几种条件异方差模型一起定义和估计，除了 ARCH 和 GARCH 之外，还包括允许在正面和负面回报之间存在非对称效应的**指数 GARCH**
+    (**EGARCH**) 模型，以及补充 HAR 平均模型的**异质 ARCH** (**HARCH**) 模型。
 - en: 'We will use daily NASDAQ returns from 2000-2020 to demonstrate the usage of
     a GARCH model (see the notebook `arch_garch_models` for details):'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将使用 2000 年至 2020 年的每日纳斯达克回报来演示 GARCH 模型的使用方法（详见笔记本 `arch_garch_models`）：
 - en: '[PRE4]'
+  id: totrans-204
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'The rescaled daily return series exhibits only limited autocorrelation, but
     the squared deviations from the mean do have substantial memory reflected in the
     slowly decaying ACF and the PACF, which are high for the first two and cut off
     only after the first six lags:'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 重新缩放后的每日收益序列仅表现出有限的自相关性，但是相对于平均值的平方偏差确实具有显著的记忆，这反映在缓慢衰减的ACF和PACF中，对于前两个而言高，在第六个滞后之后才被截断：
 - en: '[PRE5]'
+  id: totrans-206
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'The function `plot_correlogram` produces the following output:'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数`plot_correlogram`生成如下输出：
 - en: '![](img/15439_09_07.png)'
+  id: totrans-208
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_07.png)'
 - en: 'Figure 9.7: Daily NASDAQ composite volatility'
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 图9.7：每日纳斯达克综合波动性
 - en: Hence, we can estimate a GARCH model to capture the linear relationship of past
     volatilities. We will use rolling 10-year windows to estimate a GARCH(*p*, *q*)
     model with *p* and *q* ranging from 1-4 to generate one-step out-of-sample forecasts.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们可以估计一个GARCH模型来捕捉过去波动性的线性关系。我们将使用滚动10年窗口来估计一个GARCH(*p*, *q*)模型，其中*p*和*q*的范围为1-4，以生成一步外样本预测。
 - en: 'We then compare the RMSE of the predicted volatility relative to the actual
     squared deviation of the return from its mean to identify the most predictive
     model. We are using winsorized data to limit the impact of extreme return values
     being reflected in the very high positive skew of the volatility:'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们比较预测波动性的RMSE与实际收益偏离其均值的平方差，以确定最具预测性的模型。我们使用修剪数据来限制极端收益值的影响，这些值在波动率的正偏态中反映得非常高：
 - en: '[PRE6]'
+  id: totrans-212
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'The GARCH(2, 2) model achieves the lowest RMSE (same value as GARCH(4, 2) but
     with fewer parameters), so we go ahead and estimate this model to inspect the
     summary:'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: GARCH(2, 2)模型实现了最低的RMSE（与GARCH(4, 2)相同的值，但参数更少），所以我们继续估计这个模型以检查摘要：
 - en: '[PRE7]'
+  id: totrans-214
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'The output shows the maximized log-likelihood, as well as the AIC and BIC criteria,
     which are commonly minimized when selecting models based on in-sample performance
     (see *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*). It
@@ -1126,88 +1572,127 @@
     estimate, as well as the GARCH parameters for the constant omega, the AR parameters,
     ![](img/B15439_09_049.png), and the MA parameters, ![](img/B15439_09_050.png),
     all of which are statistically significant:'
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出显示了最大化的对数似然以及AIC和BIC标准，这些标准通常在选择基于样本内性能的模型时被最小化（见*第7章*，*线性模型 - 从风险因素到收益预测*）。它还显示了均值模型的结果，这种情况下，只是一个常数估计，以及常数omega的GARCH参数，AR参数，![](img/B15439_09_049.png)，和MA参数，![](img/B15439_09_050.png)，所有这些都具有统计学显著性：
 - en: '![](img/15439_09_08.png)'
+  id: totrans-216
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_08.png)'
 - en: 'Figure 9.8: GARCH Model results'
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 图9.8：GARCH模型结果
 - en: Let's now explore models for multiple time series and the concept of cointegration,
     which will enable a new trading strategy.
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在让我们探索多时间序列模型和协整概念，这将使一种新的交易策略成为可能。
 - en: Multivariate time-series models
+  id: totrans-219
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 多元时间序列模型
 - en: Multivariate time-series models are designed to capture the dynamic of multiple
     time series simultaneously and leverage dependencies across these series for more
     reliable predictions. The most comprehensive introduction to this subject is Lütkepohl
     (2005).
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 多元时间序列模型旨在同时捕获多个时间序列的动态，并利用这些序列之间的依赖关系进行更可靠的预测。对这一主题最全面的介绍是Lütkepohl（2005）。
 - en: Systems of equations
+  id: totrans-221
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 方程组
 - en: 'Univariate time-series models, like the ARMA approach we just discussed, are
     limited to statistical relationships between a target variable and its lagged
     values or lagged disturbances and exogenous series, in the case of ARMAX. In contrast,
     multivariate time-series models also allow for lagged values of other time series
     to affect the target. This effect applies to all series, resulting in complex
     interactions, as illustrated in the following diagram:'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 单变量时间序列模型，就像我们刚刚讨论的ARMA方法一样，仅限于目标变量及其滞后值或滞后扰动以及外生序列之间的统计关系，在ARMAX的情况下。相比之下，多元时间序列模型还允许其他时间序列的滞后值影响目标。这种影响适用于所有系列，导致复杂的交互作用，如下图所示：
 - en: '![](img/15439_09_09.png)'
+  id: totrans-223
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_09.png)'
 - en: 'Figure 9.9: Interactions in univariate and multivariate time-series models'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 图9.9：单变量和多变量时间序列模型中的交互作用
 - en: In addition to potentially better forecasting, multivariate time series are
     also used to gain insights into cross-series dependencies. For example, in economics,
     multivariate time series are used to understand how policy changes to one variable,
     such as an interest rate, may affect other variables over different horizons.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 除了可能更好的预测之外，多元时间序列还用于获得对交叉系列依赖性的见解。例如，在经济学中，多元时间序列用于理解一个变量的政策变化，例如利率，如何在不同的视角影响其他变量。
 - en: The **impulse-response** function produced by the multivariate model serves
     this purpose and allows us to simulate how one variable responds to a sudden change
     in other variables. The concept of **Granger causality** analyzes whether one
     variable is useful in forecasting another (in the least-squares sense). Furthermore,
     multivariate time-series models allow for a decomposition of the prediction error
     variance to analyze how other series contribute.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 多变量模型产生的**冲击响应**函数达到了这一目的，并允许我们模拟一个变量如何对其他变量的突然变化做出反应。**格兰杰因果性**概念分析了一个变量是否对另一个变量的预测有用（以最小二乘意义上）。此外，多元时间序列模型允许对预测误差方差进行分解，以分析其他系列如何做出贡献。
 - en: The vector autoregressive (VAR) model
+  id: totrans-227
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 向量自回归（VAR）模型
 - en: 'We will see how the **vector autoregressive VAR(p) model** extends the AR(*p*)
     model to *k* series by creating a system of *k* equations, where each contains
     *p* lagged values of all *k* series. In the simplest case, a VAR(1) model for
     *k*=2 takes the following form:'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将看到**向量自回归 VAR(p) 模型**如何通过创建一个包含所有*k*系列*p*滞后值的*k*方程组来扩展 AR(*p*) 模型。在最简单的情况下，*k*=2
+    的 VAR(1) 模型采用以下形式：
 - en: '![](img/B15439_09_051.png)'
+  id: totrans-229
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_051.png)'
 - en: 'This model can be expressed somewhat more concisely in **matrix form**:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个模型可以用**矩阵形式**更简洁地表达：
 - en: '![](img/B15439_09_052.png)'
+  id: totrans-231
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_052.png)'
 - en: 'The **coefficients** on the lagged values of the output provide information
     about the dynamics of the series itself, whereas the cross-variable coefficients
     offer some insight into the interactions across the series. This notation extends
     to *k* time series and order *p*, as follows:'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 对输出滞后值的**系数**提供有关系列本身动态的信息，而交叉变量的系数则提供一些关于系列之间交互作用的见解。此符号扩展到*k*时间序列和*p*阶，如下所示：
 - en: '![](img/B15439_09_053.png)'
+  id: totrans-233
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_053.png)'
 - en: VAR(*p*) models also require **stationarity** so that the initial steps from
     univariate time-series modeling carry over. First, explore the series and determine
     the necessary transformations. Then, apply the augmented Dickey-Fuller test to
@@ -1215,34 +1700,43 @@
     transformations otherwise. It can be estimated with an OLS conditional on initial
     information or with MLE, which is the equivalent for normally distributed errors
     but not otherwise.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: VAR(*p*)模型还需要**平稳性**，以便从单变量时间序列建模的初步步骤延伸。首先，探索系列并确定必要的转换。然后，应用增广迪基-福勒检验来验证每个系列是否满足平稳性标准，否则应用进一步的转换。它可以根据初始信息进行OLS估计，也可以根据MLE进行估计，这是对正态分布误差而言的等价物，但对其他情况不是。
 - en: If some or all of the *k* series are unit-root non-stationary, they may be **cointegrated**
     (see the next section). This extension of the unit root concept to multiple time
     series means that a linear combination of two or more series is stationary and,
     hence, mean-reverting.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果一些或全部的*k*系列是单位根非平稳的，它们可能是**协整的**（见下一节）。将单位根概念扩展到多个时间序列意味着两个或更多系列的线性组合是平稳的，因此是均值回归的。
 - en: The VAR model is not equipped to handle this case without differencing; instead,
     use the **vector error correction model** (**VECM**, Johansen and Juselius 1990).
     We will further explore cointegration because, if present and assumed to persist,
     it can be leveraged for a pairs-trading strategy.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: VAR 模型无法处理这种情况，需要进行差分处理；而是使用**向量误差修正模型**（**VECM**，Johansen 和 Juselius 1990）。我们将进一步探讨协整性，因为如果存在并被认为是持续存在的，它可以用于配对交易策略。
 - en: The **determination of the lag order** also takes its cues from the ACF and
     PACF for each series, but is constrained by the fact that the same lag order applies
     to all series. After model estimation, **residual diagnostics** also call for
     a result resembling white noise, and model selection can use in-sample information
     criteria or, if the goal is to use the model for prediction, out-of-sample predictive
     performance to cross-validate alternative model designs.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
 - en: As mentioned in the univariate case, predictions of the original time series
     require us to reverse the transformations applied to make a series stationary
     before training the model.
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
 - en: Using the VAR model for macro forecasts
+  id: totrans-239
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1250,42 +1744,57 @@
     data on industrial production and add a monthly time series on consumer sentiment,
     both of which are provided by the Federal Reserve''s data service. We will use
     the familiar pandas-datareader library to retrieve data from 1970 through 2017:'
+  id: totrans-240
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-241
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Log-transforming the industrial production series and seasonal differencing
     using a lag of 12 for both series yields stationary results:'
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-243
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'This leaves us with the following series:'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/15439_09_10.png)'
+  id: totrans-245
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9.10: Transformed time series: industrial production and consumer sentiment'
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
 - en: 'To limit the size of the output, we will just estimate a VAR(1) model using
     the statsmodels `VARMAX` implementation (which allows for optional exogenous variables)
     with a constant trend using the first 480 observations:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-248
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'This produces the following summary:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/15439_09_11.png)'
+  id: totrans-250
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9.11: VAR(1) model results'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
 - en: 'The output contains the coefficients for both time-series equations, as outlined
@@ -1294,38 +1803,49 @@
     the case in this simple example because the variance does not appear to be constant
     (upper left) and the quantile plot shows differences in the distribution, namely
     fat tails (lower left):'
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/15439_09_12.png)'
+  id: totrans-253
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9.12: statsmodels VAR model diagnostic plot'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
 - en: 'You can generate out-of-sample predictions as follows:'
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-256
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'The following visualization of actual and predicted values shows how the prediction
     lags the actual values and does not capture nonlinear, out-of-sample patterns
     well:'
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/15439_09_13.png)'
+  id: totrans-258
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9.13: VAR model predictions versus actuals'
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
 - en: Cointegration – time series with a shared trend
+  id: totrans-260
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
 - en: We briefly mentioned cointegration in the previous section on multivariate time-series
     models. Let's now explain this concept and how to diagnose its presence in more
     detail before leveraging it for a statistical arbitrage trading strategy.
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
 - en: We have seen how a time series can have a unit root that creates a stochastic
@@ -1337,144 +1857,199 @@
     Satellite Images*, in Wooldridge, 2008). Therefore, the recommended solution is
     to difference the time series so they become stationary before using them in a
     model.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经看到一个时间序列可以具有创建随机趋势的单位根，并使时间序列高度持久。当我们在线性回归模型中将这种整合的时间序列作为特征使用时，而不是作为差分形式使用，它与结果的关系通常会显得统计上显著，尽管实际上并不是。这种现象称为伪回归（详见Wooldridge，2008年的*第18章*，*用于金融时间序列和卫星图像的CNNs*）。因此，建议的解决方案是在将它们用于模型之前对时间序列进行差分，使它们变得平稳。
 - en: However, there is an exception when there are cointegration relationships between
     the outcome and one or more input variables. To understand the concept of cointegration,
     let's first remember that the residuals of a regression model are a linear combination
     of the inputs and the output series.
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，在结果和一个或多个输入变量之间存在协整关系时，有一个例外。要理解协整的概念，让我们首先记住回归模型的残差是输入和输出系列的线性组合。
 - en: 'Usually, the residuals of the regression of one integrated time series on one
     or more such series yields non-stationary residuals that are also integrated,
     and thus behave like a random walk. However, for some time series, this is not
     the case: the regression produces coefficients that yield a linear combination
     of the time series in the form of the residuals that are stationary, even though
     the individual series are not. Such time series are *cointegrated*.'
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，对一个或多个这样的系列的整合时间序列的回归的残差产生的是非平稳的残差，这些残差也是整合的，因此表现出类似于随机游走的行为。然而，对于一些时间序列，情况并非如此：回归产生的系数会形成时间序列的线性组合，这种线性组合是平稳的，尽管各个系列不是。这种时间序列是*协整的*。
 - en: A non-technical example is that of a drunken man on a random walk accompanied
     by his dog (on a leash). Both trajectories are non-stationary but cointegrated
     because the dog will occasionally revert to his owner. In the trading context,
     arbitrage constraints imply cointegration between spot and futures prices.
+  id: totrans-265
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个非技术示例是一个醉酒的人在随机行走，他的狗（被拴在绳索上）陪伴着他。两个轨迹都是非平稳的，但协整，因为狗偶尔会回到它的主人身边。在交易的背景下，套利约束意味着现货和期货价格之间存在协整关系。
 - en: In other words, a **linear combination of two or more cointegrated series has
     a stable mean** to which this linear combination reverts. This also applies when
     the individual series are integrated of a higher order and the linear combination
     reduces the overall order of integration.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 换句话说，**两个或多个协整系列的线性组合有一个稳定的均值**，这个线性组合会回归到这个稳定的均值。当各个系列是高阶整合的时候，这也适用，线性组合会减少整体的整合次数。
 - en: '**Cointegration differs from correlation**: two series can be highly correlated
     but need not be cointegrated. For example, if two growing series are constant
     multiples of each other, their correlation will be high, but any linear combination
     will also grow rather than revert to a stable mean.'
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: '**协整与相关性不同**：两个系列可以高度相关，但不一定是协整的。例如，如果两个增长系列是彼此的常数倍数，它们的相关性将很高，但任何线性组合也会增长而不是回归到一个稳定的均值。'
 - en: 'Cointegration is very useful: if two or more asset price series tend to revert
     to a common mean, we can leverage deviations from the trend because they should
     imply future price moves in the opposite direction. The mathematics behind cointegration
     is more involved, so we will only focus on the practical aspects; for an in-depth
     treatment, see Lütkepohl (2005).'
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 协整非常有用：如果两个或更多资产价格系列趋向于回归到一个共同的均值，我们可以利用与趋势偏离，因为它们应该暗示着未来价格的相反方向的移动。协整背后的数学更加复杂，因此我们将只关注实践方面；有关深入处理，请参阅Lütkepohl（2005）。
 - en: In this section, we will address how we can identify pairs with such a long-term
     stationary relationship, estimate the expected time for any disequilibrium to
     correct, and how to utilize these tools to implement and backtest a long-short
     pairs trading strategy.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将讨论如何识别具有这种长期平稳关系的配对，估计任何失衡纠正的预期时间，以及如何利用这些工具来实施和回测长短对交易策略。
 - en: 'There are two approaches to testing for cointegration:'
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种测试协整的方法：
 - en: The Engle-Granger two-step method
+  id: totrans-271
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 恩格尔-格兰杰两步法
 - en: The Johansen test
+  id: totrans-272
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 约翰逊测试
 - en: We'll discuss each in turn before we show how they help identify cointegrated
     securities that tend to revert to a common trend, a fact that we can leverage
     for a statistical arbitrage strategy.
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 在展示它们如何帮助识别趋向于恢复到共同趋势的共整合证券之前，我们将依次讨论每一个。
 - en: The Engle-Granger two-step method
+  id: totrans-274
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 恩格尔-格兰杰两步法
 - en: 'The **Engle-Granger method** is used to identify cointegration relationships
     between two series. It involves both of the following:'
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: '**恩格尔-格兰杰方法**用于确定两个系列之间的共整合关系。它涉及到以下两个方面：'
 - en: Regressing one series on another to estimate the stationary long-term relationship
+  id: totrans-276
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对另一个系列进行回归以估计长期稳定关系
 - en: Applying an ADF unit-root test to the regression residual
+  id: totrans-277
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将ADF单位根测试应用于回归残差
 - en: The null hypothesis is that the residuals have a unit root and are integrated;
     if we can reject it, then we assume that the residuals are stationary and, thus,
     the series are cointegrated (Engle and Granger 1987).
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 零假设是残差具有单位根并且是集成的；如果我们可以拒绝它，那么我们假设残差是稳定的，因此系列是共整合的（Engle and Granger 1987）。
 - en: A key benefit of this approach is that the regression coefficient represents
     the multiplier that renders the combination stationary, that is, mean-reverting.
     Unfortunately, the test results will differ, depending on which variable we consider
     independent, so that we try both ways and then pick the relation with the more
     negative test statistic that has the lower p-value.
+  id: totrans-279
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种方法的一个关键好处是回归系数表示的是使组合稳定的乘数，即，均值回归。不幸的是，测试结果将取决于我们考虑哪个变量是独立的，因此我们尝试两种方式，然后选择具有更负的测试统计量且具有较低p值的关系。
 - en: Another downside is that this test is limited to pairwise relationships. The
     more complex Johansen procedure can identify significant cointegration among up
     to a dozen time series.
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 这项测试的另一个缺点是，它仅限于成对关系。更复杂的约翰逊程序可以识别多达十几个时间序列之间的显著共整合。
 - en: The Johansen likelihood-ratio test
+  id: totrans-281
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 约翰逊似然比检验
 - en: 'The **Johansen procedure**, in contrast, tests the restrictions imposed by
     cointegration on a VAR model, as discussed in the previous section. More specifically,
     after subtracting the target vector from both sides of a generic VAR(*p*) model,
     we obtain the **error correction model** (**ECM**) formulation:'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 相比之下，**约翰逊程序**测试了上一节中讨论的共整合对VAR模型施加的限制。更具体地说，在从通用VAR(*p*)模型的两边减去目标向量之后，我们得到了**误差修正模型**（**ECM**）的表述：
 - en: '![](img/B15439_09_054.png)'
+  id: totrans-283
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_09_054.png)'
 - en: The resulting modified VAR(*p*) equation has only one vector term in levels
     (*y*[t][-1]) that is not expressed as a difference using the ![](img/B15439_09_055.png)
     operator. The nature of cointegration depends on the rank of the coefficient matrix
     ![](img/B15439_09_056.png) of this term (Johansen 1991).
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果修改后的VAR(*p*)方程只有一个向量项在水平（*y*[t][-1]）中，并且没有使用![](img/B15439_09_055.png)运算符作为差异。共整合的性质取决于系数矩阵![](img/B15439_09_056.png)的等级（约翰逊
+    1991）。
 - en: While this equation appears structurally similar to the ADF test setup, there
     are now several potential constellations of common trends because there are multiple
     series involved. To identify the number of cointegration relationships, the Johansen
     test successively tests for an increasing rank of ![](img/B15439_09_057.png),
     starting at 0 (no cointegration). We will explore the application to the case
     of two series in the following section.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管这个方程在结构上与ADF测试设置相似，但现在有了多个系列的潜在公共趋势组合。为了确定共整合关系的数量，约翰逊测试连续测试增加的![](img/B15439_09_057.png)等级，从0开始（无共整合）。我们将在下一节探讨应用于两个系列的情况。
 - en: Gonzalo and Lee (1998) discuss practical challenges due to misspecified model
     dynamics and other implementation aspects, including how to combine both test
     procedures that we will rely on for our sample statistical arbitrage strategy
     in the next section.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 冈萨洛和李（1998）讨论了由于错误指定的模型动态和其他实施方面的挑战，包括如何结合我们将在下一节中依赖的两种测试程序的实际统计套利策略。
 - en: Statistical arbitrage with cointegration
+  id: totrans-287
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 具有共整合关系的统计套利
 - en: Statistical arbitrage refers to strategies that employ some statistical model
     or method to take advantage of what appears to be relative mispricing of assets,
     while maintaining a level of market neutrality.
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 统计套利指的是利用某些统计模型或方法来利用资产的相对定价错误，同时保持一定程度的市场中性的策略。
 - en: '**Pairs trading** is a conceptually straightforward strategy that has been
     employed by algorithmic traders since at least the mid-eighties (Gatev, Goetzmann,
     and Rouwenhorst 2006). The goal is to find two assets whose prices have historically
@@ -1482,51 +2057,71 @@
     the spread widens, buy the loser that has dropped below the common trend and short
     the winner. If the relationship persists, the long and/or the short leg will deliver
     profits as prices converge and the positions are closed.'
+  id: totrans-289
   prefs: []
   type: TYPE_NORMAL
+  zh: '**对冲交易** 是一个概念上简单直接的策略，至少从 20 世纪八十年代中期起就被算法交易者采用（Gatev、Goetzmann 和 Rouwenhorst
+    2006）。其目标是找到历史上价格走势相似的两个资产，跟踪价差（即它们价格之间的差异），并一旦价差扩大，买入价格低于共同趋势的失败者并做空价格高于共同趋势的赢家。如果这种关系持续存在，做多和/或做空腿将随着价格趋同而获利，并且位置将被关闭。'
 - en: This approach extends to a multivariate context by forming baskets from multiple
     securities and trading one asset against a basket of two baskets against each
     other.
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 该方法通过从多个证券形成篮子，并使一个资产对抗另一个篮子而扩展到多变量环境。
 - en: 'In practice, the strategy requires two steps:'
+  id: totrans-291
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实践中，该策略需要两个步骤：
 - en: '**Formation phase**: Identify securities that have a long-term mean-reverting
     relationship. Ideally, the spread should have a high variance to allow for frequent
     profitable trades while reliably reverting to the common trend.'
+  id: totrans-292
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**形成阶段**：确定具有长期均值回归关系的证券。理想情况下，价差应具有较高的方差，以允许频繁的盈利交易，并可靠地回归到共同趋势。'
 - en: '**Trading phase**: Trigger entry and exit trading rules as price movements
     cause the spread to diverge and converge.'
+  id: totrans-293
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**交易阶段**：当价格变动导致价差分歧和趋同时，触发进出交易规则。'
 - en: Several approaches to the formation and trading phases have emerged from increasingly
     active research in this area, across multiple asset classes, over the last several
     years. The next subsection outlines the key differences before we dive into an
     example application.
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一领域越来越活跃的研究中，过去几年中出现了几种形成和交易阶段的方法，跨越多个资产类别。下一小节概述了主要区别，然后我们将深入介绍一个示例应用。
 - en: How to select and trade comoving asset pairs
+  id: totrans-295
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何选择和交易共动资产对
 - en: 'A recent comprehensive survey of pairs trading strategies (Krauss 2017) identified
     four different methodologies, plus a number of other more recent approaches, including
     ML-based forecasts:'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近对对冲交易策略的全面调查（Krauss 2017）确定了四种不同的方法，以及一些更近期的方法，包括基于 ML 的预测：
 - en: '**Distance approach**: The oldest and most-studied method identifies candidate
     pairs with distance metrics like correlation and uses non-parametric thresholds
     like Bollinger Bands to trigger entry and exit trades. Its computational simplicity
     allows for large-scale applications with demonstrated profitability across markets
     and asset classes for extended periods of time since Gatev, et al. (2006). However,
     performance has decayed more recently.'
+  id: totrans-297
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**距离法**：最古老且研究最多的方法使用诸如相关性之类的距离度量标识候选对，并使用诸如布林带之类的非参数阈值触发进出交易。其计算简单性允许进行大规模应用，自从
+    Gatev 等人（2006）以来，在不同市场和资产类别中已经表现出盈利性质，并持续了相当长的时间。然而，最近的表现已经有所衰退。'
 - en: '**Cointegration approach**: As outlined previously, this approach relies on
     an econometric model of a long-term relationship among two or more variables,
     and allows for statistical tests that promise more reliability than simple distance
@@ -1534,24 +2129,32 @@
     to identify pairs and baskets of securities, as well as simpler heuristics that
     aim to capture the concept (Vidyamurthy 2004). Trading rules often resemble the
     simple thresholds used with distance metrics.'
+  id: totrans-298
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**协整法**：如前所述，该方法依赖于两个或更多变量之间的长期关系的计量模型，并允许进行统计测试，承诺比简单距离度量更可靠。该类别中的示例使用 Engle-Granger
+    和 Johansen 程序来识别证券对和篮子，以及旨在捕获概念的更简单的启发式方法（Vidyamurthy 2004）。交易规则通常类似于距离度量使用的简单阈值。'
 - en: '**Time-series approach**: With a focus on the trading phase, strategies in
     this category aim to model the spread as a mean-reverting stochastic process and
     optimize entry and exit rules accordingly (Elliott, Hoek, and Malcolm 2005). It
     assumes promising pairs have already been identified.'
+  id: totrans-299
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**时间序列法**：着眼于交易阶段，该类别中的策略旨在将价差建模为均值回归的随机过程，并相应地优化进出规则（Elliott、Hoek 和 Malcolm
+    2005）。它假定有希望的配对已经被确定。'
 - en: '**Stochastic control approach**: Similar to the time-series approach, the goal
     is to optimize trading rules using stochastic control theory to find value and
     policy functions to arrive at an optimal portfolio (Liu and Timmermann 2013).
     We will address this type of approach in *Chapter 21*, *Generative Adversarial
     Networks for Synthetic Time-Series Data*.'
+  id: totrans-300
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**随机控制方法**：类似于时间序列方法，其目标是使用随机控制理论优化交易规则，以找到值函数和策略函数来得到最优组合（Liu和Timmermann，2013）。我们将在*第21章*，*用于合成时间序列数据的生成对抗网络*中讨论这种类型的方法。'
 - en: '**Other approaches**: Besides pair identification based on unsupervised learning
     like principal component analysis (see *Chapter 13*, *Data-Driven Risk Factors
     and Asset Allocation with Unsupervised Learning*) and statistical models like
@@ -1559,75 +2162,105 @@
     pairs based on their relative price or return forecasts (Huck 2019). We will cover
     several ML algorithms that can be used for this purpose and illustrate corresponding
     multivariate pairs trading strategies in the coming chapters.'
+  id: totrans-301
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**其他方法**：除了基于无监督学习（如主成分分析，参见*第13章*，*使用无监督学习进行数据驱动的风险因子和资产配置*）和统计模型（如copulas，Patton
+    2012）的配对识别外，近年来机器学习也变得流行，用于基于相对价格或收益预测识别配对（Huck，2019）。我们将在接下来的章节中介绍几种可用于此目的的ML算法，并且说明相应的多变量配对交易策略'
 - en: 'This summary of the various approaches offers barely a glimpse at the flexibility
     afforded by the design of a pairs trading strategy. In addition to higher-level
     questions about pair selection and trading rule logic, there are **numerous parameters**
     that we need **to define for implementation**. These parameters include the following:'
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些不同方法的摘要只是略显一斑地展示了配对交易策略设计所带来的灵活性。除了有关配对选择和交易规则逻辑的高层次问题之外，还有**许多参数**需要我们**定义以供实施**。这些参数包括以下内容：
 - en: Investment universe to screen for potential pairs or baskets
+  id: totrans-303
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 用于筛选潜在配对或篮子的投资范围
 - en: Length of the formation period
+  id: totrans-304
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 形成期的长度
 - en: Strength of the relationship used to pick tradeable candidates
+  id: totrans-305
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 用于选择可交易候选者的关系强度
 - en: Degree of deviation from and convergence to their common means to trigger entry
     or exit trades or to adjust existing positions as spreads fluctuate
+  id: totrans-306
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与公共均值的偏离程度和收敛程度来触发进入或退出交易或根据价差波动调整现有仓位
 - en: Pairs trading in practice
+  id: totrans-307
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 实践中的配对交易
 - en: 'The **distance approach** identifies pairs using the correlation of (normalized)
     asset prices or their returns, and is simple and orders of magnitude less computationally
     intensive than cointegration tests. The notebook `cointegration_test` illustrates
     this for a sample of ~150 stocks with 4 years of daily data: it takes ~30ms to
     compute the correlation with the returns of an ETF, compared to 18 seconds for
     a suite of cointegration tests (using statsmodels) – 600x slower.'
+  id: totrans-308
   prefs: []
   type: TYPE_NORMAL
+  zh: '**距离方法**使用（标准化的）资产价格或其收益的相关性来识别配对，简单且计算成本远远低于协整检验。笔记本`cointegration_test`对具有4年每日数据的约150只股票样本进行了说明：计算与ETF收益的相关性大约需要30ms，而进行一系列协整检验（使用statsmodels）则需要18秒
+    - 慢了600倍。'
 - en: The **speed advantage** is particularly valuable. This is because the number
     of potential pairs is the product of the number of candidates to be considered
     on either side so that evaluating combinations of 100 stocks and 100 ETFs requires
     comparing 10,000 tests (we'll discuss the challenge of multiple testing bias later).
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: '**速度优势**尤为宝贵。这是因为潜在配对的数量是要考虑到每一方的候选人数的乘积，因此评估100只股票和100只ETF的组合需要比较10,000个测试（我们稍后将讨论多重测试偏差的挑战）。'
 - en: 'On the other hand, distance metrics do not necessarily select the most profitable
     pairs: correlation is maximized for perfect co-movement, which, in turn, eliminates
     actual trading opportunities. Empirical studies confirm that the volatility of
     the price spread of cointegrated pairs is almost twice as high as the volatility
     of the price spread of distance pairs (Huck and Afawubo 2015).'
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一方面，距离度量不一定选择最有利可图的配对：相关性在完美共同运动时最大化，这反过来消除了实际的交易机会。经验证实证研究表明，协整配对的价差波动性几乎是距离配对的两倍（Huck和Afawubo，2015）。
 - en: 'To balance the **tradeoff between computational cost and the quality of the
     resulting pairs**, Krauss (2017) recommends a procedure that combines both approaches
     based on his literature review:'
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了平衡**计算成本与生成对质量之间的权衡**，Krauss（2017）根据他的文献综述建议采用一种结合了两种方法的程序：
 - en: Select pairs with a stable spread that shows little drift to reduce the number
     of candidates
+  id: totrans-312
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 选择传播稳定且漂移小的对，以减少候选项的数量
 - en: Test the remaining pairs with the highest spread variance for cointegration
+  id: totrans-313
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对剩余的传播方差最高的对进行协整检验
 - en: This process aims to select cointegrated pairs with lower divergence risk while
     ensuring more volatile spreads that, in turn, generate higher profit opportunities.
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: 此过程旨在选择具有较低偏离风险的协整对，同时确保更具波动性的传播，进而产生更多的利润机会。
 - en: 'A large number of tests introduce **data snooping bias**, as discussed in *Chapter
     6*, *The Machine Learning Process*: multiple testing is likely to increase the
     number of false positives that mistakenly reject the null hypothesis of no cointegration.
@@ -1635,158 +2268,226 @@
     2008), a study of commodity pairs (Cummins and Bucca 2012) shows that controlling
     the familywise error rate to improve the tests'' power, according to Romano and
     Wolf (2010), can lead to better performance.'
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 大量的测试引入了**数据窥探偏差**，如*第6章*，*机器学习过程*中所讨论的：多重检验可能会增加错误地拒绝无协整假设的假阳性数量。虽然统计显著性对于盈利交易可能不是必需的（Chan
+    2008），但商品对研究（Cummins and Bucca 2012）表明，控制家族内误差率以提高检验的功效，根据Romano and Wolf（2010）的说法，可以带来更好的性能。
 - en: In the following subsection, we'll take a closer look at how predictive various
     heuristics for the degree of comovement of asset prices are for the result of
     cointegration tests.
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 在接下来的小节中，我们将更详细地研究各种资产价格共同变动程度的预测能力对协整检验结果的影响。
 - en: The example code uses a sample of 172 stocks and 138 ETFs traded on the NYSE
     and NASDAQ, with daily data from 2010 - 2019 provided by Stooq.
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 示例代码使用了172只股票和138只ETFs，在2010年至2019年间由Stooq提供的每日数据，这些股票和ETFs在纽约证券交易所和纳斯达克交易。
 - en: The securities represent the largest average dollar volume over the sample period
     in their respective class; highly correlated and stationary assets have been removed.
     See the notebook `create_datasets` in the `data` folder of the GitHub repository
     for instructions on how to obtain the data, and the notebook `cointegration_tests`
     for the relevant code and additional preprocessing and exploratory details.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些证券代表了其所属类别在样本期内的最大平均美元成交量；高度相关且平稳的资产已被移除。有关如何获取数据的说明，请参见GitHub仓库的`data`文件夹中的笔记本`create_datasets`，以及有关代码和额外预处理和探索细节的笔记本`cointegration_tests`。
 - en: Distance-based heuristics to find cointegrated pairs
+  id: totrans-319
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 基于距离的启发式方法来寻找协整对
 - en: '`compute_pair_metrics()` computes the following distance metrics for over 23,000
     pairs of stocks and **Exchange Traded Funds** (**ETFs**) for 2010-14 and 2015-19:'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: '`compute_pair_metrics()` 计算了超过23,000对股票和**交易所交易基金**（**ETFs**）在2010-14年和2015-19年的以下距离度量：'
 - en: The **drift of the spread**, defined as a linear regression of a time trend
     on the spread
+  id: totrans-321
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 传播的漂移，定义为传播的时间趋势对传播的线性回归
 - en: The **spread's volatility**
+  id: totrans-322
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 传播的波动性
 - en: The **correlations** between the normalized price series and between their returns
+  id: totrans-323
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 标准化价格系列之间和它们的回报之间的相关性
 - en: Low drift and volatility, as well as high correlation, are simple proxies for
     cointegration.
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
+  zh: 低漂移和波动，以及高相关性，是协整的简单代理。
 - en: To evaluate the predictive power of these heuristics, we also run **Engle-Granger
     and Johansen cointegration** tests using statsmodels for the preceding pairs.
     This takes place in the loop in the second half of `compute_pair_metrics()`.
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了评估这些启发式规则的预测能力，我们还使用statsmodels对前述对运行**恩格尔-格兰杰和约翰逊协整**检验。这发生在`compute_pair_metrics()`的后半部分的循环中。
 - en: 'We first estimate the optimal number of lags that we need to specify for the
     Johansen test. For both tests, we assume that the cointegrated series (the spread)
     may have an intercept different from zero but no trend:'
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先估计我们需要为约翰逊检验指定的滞后数的最佳数量。对于两个测试，我们假设协整系列（传播）可能有一个不同于零的截距，但没有趋势：
 - en: '[PRE12]'
+  id: totrans-327
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: To check for the **significance of the cointegration tests**, we compare the
     Johansen trace statistic for rank 0 and 1 to their respective critical values
     and obtain the Engle-Granger p-value.
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了检验**协整检验的显著性**，我们将约翰逊迹统计量对于秩0和1的临界值进行比较，并得到恩格尔-格兰杰p值。
 - en: 'We follow the recommendation by Gonzalo and Lee (1998), mentioned at the end
     of the previous section, to apply both tests and accept pairs where they agree.
     The authors suggest additional due diligence in case of disagreement, which we
     are going to skip:'
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们遵循上一节末尾提到的 Gonzalo 和 Lee (1998) 的建议，即同时应用两个测试，并接受它们达成一致意见的对。作者建议在存在分歧时进行额外的尽职调查，但我们将跳过这一步：
 - en: '[PRE13]'
+  id: totrans-330
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: For the over 46,000 pairs across both sample periods, the Johansen test considers
     3.2 percent of the relationships as significant, while the Engle-Granger considers
     6.5 percent. They agree on 366 pairs (0.79 percent).
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于两个样本期间的超过 46,000 对，约翰逊测试将 3.2% 的关系视为显著，而恩格尔-格兰杰测试将 6.5% 视为显著。它们对 366 对（0.79%）达成一致意见。
 - en: How well do the heuristics predict significant cointegration?
+  id: totrans-332
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 启发式方法能多好地预测显著的协整？
 - en: 'When we compare the distributions of the heuristics for series that are cointegrated
     according to both tests with the remainder that is not, volatility and drift are
     indeed lower (in absolute terms). *Figure 9.14* shows that the picture is less
     clear for the two correlation measures:'
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我们比较那些根据两个测试协整的系列和其余系列的启发式方法的分布时，波动性和漂移确实较低（绝对值）。*图 9.14* 显示这两个相关性指标的情况不太明确：
 - en: '![](img/15439_09_14.png)'
+  id: totrans-334
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_14.png)'
 - en: 'Figure 9.14: The distribution of heuristics, broken down by the significance
     of both cointegration tests'
+  id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.14：启发式方法的分布，按照两个协整测试的显著性来分解
 - en: To evaluate the predictive accuracy of the heuristics, we first run a logistic
     regression model with these features to predict significant cointegration. It
     achieves an **area-under-the-curve** (**AUC**) cross-validation score of 0.815;
     excluding the correlation metrics, it still scores 0.804\. A decision tree does
     slightly better at AUC=0.821, with or without the correlation features.
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了评估启发式方法的预测准确性，我们首先运行一个 logistic 回归模型，使用这些特征来预测显著的协整。它达到了**曲线下面积** (**AUC**)
+    交叉验证分数为 0.815；排除相关性指标后，它仍然得分 0.804。决策树在 AUC=0.821 时表现稍好，无论是否包含相关性特征。
 - en: 'Not least due to the strong class imbalance, there are large numbers of false
     positives: correctly identifying 80 percent of the 366 cointegrated pairs implies
     over 16,500 false positives, but eliminates almost 30,000 of the candidates. See
     the notebook `cointegration_tests` for additional detail.'
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于强烈的类别不平衡，存在大量的假阳性：正确识别 366 个协整对的 80% 意味着有超过 16,500 个假阳性，但也消除了几乎 30,000 个候选对。有关更多详细信息，请参阅笔记本
+    `cointegration_tests`。
 - en: The **key takeaway** is that distance heuristics can help screen a large universe
     more efficiently, but this comes at a cost of missing some cointegrated pairs
     and still requires substantial testing.
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
+  zh: '**关键要点** 是距离启发式方法可以帮助更高效地筛选大范围的内容，但这样做的代价是可能会错过一些共整对，并且仍然需要大量的测试。'
 - en: Preparing the strategy backtest
+  id: totrans-339
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备策略回测
 - en: In this section, we are going to implement a statistical arbitrage strategy
     based on cointegration for the sample of stocks and ETFs and the 2017-2019 period.
     Some aspects are simplified to streamline the presentation. See the notebook `statistical_arbitrage_with_cointegrated_pairs`
     for the code examples and additional detail.
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将基于股票和 ETF 的样本以及 2017-2019 年期间实施基于协整的统计套利策略。为了简化演示，某些方面进行了简化。有关代码示例和额外细节，请参阅笔记本
+    `statistical_arbitrage_with_cointegrated_pairs`。
 - en: We first generate and store the cointegration tests for all candidate pairs
     and the resulting trading signals. Then, we backtest a strategy based on these
     signals, given the computational intensity of the process.
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先生成并存储所有候选对的协整测试及其产生的交易信号，然后，鉴于该过程的计算强度，我们对基于这些信号的策略进行回测。
 - en: Precomputing the cointegration tests
+  id: totrans-342
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 预计算协整测试
 - en: First, we run quarterly cointegration tests over a 2-year lookback period on
     each of the 23,000 potential pairs, Then, we select pairs where both the Johansen
     and the Engle-Granger tests agree for trading. We should exclude assets that are
     stationary during the lookback period, but we eliminated assets that are stationary
     for the entire period, so we skip this step to simplify it.
+  id: totrans-343
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们在一个两年的回溯期内对每一对可能的 23,000 个对进行季度协整测试，然后，我们选择那些约翰逊（Johansen）和恩格尔-格兰杰（Engle-Granger）测试均同意进行交易的对。我们应该在回溯期内排除静止的资产，但我们排除了整个期间都是静止的资产，所以我们跳过了这一步以简化流程。
 - en: This procedure follows the steps outlined previously; please see the notebook
     for details.
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 此过程遵循先前概述的步骤；请参阅笔记本以获取详细信息。
 - en: '*Figure 9.15* shows the original stock and ETF series of the two different
     pairs selected for trading; note the clear presence of a common trend over the
     sample period:'
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
 - en: '![](img/15439_09_15.png)'
+  id: totrans-346
   prefs: []
   type: TYPE_IMG
 - en: 'Figure 9.15: Price series for two selected pairs over the sample period'
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
 - en: Getting entry and exit trades
+  id: totrans-348
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1795,32 +2496,42 @@
     the spread larger than two rolling standard deviations away from its moving average
     as **long and short entry signals**, and crossings of the moving average in reverse
     as exit signals.
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
 - en: Smoothing prices with the Kalman filter
+  id: totrans-350
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'To this end, we first apply a rolling **Kalman filter** (**KF**) to remove
     some noise, as demonstrated in *Chapter 4*, *Financial Feature Engineering – How
     to Research Alpha Factors*:'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-352
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: Computing the rolling hedge ratio using the Kalman filter
+  id: totrans-353
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'To obtain a dynamic hedge ratio, we use the KF for rolling linear regression,
     as follows:'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-355
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Estimating the half-life of mean reversion
+  id: totrans-356
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
@@ -1829,54 +2540,70 @@
     is that we gain a formula for the half-life of mean reversion, as an approximation
     of the time required for the spread to converge again after a deviation (see *Chapter
     2*, *Market and Fundamental Data – Sources and Techniques*, in Chan 2013 for details):'
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-358
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: Computing spread and Bollinger Bands
+  id: totrans-359
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'The following function orchestrates the preceding computations and expresses
     the spread as a z-score that captures deviations from the moving average with
     a window equal to two half-lives in terms of the rolling standard deviations:'
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-361
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Getting entry and exit dates for long and short positions
+  id: totrans-362
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
 - en: 'Finally, we use the set of z-scores to derive trading signals:'
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
 - en: We enter a long (short) position if the z-score is below (above) two, which
     implies the spread has moved two rolling standard deviations below (above) the
     moving average
+  id: totrans-364
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: We exit trades when the spread crosses the moving average again
+  id: totrans-365
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
 - en: We derive rules on a quarterly basis for the set of pairs that passed the cointegration
     tests during the prior lookback period but allow pairs to exit during the subsequent
     3 months.
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
 - en: 'We again simplify this by dropping pairs that do not close during this 6-month
     period. Alternatively, we could have handled this using the stop-loss risk management
     that we included in the strategy (see the next section on backtesting):'
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-368
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: Backtesting the strategy using backtrader
+  id: totrans-369
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -1884,9 +2611,11 @@
     it, and evaluate the results. To do so, we need to track our pairs, in addition
     to individual portfolio positions, and monitor the spread of active and inactive
     pairs to apply our trading rules.
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
 - en: Tracking pairs with a custom DataClass
+  id: totrans-371
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
@@ -1895,81 +2624,115 @@
     allows us to store the pair components, their number of shares, and the hedge
     ratio, and compute the current spread and the return, among other things. See
     a simplified version in the following code:'
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了考虑活跃的配对，我们定义了一个`dataclass`（在Python 3.7中引入 - 详见Python文档以获取详情）。这个数据结构，称为`Pair`，允许我们存储配对组件、它们的股数和对冲比率，并计算当前价差和收益等内容。请参见以下代码中的简化版本：
 - en: '[PRE19]'
+  id: totrans-373
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: Running and evaluating the strategy
+  id: totrans-374
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 运行和评估策略
 - en: 'Key implementation aspects include:'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
+  zh: 关键的实施方面包括：
 - en: The daily exit from pairs that have either triggered the exit rule or exceeded
     a given negative return
+  id: totrans-376
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每天退出已触发退出规则或超过给定负回报的配对
 - en: The opening of new long and short positions for pairs whose spreads triggered
     entry signals
+  id: totrans-377
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对触发入场信号的价差的新多头和空头仓位的开仓
 - en: In addition, we adjust positions to account for the varying number of pairs
+  id: totrans-378
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 此外，我们调整头寸以考虑不同数量的配对
 - en: The code for the strategy itself takes up too much space to display here; see
     the notebook `pairs_trading_backtest` for details.
+  id: totrans-379
   prefs: []
   type: TYPE_NORMAL
+  zh: 策略本身的代码在这里展示太占用空间；详见笔记本`pairs_trading_backtest`获取详情。
 - en: '*Figure 9.16* shows that, at least for the 2017-2019 period, this simplified
     strategy had its moments (note that we availed ourselves of some lookahead bias
     and ignored transaction costs).'
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图9.16*显示，至少在2017-2019年期间，这个简化的策略有其时机（请注意，我们利用了一些前瞻性偏见并忽略了交易成本）。'
 - en: 'Under these lax assumptions, it underperformed the S&P 500 at the beginning
     and end of the period and was otherwise roughly in line (left panel). It yields
     an alpha of 0.08 and a negative beta of -0.14 (right panel), with an average Sharpe
     ratio of 0.75 and a Sortino ratio of 1.05 (central panel):'
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这些宽松的假设下，它在期间的开始和结束时表现不及标普500指数，并且在其他时候大致处于相同水平（左侧面板）。它产生0.08的alpha和-0.14的负beta（右侧面板），平均夏普比率为0.75，Sortino比率为1.05（中央面板）：
 - en: '![](img/15439_09_16.png)'
+  id: totrans-382
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/15439_09_16.png)'
 - en: 'Figure 9.16: Strategy performance metrics'
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 9.16：策略绩效指标
 - en: While we should take these performance metrics with a grain of salt, the strategy
     demonstrates the anatomy of a statistical arbitrage based on cointegration in
     the form of pairs trading. Let's take a look at a few steps you could take to
     build on this framework to produce better performance.
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管我们应该对这些绩效指标持谨慎态度，但这个策略展示了一种基于协整的统计套利的解剖学，以配对交易的形式呈现。让我们看看您可以采取哪些步骤来在此框架上进行改进以获得更好的表现。
 - en: Extensions – how to do better
+  id: totrans-385
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 扩展 - 如何做得更好
 - en: Cointegration is a very useful concept to identify pairs or groups of stocks
     that tend to move in unison. Compared to the statistical sophistication of cointegration,
     we used very simple and static trading rules; the computation on a quarterly basis
     also distorts the strategy, as the patterns of long and short holdings show (see
     notebook).
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 协整是一个非常有用的概念，可以识别出倾向于同步运动的股票配对或组合。与协整的统计复杂性相比，我们使用的是非常简单和静态的交易规则；季度基础上的计算也扭曲了策略，因为长期和短期持有的模式显示（请参见笔记本）。
 - en: To be successful, you will, at a minimum, need to screen a larger universe and
     optimize several of the parameters, including the trading rules. Moreover, risk
     management should account for concentrated positions that arise when certain assets
     appear relatively often on the same side of a traded pair.
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
+  zh: 要取得成功，你至少需要筛选更大的资产组合，并优化其中的几个参数，包括交易规则。此外，风险管理应考虑到当某些资产经常出现在同一交易对的同一侧时产生的集中仓位。
 - en: You could also operate with baskets as opposed to individual pairs; however,
     to address the growing number of candidates, you would likely need to constrain
     the composition of the baskets.
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
+  zh: 你也可以操作篮子而不是单个配对；然而，为了解决不断增长的候选数量，你可能需要限制篮子的组成。
 - en: As mentioned in the *Pairs trading – statistical arbitrage with cointegration*
     section, there are alternatives that aim to predict price movements. In the following
     chapters, we will explore various machine learning models that aim to predict
@@ -1977,20 +2740,26 @@
     and horizon. Using these forecasts as long and short entry signals is a natural
     extension or alternative to the pairs trading framework that we studied in this
     section.
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如在*配对交易 - 具有协整的统计套利*部分中所述，存在着旨在预测价格走势的替代方案。在接下来的章节中，我们将探讨各种机器学习模型，这些模型旨在预测给定投资范围和时间跨度的价格走势的绝对大小或方向。将这些预测用作多头和空头进入信号是对我们在本节中学习的配对交易框架的自然扩展或替代方法。
 - en: Summary
+  id: totrans-390
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we explored linear time-series models for the univariate case
     of individual series, as well as multivariate models for several interacting series.
     We encountered applications that predict macro fundamentals, models that forecast
     asset or portfolio volatility with widespread use in risk management, and multivariate
     VAR models that capture the dynamics of multiple macro series. We also looked
     at the concept of cointegration, which underpins the popular pair-trading strategy.
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们探讨了用于单个系列的单变量线性时间序列模型，以及用于多个交互系列的多变量模型。我们遇到了用于预测宏观基本面的应用程序，用于风险管理中广泛使用的预测资产或组合波动性的模型，以及捕捉多个宏观系列动态的多元VAR模型。我们还研究了协整概念，这是支撑流行的配对交易策略的基础。
 - en: Similar to *Chapter 7*, *Linear Models – From Risk Factors to Return Forecasts*,
     we saw how linear models impose a lot of structure, that is, they make strong
     assumptions that potentially require transformations and extensive testing to
@@ -1999,5 +2768,8 @@
     models may be able to improve on. In the next two chapters, we will see two examples
     of this, namely random forests and gradient boosting models, and we will encounter
     several more in *Part 4*, which is on deep learning.
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于*第 7 章*，*线性模型 - 从风险因素到收益预测*，我们看到线性模型施加了很多结构，也就是说，它们做出了强烈的假设，可能需要进行转换和广泛的测试来验证这些假设是否成立。如果确实如此，模型的训练和解释就会很直接，而且这些模型提供了一个很好的基准，更复杂的模型可能能够改进。在接下来的两章中，我们将看到两个示例，即随机森林和梯度提升模型，并且我们将在*第
+    4 部分*中遇到更多示例，该部分是关于深度学习的。
