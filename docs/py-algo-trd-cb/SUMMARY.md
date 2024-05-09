@@ -1,3 +1,4 @@
++   [Python 算法交易秘籍](README.md)
 +   [前言](py-algo-trd-cb_00.md)
 +   [第一章：处理和操纵日期、时间和时间序列数据](py-algo-trd-cb_01.md)
 +   [第二章：股票市场-交易入门](py-algo-trd-cb_02.md)

@@ -1,3 +1,4 @@
++   [Python 金融交易实用指南](README.md)
 +   [前言](hsn-fin-trd-py_00.md)
 +   [第一部分：算法交易简介](hsn-fin-trd-py_01.md)
 +   [第一章：算法交易简介](hsn-fin-trd-py_02.md)

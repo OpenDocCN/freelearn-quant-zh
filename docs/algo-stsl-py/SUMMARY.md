@@ -1,3 +1,4 @@
++   [Python 卖空算法教程](README.md)
 +   [前言](algo-stsl-py_00.md)
 +   [第一章：股票市场游戏](algo-stsl-py_01.md)
 +   [第二章：10 个关于卖空的经典神话](algo-stsl-py_02.md)
