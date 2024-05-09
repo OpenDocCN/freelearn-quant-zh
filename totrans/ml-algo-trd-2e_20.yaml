@@ -974,17 +974,20 @@
   id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将创建这个模型的简化版本，以演示如何**利用自动编码器生成可交易的信号**。为此，我们将使用yfinance在1990年至2019年期间构建一个接近4,000只美国股票的新数据集，因为它提供了一些额外的信息，有助于计算资产特征。我们会采取一些捷径，比如使用较少的资产和仅最重要的特征。我们还会省略一些实现细节，以简化表达。我们将重点介绍最重要的差异，以便您相应地增强模型。
 - en: We'll first show how to prepare the data before we explain, build, and train
     the model and evaluate its predictive performance. Please see the above references
     for additional background on the theory and implementation.
   id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将首先展示如何准备数据，然后解释、构建和训练模型并评估其预测性能。请参阅上述参考资料以了解更多有关理论和实现的背景。
 - en: Sourcing stock prices and metadata information
   id: totrans-137
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 获取股票价格和元数据信息
 - en: The GKX reference implementation uses stock price and firm characteristic data
     for over 30,000 US equities from the Center for Research in Security Prices (CRSP)
     from 1957-2016 at a monthly frequency. It computes 94 metrics that include a broad
@@ -994,6 +997,7 @@
   id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: GKX参考实现使用了来自1957年至2016年的中心研究安全价格（CRSP）的超过30,000只美国股票的股价和公司特征数据，频率为每月一次。它计算了94个指标，其中包括了一系列在以往学术研究中被建议用于预测收益的资产属性，这些属性在Green、Hand和Zhang（2017年）中列出，他们旨在验证这些说法。
 - en: 'Since we do not have access to the high-quality but costly CRSP data, we leverage
     yfinance (see *Chapter 2*, *Market and Fundamental Data – Sources and Techniques*)
     to download price and metadata from Yahoo Finance. There are downsides to choosing
@@ -1001,33 +1005,39 @@
   id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们无法获得高质量但昂贵的CRSP数据，我们利用了yfinance（见*第2章*，*市场和基本数据-来源和技术*）从Yahoo Finance下载价格和元数据。选择免费数据有一些缺点，包括：
 - en: The lack of quality control regarding adjustments
   id: totrans-140
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缺乏关于调整的质量控制
 - en: Survivorship bias because we cannot get data for stocks that are no longer listed
   id: totrans-141
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 存活偏差，因为我们无法获取不再上市的股票的数据
 - en: A smaller scope in terms of both the number of equities and the length of their
     history
   id: totrans-142
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在股票数量和历史长度方面范围较小
 - en: The `build_us_stock_dataset.ipynb` notebook contains the relevant code examples
     for this section.
   id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: '`build_us_stock_dataset.ipynb` 笔记本包含了本节的相关代码示例。'
 - en: 'To obtain the data, we get a list of the 8,882 currently traded symbols from
     NASDAQ using pandas-datareader (see *Chapter 2*, *Market and Fundamental Data
     – Sources and Techniques*):'
   id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 要获取数据，我们使用pandas-datareader（见*第2章*，*市场和基本数据-来源和技术*）从NASDAQ获取了8,882个当前交易符号的列表：
 - en: '[PRE20]'
   id: totrans-145
   prefs: []
@@ -1037,6 +1047,7 @@
   id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们移除ETF，并为其余部分创建yfinance `Ticker()`对象。
 - en: '[PRE21]'
   id: totrans-147
   prefs: []
@@ -1048,6 +1059,7 @@
   id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个股票的`.info`属性包含从Yahoo Finance抓取的数据点，从未偿还的股票数量和其他基本面到最新的市值；覆盖范围因证券而异：
 - en: '[PRE22]'
   id: totrans-149
   prefs: []
@@ -1060,10 +1072,12 @@
   id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于具有元数据的股票，我们同时下载调整后和未调整的价格，后者包括像股票分割和股息支付之类的企业行动，我们可以使用这些信息创建一个Zipline bundle用于策略回测（见*第8章*，*ML4T工作流程-从模型到策略回测*）。
 - en: 'We get adjusted OHLCV data on 4,314 stocks as follows:'
   id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们获得了4,314支股票的调整后的OHLCV数据，具体如下：
 - en: '[PRE23]'
   id: totrans-152
   prefs: []
@@ -1075,6 +1089,7 @@
   id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 在没有关于基础价格数据和股票分割调整的任何质量控制的情况下，我们删除了具有可疑值的股票，如日回报超过100%或低于-100%的股票：
 - en: '[PRE24]'
   id: totrans-154
   prefs: []
