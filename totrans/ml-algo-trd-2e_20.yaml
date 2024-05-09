@@ -3,17 +3,20 @@
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '20'
 - en: Autoencoders for Conditional Risk Factors and Asset Pricing
   id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 自编码器用于条件风险因子和资产定价
 - en: This chapter shows how unsupervised learning can leverage deep learning for
     trading. More specifically, we'll discuss **autoencoders** that have been around
     for decades but have recently attracted fresh interest.
   id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章展示了无监督学习如何利用深度学习进行交易。更具体地说，我们将讨论数十年来存在但最近引起新关注的**自编码器**。
 - en: '**Unsupervised learning** addresses practical ML challenges such as the limited
     availability of labeled data and the curse of dimensionality, which requires exponentially
     more samples for successful learning from complex, real-life data with many features.
@@ -26,6 +29,7 @@
   id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: '**无监督学习**解决了实际机器学习挑战，比如有标签数据的有限可用性和维度灾难，后者需要指数级更多的样本才能成功地从具有许多特征的复杂现实数据中学习。在概念层面上，无监督学习更类似于人类学习和常识的发展，而不是监督学习和强化学习，我们将在下一章中介绍。它也被称为**预测学习**，因为它旨在从数据中发现结构和规律，以便可以预测缺失的输入，也就是从观察到的部分填补空白。'
 - en: 'An **autoencode**r is a **neural network** (**NN**) trained to reproduce the
     input while learning a new representation of the data, encoded by the parameters
     of a hidden layer. Autoencoders have long been used for nonlinear dimensionality
@@ -39,37 +43,45 @@
   id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: '**自编码器**是一个**神经网络**（**NN**）训练成为复制输入同时学习数据的新表示的神经网络，由隐藏层的参数编码。自编码器长期以来一直用于非线性降维和流形学习（见*第13章*，*使用无监督学习进行数据驱动的风险因子和资产配置*）。各种设计利用了我们在最后三章中介绍的前馈、卷积和递归网络架构。我们将看到自编码器如何支撑一个**交易策略**：我们将构建一个深度神经网络，该网络使用自编码器来提取风险因子并预测股票回报，条件是一系列股票属性（Gu、Kelly
+    和 Xiu 2020）。'
 - en: 'More specifically, in this chapter you will learn about:'
   id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，在本章中，您将学习以下内容：
 - en: Which types of autoencoders are of practical use and how they work
   id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 哪些类型的自编码器具有实际用途以及它们的工作原理
 - en: Building and training autoencoders using Python
   id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用 Python 构建和训练自编码器
 - en: Using autoencoders to extract data-driven risk factors that take into account
     asset characteristics to predict returns
   id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用自编码器提取考虑资产特征以预测回报的数据驱动风险因子
 - en: You can find the code samples for this chapter and links to additional resources
     in the corresponding directory of the GitHub repository. The notebooks include
     color versions of the images.
   id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 您可以在 GitHub 仓库的相应目录中找到本章的代码示例和其他资源的链接。笔记本包括图像的彩色版本。
 - en: Autoencoders for nonlinear feature extraction
   id: totrans-10
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 用于非线性特征提取的自编码器
 - en: In *Chapter 17*, *Deep Learning for Trading*, we saw how neural networks succeed
     at supervised learning by extracting a hierarchical feature representation useful
     for the given task. **Convolutional neural networks** (**CNNs**), for example,
@@ -78,6 +90,7 @@
   id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *第17章*，*交易的深度学习* 中，我们看到神经网络如何通过提取对给定任务有用的分层特征表示而成功进行监督学习。例如，**卷积神经网络**（**CNNs**）从类似网格的数据中学习和合成越来越复杂的模式，例如，在图像中识别或检测对象，或者对时间序列进行分类。
 - en: An autoencoder, in contrast, is a neural network designed exclusively to learn
     a **new representation** that encodes the input in a way that helps solve another
     task. To this end, the training forces the network to reproduce the input. Since
@@ -88,6 +101,7 @@
   id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 与之相反，自编码器是专门设计用来学习一个**新表示**的神经网络，该表示以一种有助于解决另一个任务的方式对输入进行编码。为此，训练强制网络重现输入。由于自编码器通常使用相同的数据作为输入和输出，它们也被视为**自监督学习**的一种实例。在这个过程中，隐藏层的参数*h*成为表示输入的编码，类似于第16章*《用于收益电话和SEC文件的词嵌入》*中介绍的word2vec模型。
 - en: 'More specifically, the network can be viewed as consisting of an encoder function
     *h=f(x)* that learns the hidden layer''s parameters from input *x*, and a decoder
     function g that learns to reconstruct the input from the encoding *h*. Rather
@@ -95,16 +109,19 @@
   id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 更具体地说，网络可以被视为由一个编码器函数*h=f(x)*和一个解码器函数*g*组成，编码器函数从输入*x*中学习隐藏层的参数，解码器函数学习从编码*h*中重构输入。而不是学习身份函数：
 - en: '![](img/B15439_20_001.png)'
   id: totrans-14
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_20_001.png)'
 - en: which simply copies the input, autoencoders use **constraints** that force the
     hidden layer to **prioritize which aspects of the data to encod**e. The goal is
     to obtain a representation of practical value.
   id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 自编码器不是简单地复制输入，而是使用**约束**来强制隐藏层**优先编码数据的哪些方面**。目标是获得实用价值的表示。
 - en: Autoencoders can also be viewed as a **special case of a feedforward neural
     network** (see *Chapter 17*, *Deep Learning for Trading*) and can be trained using
     the same techniques. Just as with other models, excess capacity will lead to overfitting,
@@ -114,11 +131,14 @@
   id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 自编码器也可以被视为**前馈神经网络的特例**（见*第17章，用于交易的深度学习*），并且可以使用相同的技术进行训练。与其他模型一样，过量的容量会导致过拟合，阻止自编码器产生超出训练样本的通用编码。有关更多背景信息，请参阅Goodfellow、Bengio和Courville
+    (2016)的*第14*和*15*章。
 - en: Generalizing linear dimensionality reduction
   id: totrans-17
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 泛化线性降维
 - en: 'A traditional use case includes dimensionality reduction, achieved by limiting
     the size of the hidden layer and thus creating a "bottleneck" so that it performs
     lossy compression. Such an autoencoder is called **undercomplete**, and the purpose
@@ -127,10 +147,12 @@
   id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 传统用例包括降维，通过限制隐藏层的大小从而创建一个“瓶颈”，使其执行有损压缩。这样的自编码器被称为**欠完备**，其目的是通过最小化形式为*L*的损失函数来学习数据的最显著属性：
 - en: '![](img/B15439_20_002.png)'
   id: totrans-19
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_20_002.png)'
 - en: An example loss function that we will explore in the next section is simply
     the mean squared error evaluated on the pixel values of the input images and their
     reconstruction. We will also use this loss function to extract risk factors from
@@ -139,6 +161,7 @@
   id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在下一节中探讨的一个示例损失函数仅仅是在输入图像的像素值及其重构上计算的均方误差。当我们构建用于交易的条件自编码器时，我们还将使用这个损失函数来从金融特征的时间序列中提取风险因子。
 - en: Undercomplete autoencoders differ from linear dimensionality reduction methods
     like **principal component analysis** (**PCA**; see *Chapter 13*, *Data-Driven
     Risk Factors and Asset Allocation with Unsupervised Learning*) when they use **nonlinear
@@ -148,6 +171,7 @@
   id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 与主成分分析（**PCA**；见*第13章，用于无监督学习的数据驱动风险因子和资产配置*）等线性降维方法不同，欠完备自编码器使用**非线性激活函数**；否则，它们学习与PCA相同的子空间。因此，它们可以被视为PCA的非线性推广，能够学习更广泛的编码。
 - en: '*Figure 20.1* illustrates the encoder-decoder logic of an undercomplete feedforward
     autoencoder with three hidden layers: the encoder and decoder have one hidden
     layer each plus a shared encoder output/decoder input layer containing the encoding.
@@ -553,6 +577,7 @@
   id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 编码器仅使用输入和隐藏层，总参数约为一半：
 - en: '[PRE7]'
   id: totrans-80
   prefs: []
@@ -563,16 +588,19 @@
   id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 不久我们将看到，一旦训练了自动编码器，我们就可以使用编码器来压缩数据。
 - en: Defining the decoder
   id: totrans-82
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 定义解码器
 - en: 'The decoder consists of the last autoencoder layer, fed by a placeholder for
     the encoded data:'
   id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 解码器由最后一个自动编码器层组成，由编码数据的占位符提供：
 - en: '[PRE8]'
   id: totrans-84
   prefs: []
@@ -583,6 +611,7 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 训练模型
 - en: 'We compile the model to use the Adam optimizer (see *Chapter 17*, *Deep Learning
     for Trading*) to minimize the mean squared error between the input data and the
     reproduction achieved by the autoencoder. To ensure that the autoencoder learns
@@ -590,6 +619,7 @@
   id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们编译模型以使用 Adam 优化器（参见*第17章*，*交易的深度学习*）来最小化输入数据和自动编码器实现的复制之间的均方误差。为了确保自动编码器学会复制输入，我们使用相同的输入和输出数据来训练模型：
 - en: '[PRE9]'
   id: totrans-87
   prefs: []
@@ -600,10 +630,12 @@
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 评估结果
 - en: 'Training stops after some 20 epochs with a test RMSE of 0.1121:'
   id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练在一定的20个周期后停止，测试 RMSE 为 0.1121：
 - en: '[PRE10]'
   id: totrans-90
   prefs: []
@@ -613,6 +645,7 @@
   id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 要对数据进行编码，我们使用刚刚定义的编码器如下：
 - en: '[PRE11]'
   id: totrans-92
   prefs: []
@@ -623,6 +656,7 @@
   id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 解码器获取压缩数据，并根据自动编码器的训练结果重现输出：
 - en: '[PRE12]'
   id: totrans-94
   prefs: []
@@ -633,24 +667,29 @@
   id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图20.3*显示了10张原始图像及其经自动编码器重建后的图像，并展示了压缩后的损失：'
 - en: '![](img/B15439_20_03.png)'
   id: totrans-96
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_20_03.png)'
 - en: 'Figure 20.3: Sample Fashion MNIST images, original and reconstructed'
   id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 图20.3：示例时尚 MNIST 图像，原始和重建
 - en: Feedforward autoencoder with sparsity constraints
   id: totrans-98
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 带稀疏约束的前馈自动编码器
 - en: 'The addition of regularization is fairly straightforward. We can apply it to
     the dense encoder layer using Keras'' `activity_regularizer` as follows:'
   id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 添加正则化相当简单。我们可以使用 Keras 的`activity_regularizer`将其应用于密集编码器层，如下所示：
 - en: '[PRE13]'
   id: totrans-100
   prefs: []
@@ -662,17 +701,20 @@
   id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 输入和解码层保持不变。在这个例子中，压缩因子为24.5，正则化对性能产生了负面影响，测试 RMSE 为0.1229。
 - en: Deep feedforward autoencoder
   id: totrans-102
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 深度前馈自动编码器
 - en: 'To illustrate the benefit of adding depth to the autoencoder, we will build
     a three-layer feedforward model that successively compresses the input from 784
     to 128, 64, and 32 units, respectively:'
   id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了说明向自动编码器添加深度的好处，我们将构建一个三层前馈模型，依次将输入从784压缩到128、64和32个单元：
 - en: '[PRE14]'
   id: totrans-104
   prefs: []
@@ -683,6 +725,7 @@
   id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果模型有超过222,000个参数，比之前的单层模型的容量多四倍多：
 - en: '[PRE15]'
   id: totrans-106
   prefs: []
@@ -694,11 +737,13 @@
   id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 训练在45个周期后停止，并将测试 RMSE 减少了14%，达到了0.097。由于分辨率较低，难以明显注意到更好的重建。
 - en: Visualizing the encoding
   id: totrans-108
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 可视化编码
 - en: We can use the manifold learning technique **t-distributed Stochastic Neighbor
     Embedding** (**t-SNE**; see *Chapter 13*, *Data-Driven Risk Factors and Asset
     Allocation with Unsupervised Learning*) to visualize and assess the quality of
@@ -706,6 +751,7 @@
   id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用流形学习技术**t-分布随机邻域嵌入**（**t-SNE**；参见*第13章*，*使用无监督学习的数据驱动风险因子和资产配置*）来可视化和评估自动编码器隐藏层学习到的编码的质量。
 - en: 'If the encoding is successful in capturing the salient features of the data,
     then the compressed representation of the data should still reveal a structure
     aligned with the 10 classes that differentiate the observations. We use the output
@@ -714,6 +760,7 @@
   id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果编码成功捕捉到数据的显著特征，那么数据的压缩表示仍应显示与区分观察的10个类别对齐的结构。我们使用刚刚训练的深度编码器的输出来获取测试集的32维表示：
 - en: '[PRE16]'
   id: totrans-111
   prefs: []
@@ -726,10 +773,12 @@
   id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图20.4*显示出10个类别很好地分离，表明编码对于作为保存数据关键特征的较低维度表示是有用的（请参见`variational_autoencoder.ipynb`笔记本以获取彩色版本）：'
 - en: '![](img/B15439_20_04.png)'
   id: totrans-113
   prefs: []
   type: TYPE_IMG
+  zh: '![](img/B15439_20_04.png)'
 - en: 'Figure 20.4: t-SNE visualization of the Fashion MNIST autoencoder embedding'
   id: totrans-114
   prefs: []
@@ -1350,6 +1399,7 @@
   id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 从数据源到架构的众多简化指向了几个改进途径。除了获取更多质量更好的数据，并且还可以计算出额外特征的数据外，以下修改是一个起点——当然还有许多其他途径：
 - en: Experiment with **data frequencies** other than weekly and forecast horizons
     other than annual, where shorter periods will also increase the amount of training
     data
@@ -1357,6 +1407,7 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 尝试与周频以外的**数据频率**，以及年度以外的预测时段，其中较短的周期还将增加训练数据的数量。
 - en: Modify the **model architecture**, especially if using more data, which might
     reverse the finding that an even smaller hidden layer would estimate better factor
     loadings
@@ -1364,11 +1415,13 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 修改**模型架构**，特别是在使用更多数据的情况下，可能会推翻这样一个发现：一个更小的隐藏层会更好地估计因子载荷。
 - en: Summary
   id: totrans-212
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we introduced how unsupervised learning leverages deep learning.
     Autoencoders learn sophisticated, nonlinear feature representations that are capable
     of significantly compressing complex data while losing little information. As
@@ -1379,6 +1432,8 @@
   id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们介绍了无监督学习如何利用深度学习。自动编码器学习复杂的、非线性的特征表示，能够显著压缩复杂数据而损失很少信息。因此，它们对于应对与具有许多特征的丰富数据相关的维度灾难特别有用，尤其是具有替代数据的常见数据集。我们还看到如何使用
+    TensorFlow 2 实现各种类型的自动编码器。
 - en: Most importantly, we implemented recent academic research that extracts data-driven
     risk factors from data to predict returns. Different from our linear approach
     to this challenge in *Chapter 13*, *Data-Driven Risk Factors and Asset Allocation
@@ -1388,9 +1443,11 @@
   id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 最重要的是，我们实现了最近的学术研究，从数据中提取数据驱动的风险因素来预测回报。与我们在*第13章*中对这一挑战的线性方法不同，*基于数据驱动的风险因素和无监督学习的资产配置*，自动编码器捕捉非线性关系。此外，深度学习的灵活性使我们能够将许多关键资产特征纳入模型中，以建模更敏感的因素，有助于预测回报。
 - en: In the next chapter, we focus on generative adversarial networks, which have
     often been called one of the most exciting recent developments in artificial intelligence,
     and see how they are capable of creating synthetic training data.
   id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将重点研究生成对抗网络，它们常被称为人工智能最令人兴奋的最新发展之一，并看看它们如何能够创建合成的训练数据。
