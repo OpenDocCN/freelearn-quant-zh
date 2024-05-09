@@ -1,0 +1,1035 @@
+- en: '*Chapter 8*: Introduction to Zipline and PyFolio'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, you will learn about the Python libraries known as Zipline
+    and PyFolio, which abstract away the complexities of the backtesting and performance/risk
+    analysis aspects of algorithmic trading strategies. They allow you to completely
+    focus on the trading logic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For this, we are going to cover the following main topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introduction to Zipline and PyFolio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Installing Zipline and PyFolio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Importing market data into a Zipline/PyFolio backtesting system
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Structuring Zipline/PyFolio backtesting modules
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Reviewing the key Zipline API reference
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Running Zipline backtesting from the command line
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Introduction to the key risk management figures provided by PyFolio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Technical requirements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The Python code used in this chapter is available in the `Chapter08/risk_management.ipynb`
+    notebook in the book's code repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introduction to Zipline and PyFolio
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Backtesting is a computational method of assessing how well a trading strategy
+    would have done if it had been applied to historical data. Ideally, this historical
+    data should come from a period of time where there were similar market conditions,
+    such as it having similar volatility to the present and the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backtesting should include all relevant factors, such as slippage and trading
+    costs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Zipline** is one of the most advanced open source Python libraries for algorithmic
+    trading backtesting engines. Its source code can be found at [https://github.com/quantopian/zipline](https://github.com/quantopian/zipline).
+    Zipline is a backtesting library ideal for daily trading (you can also backtest
+    weekly, monthly, and so on). It is less suitable for backtesting high-frequency
+    trading strategies.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**PyFolio** is an open source Python performance and risk analysis library
+    consisting of financial portfolios that''s closely integrated with Zipline. You
+    can find its documentation at [https://github.com/quantopian/pyfolio](https://github.com/quantopian/pyfolio).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using these two libraries to backtest your trading strategy saves you an enormous
+    amount of time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The objective of this chapter is to describe the key functionality of these
+    libraries and to build your intuition. You are encouraged to debug the code in
+    PyCharm or any other Python IDE and study the contents of each result's variables
+    to make full use of the provided information. Once you become familiar with the
+    contents of each resultant object, briefly study the source code of the libraries
+    to see their full functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Installing Zipline and PyFolio
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We recommend setting up the development environment as described in [*Appendix
+    A*](B15029_App_Final_NM_ePub.xhtml#_idTextAnchor200). Nevertheless, the detailed
+    instructions are given in the following sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Installing Zipline
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: For performance reasons, Zipline is closely dependent on a particular version
+    of Python and its related libraries. Therefore, the best way to install it is
+    to create a `conda` virtual environment and install Zipline there. We recommend
+    using Anaconda Python for this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s create a virtual environment called `zipline_env` with Python 3.6 and
+    install the `zipline` package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will now install PyFolio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Installing PyFolio
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You can install the `pyfolio` package via `pip`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: As we can see, installing PyFolio is also an easy task.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing market data into a Zipline/PyFolio backtesting system
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Backtesting depends on us having an extensive market data database.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Zipline introduces two market data-specific terms – bundle and ingest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A **bundle** is an interface for incrementally importing market data into Zipline's
+    proprietary database from a custom source.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An **ingest** is the actual process of incrementally importing the custom source
+    market data into Zipline's proprietary database; the data ingest is not automatically
+    updated. Each time you need fresh data, you must re-ingest the bundle.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'By default, Zipline supports these bundles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Historical Quandl bundle (complimentary daily data for US equities up to 2018)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`.csv` files bundle'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will now learn how to import these two bundles in more detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing data from the historical Quandl bundle
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: First, in the activated `zipline_env` environment, set the `QUANDL_API_KEY`
+    environment variable to your free (or paid) Quandl API key. Then, ingest the `quandl`
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For Windows, use the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For Mac/Linux, use the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quandl stopped updating the complimentary bundle in 2018 but is still more than
+    useful for the first few algorithmic trading steps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It''s best to set `QUANDL_API_KEY` in Windows'' System Properties (press the
+    Windows icon and type `Environment Variables`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.1 – Locating the Edit the system environment variables dialog on
+    Windows](img/Figure_8.1_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.1 – Locating the Edit the system environment variables dialog on Windows
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, choose **Edit the system environment variables**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.2 – The location of the Environment Variables… dialog in System
+    Properties on Windows](img/Figure_8.2_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.2 – The location of the Environment Variables… dialog in System Properties
+    on Windows
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, specify the variable in the **Environment Variables...** dialog.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'On Mac/Linux, add the following command to `~/.bash_profile` for user-based
+    operations or `~/.bashrc` for non-login interactive shells:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, let's learn how to import data from the CSV files bundle.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing data from the CSV files bundle
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The default CSV bundle requires the CSV file to be in **open, high, low, close,
+    volume** (**OHLCV**) format with dates, dividends, and splits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This book''s GitHub repository contains one sample input CSV file. Its top
+    few lines are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To use the custom CSV files bundle, follow these steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Create a directory for CSV files, for example, `C:\MarketData`, with a subdirectory
+    called `Daily`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Copy the CSV files to the created directory (for example, `C:\MarketData\Daily`).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Edit the `.py` file extension in the `C:\Users\<username>\.zipline\extension.py`
+    directory on Windows or `~/.zipline/extension.py` on Mac/Linux, as shown:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Notice that we associate the market data with a trading calendar. In this case,
+    we're using `NYSE`, which corresponds to the US equities.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Ingest the bundle, as follows:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The output is as follows:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Figure 8.3 – Output of the zipline ingest for packt-csvdir-bundle](img/Figure_8.3_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.3 – Output of the zipline ingest for packt-csvdir-bundle
+  prefs: []
+  type: TYPE_NORMAL
+- en: This has created one asset with the `A` ticker.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing data from custom bundles
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The historical Quandl bundle is most suitable for learning how to design and
+    backtest an algorithmic strategy. The CSV files bundle is most suitable for importing
+    prices of assets with no public prices. However, for other purposes, you should
+    purchase a market data subscription.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing data from Quandl's EOD US Stock Prices data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Quandl offers a subscription service for the End of Day US Stock Prices database
+    ([https://www.quandl.com/data/EOD-End-of-Day-US-Stock-Prices](https://www.quandl.com/data/EOD-End-of-Day-US-Stock-Prices))
+    at 49 USD per month, with discounts for quarterly or annual payments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The advantages of this service, compared to others, are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quandl is deeply integrated into Zipline and you can download the history of
+    all the stocks using one command.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is no hard limit in terms of the number of API calls you can make per
+    month, unlike other providers.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Installing the custom bundle is straightforward:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Find the location of the `bundles` directory using the following command:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This results in the following output on my computer:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Copy the `quandl_eod.py` file from this book's GitHub repository into that directory.
+    The file is a slight modification of the code from Zipline's GitHub.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'In the same directory, modify the `__init__.py` file (add this line there):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'An example of the full `__init__.py` file is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once you have set this up, ensure you have set the `QUANDL_API_KEY` environment
+    variable to your API key and run the `ingest` command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.4 – Output of ingesting the quandl_eod bundle](img/Figure_8.4_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.4 – Output of ingesting the quandl_eod bundle
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The actual source code of `quandl_eod.py` is self-explanatory. The `quandl_eod_bundle`
+    function, which is annotated with `@bundles.register("quandl_eod")`, defines the
+    download process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The steps that are involved in this process are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Download all the EOD data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Generate the metadata.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Apply the trading calendar.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Apply the corporate events.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: While Quandl's commercial data source is deeply integrated with Zipline, there
+    are alternative data sources.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Importing data from Yahoo Finance and IEX paid data
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The project at [https://github.com/hhatefi/zipline_bundles](https://github.com/hhatefi/zipline_bundles)
+    provides a Zipline bundle for Yahoo Finance and IEX. The package supports Zipline
+    imports from a Yahoo Finance `.csv` file, Yahoo Finance directly, and from IEX.
+    This book will only focus on directly importing from Yahoo Finance and IEX.
+  prefs: []
+  type: TYPE_NORMAL
+- en: While the package does allow automatic installation, I do not recommend it since
+    it requires an empty `extension.py` file in the `C:\Users\<username>\.zipline\extension.py`
+    directory on Windows or `~/.zipline/extension.py` on Mac/Linux.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The installation steps are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Download the repository from [https://github.com/hhatefi/zipline_bundles](https://github.com/hhatefi/zipline_bundles).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Merge the repository's `\zipline_bundles-master\lib\extension.py` file with
+    `C:\Users\<username>\.zipline\extension.py` on Windows or `~/.zipline/extension.py`
+    on Mac/Linux. If the latter file does not exist, just copy and paste the file.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Edit the start and end dates in the following code:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Do the same in the following code:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The full file should look as follows:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Find the location of the `bundles` directory using the following command:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This results in the following output on my computer:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Copy the `Copy \zipline_bundles-master\lib\iex.py`, `\zipline_bundles-master\lib\ingester.py`,
+    and `\zipline_bundles-master\lib\yahoo.py` repository files into your Zipline
+    `bundles` directory; for example, `d:\\Anaconda3\\envs\\zipline_env\\lib\\site-packages\\zipline\\data\\bundles\`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Set the tickers of interest as environmental variables. For example, for Windows,
+    use the following code:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'For Mac/Linux, use the following code:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Set an IEX token (it starts with `sk_`), if available, like so on Windows:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'For Mac/Linux, do the following:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Ingest the data:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This results in the following output in terms of the `yahoo_direct` bundle:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![Figure 8.5 – Output of ingesting the yahoo_direct bundle](img/Figure_8.5_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.5 – Output of ingesting the yahoo_direct bundle
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This also results in the following output, which is for the `iex` bundle:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.6 – Output of ingesting the iex bundle](img/Figure_8.6_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.6 – Output of ingesting the iex bundle
+  prefs: []
+  type: TYPE_NORMAL
+- en: Integrating with other data sources, such as a local MySQL database, is similar
+    to the code in [https://github.com/hhatefi/zipline_bundles](https://github.com/hhatefi/zipline_bundles).
+    Some such bundles are available on [github.com](http://github.com).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Structuring Zipline/PyFolio backtesting modules
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Typical Zipline backtesting code defines three functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`initialize`: This method is called before any simulated trading happens; it''s
+    used to enrich the context object with the definition of tickers and other key
+    trading information. It also enables commission and slippage considerations.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`handle_data`: This method downloads the market data, calculates the trading
+    signals, and places the trades. This is where you put the actual trading logic
+    on entry/exit positions.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`analyze`: This method is called to perform trading analytics. In our code,
+    we will use pyfolio''s standard analytics. Notice that the `pf.utils.extract_rets_pos_txn_from_zipline(perf)`
+    function returns any returns, positions, and transactions for custom analytics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Finally, the code defines the `run_algorithm` method. This method returns a
+    comprehensive summary of all the trades to be persisted to a file, which can be
+    analyzed later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a few typical patterns when it comes to Zipline's code, depending
+    on the use case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Trading happens every day
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let''s refer to the `handle_data` method directly from the `run_algorithm`
+    method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `handle_data` method will be called for every single day between `start_date`
+    and `end_date`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Trading happens on a custom schedule
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We omit the references to the `handle_data` method in the `run_algorithm` method.
+    Instead, we set the scheduler in the `initialize` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `handle_data` method will be called for every single `month_end` with the
+    prices 1 hour after the market opens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can specify various date rules, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.7 – Table containing various date rules](img/Figure_8.7_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.7 – Table containing various date rules
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similarly, we can specify time rules, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.8 – Table containing various time rules](img/Figure_8.8_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.8 – Table containing various time rules
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will now learn how to review the key Zipline API reference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reviewing the key Zipline API reference
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we will outline the key features from [https://www.zipline.io/appendix.html](https://www.zipline.io/appendix.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: For backtesting, the most important features are order types, commission models,
+    and slippage models. Let's look at them in more detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Types of orders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Zipline supports these types of orders:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.9 – Supported order types](img/Figure_8.9_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.9 – Supported order types
+  prefs: []
+  type: TYPE_NORMAL
+- en: The order-placing logic is typically placed in the `handle_data` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: This example places an order so that we own 100% of the stock if the last daily
+    price is above the average of the close prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Commission models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Commission is the fee that's charged by a brokerage for selling or buying stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Zipline supports various types of commissions, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.10 – Supported commission types](img/Figure_8.10_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.10 – Supported commission types
+  prefs: []
+  type: TYPE_NORMAL
+- en: This logic is typically placed into the `initialize` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, we have defined a commission of 5 USD per trade.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Slippage models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Slippage is defined as the difference between the expected price and the executed
+    price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Zipline offers these slippage models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.11 – Supported slippage models ](img/Figure_8.11_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.11 – Supported slippage models
+  prefs: []
+  type: TYPE_NORMAL
+- en: The slippage model should be placed in the `initialize` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is an example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this example, we have chosen `VolumeShareSlippage` with a limit of `0.025`
+    and a price impact of `0.05`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running Zipline backtesting from the command line
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: For large backtesting jobs, it's preferred to run backtesting from the command
+    line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following command runs the backtesting strategy defined in the `job.py`
+    Python script and saves the resulting DataFrame in the `job_results.pickle` pickle
+    file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: For example, you can set up a batch consisting of tens of Zipline command-line
+    jobs to run overnight, with each storing the results in a pickle file for later
+    analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It's a good practice to keep a journal and library of past backtesting pickle
+    files for easy reference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introduction to risk management with PyFolio
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Having a risk management system is a fundamental part of having a successful
+    algorithmic trading system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Various risks are involved in algorithmic trading:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Market risk**: While all strategies lose money at some point in their life
+    cycle, quantifying risk measures and ensuring there are risk management systems
+    in place can mitigate strategy losses. In some cases, bad risk management can
+    increase trading losses to an extreme and even shut down successful trading firms
+    completely.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Regulatory risk**: This is the risk that stems from either accidentally or
+    intentionally violating regulations. It is designed to enforce smooth and fair
+    market functionality. Some well-known examples include *spoofing*, *quote stuffing*,
+    and *banging the close*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Software implementation risk**: Software development is a complex process
+    and sophisticated algorithmic trading strategy systems are especially complex.
+    Even seemingly minor software bugs can lead to malfunctioning algorithmic trading
+    strategies and yield catastrophic outcomes.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Operational risk**: This risk comes from deploying and operating these algorithmic
+    trading systems. Operations/trading personnel mistakes can also lead to disastrous
+    outcomes. Perhaps the most well-known error in this category is the fat-finger
+    error, which refers to accidentally sending huge orders and/or at unintentional
+    prices.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The PyFolio library provides extensive market performance and risk reporting
+    functionality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A typical PyFolio report looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.12 – PyFolio''s standard output showing the backtesting summary
+    and key risk statistics](img/Figure_8.12_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.12 – PyFolio's standard output showing the backtesting summary and
+    key risk statistics
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following text aims to explain the key statistics in this report; that is,
+    **Annual volatility**, **Sharpe ratio**, and **drawdown**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For the purpose of this chapter, let's generate trades and returns from a hypothetical
+    trading strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code block generates hypothetical PnLs for a trading strategy
+    with a slight positive bias and hypothetical positions with no bias:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s review how the PnL varies over the course of 20 years:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here''s the output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.13 – Plot showing the synthetically generated PnLs with a slight
+    positive bias](img/Figure_8.13_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.13 – Plot showing the synthetically generated PnLs with a slight positive
+    bias
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot confirms that the slight positive bias causes the strategy to be profitable
+    in the long run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, let's explore some risk metrics of this hypothetical strategy's performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market volatility, PnL variance, and PnL standard deviation
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**Market volatility** is defined as the standard deviation of prices. Generally,
+    during more volatile market conditions, trading strategy PnLs also undergo increased
+    swings in magnitude. This is because the same positions are susceptible to larger
+    price moves, which means that the PnL moves.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**PnL variance** is used to measure the magnitude of volatility in the strategy''s
+    performance/returns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The code to compute the PnL's standard deviation is identical to the code that's
+    used to compute the standard deviation of prices (market volatility).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s compute the PnL standard deviation over a rolling 20-day period:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.14 – Plot showing PnL standard deviations across a 20-day rolling
+    period](img/Figure_8.14_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.14 – Plot showing PnL standard deviations across a 20-day rolling period
+  prefs: []
+  type: TYPE_NORMAL
+- en: This plot proves that, in this case, there is not a significant pattern – it
+    is a relatively random strategy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Trade-level Sharpe ratio
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The trade-level Sharpe ratio compares average PnLs (strategy returns) relative
+    to PnL standard deviations (strategy volatility). Compared to the standard Sharpe
+    ratio, the Trade Level Sharpe Ratio assumes that the risk-free rate is *0* since
+    we don't roll over positions, so there is no interest charge. This assumption
+    is realistic for intraday or daily trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The advantage of this measure is that it's a single number that takes all the
+    relevant risk management factors into account, so we can easily compare the performance
+    of different strategies. Nevertheless, it's important to realize that the Sharpe
+    ratio does not tell the whole story and that it's critical to use it in combination
+    with other risk measures.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Trade Level Sharpe Ratio is defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/Formula_8.1_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Let''s generate the Sharpe ratio for our strategy''s returns. First, we''ll
+    generate the daily PnLs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Intuitively, this Sharpe ratio makes sense since the hypothetical strategy''s
+    expected daily average performance was set to (1000-990)/2 = $5 and the daily
+    standard deviation of PnLs was set to be roughly $1,000 based on this line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In practice, Sharpe ratios are often annualized so that we can make comparisons
+    between strategies with different horizons fairer. To annualize the Sharpe ratio
+    computed over daily returns, we must multiply it by the square root of 252 (the
+    number of trading dates in a year):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/Formula_8.2_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The code for this is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, let''s interpret the Sharpe ratio:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A ratio of 3.0 or higher is excellent.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A ratio > 1.5 is very good.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A ratio > 1.0 is acceptable.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A ratio < 1.0 is considered sub-optimal.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We will now look at maximum drawdown.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Maximum drawdown
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Maximum drawdown is the peak-to-trough decline in a trading strategy's cumulative
+    PnL over a period of time. In other words, it's the longest streak of losing money
+    compared to the last known maximum cumulative PnL.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This metric quantifies the worst-case decline in a trading account's value based
+    on historical results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s visually find the maximum drawdown in the hypothetical strategy''s performance:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here''s the output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 8.15 – Plot showing the peak and trough PnLs and max drawdown](img/Figure_8.15_B15029.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 8.15 – Plot showing the peak and trough PnLs and max drawdown
+  prefs: []
+  type: TYPE_NORMAL
+- en: From this plot, we can assess that the biggest drawdown was $43K for this strategy,
+    from the peak PnL of roughly $28K in 1996 to the trough PnL of roughly -$15K in
+    2001\. If we had started this strategy in 1996, we would have experienced a loss
+    of $43K in our account, which we need to be aware of and prepared for moving forward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Strategy stop rule – stop loss/maximum loss
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Before opening trades, it's important to set a stop loss barrier, which is defined
+    as the maximum number of losses that a strategy or portfolio (which is just a
+    collection of strategies) can take before it is stopped.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The stop loss barrier can be set using historical maximum drawdown values. For
+    our hypothetical strategy, we saw that over the course of 20 years, the maximum
+    drawdown that was achieved was $43K. While historical results are not 100% representative
+    of future results, you might wish to use a $43K stop loss value for this strategy
+    and shut it down if it loses that much money in the future. In practice, setting
+    stop losses is much more complex than described here, but this should help you
+    build some intuition about stop losses.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once a strategy is stopped, we can decide to shut down the strategy forever
+    or just shut it down for a certain period of time, or even shut it down until
+    certain market conditions change. This decision depends on the strategy's behavior
+    and its risk tolerance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we learned how to install and set up a complete backtesting
+    and risk/performance analysis system based on Zipline and PyFolio. We then imported
+    market data into a Zipline/PyFolio backtesting protfolio and structured it and
+    reviewed it. Then, we looked into how to manage risk with PyFolio and make a successful
+    algorithmic trading system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we make full use of this setup and introduce several key
+    trading strategies.
+  prefs: []
+  type: TYPE_NORMAL
