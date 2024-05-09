@@ -2,6 +2,7 @@
   id: totrans-0
   prefs: []
   type: TYPE_NORMAL
+  zh: 股票市场-交易入门
 - en: When building algorithmic trading systems, it is essential to have an account
     open with a modern broker that provides APIs for placing and querying trades programmatically.
     This allows us to control the broking account, which is conventionally operated
@@ -12,102 +13,123 @@
   id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 在构建算法交易系统时，有必要与提供用于程序化下单和查询交易的API的现代经纪人开设账户。这样我们就可以通过我们的Python脚本控制经纪账户，而传统上是通过经纪人的网站手动操作经纪账户，这个Python脚本将成为我们更大型算法交易系统的一部分。本章演示了一些基本的配方，介绍了开发完整的算法交易系统所需的基本经纪API调用。
 - en: 'This chapter covers the following recipes:'
   id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章涵盖以下配方：
 - en: Setting up Python connectivity with the broker
   id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 设置Python与经纪人的连接
 - en: Querying a list of instruments
   id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 查询工具列表
 - en: Fetching an instrument
   id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 获取工具
 - en: Querying a list of exchanges
   id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 查询交易所列表
 - en: Querying a list of segments
   id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 查询段列表
 - en: Knowing other attributes supported by the broker
   id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 了解经纪人支持的其他属性
 - en: Placing a simple REGULAR order
   id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下单普通订单
 - en: Placing a simple BRACKET order
   id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下单布林订单
 - en: Placing a simple DELIVERY order
   id: totrans-11
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下单交割订单
 - en: Placing a simple INTRADAY order
   id: totrans-12
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下单当日订单
 - en: Querying margins and funds
   id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 查询保证金和资金
 - en: Calculating the brokerage charged
   id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 计算经纪费
 - en: Calculating the government taxes charged
   id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 计算政府征收的税费
 - en: Let's get started!
   id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们开始吧！
 - en: Technical requirements
   id: totrans-17
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 技术要求
 - en: 'You will need the following to successfully execute the recipes in this chapter:'
   id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 要成功执行本章中的示例，您将需要以下内容：
 - en: Python 3.7+
   id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python 3.7+
 - en: The Python `pyalgotrading` package (`$ pip install pyalgotrading`)
   id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Python的`pyalgotrading`包（`$ pip install pyalgotrading`）
 - en: The latest Jupyter Notebook for this chapter can be found on GitHub at [https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter02](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter02).
   id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的最新Jupyter笔记本可以在GitHub上找到：[https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter02](https://github.com/PacktPublishing/Python-Algorithmic-Trading-Cookbook/tree/master/Chapter02)。
 - en: This chapter demonstrates the APIs of a modern broker, `ZERODHA`, which is supported
     by `pyalgotrading`. You may wish to choose other brokers supported by `pyalgotrading`
     as well. The recipes in this chapter should be more or less the same for any other
@@ -116,16 +138,19 @@
   id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章演示了现代经纪人`ZERODHA`的API，它受到`pyalgotrading`的支持。您也可以选择其他由`pyalgotrading`支持的经纪人。本章中的配方对于任何其他经纪人应该大致相同。`pyalgotrading`包将经纪API抽象为统一的接口，因此您不需要担心底层经纪API调用。
 - en: To set up a broking account with `ZERODHA`, please refer to the detailed steps
     provided in *Appendix I*.
   id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 要设置与`ZERODHA`的经纪账户，请参阅*附录I*中提供的详细步骤。
 - en: Setting up Python connectivity with the broker
   id: totrans-24
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 设置Python与经纪人的连接
 - en: The first thing you need to set up connectivity with the broker is API keys.
     The broker provides unique keys to each customer, typically as an `api-key` and
     `api-secret` key pair. These API keys are chargeable, usually on a monthly subscription
@@ -134,20 +159,24 @@
   id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置与经纪人的连接的第一步是获取API密钥。经纪人通常为每个客户提供唯一的密钥，通常是作为`api-key`和`api-secret`密钥对。这些API密钥通常是收费的，通常按月订阅。在开始本配方之前，您需要从经纪人的网站获取`api-key`和`api-secret`的副本。有关更多详细信息，请参阅*附录I*。
 - en: How to do it…
   id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 怎么做…
 - en: 'We execute the following steps to complete this recipe:'
   id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们执行以下步骤来完成此配方：
 - en: 'Import the necessary modules:'
   id: totrans-28
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入必要的模块：
 - en: '[PRE0]'
   id: totrans-29
   prefs: []
@@ -159,6 +188,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从经纪人那里获取`api_key`和`api_secret`密钥。这些对您是唯一的，并将由经纪人用于识别您的Demat账户：
 - en: '[PRE1]'
   id: totrans-31
   prefs: []
@@ -168,6 +198,7 @@
   id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 您将获得以下结果：
 - en: '[PRE2]'
   id: totrans-33
   prefs: []
@@ -178,6 +209,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从上述网址获取请求令牌：
 - en: '[PRE3]'
   id: totrans-35
   prefs: []
@@ -188,6 +220,7 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '工作原理… '
 - en: 'In *step 1*, you import the `BrokerConnectionZerodha` class from `pyalgotrading`.
     The `BrokerConnectionZerodha` class provides an abstraction around the broker-specific
     APIs. For *step 2*, you need your API key and API secret from the broker. If you
@@ -205,6 +238,12 @@
   id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *第一步* 中，你从 `pyalgotrading` 导入 `BrokerConnectionZerodha` 类。`BrokerConnectionZerodha`
+    类提供了围绕特定经纪人 API 的抽象。对于 *第二步*，你需要经纪人的 API 密钥和 API 秘密。如果你没有它们，请参考 *附录 I* 获取详细的说明和带有截图的指导。在
+    *第二步* 中，你将你的 API 密钥和 API 秘密分配给新的 `api_key` 和 `api_secret` 变量，并使用它们创建 `broker_connection`，`BrokerConnectionZerodha`
+    类的一个实例。如果你是第一次运行这个程序并且没有安装 `kiteconnect`，`pyalgotrading` 将自动为你安装它。（`kiteconnect`
+    是官方的 Python 包，用于与 Zerodha 后端通信；`BrokerConnectionZerodha` 是在 `kiteconnect` 之上的一个封装。）*第二步*
+    生成一个登录链接。在这里，你需要点击链接并使用你的 Zerodha 凭据登录。如果认证过程成功，你将在浏览器地址栏中看到一个类似以下的链接：
 - en: '[PRE4]'
   id: totrans-38
   prefs: []
@@ -214,6 +253,7 @@
   id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，完整的链接将如下所示：
 - en: '[PRE5]'
   id: totrans-40
   prefs: []
@@ -225,40 +265,49 @@
   id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 复制字母数字令牌，`H06I6Ydv95y23D2Dp7NbigFjKweGwRP7`，并将其粘贴到 *第三步* 的 `request_token` 中。`broker_connection`
+    实例现在已准备好执行 API 调用。
 - en: Querying a list of instruments
   id: totrans-42
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 查询一组工具
 - en: Once the `broker_connection` handle is ready, it can be used to query the list
     containing all the financial instruments provided by the broker.
   id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦 `broker_connection` 句柄准备好，它就可以用来查询包含经纪人提供的所有金融工具的列表。
 - en: Getting ready
   id: totrans-44
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备工作
 - en: Make sure the `broker_connection` object is available in your Python namespace.
     Refer to the previous recipe in this chapter to set up this object.
   id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 确保 `broker_connection` 对象在你的 Python 命名空间中可用。请参考本章中前一个配方设置此对象。
 - en: How to do it…
   id: totrans-46
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何做…
 - en: 'We execute the following steps to complete this recipe:'
   id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们执行以下步骤来完成这个配方：
 - en: 'Display all the instruments:'
   id: totrans-48
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 显示所有工具：
 - en: '[PRE6]'
   id: totrans-49
   prefs: []
@@ -269,6 +318,7 @@
   id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 你将会得到类似以下的输出。对你来说，确切的输出可能会有所不同：
 - en: '[PRE7]'
   id: totrans-51
   prefs: []
@@ -279,6 +329,7 @@
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 打印工具总数：
 - en: '[PRE8]'
   id: totrans-53
   prefs: []
@@ -288,6 +339,7 @@
   id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到以下输出（你的输出可能会有所不同）：
 - en: '[PRE9]'
   id: totrans-55
   prefs: []
@@ -298,6 +350,7 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作原理…
 - en: The first step fetches all the available financial instruments using the `get_all_instruments()`
     method of `broker_connection`. This method returns a `pandas.DataFrame` object.
     This object is assigned to a new variable, `instruments`, which is shown in the
@@ -307,6 +360,8 @@
   id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一步使用 `broker_connection` 的 `get_all_instruments()` 方法获取所有可用的金融工具。此方法返回一个 `pandas.DataFrame`
+    对象。此对象分配给一个新变量 `instruments`，显示在 *第一步* 的输出中。由于经常添加新的金融工具并定期过期现有的工具，这个输出可能对你来说有所不同。最后一步显示了经纪人提供的工具总数。
 - en: An explanation of the data that was returned by the preceding API call will
     be discussed in depth in [Chapter 3](d82aae2c-b9a8-4a79-bfea-44719adf1acf.xhtml),
     *Analyzing Financial Data*. For this recipe, it suffices to know the method for
@@ -314,11 +369,13 @@
   id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于前面的 API 调用返回的数据的解释将在[第 3 章](d82aae2c-b9a8-4a79-bfea-44719adf1acf.xhtml)中深入讨论，*分析金融数据*。对于这个配方，知道如何获取工具列表的方法就足够了。
 - en: Fetching an instrument
   id: totrans-59
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 获取一个工具
 - en: '**Instruments**, also known as **financial instruments** or **securities**,
     are assets that can be traded in an exchange. In an exchange, there can easily
     be tens of thousands of instruments. This recipe demonstrates how to fetch an
