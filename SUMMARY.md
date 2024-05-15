@@ -1,3 +1,4 @@
++   [C++ 高级量化金融](docs/adv-quant-fin-cpp/README.md)
 +   [Python 卖空算法教程](docs/algo-stsl-py/README.md)
 +   [Excel 2019 金融建模实用指南](docs/hsn-fin-mdl-exl19/README.md)
 +   [Python 金融交易实用指南](docs/hsn-fin-trd-py/README.md)
