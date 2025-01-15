@@ -1,11 +1,15 @@
 - en: '15'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '15'
 - en: Deep Learning in Finance
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 金融中的深度学习
 - en: In recent years, we have seen many spectacular successes achieved by means of
     deep learning techniques. Deep neural networks have been successfully applied
     to tasks in which traditional machine learning algorithms could not succeed—large-scale
@@ -13,15 +17,19 @@
     traditional games such as Go or classic video games (from Super Mario to StarCraft
     II). Almost yearly, we can observe the introduction of a new type of network that
     achieves state-of-the-art (SOTA) results and breaks some kind of performance record.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 近年来，我们看到深度学习技术在许多领域取得了惊人的成功。深度神经网络成功应用于传统机器学习算法无法成功的任务——大规模图像分类、自动驾驶、以及在围棋或经典视频游戏（从超级马里奥到星际争霸II）中超越人类的表现。几乎每年，我们都能看到一种新型网络的推出，它在某些方面打破了性能记录并取得了最先进的（SOTA）成果。
 - en: With the constant improvement in commercially available **Graphics Processing
     Units** (**GPUs**), the emergence of freely available processing power involving
     CPUs/GPUs (Google Colab, Kaggle, and so on), and the rapid development of different
     frameworks, deep learning continues to gain more and more attention among researchers
     and practitioners who want to apply the techniques to their business cases.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着**图形处理单元**（**GPU**）的持续改进，涉及CPU/GPU的免费计算资源（如Google Colab、Kaggle等）的出现，以及各种框架的快速发展，深度学习在研究人员和从业者中越来越受到关注，他们希望将这些技术应用到自己的业务案例中。
 - en: In this chapter, we are going to show two possible use cases of deep learning
     in the financial domain—predicting credit card default (a classification task)
     and forecasting time series. Deep learning proves to deliver great results with
@@ -31,456 +39,657 @@
     it is such a challenge to model them. Deep learning approaches are especially
     apt for the task, as they make no assumptions about the distribution of the underlying
     data and can be quite robust to noise.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章将展示深度学习在金融领域的两个可能应用场景——预测信用卡违约（分类任务）和时间序列预测。深度学习在处理语音、音频和视频等序列数据时表现出色。这也是它自然适用于处理时间序列数据（包括单变量和多变量）的原因。金融时间序列通常表现得非常不稳定且复杂，这也是建模它们的挑战所在。深度学习方法特别适合这一任务，因为它们不对底层数据的分布做任何假设，并且能够对噪声具有较强的鲁棒性。
 - en: In the first edition of the book, we focused on the traditional NN architectures
     used for time series forecasting (CNN, RNN, LSTM, and GRU) and their implementation
     in PyTorch. In this book, we will be using more complex architectures with the
     help of dedicated Python libraries. Thanks to those, we do not have to recreate
     the logic of the NNs and we can focus on the forecasting challenges instead.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本书的第一版中，我们重点介绍了用于时间序列预测的传统神经网络架构（CNN、RNN、LSTM和GRU）及其在PyTorch中的实现。在本书中，我们将使用更复杂的架构，并借助专用的Python库来实现。得益于这些库，我们不必重新创建神经网络的逻辑，可以专注于预测挑战。
 - en: 'In this chapter, we present the following recipes:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们介绍以下几种方法：
 - en: Exploring fastai’s Tabular Learner
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 探索fastai的Tabular Learner
 - en: Exploring Google’s TabNet
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 探索Google的TabNet
 - en: Time series forecasting with Amazon’s DeepAR
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用亚马逊DeepAR进行时间序列预测
 - en: Time series forecasting with NeuralProphet
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用NeuralProphet进行时间序列预测
 - en: Exploring fastai’s Tabular Learner
+  id: totrans-11
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 探索fastai的Tabular Learner
 - en: 'Deep learning is not often associated with tabular or structured data, as this
     kind of data comes with some possible questions:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 深度学习通常不与表格或结构化数据联系在一起，因为这类数据涉及一些可能的问题：
 - en: How should we represent features in a way that can be understood by the neural
     networks? In tabular data, we often deal with numerical and categorical features,
     so we need to correctly represent both types of inputs.
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们应该如何以神经网络能够理解的方式表示特征？在表格数据中，我们通常处理数值型和类别型特征，因此我们需要正确表示这两种类型的输入。
 - en: How do we use feature interactions, both between the features themselves and
     the target?
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们如何使用特征交互，包括特征之间以及与目标之间的交互？
 - en: How do we effectively sample the data? Tabular datasets tend to be smaller than
     typical datasets used for solving computer vision or NLP problems. There is no
     easy way to apply augmentation, such as random cropping or rotation in the case
     of images. Also, there is no general large dataset with some universal properties,
     based on which we could easily apply transfer learning.
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们如何有效地对数据进行采样？表格数据集通常比用于计算机视觉或NLP问题的典型数据集要小。没有简单的方法可以应用数据增强，例如图像的随机裁剪或旋转。此外，也没有通用的大型数据集具备一些普适的属性，我们可以基于这些属性轻松地应用迁移学习。
 - en: How do we interpret the predictions of a neural network?
+  id: totrans-16
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们如何解释神经网络的预测结果？
 - en: That is why practitioners tend to use traditional machine learning approaches
     (often based on some kind of gradient-boosted trees) to approach tasks involving
     structured data. However, a potential benefit of using deep learning for structured
     data is the fact that it requires much less feature engineering and domain knowledge.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就是为什么实践者倾向于使用传统的机器学习方法（通常基于某种梯度提升树）来处理涉及结构化数据的任务。然而，使用深度学习处理结构化数据的一个潜在优势是，它需要的特征工程和领域知识要少得多。
 - en: In this recipe, we present how to successfully use deep learning for tabular
     data. To do so, we use the popular `fastai` library, which is built on top of
     PyTorch.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个食谱中，我们展示了如何成功地使用深度学习处理表格数据。为此，我们使用了流行的`fastai`库，该库建立在PyTorch之上。
 - en: 'Some of the benefits of working with the `fastai` library are:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`fastai`库的一些优点包括：
 - en: It provides a selection of APIs that greatly simplify working with **Artificial
     Neural Networks** (**ANNs**)—from loading and batching the data to training the
     model
+  id: totrans-20
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它提供了一些API，可以大大简化与**人工神经网络**（**ANNs**）的工作——从加载和批处理数据到训练模型。
 - en: It incorporates a selection of empirically tested best approaches to using deep
     learning for various tasks, such as image classification, NLP, and tabular data
     (both classification and regression problems)
+  id: totrans-21
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它结合了经实验证明有效的最佳方法，用于深度学习处理各种任务，如图像分类、自然语言处理（NLP）和表格数据（包括分类和回归问题）。
 - en: It handles the data preprocessing automatically—we just need to define which
     operations we want to apply
+  id: totrans-22
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它自动处理数据预处理——我们只需定义要应用的操作。
 - en: What makes `fastai` stand out is the use of **entity embedding** (or embedding
     layers) for categorical data. By using it, the model can learn some potentially
     meaningful relationships between the observations of categorical features. You
     can think of embeddings as latent features. For each categorical column, there
     is a trainable embedding matrix and each unique value has a designated vector
     mapped to it. Thankfully, `fastai` does all of that for us.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: '`fastai`的一个亮点是使用**实体嵌入**（或嵌入层）处理分类数据。通过使用它，模型可以学习分类特征观测值之间潜在的有意义的关系。你可以把嵌入看作是潜在特征。对于每个分类列，都会有一个可训练的嵌入矩阵，每个唯一值都被映射到一个指定的向量。幸运的是，`fastai`为我们完成了所有这些工作。'
 - en: Using entity embedding comes with quite a few advantages. First, it reduces
     memory usage and speeds up the training of neural networks as compared to using
     one-hot encoding. Second, it maps similar values close to each other in the embedding
     space, which reveals the intrinsic properties of the categorical variables. Third,
     the technique is especially useful for datasets with many high-cardinality features,
     when other approaches tend to result in overfitting.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用实体嵌入有很多优点。首先，它减少了内存使用，并且比使用独热编码加速了神经网络的训练。其次，它将相似的值映射到嵌入空间中彼此接近的位置，这揭示了分类变量的内在特性。第三，这种技术对于具有许多高基数特征的数据集尤其有用，而其他方法往往会导致过拟合。
 - en: 'In this recipe, we apply deep learning to a classification problem based on
     the credit card default dataset. We have already used this dataset in *Chapter
     13*, *Applied Machine Learning: Identifying Credit Default*.'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个食谱中，我们将深度学习应用于一个基于信用卡违约数据集的分类问题。我们已经在*第13章*，*应用机器学习：识别信用卡违约*中使用过这个数据集。
 - en: How to do it…
+  id: totrans-26
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何做…
 - en: 'Execute the following steps to train a neural network to classify defaulting
     customers:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤来训练一个神经网络，用于分类违约客户：
 - en: 'Import the libraries:'
+  id: totrans-28
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE0]'
+  id: totrans-29
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Load the dataset from a CSV file:'
+  id: totrans-30
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从CSV文件加载数据集：
 - en: '[PRE1]'
+  id: totrans-31
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Define the target, lists of categorical/numerical features, and preprocessing
     steps:'
+  id: totrans-32
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义目标、分类/数值特征列表和预处理步骤：
 - en: '[PRE2]'
+  id: totrans-33
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Define the splitter used to create training and validation sets:'
+  id: totrans-34
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义用于创建训练集和验证集的分割器：
 - en: '[PRE3]'
+  id: totrans-35
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Executing the snippet generates the following previews of the datasets:'
+  id: totrans-36
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这个代码片段会生成以下数据集预览：
 - en: '[PRE4]'
+  id: totrans-37
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Create the `TabularPandas` dataset:'
+  id: totrans-38
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建`TabularPandas`数据集：
 - en: '[PRE5]'
+  id: totrans-39
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Executing the snippet generates the following preview of the dataset:'
+  id: totrans-40
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下数据集的预览：
 - en: '![](../Images/B18112_15_01.png)'
+  id: totrans-41
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_01.png)'
 - en: 'Figure 15.1: The preview of the encoded dataset'
+  id: totrans-42
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.1：编码数据集的预览
 - en: 'We printed only a small selection of columns to keep the DataFrame readable.
     We can observe the following:'
+  id: totrans-43
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们仅打印了少量列，以保持数据框的可读性。我们可以观察到以下内容：
 - en: The categorical columns are encoded using a label encoder
+  id: totrans-44
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 类别列使用标签编码器进行编码
 - en: The continuous columns are normalized
+  id: totrans-45
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 连续列已经被标准化
 - en: The continuous column that had missing values (`age`) has an extra column with
     an encoding indicating whether the particular value was missing before imputation
+  id: totrans-46
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 含有缺失值的连续列（如`age`）有一个额外的列，表示该特定值在插补前是否缺失。
 - en: 'Define a `DataLoaders` object from the `TabularPandas` dataset:'
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从`TabularPandas`数据集中定义`DataLoaders`对象：
 - en: '[PRE6]'
+  id: totrans-48
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'Executing the snippet generates the following preview of the batch:'
+  id: totrans-49
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下批次的预览：
 - en: '![](../Images/B18112_15_02.png)'
+  id: totrans-50
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_02.png)'
 - en: 'Figure 15.2: The preview of a batch from the DataLoaders object'
+  id: totrans-51
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.2：`DataLoaders`对象中一个批次的预览
 - en: As we can see in *Figure 15.2*, the features here are in their original representation.
+  id: totrans-52
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 正如我们在*图15.2*中看到的，这里的特征处于其原始表示形式。
 - en: 'Define the metrics of choice and the tabular learner:'
+  id: totrans-53
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义所选择的指标和表格学习器：
 - en: '[PRE7]'
+  id: totrans-54
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Executing the snippet prints the schema of the model:'
+  id: totrans-55
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会打印出模型的架构：
 - en: '[PRE8]'
+  id: totrans-56
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: To provide an interpretation of the embeddings, `Embedding(11`, `6)` means that
     a categorical embedding was created with 11 input values and 6 output latent features.
+  id: totrans-57
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了提供对嵌入的解释，`Embedding(11`, `6)`表示创建了一个类别嵌入，输入值为11个，输出潜在特征为6个。
 - en: 'Find the suggested learning rate:'
+  id: totrans-58
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 查找建议的学习率：
 - en: '[PRE9]'
+  id: totrans-59
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-60
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_15_03.png)'
+  id: totrans-61
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_03.png)'
 - en: 'Figure 15.3: The suggested learning rate for our model'
+  id: totrans-62
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.3：我们模型的建议学习率
 - en: 'It also prints the following output with the exact value of the suggested learning
     rate:'
+  id: totrans-63
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 它还会打印出以下输出，显示建议学习率的精确值：
 - en: '[PRE10]'
+  id: totrans-64
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'Train the tabular learner:'
+  id: totrans-65
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 训练表格学习器：
 - en: '[PRE11]'
+  id: totrans-66
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: While the model is training, we can observe the updates of its performance after
     each epoch. We present a snippet below.
+  id: totrans-67
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在模型训练过程中，我们可以观察到每个训练周期后性能的更新。以下是代码片段：
 - en: '![](../Images/B18112_15_04.png)'
+  id: totrans-68
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_04.png)'
 - en: 'Figure 15.4: The first 10 epochs of the Tabular learner’s training'
+  id: totrans-69
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.4：表格学习器训练的前10个周期
 - en: In the first 10 epochs, the losses are still a bit erratic and increase/decrease
     over time. The same goes for the evaluation metrics.
+  id: totrans-70
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在前10个训练周期中，损失值仍然有些不稳定，随着时间的推移有时上升/下降。评估指标也是如此。
 - en: 'Plot the losses:'
+  id: totrans-71
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制损失值图表：
 - en: '[PRE12]'
+  id: totrans-72
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-73
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_15_05.png)'
+  id: totrans-74
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_05.png)'
 - en: 'Figure 15.5: The training and validation loss over training time (batches)'
+  id: totrans-75
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.5：训练和验证损失随训练时间（批次）的变化
 - en: We can observe that the validation loss plateaued a bit, with some bumps every
     now and then. It might mean that the model is a bit too complex for our data and
     we might want to reduce the size of the hidden layers.
+  id: totrans-76
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以观察到验证损失有所平稳，偶尔有些波动。这可能意味着模型对于我们的数据来说有些过于复杂，我们可能需要减少隐藏层的大小。
 - en: 'Define the validation `DataLoaders`:'
+  id: totrans-77
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义验证集的`DataLoaders`：
 - en: '[PRE13]'
+  id: totrans-78
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Evaluate the performance on the validation set:'
+  id: totrans-79
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在验证集上评估性能：
 - en: '[PRE14]'
+  id: totrans-80
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-81
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下输出：
 - en: '[PRE15]'
+  id: totrans-82
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'These are the metrics for the validation set: loss, accuracy, recall, and precision.'
+  id: totrans-83
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 这些是验证集的指标：损失，准确率，召回率和精度。
 - en: 'Get predictions for the validation set:'
+  id: totrans-84
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取验证集的预测结果：
 - en: '[PRE16]'
+  id: totrans-85
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: '`y_true` contains the actual labels from the validation set. The `preds` object
     is a tensor containing the predicted probabilities. It looks as follows:'
+  id: totrans-86
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '`y_true`包含验证集中的实际标签。`preds`对象是一个包含预测概率的张量。其内容如下：'
 - en: '[PRE17]'
+  id: totrans-87
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'To get the predicted classes from it, we can use the following command:'
+  id: totrans-88
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了获取预测的类别，我们可以使用以下命令：
 - en: '[PRE18]'
+  id: totrans-89
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'Inspect the performance evaluation metrics:'
+  id: totrans-90
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 检查性能评估指标：
 - en: '[PRE19]'
+  id: totrans-91
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-92
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_15_06.png)'
+  id: totrans-93
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_06.png)'
 - en: 'Figure 15.6: The performance evaluation of the Tabular learner’s prediction
     of the validation set'
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 图15.6：表格学习器在验证集上的性能评估
 - en: The `perf` object is a dictionary containing various evaluation metrics. We
     have not presented it here for brevity, but we can also see that accuracy, precision,
     and recall have the same values as we saw in *Step 12*.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: '`perf` 对象是一个字典，包含各种评估指标。由于篇幅原因，我们在这里没有展示它，但我们也可以看到，准确率、精确度和召回率的值与我们在*第 12 步*中看到的相同。'
 - en: How it works…
+  id: totrans-96
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: In *Step 2*, we loaded the dataset into Python using the `read_csv` function.
     While doing so, we indicated which symbol represents the missing values.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第 2 步*中，我们使用 `read_csv` 函数将数据集加载到 Python 中。在此过程中，我们指明了哪些符号表示缺失值。
 - en: 'In *Step 3*, we identified the dependent variable (the target), as well as
     both numerical and categorical features. To do so, we used the `select_dtypes`
     methods and indicated which data type we wanted to extract. We stored the features
     in lists. We also had to remove the dependent variable from the list containing
     the numerical features. Lastly, we created a list containing all the transformations
     we wanted to apply to the data. We selected the following:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第 3 步*中，我们识别了因变量（目标）以及数值特征和类别特征。为此，我们使用了 `select_dtypes` 方法并指定了要提取的数据类型。我们将特征存储在列表中。我们还需要将因变量从包含数值特征的列表中移除。最后，我们创建了一个包含所有要应用于数据的转换的列表。我们选择了以下内容：
 - en: '`FillMissing`: Missing values will be filled depending on the data type. In
     the case of categorical variables, missing values become a separate category.
     In the case of continuous features, the missing values are filled using the median
     of the feature’s values (default approach), the mode, or with a constant value.
     Additionally, an extra column is added with a flag whether the value was missing
     or not.'
+  id: totrans-99
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`FillMissing`：缺失值将根据数据类型进行填充。在类别变量的情况下，缺失值将成为一个独立的类别。在连续特征的情况下，缺失值将使用该特征值的中位数（默认方法）、众数或常量值进行填充。此外，还会添加一个额外的列，标记该值是否缺失。'
 - en: '`Categorify`: Maps categorical features into their integer representation.'
+  id: totrans-100
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`Categorify`：将类别特征映射为它们的整数表示。'
 - en: '`Normalize`: Features’ values are transformed such that they have zero mean
     and unit variance. This makes training neural networks easier.'
+  id: totrans-101
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`Normalize`：特征值被转换，使其均值为零，方差为单位。这使得训练神经网络变得更容易。'
 - en: It is important to note that the same transformations will be applied to both
     the training and validation sets. To prevent data leakage, the transformations
     are based solely on the training set.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要注意的是，相同的转换将同时应用于训练集和验证集。为了防止数据泄漏，转换仅基于训练集进行。
 - en: In *Step 4*, we defined a split used for creating the training and validation
     sets. We used the `RandomSplitter` class, which does a stratified split under
     the hood. We indicated we wanted to split the data using the 80-20 ratio. Additionally,
     after instantiating the splitter, we also had to use the `range_of` function,
     which returns a list containing all the indices of our DataFrame.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第 4 步*中，我们定义了用于创建训练集和验证集的分割。我们使用了 `RandomSplitter` 类，它在后台进行分层分割。我们指明了希望按照
+    80-20 的比例进行数据分割。此外，在实例化分割器之后，我们还需要使用 `range_of` 函数，该函数返回一个包含 DataFrame 所有索引的列表。
 - en: In *Step 5*, we created a `TabularPandas` dataset. It is a wrapper around a
     `pandas` DataFrame, which adds a few convenient utilities on top—it handles all
     the preprocessing and splitting. While instantiating the `TabularPandas` class,
@@ -490,8 +699,12 @@
     We have to do so when we are working with a classification problem and the target
     was already encoded into a binary representation (a column of zeroes and ones).
     Otherwise, it might be confused with a regression problem.
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第 5 步*中，我们创建了一个 `TabularPandas` 数据集。它是对 `pandas` DataFrame 的封装，添加了一些方便的实用工具——它处理所有的预处理和分割。在实例化
+    `TabularPandas` 类时，我们提供了原始 DataFrame、包含所有预处理步骤的列表、目标和类别/连续特征的名称，以及我们在*第 4 步*中定义的分割器对象。我们还指定了
+    `y_block=CategoryBlock()`。当我们处理分类问题且目标已被编码为二进制表示（零和一的列）时，必须这样做。否则，它可能会与回归问题混淆。
 - en: 'We can easily convert a `TabularPandas` object into a regular `pandas` DataFrame.
     We can use the `xs` method to extract the features and the `ys` method to extract
     the target. Additionally, we can use the `cats` and `conts` methods to extract
@@ -500,28 +713,38 @@
     we can use the `train` and `valid` accessors to extract only one of the sets.
     For example, to extract the validation set features from a `TabularPandas` object
     called `tabular_df`, we could use the following snippet:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以轻松地将一个`TabularPandas`对象转换为常规的`pandas` DataFrame。我们可以使用`xs`方法提取特征，使用`ys`方法提取目标。此外，我们可以使用`cats`和`conts`方法分别提取类别特征和连续特征。如果我们直接在`TabularPandas`对象上使用这四个方法中的任何一个，将会提取整个数据集。或者，我们可以使用`train`和`valid`访问器仅提取其中一个数据集。例如，要从名为`tabular_df`的`TabularPandas`对象中提取验证集特征，我们可以使用以下代码：
 - en: '[PRE20]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: In *Step 6*, we converted the `TabularPandas` object into a `DataLoaders` object.
     To do so, we used the `dataloaders` method of the `TabularPandas` dataset. Additionally,
     we specified a batch size of 64 and that we wanted to drop the last incomplete
     batch. We displayed a sample batch using the `show_batch` method.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤6*中，我们将`TabularPandas`对象转换为`DataLoaders`对象。为此，我们使用了`TabularPandas`数据集的`dataloaders`方法。此外，我们指定了批量大小为64，并要求丢弃最后一个不完整的批量。我们使用`show_batch`方法显示了一个示例批量。
 - en: We could have also created a `DataLoaders` object directly from a CSV file instead
     of converting a `pandas` DataFrame. To do so, we could use the `TabularDataLoaders.from_csv`
     functionality.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们本来也可以直接从CSV文件创建一个`DataLoaders`对象，而不是转换一个`pandas` DataFrame。为此，我们可以使用`TabularDataLoaders.from_csv`功能。
 - en: 'In *Step 7*, we defined the learner using `tabular_learner`. First, we instantiated
     additional metrics: precision and recall. When using `fastai`, metrics are expressed
     as classes (the name is spelled in uppercase) and we first need to instantiate
     them before passing them to the learner.'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤7*中，我们使用`tabular_learner`定义了学习器。首先，我们实例化了额外的度量标准：精确度和召回率。在使用`fastai`时，度量标准以类的形式表示（类名为大写），我们需要先实例化它们，然后再将其传递给学习器。
 - en: Then, we instantiated the learner. This is the place where we defined the network’s
     architecture. We decided to use a network with two hidden layers, with 500 and
     200 neurons, respectively. Choosing the network’s architecture can often be considered
@@ -530,30 +753,40 @@
     else, for example, based on academic papers, Kaggle competitions, blog articles,
     and so on. As for the metrics, we wanted to consider accuracy and the previously
     mentioned precision and recall.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们实例化了学习器。这是我们定义网络架构的地方。我们决定使用一个有两个隐藏层的网络，分别有500个和200个神经元。选择网络架构通常被认为是一门艺术而非科学，可能需要大量的试验和错误。另一种常见的方法是使用之前有人使用过且有效的架构，例如基于学术论文、Kaggle竞赛、博客文章等。至于度量标准，我们希望考虑准确率，以及前面提到的精确度和召回率。
 - en: 'As in the case of machine learning, it is crucial to prevent overfitting with
     neural networks. We want the networks to be able to generalize to new data. Some
     of the popular techniques used for tackling overfitting include the following:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 与机器学习一样，防止神经网络过拟合至关重要。我们希望网络能够推广到新的数据。解决过拟合的一些常见技术包括以下几种：
 - en: '**Weight decay**: Each time the weights are updated, they are multiplied by
     a factor smaller than 1 (a rule of thumb is to use values between 0.01 and 0.1).'
+  id: totrans-112
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**权重衰减（Weight decay）**：每次更新权重时，它们都会乘以一个小于1的因子（通常的经验法则是使用0.01到0.1之间的值）。'
 - en: '**Dropout**: While training the NN, some activations are randomly dropped for
     each mini-batch. Dropout can also be used for the concatenated vector of embeddings
     of categorical features.'
+  id: totrans-113
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**丢弃法（Dropout）**：在训练神经网络时，对于每个小批量，某些激活值会被随机丢弃。丢弃法也可以用于类别特征的嵌入向量的连接。'
 - en: '**Batch normalization**: This technique reduces overfitting by making sure
     that a small number of outlying inputs does have too much impact on the trained
     network.'
+  id: totrans-114
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**批量归一化（Batch normalization）**：该技术通过确保少数异常输入不会对训练后的网络产生过大的影响，从而减少过拟合。'
 - en: Then, we inspected the model’s architecture. In the output, we first saw the
     categorical embeddings and the corresponding dropout, or in this case, the lack
     of it. Then, in the `(layers)` section, we saw the input layer (63 input and 500
@@ -561,23 +794,29 @@
     function, and batch normalization. Potential dropout is governed in the `LinBnDrop`
     layer. The same steps were repeated for the second hidden layer and then the last
     linear layer produced the class probabilities.
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们检查了模型的架构。在输出中，我们首先看到了分类嵌入层及其对应的dropout，或者在本例中，缺少dropout。接下来，在`(layers)`部分，我们看到了输入层（63个输入特征和500个输出特征），接着是**ReLU**（**修正线性单元**）激活函数和批量归一化。潜在的dropout在`LinBnDrop`层中控制。对于第二个隐藏层，重复了相同的步骤，最后一个线性层产生了类别概率。
 - en: '`fastai` uses a rule to determine the embedding size. The rule was chosen empirically
     and it selects the lower of either 600, or 1.6 multiplied by the cardinality of
     a variable to the power of 0.56\. To figure out the embedding size manually, you
     can use the `get_emb_sz` function. `tabular_learner` does it under the hood if
     the size was not specified manually.'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: '`fastai`使用一个规则来确定嵌入层的大小。这个规则是通过经验选择的，它选择600和1.6乘以某个变量的基数的0.56次方中的较小值。要手动计算嵌入层的大小，可以使用`get_emb_sz`函数。如果没有手动指定大小，`tabular_learner`会在后台自动处理。'
 - en: In *Step 8*, we tried to determine the “good” learning rate. `fastai` provides
     a helper method, `lr_find`, which facilitates the process. It begins to train
     the network while increasing the learning rate—it starts with a very low one and
     increases to a very large one. Then, it plots the losses against the learning
     rates and displays the suggested value. We should aim for a value that is before
     the minimum value, but where the loss still improves (decreases).
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第8步*中，我们尝试确定“合适的”学习率。`fastai`提供了一个辅助方法`lr_find`，帮助简化这一过程。该方法开始训练网络并逐步提高学习率——从非常低的学习率开始，逐渐增加到非常高的学习率。然后，它会绘制学习率与损失值的关系图，并显示建议的学习率值。我们应该选择一个值，它位于最小值之前，但损失仍然在改善（减少）时的点。
 - en: In *Step 9*, we trained the neural network using the `fit` method of the learner.
     We’ll briefly describe the training algorithm. The entire training set is divided
     into **batches**. For each batch, the network is used to make predictions, which
@@ -587,505 +826,714 @@
     case, we trained the network for 25 epochs. We additionally specified the learning
     rate and weight decay. In *Step 10*, we plotted the training and validation loss
     over batches.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第9步*中，我们使用学习器的`fit`方法训练了神经网络。我们将简要描述训练算法。整个训练集被划分为**批次**。对于每个批次，网络用来进行预测，并将预测结果与目标值进行比较，从而计算误差。然后，误差被用来更新网络中的权重。**一个epoch**指的是完整地遍历所有批次，换句话说，就是用整个数据集进行训练。在我们的案例中，我们训练了25个epoch。此外，我们还指定了学习率和权重衰减。在*第10步*中，我们绘制了批次中的训练和验证损失。
 - en: Without going into too much detail, by default `fastai` uses the (flattened)
     **cross-entropy loss function** (for classification tasks) and **Adam (Adaptive
     Moment Estimation)** as the optimizer. The reported training and validation losses
     come from the loss function and the evaluation metrics (such as recall) are not
     used in the training procedure.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 不深入细节，默认情况下，`fastai`使用（展平后的）**交叉熵损失函数**（用于分类任务）和**Adam（自适应矩估计）**作为优化器。报告的训练和验证损失来自于损失函数，评估指标（如召回率）在训练过程中并未使用。
 - en: In *Step 11*, we defined a validation dataloader. To identify the indices of
     the validation set, we extracted them from the splitter. In the next step, we
     evaluated the performance of the neural network on the validation set using the
     `validate` method of the learner object. As input for the method, we passed the
     validation dataloader.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第11步*中，我们定义了一个验证数据加载器。为了确定验证集的索引，我们从分割器中提取了它们。在下一步中，我们使用学习器对象的`validate`方法评估神经网络在验证集上的表现。作为方法的输入，我们传递了验证数据加载器。
 - en: In *Step 13*, we used the `get_preds` method to obtain the validation set predictions.
     To obtain the predictions from the `preds` object, we had to use the `argmax`
     method.
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第13步*中，我们使用了`get_preds`方法来获取验证集的预测结果。为了从`preds`对象中获取预测，我们需要使用`argmax`方法。
 - en: Lastly, we used the slightly modified helper function (used in the previous
     chapters) to recover evaluation metrics such as precision and recall.
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们使用了稍作修改的辅助函数（在前几章中使用过）来恢复评估指标，如精确度和召回率。
 - en: There’s more…
+  id: totrans-123
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多……
 - en: 'Some noteworthy features of `fastai` for tabular datasets include:'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: '`fastai`在表格数据集上的一些显著特点包括：'
 - en: Using callbacks while training neural networks. Callbacks are used to insert
     some custom code/logic into the training loop at different times, for example,
     at the beginning of the epoch or at the beginning of the fitting process.
+  id: totrans-125
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在训练神经网络时使用回调。回调用于在训练循环中的不同时间插入自定义代码/逻辑，例如，在每个epoch开始时或在拟合过程开始时。
 - en: '`fastai` provides a helper function, `add_datepart`, which extracts a variety
     of features from columns containing dates (such as the purchase date). Some of
     the extracted features may include the day of the week, the day of the month,
     and a Boolean for the start/end of the month/quarter/year.'
+  id: totrans-126
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`fastai`提供了一个辅助函数`add_datepart`，用于从包含日期的列（例如购买日期）中提取各种特征。提取的特征可能包括星期几、月份几号，以及一个表示月/季/年开始或结束的布尔值。'
 - en: We can use the `predict` method of a fitted tabular learner to predict the class
     directly for a single row of the source DataFrame.
+  id: totrans-127
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以使用拟合的表格学习器的`predict`方法，直接预测源数据框中单行的类别。
 - en: Instead of the `fit` method, we can also use the `fit_one_cycle` method. This
     employs the super-convergence policy. The underlying idea is to train the network
     with a varying learning rate. It starts at low values, increases to the specified
     maximum, and goes back to low values again. This approach is considered to work
     better than choosing a single learning rate.
+  id: totrans-128
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以使用`fit_one_cycle`方法，代替`fit`方法。该方法采用超收敛策略，其基本思想是通过变化的学习率来训练网络。它从较低值开始，逐渐增加到指定的最大值，再回到较低值。这种方法被认为比选择单一学习率效果更好。
 - en: As we were working with a relatively small dataset and a simple model, we could
     have quite easily trained the NN on a CPU. `fastai` naturally supports using GPUs.
     For more information on how to use a GPU, please see `fastai`'s documentation.
+  id: totrans-129
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由于我们处理的是一个相对较小的数据集和简单的模型，因此可以轻松地在CPU上训练神经网络。`fastai`自然支持使用GPU。有关如何使用GPU的更多信息，请参见`fastai`的文档。
 - en: 'Using custom indices for training and validation sets. This feature comes in
     handy when we are, for example, dealing with class imbalance and want to make
     sure that both the training and validation sets contain a similar ratio of classes.
     We can use `IndexSplitter` in combination with `scikit-learn`''s `StratifiedKFold`.
     We show an example of the implementation in the following snippet:'
+  id: totrans-130
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用自定义索引进行训练和验证集的划分。当我们处理类别不平衡等问题时，这个功能特别有用，可以确保训练集和验证集包含相似的类别比例。我们可以将`IndexSplitter`与`scikit-learn`的`StratifiedKFold`结合使用。以下代码片段展示了实现示例：
 - en: '[PRE21]'
+  id: totrans-131
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: See also
+  id: totrans-132
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: 'For more information about `fastai`, we recommend the following:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 关于`fastai`的更多信息，我们推荐以下资源：
 - en: 'The `fastai` course website: [https://course.fast.ai/](https://course.fast.ai/).'
+  id: totrans-134
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`fastai`课程网站：[https://course.fast.ai/](https://course.fast.ai/)。'
 - en: Howard, J., & Gugger, S. 2020\. *Deep Learning for Coders with fastai and PyTorch*.
     O’Reilly Media. [https://github.com/fastai/fastbook](https://github.com/fastai/fastbook).
+  id: totrans-135
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Howard, J., & Gugger, S. 2020\. *使用fastai和PyTorch进行深度学习编程*。O'Reilly Media。 [https://github.com/fastai/fastbook](https://github.com/fastai/fastbook)。
 - en: 'Additional resources are available here:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 额外的资源可以在这里找到：
 - en: Guo, C., & Berkhahn, F. 2016\. *Entity Embeddings of Categorical Variables*.
     arXiv preprint arXiv:1604.06737.
+  id: totrans-137
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Guo, C., & Berkhahn, F. 2016\. *类别变量的实体嵌入*。arXiv预印本arXiv:1604.06737。
 - en: 'Ioffe, S., & Szegedy, C. 2015\. *Batch Normalization: Accelerating Deep Network
     Training by Reducing Internal Covariate Shift*. arXiv preprint arXiv:1502.03167.'
+  id: totrans-138
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Ioffe, S., & Szegedy, C. 2015\. *批量归一化：通过减少内部协变量偏移加速深度网络训练*。arXiv预印本arXiv:1502.03167。
 - en: 'Krogh, A., & Hertz, J. A. 1991\. “A simple weight decay can improve generalization.”
     In *Advances in neural information processing systems*: 9950-957.'
+  id: totrans-139
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Krogh, A., & Hertz, J. A. 1991\. “简单的权重衰减可以改善泛化能力。” 见于*神经信息处理系统的进展*：9950-957。
 - en: Ryan, M. 2020\. *Deep Learning with Structured Data*. Simon and Schuster.
+  id: totrans-140
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Ryan, M. 2020\. *结构化数据的深度学习*。Simon和Schuster。
 - en: 'Shwartz-Ziv, R., & Armon, A. 2022\. “Tabular data: Deep learning is not all
     you need”, *Information Fusion*, 81: 84-90.'
+  id: totrans-141
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Shwartz-Ziv, R., & Armon, A. 2022\. “表格数据：深度学习并不是你所需要的一切”，*信息融合*，81：84-90。
 - en: 'Smith, L. N. 2018\. *A disciplined approach to neural network hyperparameters:
     Part 1 – learning rate, batch size, momentum, and weight decay*. arXiv preprint
     arXiv:1803.09820.'
+  id: totrans-142
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Smith, L. N. 2018\. *一种有纪律的方法来调整神经网络的超参数：第一部分 - 学习率、批量大小、动量和权重衰减*。arXiv预印本arXiv:1803.09820。
 - en: 'Smith, L. N., & Topin, N. 2019, May. Super-convergence: Very fast training
     of neural networks using large learning rates. In *Artificial intelligence and
     machine learning for multi-domain operations applications* (1100612). International
     Society for Optics and Photonics.'
+  id: totrans-143
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Smith, L. N., & Topin, N. 2019年5月。超收敛：使用大学习率快速训练神经网络。在*人工智能与机器学习在多领域操作应用中的应用*（1100612）中。国际光学与光子学学会。
 - en: 'Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov,
     R. 2014\. “Dropout: a simple way to prevent neural networks from overfitting”,
     *The Journal of Machine Learning Research*, 15(1): 1929-1958.'
+  id: totrans-144
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Srivastava, N., Hinton, G., Krizhevsky, A., Sutskever, I., & Salakhutdinov,
+    R. 2014\. “Dropout: 防止神经网络过拟合的一种简单方法”，*机器学习研究期刊*，15（1）：1929-1958。'
 - en: Exploring Google’s TabNet
+  id: totrans-145
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 探索谷歌的TabNet
 - en: 'Another possible approach to modeling tabular data using neural networks is
     Google’s **TabNet**. As TabNet is a complex model, we will not describe its architecture
     in depth. For that, we refer you to the original paper (mentioned in the *See
     also* section). Instead, we provide a high-level overview of TabNet’s main features:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种使用神经网络建模表格数据的方法是谷歌的**TabNet**。由于TabNet是一个复杂的模型，我们不会深入描述它的架构。关于这一点，请参阅原始论文（见*另见*部分）。相反，我们提供一个TabNet主要特性的高层次概述：
 - en: TabNet uses raw tabular data without any preprocessing.
+  id: totrans-147
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet使用原始的表格数据，不需要任何预处理。
 - en: The optimization procedure used in TabNet is based on gradient descent.
+  id: totrans-148
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet中使用的优化过程基于梯度下降。
 - en: TabNet combines the ability of neural networks to fit very complex functions
     and the feature selection properties of tree-based algorithms. By using **sequential
     attention** to choose features at each decision step, TabNet can focus on learning
     from only the most useful features.
+  id: totrans-149
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet结合了神经网络拟合复杂函数的能力和基于树的算法的特征选择特性。通过使用**顺序注意力**在每个决策步骤中选择特征，TabNet能够专注于仅从最有用的特征中学习。
 - en: 'TabNet’s architecture employs two critical building blocks: a feature transformer
     and an attentive transformer. The former processes the features into a more useful
     representation. The latter selects the most relevant features to process during
     the next step.'
+  id: totrans-150
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet的架构包含两个关键的构建模块：特征变换器和注意力变换器。前者将特征处理为更有用的表示。后者在下一步中选择最相关的特征进行处理。
 - en: TabNet also has another interesting component—a learnable mask of the input
     features. The mask should be sparse, that is, it should select a small set of
     features to solve the prediction task. In contrast to decision trees (and other
     tree-based models), the feature selection enabled by the mask allows for **soft
     decisions**. In practice, it means that a decision can be made on a larger range
     of values instead of a single threshold value.
+  id: totrans-151
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet还具有另一个有趣的组成部分——输入特征的可学习掩码。该掩码应该是稀疏的，也就是说，它应选择一小部分特征来解决预测任务。与决策树（以及其他基于树的模型）不同，由掩码启用的特征选择允许**软决策**。实际上，这意味着决策可以在更大的值范围内做出，而不是基于单一的阈值。
 - en: TabNet’s feature selection is instance-wise, that is, different features can
     be selected for each observation (row) in the training data.
+  id: totrans-152
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet的特征选择是按实例进行的，即可以为训练数据中的每个观测（行）选择不同的特征。
 - en: TabNet is also quite unique as it uses a single deep learning architecture for
     both feature selection and reasoning.
+  id: totrans-153
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet也非常独特，因为它使用单一的深度学习架构来同时进行特征选择和推理。
 - en: In contrast to the vast majority of deep learning models, TabNet is interpretable
     (to some extent). All of the design choices allow TabNet to offer both local and
     global interpretability. The local interpretability allows us to visualize the
     feature importances and how they are combined for a single row. The global one
     provides an aggregate measure of each feature’s contribution to the trained model
     (over the entire dataset).
+  id: totrans-154
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与绝大多数深度学习模型不同，TabNet是可解释的（在某种程度上）。所有的设计选择使TabNet能够提供局部和全局的可解释性。局部可解释性让我们能够可视化特征的重要性，并了解它们是如何为单行数据组合的。全局可解释性则提供了每个特征对训练模型的贡献的汇总度量（基于整个数据集）。
 - en: In this recipe, we show how to apply TabNet (its PyTorch implementation) to
     the same credit card default dataset we covered in the previous example.
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们展示了如何将TabNet（其PyTorch实现）应用于我们在前一个例子中讨论的相同信用卡违约数据集。
 - en: How to do it…
+  id: totrans-156
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何做到……
 - en: 'Execute the following steps to train a TabNet classifier using the credit card
     fraud dataset:'
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤以使用信用卡欺诈数据集训练一个TabNet分类器：
 - en: 'Import the libraries:'
+  id: totrans-158
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE22]'
+  id: totrans-159
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Load the dataset from a CSV file:'
+  id: totrans-160
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从CSV文件加载数据集：
 - en: '[PRE23]'
+  id: totrans-161
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Separate the target from the features and create lists with numerical/categorical
     features:'
+  id: totrans-162
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将目标从特征中分离，并创建包含数值/类别特征的列表：
 - en: '[PRE24]'
+  id: totrans-163
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'Impute missing values in the categorical features, encode them using `LabelEncoder`,
     and store the number of unique categories per feature:'
+  id: totrans-164
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 填充类别特征的缺失值，使用`LabelEncoder`进行编码，并存储每个特征的唯一类别数量：
 - en: '[PRE25]'
+  id: totrans-165
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-166
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成以下输出：
 - en: '[PRE26]'
+  id: totrans-167
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: Based on the EDA, we would assume that the `sex` feature takes two unique values.
     However, as we have imputed the missing values with the `Missing` category, there
     are three unique possibilities.
+  id: totrans-168
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 基于EDA（探索性数据分析），我们可能会认为`sex`特征只有两个唯一值。然而，由于我们使用`Missing`类别填充了缺失值，因此有三个唯一可能的值。
 - en: 'Create a train/valid/test split using the 70-15-15 split:'
+  id: totrans-169
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用70-15-15的比例创建训练/验证/测试集划分：
 - en: '[PRE27]'
+  id: totrans-170
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Impute the missing values in the numerical features across all the sets:'
+  id: totrans-171
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 填充所有数据集中的数值特征的缺失值：
 - en: '[PRE28]'
+  id: totrans-172
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'Prepare lists with the indices of categorical features and the number of unique
     categories:'
+  id: totrans-173
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 准备包含类别特征索引和唯一类别数量的列表：
 - en: '[PRE29]'
+  id: totrans-174
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'Define a custom recall metric:'
+  id: totrans-175
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义自定义召回率指标：
 - en: '[PRE30]'
+  id: totrans-176
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Define TabNet’s parameters and instantiate the classifier:'
+  id: totrans-177
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义TabNet的参数并实例化分类器：
 - en: '[PRE31]'
+  id: totrans-178
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'Train the TabNet classifier:'
+  id: totrans-179
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 训练TabNet分类器：
 - en: '[PRE32]'
+  id: totrans-180
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Below we can see an abbreviated log from the training procedure:'
+  id: totrans-181
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 下面我们可以看到训练过程中的简略日志：
 - en: '[PRE33]'
+  id: totrans-182
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'Prepare the history DataFrame and plot the scores over epochs:'
+  id: totrans-183
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 准备历史记录DataFrame并绘制每个epoch的分数：
 - en: '[PRE34]'
+  id: totrans-184
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Then, we start by plotting the loss over epochs:'
+  id: totrans-185
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 然后，我们开始绘制每个epoch的损失值：
 - en: '[PRE35]'
+  id: totrans-186
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-187
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成以下图表：
 - en: '![](../Images/B18112_15_07.png)'
+  id: totrans-188
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_07.png)'
 - en: 'Figure 15.7: Training loss over epochs'
+  id: totrans-189
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.7：训练损失随epoch变化
 - en: Then, in a similar manner, we generated a plot showing the recall score over
     the epochs. For brevity, we have not included the code generating the plot.
+  id: totrans-190
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 然后，以类似的方式，我们生成了一个展示每个epoch召回率的图。为了简洁起见，我们没有包括生成图表的代码。
 - en: '![](../Images/B18112_15_08.png)'
+  id: totrans-191
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_08.png)'
 - en: 'Figure 15.8: Training and validation recall over epochs'
+  id: totrans-192
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图15.8：训练和验证召回率随epoch变化
 - en: 'Create predictions for the test set and evaluate their performance:'
+  id: totrans-193
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为测试集创建预测并评估其性能：
 - en: '[PRE36]'
+  id: totrans-194
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-195
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成以下输出：
 - en: '[PRE37]'
+  id: totrans-196
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: As we can see, the test set performance is slightly better than the recall score
     calculated using the validation set.
+  id: totrans-197
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如我们所见，测试集的表现略优于使用验证集计算的召回率。
 - en: 'Extract and plot the global feature importance:'
+  id: totrans-198
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提取并绘制全局特征重要性：
 - en: '[PRE38]'
+  id: totrans-199
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-200
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成以下图表：
 - en: '![](../Images/B18112_15_09.png)'
+  id: totrans-201
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_09.png)'
 - en: 'Figure 15.9: Global feature importance values extracted from the fitted TabNet
     classifier'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 图15.9：从拟合的TabNet分类器中提取的全局特征重要性值
 - en: According to TabNet, the most important features for predicting defaults in
     October were the payment statuses in September, July, and May. Another important
     feature was the limit balance.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据TabNet，预测10月违约的最重要特征是9月、7月和5月的支付状态。另一个重要特征是信用额度余额。
 - en: Two things are worth mentioning at this point. First, the most important features
     are similar to the ones we identified in the *Investigating feature importance*
     recipe in *Chapter 14*, *Advanced Concepts for Machine Learning Projects*. Second,
     the feature importance is on a feature level, not on a feature and category level,
     as we could have seen while using one-hot encoding on categorical features.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 在此时有两点值得注意。首先，最重要的特征与我们在*第14章 高级机器学习项目概念*中的*调查特征重要性*方法中识别的特征相似。其次，特征重要性是按特征层面计算的，而非按特征和类别层面计算的，正如我们在使用类别特征的独热编码时所看到的那样。
 - en: How it works…
+  id: totrans-205
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的…
 - en: After importing the libraries, we loaded the dataset from a CSV file. Then,
     we separated the target from the features and extracted the names of the categorical
     and numerical features. We stored those as lists.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入库后，我们从CSV文件加载数据集。然后，我们将目标从特征中分离，并提取类别特征和数值特征的名称。我们将其存储为列表。
 - en: In *Step 4*, we carried out a few operations on the categorical features. First,
     we imputed any missing values with a new category—`Missing`. Then, we used `scikit-learn`'s
     `LabelEncoder` to encode each of the categorical columns. While doing so, we populated
     a dictionary containing the number of unique categories (including the newly created
     one for the missing values) for each of the categorical features.
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤* *4*中，我们对分类特征进行了几项操作。首先，我们用一个新的类别——`Missing`来填补任何缺失的值。然后，我们使用`scikit-learn`的`LabelEncoder`对每一列分类特征进行编码。在此过程中，我们创建了一个字典，记录了每个分类特征的唯一类别数量（包括为缺失值新创建的类别）。
 - en: In *Step* *5*, we created a training/validation/test split using the `train_test_split`
     function. We decided to use the 70-15-15 split for the sets. As the dataset is
     imbalanced (the minority class is observable in approximately 22% of observations),
     we used stratification while splitting the data.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤* *5*中，我们使用`train_test_split`函数创建了训练/验证/测试数据集划分。我们决定采用70-15-15的比例进行划分。由于数据集不平衡（少数类大约在22%的观测中可见），因此我们在划分数据时使用了分层抽样。
 - en: In *Step* *6*, we imputed the missing values for the numerical features. We
     filled in the missing values using the average value calculated over the training
     set.
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤* *6*中，我们为数值特征填补了缺失值。我们使用训练集计算的平均值来填充缺失值。
 - en: In *Step* *7*, we prepared two lists. The first one contained the numerical
     indices of the categorical features, while the second one contained the number
     of unique categories per categorical feature. It is crucial that the lists are
     aligned so that the indices of the features correspond to those features’ number
     of unique categories.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤* *7*中，我们准备了两个列表。第一个列表包含了分类特征的数值索引，而第二个列表则包含了每个分类特征的唯一类别数量。确保这两个列表对齐至关重要，以便特征的索引与该特征的唯一类别数量一一对应。
 - en: 'In *Step* *8*, we created a custom recall metric. `pytorch-tabnet` offers a
     few metrics (for classification problems, those include accuracy, ROC AUC, and
     balanced accuracy), but we can easily define more. To create the custom metric,
     we did the following:'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤* *8*中，我们创建了一个自定义的召回率度量。`pytorch-tabnet`提供了一些度量（对于分类问题，包括准确率、ROC AUC和均衡准确率），但我们也可以轻松定义更多度量。为了创建自定义度量，我们进行了以下操作：
 - en: We defined a class inheriting from the `Metric` class.
+  id: totrans-212
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们定义了一个继承自`Metric`类的类。
 - en: In the `__init__` method, we defined the name of the metric (as visible in the
     training logs) and indicated whether the goal is to maximize the metric. That
     is the case for recall.
+  id: totrans-213
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在`__init__`方法中，我们定义了度量的名称（如训练日志中所示），并指明了目标是否是最大化该度量。对于召回率而言，目标就是最大化该度量。
 - en: In the `__call__` method, we calculated the value of recall using the `recall_score`
     function from `scikit-learn`. But first, we had to convert the array containing
     the predicted probabilities of each class into an object containing the predicted
     class. We did so using the `np.argmax` function.
+  id: totrans-214
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在`__call__`方法中，我们使用`scikit-learn`的`recall_score`函数计算召回率的值。但首先，我们需要将包含每个类别预测概率的数组转换为一个包含预测类别的对象。我们通过使用`np.argmax`函数来实现这一点。
 - en: In *Step 9*, we defined some of the hyperparameters of TabNet and instantiated
     the model. `pytorch-tabnet` offers a familiar `scikit-learn` API to train TabNet
     for either a classification or regression task. This way, we do not have to be
     familiar with PyTorch to train the model. First, we defined a dictionary containing
     the hyperparameters of the model.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤* *9*中，我们定义了一些TabNet的超参数并实例化了该模型。`pytorch-tabnet`提供了一个类似于`scikit-learn`的API，用于训练TabNet模型，无论是分类任务还是回归任务。因此，我们不需要精通PyTorch就能训练模型。首先，我们定义了一个字典，包含了模型的超参数。
 - en: 'In general, some of the hyperparameters are defined on the model level (passed
     to the class while instantiating it), while the other ones are defined on the
     fit level (passed to the model while using the `fit` method). At this point, we
     defined the model hyperparameters:'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，一些超参数是在模型级别定义的（在实例化类时传递给类），而其他超参数则是在拟合级别定义的（在使用`fit`方法时传递给模型）。此时，我们定义了模型的超参数：
 - en: The indices of the categorical features and the corresponding numbers of unique
     classes
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 分类特征的索引及其对应的唯一类别数量
 - en: ADAM as the selected optimizer
+  id: totrans-218
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 选择的优化器：ADAM
 - en: The learning rate scheduler
+  id: totrans-219
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 学习率调度器
 - en: The type of masking
+  id: totrans-220
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 掩码类型
 - en: Random seed
+  id: totrans-221
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 随机种子
 - en: Among all of those, the learning rate scheduler might require a bit of clarification.
     As per TabNet’s documentation, we used a stepwise decay for the learning rate.
     To do so, we specified `torch.optim.lr_scheduler.StepLR` as the scheduler function.
@@ -1095,115 +1543,159 @@
     the decay rate of `0.9`. In practice, it means that after 20 epochs, the learning
     rate will be 0.9 times 0.02, which is equal to 0.018\. The decay then continues
     after every 20 epochs.
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 在所有这些参数中，学习率调度器可能需要一些澄清。根据TabNet的文档，我们使用了逐步衰减的学习率。为此，我们指定了`torch.optim.lr_scheduler.StepLR`作为调度器函数。然后，我们提供了一些其他参数。最初，我们在`optimizer_params`中将学习率设置为`0.02`。接着，我们在`scheduler_params`中定义了逐步衰减的参数。我们指定每经过20个epoch，就应用一个衰减率`0.9`。在实践中，这意味着每经过20个epoch，学习率将变为0.9乘以0.02，等于0.018。衰减过程在每20个epoch后继续进行。
 - en: Having done so, we instantiated the `TabNetClassifier` class using the specified
     hyperparameters. By default, TabNet uses a cross-entropy loss function for classification
     problems and the MSE for regression tasks.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 完成这些步骤后，我们通过指定的超参数实例化了`TabNetClassifier`类。默认情况下，TabNet使用交叉熵损失函数进行分类问题，使用均方误差（MSE）进行回归任务。
 - en: 'In *Step 10*, we trained `TabNetClassifier` using its `fit` method. We provided
     quite a few parameters:'
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第10步*中，我们使用`fit`方法训练了`TabNetClassifier`。我们提供了相当多的参数：
 - en: Training data
+  id: totrans-225
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 训练数据
 - en: Evaluation sets—in this case, we used both the training and validation sets
     so that after each epoch we see the metrics calculated over both sets
+  id: totrans-226
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 评估集——在此案例中，我们使用了训练集和验证集，这样每个epoch后，我们可以看到两个数据集的计算指标。
 - en: The names of the evaluation sets
+  id: totrans-227
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 评估集的名称
 - en: The metrics to be used for evaluation—we used the ROC AUC and the custom recall
     metric defined in *Step 8*
+  id: totrans-228
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 用于评估的指标——我们使用了ROC AUC和在*第8步*中定义的自定义召回指标。
 - en: The maximum number of epochs
+  id: totrans-229
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 最大epoch数
 - en: The patience parameter, which states that if we do not observe an improvement
     in the evaluation metrics over *X* consecutive epochs, the training will stop
     and we will use the weights from the best epoch for predictions
+  id: totrans-230
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**patience**参数，表示如果我们在*X*个连续的epoch中没有看到评估指标的改善，训练将停止，并且我们将使用最佳epoch的权重进行预测。'
 - en: The batch size and the virtual batch size (used for ghost batch normalization;
     please see the *There’s more...* section for more details)
+  id: totrans-231
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 批量大小和虚拟批量大小（用于幽灵批量归一化；更多细节请参见*更多内容...*部分）
 - en: The `weights` parameter, which is only available for classification problems.
     It corresponds to sampling, which can be of great help when dealing with class
     imbalance. Setting it to `0` results in no sampling. Setting it to `1` turns on
     the sampling with the weights proportional to the inverse class occurrences. Lastly,
     we can provide a dictionary with custom weights for the classes.
+  id: totrans-232
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`weights`参数，仅适用于分类问题。它与采样有关，在处理类别不平衡时非常有帮助。将其设置为`0`表示没有采样。将其设置为`1`则启用基于类别发生频率的反向比例进行加权采样。最后，我们可以提供一个包含自定义类别权重的字典。'
 - en: One thing to note about TabNet’s training is that the dataset we provide must
     be `numpy` arrays instead of `pandas` DataFrames. That is why we used the `values`
     method to extract the arrays from the DataFrames. The need to use `numpy` arrays
     is also the reason why we had to define the numeric indices of the categorical
     features, instead of providing a list with feature names.
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要注意的是，TabNet的训练中，我们提供的数据集必须是`numpy`数组，而不是`pandas` DataFrame。因此，我们使用`values`方法从DataFrame中提取数组。使用`numpy`数组的需求也是我们需要定义类别特征的数值索引，而不能提供特征名称列表的原因。
 - en: Compared to many neural network architectures, TabNet uses quite large batch
     sizes. The original paper suggests that we can use batch sizes of up to 10% of
     the total number of training observations. It is also recommended that the virtual
     batch size is smaller than the batch size and the latter can be evenly divided
     into the former.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 与许多神经网络架构相比，TabNet使用了相对较大的批量大小。原始论文建议，我们可以使用总训练观测数的10%作为批量大小。还建议虚拟批量大小应小于批量大小，且后者可以整除前者。
 - en: In *Step 11*, we extracted the training information from the `history` attribute
     of the fitted TabNet model. It contains the same information that was visible
     in the training log, that is, the loss, learning rate, and evaluation metrics
     over epochs. Then, we plotted the loss and recall over epochs.
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 11*中，我们从拟合的 TabNet 模型的`history`属性中提取了训练信息。它包含了训练日志中显示的相同信息，即每个 epoch 的损失、学习率和评估指标。然后，我们绘制了每个
+    epoch 的损失和召回率图。
 - en: In *Step 12*, we created the predictions using the `predict` method. Similar
     to the training step, we also had to provide the input features as a `numpy` array.
     As in `scikit-learn`, the `predict` method returns the predicted class, while
     we could use the `predict_proba` method to get the class probabilities. We also
     calculated the recall score over the test set using the `recall_score` function
     from `scikit-learn`.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 12*中，我们使用 `predict` 方法创建了预测。与训练步骤类似，我们也需要将输入特征提供为 `numpy` 数组。和 `scikit-learn`
+    中一样，`predict` 方法返回预测的类别，而我们可以使用 `predict_proba` 方法获取类别概率。我们还使用 `scikit-learn`
+    的 `recall_score` 函数计算了测试集上的召回率。
 - en: In the last step, we extracted the global feature importance values. Similar
     to `scikit-learn` models, they are stored under the `feature_importances_` attribute
     of a fitted model. Then, we plotted the 20 most important features. It is worth
     mentioning that the global feature importance values are normalized and they sum
     up to 1.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最后一步，我们提取了全局特征重要性值。与 `scikit-learn` 模型类似，它们存储在拟合模型的 `feature_importances_`
+    属性下。然后，我们绘制了最重要的 20 个特征。值得注意的是，全局特征重要性值是标准化的，它们的总和为 1。
 - en: There’s more…
+  id: totrans-238
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多……
 - en: 'Here are a few more interesting points about TabNet and its implementation
     in PyTorch:'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里有一些关于 TabNet 和其在 PyTorch 中实现的有趣点：
 - en: TabNet uses **ghost batch normalization** to train large batches of data and
     provide better generalization at the same time. The idea behind the procedure
     is that we split the input batch into equal-sized sub-batches (determined by the
     virtual batch size parameter). Then, we apply the same batch normalization layer
     to those sub-batches.
+  id: totrans-240
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet 使用**幽灵批量归一化**来训练大批量数据，并同时提供更好的泛化能力。该过程的基本思想是将输入批次分割成大小相等的子批次（由虚拟批次大小参数确定）。然后，我们对这些子批次应用相同的批量归一化层。
 - en: '`pytorch-tabnet` allows us to apply custom data augmentation pipelines during
     training. Currently, the library offers using SMOTE for both classification and
     regression tasks.'
+  id: totrans-241
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`pytorch-tabnet` 允许我们在训练过程中应用自定义的数据增强管道。目前，库提供了对分类和回归任务使用 SMOTE 方法的功能。'
 - en: TabNet can be pre-trained as an unsupervised model, which can then lead to improved
     performance. While pre-training, certain cells are deliberately masked and the
     model learns the relationships between these censored cells and the adjacent columns
@@ -1211,44 +1703,59 @@
     supervised task. By learning about the relationships between features, the unsupervised
     representation learning acts as an improved encoder model for the supervised learning
     task. When pre-training, we can decide what percentage of features is masked.
+  id: totrans-242
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet 可以作为无监督模型进行预训练，从而提高模型的表现。在预训练过程中，某些单元会被故意遮蔽，模型通过预测这些缺失（遮蔽）值，学习这些被遮蔽单元与相邻列之间的关系。然后，我们可以将这些权重用于有监督任务。通过学习特征之间的关系，无监督表示学习作为有监督学习任务的改进编码器模型。在预训练时，我们可以决定遮蔽多少比例的特征。
 - en: TabNet uses **sparsemax** as the masking function. In general, sparsemax is
     a non-linear normalization function with a sparser distribution than the popular
     softmax function. This function allows the neural network to more effectively
     select the important features. Additionally, the function employs sparsity regularization
     (its strength is determined by a hyperparameter) to penalize less sparse masks.
     The `pytorch-tabnet` library also contains the `EntMax` masking function.
+  id: totrans-243
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: TabNet 使用**sparsemax**作为遮蔽函数。一般来说，sparsemax 是一种非线性归一化函数，其分布比流行的 softmax 函数更稀疏。这个函数使神经网络能够更有效地选择重要的特征。此外，该函数采用稀疏性正则化（其强度由超参数决定）来惩罚不够稀疏的遮蔽。`pytorch-tabnet`
+    库还包含了 `EntMax` 遮蔽函数。
 - en: 'In the recipe, we have presented how to extract global feature importance.
     To extract the local ones, we can use the `explain` method of a fitted TabNet
     model. It returns two elements: a matrix containing the importance of each observation
     and feature, and the attention masks used by the model for feature selection.'
+  id: totrans-244
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在本教程中，我们介绍了如何提取全局特征重要性。要提取局部重要性，我们可以使用拟合后的TabNet模型的`explain`方法。该方法返回两个元素：一个矩阵，包含每个观察值和特征的重要性，以及模型在特征选择中使用的注意力掩码。
 - en: See also
+  id: totrans-245
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: 'Arik, S. Ö., & Pfister, T. 2021, May. Tabnet: Attentive interpretable tabular
     learning. In *Proceedings of the AAAI Conference on Artificial Intelligence*,
     35(8): 6679-6687.'
+  id: totrans-246
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Arik, S. Ö., & Pfister, T. 2021年5月。Tabnet：可解释的注意力表格学习。在*AAAI人工智能会议论文集*，35(8)：6679-6687。
 - en: 'The original repository containing TabNet’s implementation described in the
     abovementioned paper: [https://github.com/google-research/google-research/tree/master/tabnet](https://github.com/google-research/google-research/tree/master/tabnet).'
+  id: totrans-247
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 描述上述论文中TabNet实现的原始代码库：[https://github.com/google-research/google-research/tree/master/tabnet](https://github.com/google-research/google-research/tree/master/tabnet)。
 - en: Time series forecasting with Amazon’s DeepAR
+  id: totrans-248
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 亚马逊DeepAR的时间序列预测
 - en: We have already covered time series analysis and forecasting in *Chapter 6*,
     *Time Series Analysis and Forecasting*, and *Chapter 7*, *Machine Learning-Based
     Approaches to Time Series Forecasting*. This time, we will have a look at an example
@@ -1256,218 +1763,316 @@
     Amazon’s DeepAR model. The model was originally developed as a tool for demand/sales
     forecasting at the scale of hundreds if not thousands of **stock-keeping units**
     (**SKUs**).
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经在*第六章*《时间序列分析与预测》和*第七章*《基于机器学习的时间序列预测方法》中讲解了时间序列分析和预测。这次，我们将看一个深度学习方法在时间序列预测中的应用示例。在本教程中，我们将介绍亚马逊的DeepAR模型。该模型最初是作为一个需求/销售预测工具开发的，旨在处理成百上千个**库存单位**（**SKU**）的规模。
 - en: 'The architecture of DeepAR is beyond the scope of this book. Hence, we will
     only focus on some of the key characteristics of the model. Those are listed below:'
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: DeepAR的架构超出了本书的范围。因此，我们将只关注模型的一些关键特性。具体如下：
 - en: DeepAR creates a global model used for all the considered time series. It implements
     LSTM cells in an architecture that allows for training using hundreds or thousands
     of time series simultaneously. The model also uses an encoder-decoder setup, which
     is common in sequence-to-sequence models.
+  id: totrans-251
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: DeepAR创建一个用于所有考虑的时间序列的全局模型。它在架构中实现了LSTM单元，这种架构允许同时使用成百上千个时间序列进行训练。该模型还使用了编码器-解码器结构，这是序列到序列模型中常见的做法。
 - en: DeepAR allows for using a set of covariates (external regressors) related to
     the target time series.
+  id: totrans-252
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: DeepAR允许使用与目标时间序列相关的一组协变量（外部回归量）。
 - en: The model requires minimal feature engineering. It automatically creates relevant
     time series features (depending on the granularity of the data, this might be
     the day of the month, day of the year, and so on) and it learns seasonal patterns
     from the provided covariates across time series.
+  id: totrans-253
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该模型对特征工程的要求最小。它自动创建相关的时间序列特征（根据数据的粒度，这些特征可能包括月份中的天、年份中的天等），并且它从提供的协变量中学习时间序列的季节性模式。
 - en: DeepAR offers probability forecasts based on Monte Carlo sampling—it calculates
     consistent quantile estimates.
+  id: totrans-254
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: DeepAR提供基于蒙特卡罗采样的概率预测——它计算一致的分位数估计。
 - en: The model is able to create forecasts for time series with little historical
     data by learning from similar time series. This is a potential solution to the
     cold start problem.
+  id: totrans-255
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该模型能够通过学习相似的时间序列来为具有少量历史数据的时间序列生成预测。这是解决冷启动问题的一种潜在方案。
 - en: The model can use various likelihood functions.
+  id: totrans-256
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该模型可以使用各种似然函数。
 - en: In this recipe, we will train a DeepAR model using around 100 time series of
     daily stock prices from the years 2020 and 2021\. Then, we will create 20-day-ahead
     forecasts covering the last 20 business days of 2021.
+  id: totrans-257
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本教程中，我们将使用2020年和2021年的大约100个时间序列的日常股票价格来训练一个DeepAR模型。然后，我们将创建涵盖2021年最后20个工作日的20天前的预测。
 - en: Before moving forward, we wanted to highlight that we are using time series
     of stock prices just for illustratory purposes. Deep learning models excel when
     trained on hundreds if not thousands of time series. We have selected stock prices
     as those are the easiest to download. As we have already mentioned, accurately
     forecasting stock prices, especially with a long forecast horizon, is very difficult
     if not simply impossible.
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 在继续之前，我们想强调的是，使用股票价格的时间序列只是为了说明目的。深度学习模型在经过数百甚至数千个时间序列的训练后表现最佳。我们选择了股票价格作为示例，因为这些数据最容易下载。正如我们之前提到的，准确预测股票价格，尤其是在长时间预测的情况下，极其困难，甚至几乎不可能。
 - en: How to do it…
+  id: totrans-259
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何做…
 - en: 'Execute the following steps to train the DeepAR model using stock prices as
     the input time series:'
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，使用股票价格作为输入时间序列来训练DeepAR模型：
 - en: 'Import the libraries:'
+  id: totrans-261
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE39]'
+  id: totrans-262
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'Download the tickers of the S&P 500 constituents and sample 100 random tickers
     from the list:'
+  id: totrans-263
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载标准普尔500指数成分股的股票代码，并从列表中随机抽取100个股票代码：
 - en: '[PRE40]'
+  id: totrans-264
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Download the historical stock prices of the selected stocks:'
+  id: totrans-265
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载所选股票的历史股价：
 - en: '[PRE41]'
+  id: totrans-266
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'Keep the adjusted close price and remove the stocks with missing values:'
+  id: totrans-267
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 保留调整后的收盘价，并剔除缺失值的股票：
 - en: '[PRE42]'
+  id: totrans-268
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: After removing the stocks that have at least one missing value in the period
     of interest, we are left with 98 stocks.
+  id: totrans-269
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在剔除在关注期内至少有一个缺失值的股票后，剩下了98只股票。
 - en: 'Convert the data’s format from wide to long and add the time index:'
+  id: totrans-270
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将数据格式从宽格式转换为长格式，并添加时间索引：
 - en: '[PRE43]'
+  id: totrans-271
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'Executing the snippet generates the following preview of the DataFrame:'
+  id: totrans-272
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段后，会生成以下数据框架的预览：
 - en: '![](../Images/B18112_15_10.png)'
+  id: totrans-273
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_10.png)'
 - en: 'Figure 15.10: The preview of the input DataFrame for the DeepAR model'
+  id: totrans-274
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.10：DeepAR模型输入数据框架的预览
 - en: 'Define constants used for setting up the model’s training:'
+  id: totrans-275
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义用于设置模型训练的常量：
 - en: '[PRE44]'
+  id: totrans-276
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'Define the training and validation datasets:'
+  id: totrans-277
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义训练集和验证集：
 - en: '[PRE45]'
+  id: totrans-278
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'Get the dataloaders from the datasets:'
+  id: totrans-279
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从数据集获取数据加载器：
 - en: '[PRE46]'
+  id: totrans-280
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'Define the DeepAR model and find the suggested learning rate:'
+  id: totrans-281
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义DeepAR模型并找到建议的学习率：
 - en: '[PRE47]'
+  id: totrans-282
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: Executing the snippet generates the following plot, in which the red dot indicates
     the suggested learning rate.
+  id: totrans-283
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段后，会生成以下图表，其中红点表示建议的学习率。
 - en: '![](../Images/B18112_15_11.png)'
+  id: totrans-284
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_11.png)'
 - en: 'Figure 15.11: The suggested learning rate for training the DeepAR model'
+  id: totrans-285
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.11：训练DeepAR模型时建议的学习率
 - en: 'Train the DeepAR model:'
+  id: totrans-286
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 训练DeepAR模型：
 - en: '[PRE48]'
+  id: totrans-287
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'Extract the best DeepAR model from a checkpoint:'
+  id: totrans-288
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从检查点中提取最佳的DeepAR模型：
 - en: '[PRE49]'
+  id: totrans-289
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'Create the predictions for the validation set and plot 5 of them:'
+  id: totrans-290
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建验证集的预测并绘制其中的5个：
 - en: '[PRE50]'
+  id: totrans-291
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: In the snippet, we generated 100 predictions and plotted 5 of them for visual
     inspection. For brevity, we will only show two of them. But we highly encourage
     inspecting more plots to better understand the model’s performance.
+  id: totrans-292
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在代码片段中，我们生成了100个预测并绘制了其中5个以进行视觉检查。为了简洁起见，我们只展示了其中两个。但我们强烈建议检查更多图表，以更好地理解模型的表现。
 - en: '![](../Images/B18112_15_12.png)'
+  id: totrans-293
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_12.png)'
 - en: 'Figure 15.12: DeepAR’s forecast for the ABMD stock'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.12：DeepAR对ABMD股票的预测
 - en: '![](../Images/B18112_15_13.png)'
+  id: totrans-295
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_13.png)'
 - en: 'Figure 15.13: DeepAR’s forecast for the ADM stock'
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.13：DeepAR对ADM股票的预测
 - en: The plots show the forecast for two stocks for the last 20 business days of
     2021, together with the corresponding quantile estimates. While the forecasts
     do not perform that well, we can see that at the very least the actual values
     are within the provided quantile estimates.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些图表展示了2021年最后20个工作日两只股票的预测值，以及对应的分位数估计值。虽然预测结果表现一般，但我们可以看到，至少实际值位于提供的分位数估计范围内。
 - en: We will not spend more time evaluating the performance of the model and its
     forecasts, as the main idea was to present how the DeepAR model works and how
     to use it to generate the forecasts. However, we will mention a few potential
@@ -1477,81 +2082,112 @@
     network’s architecture. In a real-life scenario, we should use a hyperparameter
     optimization routine of our choice to identify the best values for our task at
     hand.
+  id: totrans-298
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们不会花更多时间评估模型及其预测的表现，因为主要目的是展示DeepAR模型是如何工作的，以及如何使用它生成预测。然而，我们会提到一些潜在的改进。首先，我们本可以训练更多的周期，因为我们没有检查模型的收敛性。我们使用了早停法，但在训练过程中并没有触发。其次，我们使用了相当多的任意值来定义网络的架构。在实际应用中，我们应该使用自己选择的超参数优化方法来识别适合我们任务的最佳值。
 - en: How it works…
+  id: totrans-299
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: In *Step 1*, we imported the required libraries. To use the DeepAR model, we
     decided to use the PyTorch Forecasting library. It is a library built on top of
     PyTorch Lightning and allows us to easily use state-of-the-art deep learning models
     for time series forecasting. The models can be trained using GPUs and we can also
     refer to TensorBoard for inspection of the training logs.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤1*中，我们导入了所需的库。为了使用DeepAR模型，我们决定使用PyTorch Forecasting库。它是建立在PyTorch Lightning之上的库，允许我们轻松使用最先进的深度学习模型进行时间序列预测。这些模型可以使用GPU进行训练，我们还可以参考TensorBoard查看训练日志。
 - en: In *Step 2*, we downloaded the list containing the constituents of the S&P 500
     index. Then, we randomly sampled 100 of those and stored the results in a list.
     We sampled the tickers to make the training faster. It would definitely be interesting,
     and beneficial to the model, to repeat the exercise with all of the stocks.
+  id: totrans-301
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤2*中，我们下载了包含标准普尔500指数成分股的列表。然后，我们随机抽取了其中100只并将结果存储在列表中。我们随机抽取了股票代码，以加速训练。重复这个过程，使用所有的股票，肯定会对模型产生有益的影响。
 - en: In *Step 3*, we downloaded the historical stock prices from the years 2020 and
     2021 using the `yfinance` library. In the next step, we had to apply further preprocessing.
     We only kept the adjusted close prices and we removed the stocks with any missing
     values.
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤3*中，我们使用`yfinance`库下载了2020年和2021年的历史股票价格。在下一步中，我们需要进行进一步的预处理。我们只保留了调整后的收盘价，并移除了任何有缺失值的股票。
 - en: In *Step 5*, we continued with the preprocessing. We converted the DataFrame
     from a wide to a long format and then added the time index. The DeepAR implementation
     works with an integer time index instead of dates, hence we used the `cumcount`
     method combined with the `groupby` method to create the time index for each of
     the considered stocks.
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤5*中，我们继续进行预处理。我们将数据框从宽格式转换为长格式，然后添加时间索引。DeepAR的实现使用整数时间索引而不是日期，因此我们使用了`cumcount`方法结合`groupby`方法为每只考虑的股票创建了时间索引。
 - en: In *Step 6*, we defined some of the constants used for the training procedure,
     for example, the max length of the encoder step, the number of observations we
     wanted to forecast into the future, the max number of training epochs, and so
     on. We also specified which time index cuts off the training from the validation.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤6*中，我们定义了用于训练过程的一些常数，例如编码器步骤的最大长度、我们希望预测的未来观测值数量、最大训练周期数等。我们还指定了哪个时间索引将训练与验证数据分开。
 - en: 'In *Step 7*, we defined the training and validation datasets. We did so using
     the `TimeSeriesDataSet` class, the responsibilities of which include:'
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤7*中，我们定义了训练集和验证集。我们使用了`TimeSeriesDataSet`类来完成这一操作，该类的职责包括：
 - en: The handling of variable transformations
+  id: totrans-306
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 变量转换的处理
 - en: The treatment of missing values
+  id: totrans-307
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缺失值的处理
 - en: Storing information about static and time-varying variables (both known and
     unknown in the future)
+  id: totrans-308
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 存储有关静态和时间变化变量的信息（包括已知和未来未知的）
 - en: Randomized subsampling
+  id: totrans-309
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 随机子抽样
 - en: While defining the training dataset, we had to provide the training data (filtered
     using the previously defined cutoff point), the name of the columns containing
     the time index, the target, group IDs (in our case, these were the tickers), the
     encoder length, and the forecast horizon.
+  id: totrans-310
   prefs: []
   type: TYPE_NORMAL
+  zh: 在定义训练数据集时，我们需要提供训练数据（使用先前定义的截止点进行过滤）、包含时间索引的列名称、目标、组ID（在我们的案例中，这些是股票代码）、编码器长度和预测范围。
 - en: Each sample generated from `TimeSeriesDataSet` is a subsequence of a full-time
     series. Each subsequence consists of the encoder and prediction timepoints for
     a given time series. `TimeSeriesDataSet` creates an index defining which subsequences
     exist and can be sampled from.
+  id: totrans-311
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 `TimeSeriesDataSet` 生成的每个样本都是完整时间序列的一个子序列。每个子序列包含给定时间序列的编码器和预测时间点。`TimeSeriesDataSet`
+    创建了一个索引，定义了哪些子序列存在并可以从中进行采样。
 - en: In *Step 8*, we converted the datasets into dataloaders using the `to_dataloader`
     method of a `TimeSeriesDataSet`.
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 8*中，我们使用 `TimeSeriesDataSet` 的 `to_dataloader` 方法将数据集转换为数据加载器。
 - en: In *Step 9*, we defined the DeepAR model using the `from_dataset` method of
     the `DeepAR` class. This way, we did not have to repeat what we had already specified
     while creating the `TimeSeriesDataSet` objects. Additionally, we specified the
@@ -1560,22 +2196,31 @@
     should be tuned using some HPO framework, for example, Hyperopt or Optuna. Then,
     we used PyTorch Lightning’s `Trainer` class to find the best learning rate for
     our model.
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 9*中，我们使用 `DeepAR` 类的 `from_dataset` 方法定义了 DeepAR 模型。这样，我们就不必重复在创建 `TimeSeriesDataSet`
+    对象时已经指定的内容。此外，我们还指定了学习率、隐藏层的大小以及 RNN 层数。后两者是 DeepAR 模型中最重要的超参数，应该使用一些超参数优化（HPO）框架进行调优，例如
+    Hyperopt 或 Optuna。然后，我们使用 PyTorch Lightning 的 `Trainer` 类来寻找最优的学习率。
 - en: By default, the DeepAR model uses the Gaussian loss function. We could use some
     of the alternatives, depending on the task at hand. Gaussian distribution is the
     preferred choice when dealing with real-valued data. We might want to use the
     negative-binomial likelihood for positive count data. Beta likelihood can be a
     good choice for data in the unit interval, while the Bernoulli likelihood is good
     for binary data.
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，DeepAR 模型使用高斯损失函数。根据任务的不同，我们可以使用一些其他替代方法。对于处理实数数据时，高斯分布是首选。对于正整数计数数据，我们可能需要使用负二项式似然。对于位于单位区间的数据，Beta
+    似然是一个不错的选择，而对于二值数据，Bernoulli 似然则是理想的选择。
 - en: In *Step 10*, we trained the DeepAR model using the identified learning rate.
     Additionally, we specified the early stopping callback, which stops the training
     if there is no significant (defined by us) improvement in the validation loss
     over 10 epochs.
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 10*中，我们使用确定的学习率训练了 DeepAR 模型。此外，我们还指定了早停回调函数，如果在 10 个 epoch 内验证损失没有显著（由我们定义）改善，训练将停止。
 - en: In *Step 11*, we extracted the best model from a checkpoint. Then, we used the
     best model to create predictions using the `predict` method. We created predictions
     for 100 sequences available in the validation dataloader. We indicated that we
@@ -1583,257 +2228,376 @@
     predictions and additional information such as the corresponding quantiles, and
     so on) and the inputs used for generating those predictions. Then, we plotted
     the predictions using the `plot_prediction` method of the fitted `DeepAR` model.
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 11*中，我们从检查点提取了最佳模型。然后，我们使用最佳模型通过 `predict` 方法生成预测。我们为验证数据加载器中可用的 100 个序列创建了预测。我们指出希望提取原始预测（此选项返回一个包含预测及附加信息（如相应的分位数等）的字典）以及生成这些预测所用的输入。然后，我们使用拟合的
+    `DeepAR` 模型的 `plot_prediction` 方法绘制了预测图。
 - en: There’s more…
+  id: totrans-317
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多内容……
 - en: PyTorch Forecasting also allows us to easily train a DeepVAR model, which is
     the multivariate counterpart of DeepAR. Originally, Salinas *et al*. (2019) called
     this model VEC-LSTM.
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: PyTorch Forecasting 还允许我们轻松训练 DeepVAR 模型，它是 DeepAR 的多变量对应模型。最初，Salinas *et al*.（2019）将该模型称为
+    VEC-LSTM。
 - en: Both DeepAR and DeepVAR are also available in Amazon’s GluonTS library.
+  id: totrans-319
   prefs: []
   type: TYPE_NORMAL
+  zh: DeepAR 和 DeepVAR 都可以在亚马逊的 GluonTS 库中使用。
 - en: 'In this section, we show how to adjust the code used for training the DeepAR
     model to train a DeepVAR model instead:'
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们展示了如何调整用于训练 DeepAR 模型的代码，改为训练 DeepVAR 模型：
 - en: 'Import the libraries:'
+  id: totrans-321
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE51]'
+  id: totrans-322
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'Define the dataloaders again:'
+  id: totrans-323
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 再次定义数据加载器：
 - en: '[PRE52]'
+  id: totrans-324
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: There are two differences in this step. First, when we created the training
     dataset, we also specified the `static_categoricals` argument. Because we will
     forecast correlations, it is important to use series characteristics such as their
     tickers. Second, we also had to specify `batch_sampler="synchronized"` while creating
     the dataloaders. Using that option ensures that samples passed to the decoder
     are aligned in time.
+  id: totrans-325
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在这一步有两个不同之处。首先，在创建训练数据集时，我们还指定了`static_categoricals`参数。因为我们要预测相关性，使用诸如股票代码等序列特征非常重要。第二，在创建数据加载器时，我们还必须指定`batch_sampler="synchronized"`。使用这个选项可以确保传递给解码器的样本在时间上是对齐的。
 - en: 'Define the DeepVAR model and find the learning rate:'
+  id: totrans-326
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义DeepVAR模型并找到学习率：
 - en: '[PRE53]'
+  id: totrans-327
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: The last difference between training DeepVAR and DeepAR models is that for the
     former, we use `MultivariateNormalDistributionLoss` as the loss, instead of the
     default `NormalDistributionLoss`.
+  id: totrans-328
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 训练DeepVAR和DeepAR模型的最后一个区别是，对于前者，我们使用`MultivariateNormalDistributionLoss`作为损失，而不是默认的`NormalDistributionLoss`。
 - en: 'Train the DeepVAR model using the selected learning rate:'
+  id: totrans-329
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用选择的学习率训练DeepVAR模型：
 - en: '[PRE54]'
+  id: totrans-330
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'Extract the best DeepVAR model from a checkpoint:'
+  id: totrans-331
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从检查点提取最佳DeepVAR模型：
 - en: '[PRE55]'
+  id: totrans-332
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: 'Extract the correlation matrix:'
+  id: totrans-333
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提取相关性矩阵：
 - en: '[PRE56]'
+  id: totrans-334
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: 'Plot the correlation matrix and the distribution of the correlations:'
+  id: totrans-335
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制相关性矩阵及其分布：
 - en: '[PRE57]'
+  id: totrans-336
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-337
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段生成以下图形：
 - en: '![](../Images/B18112_15_14.png)'
+  id: totrans-338
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_14.png)'
 - en: 'Figure 15.14: Correlation matrix extracted from DeepVAR'
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.14：从DeepVAR提取的相关性矩阵
 - en: 'To get a better understanding of the distribution of correlations, we plot
     their histogram:'
+  id: totrans-340
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地理解相关性的分布，我们绘制了其直方图：
 - en: '[PRE58]'
+  id: totrans-341
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行该代码片段生成以下图形：
 - en: '![](../Images/B18112_15_15.png)'
+  id: totrans-343
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_15.png)'
 - en: 'Figure 15.15: The histogram presents the distribution of the extracted correlations'
+  id: totrans-344
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.15：直方图展示了提取的相关性分布
 - en: While investigating the histogram, bear in mind that we have created a histogram
     based on the correlation matrix. This means that we have effectively counted each
     value twice.
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 在查看直方图时，请记住我们是基于相关性矩阵创建了直方图。这意味着我们实际上对每个值进行了两次计数。
 - en: See also
+  id: totrans-346
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: 'Salinas, D., Flunkert, V., Gasthaus, J., & Januschowski, T. 2020\. “DeepAR:
     Probabilistic forecasting with autoregressive recurrent networks”, *International
     Journal of Forecasting*, 36(3): 1181-1191.'
+  id: totrans-347
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Salinas, D., Flunkert, V., Gasthaus, J., & Januschowski, T. 2020\. “DeepAR:
+    基于自回归递归网络的概率预测”，*国际预测学杂志*，36(3)：1181-1191。'
 - en: Salinas, D., Bohlke-Schneider, M., Callot, L., Medico, R., & Gasthaus, J. 2019\.
     High-dimensional multivariate forecasting with low-rank Gaussian copula processes.
     *Advances in neural information processing systems*, 32.
+  id: totrans-348
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Salinas, D., Bohlke-Schneider, M., Callot, L., Medico, R., & Gasthaus, J. 2019\.
+    高维多元预测与低秩高斯哥普拉过程。*神经信息处理系统进展*，32。
 - en: Time series forecasting with NeuralProphet
+  id: totrans-349
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用NeuralProphet进行时间序列预测
 - en: In *Chapter 7, Machine Learning-Based Approaches to Time Series Forecasting*,
     we covered the Prophet algorithm created by Meta (formerly Facebook). In this
     recipe, we will look into an extension of that algorithm—NeuralProphet.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第7章，基于机器学习的时间序列预测方法*中，我们介绍了Meta（前身为Facebook）创建的Prophet算法。在本食谱中，我们将探讨该算法的扩展——NeuralProphet。
 - en: As a brief refresher, the authors of Prophet highlighted good performance, interpretability,
     and ease of use as the model’s key advantages. The authors of NeuralProphet also
     had this in mind for their approach. They retained all the advantages of Prophet
     while adding new components that lead to improved accuracy and scalability.
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 简单回顾一下，Prophet的作者强调了模型的良好性能、可解释性和易用性作为其主要优势。NeuralProphet的作者也考虑到了这一点，并在其方法中保留了Prophet的所有优势，同时加入了新组件，提升了准确性和可扩展性。
 - en: The critique of the original Prophet algorithm included its rigid parametric
     structure (based on a generalized linear model) and the fact that it was a sort
     of “curve-fitter” that was not adaptive enough to fit the local patterns.
+  id: totrans-352
   prefs: []
   type: TYPE_NORMAL
+  zh: 原始Prophet算法的批评包括其僵化的参数结构（基于广义线性模型）以及它作为一种“曲线拟合器”不足以适应局部模式。
 - en: Traditionally, time series models used lagged values of the time series to predict
     the future value. Prophet’s creators reframed time series forecasting as a curve-fitting
     problem and the algorithm tries to find the functional form of the trend.
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 传统上，时间序列模型使用时间序列的滞后值来预测未来的值。Prophet的创造者将时间序列预测重新定义为曲线拟合问题，算法试图找到趋势的函数形式。
 - en: 'In the following points, we briefly mention the most relevant additions to
     NeuralProphet:'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 在接下来的内容中，我们简要提到 NeuralProphet 的一些重要新增功能：
 - en: NeuralProphet introduces the autoregressive terms to the Prophet specification.
+  id: totrans-355
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: NeuralProphet 在 Prophet 规范中引入了自回归项。
 - en: Autoregression is included by means of the **AutoRegressive Network (AR-Net)**.
     AR-Net is a neural network trained to mimic the autoregressive process in a time
     series signal. While the inputs for the traditional AR models and AR-Net are the
     same, the latter is able to operate at a much larger scale than the former.
+  id: totrans-356
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 自回归通过**自回归网络（AR-Net）**实现。AR-Net 是一个神经网络，用于模拟时间序列信号中的自回归过程。虽然传统 AR 模型和 AR-Net
+    的输入相同，但后者能够在比前者更大规模下操作。
 - en: NeuralProphet uses PyTorch as its backend, as opposed to Stan used by the Prophet
     algorithm. This results in faster training speed and some other benefits.
+  id: totrans-357
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: NeuralProphet 使用 PyTorch 作为后端，而 Prophet 算法使用 Stan。这使得训练速度更快，并带来其他一些好处。
 - en: Lagged regressors (features) are modeled using a feed-forward neural network.
+  id: totrans-358
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 滞后回归变量（特征）通过前馈神经网络建模。
 - en: The algorithm can work with custom losses and metrics.
+  id: totrans-359
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该算法可以与自定义的损失函数和评估指标一起使用。
 - en: 'The library uses regularization extensively and we are able to apply it to
     most of the model’s components: trend, seasonality, holidays, AR terms, etc. That
     is especially relevant for the AR terms, as with regularization we can use more
     lagged values without worrying about the rapidly increasing training time.'
+  id: totrans-360
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该库广泛使用正则化，并且我们可以将其应用于模型的各个组件：趋势、季节性、假期、自回归项等。尤其对于 AR 项，使用正则化可以让我们在不担心训练时间迅速增加的情况下使用更多的滞后值。
 - en: 'Actually, NeuralProphet supports a few configurations of the AR terms:'
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际上，NeuralProphet 支持几种 AR 项的配置：
 - en: Linear AR—a single-layer neural network without bias terms or activation functions.
     Essentially, it regresses a particular lag onto a particular forecast step. Its
     simplicity makes its interpretation quite easy.
+  id: totrans-362
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 线性 AR——一个没有偏置项和激活函数的单层神经网络。本质上，它将特定的滞后值回归到特定的预测步长。由于其简洁性，它的解释相对简单。
 - en: Deep AR—in this form, the AR terms are modeled using a fully connected NN with
     a specified number of hidden layers and ReLU activation functions. At a cost of
     increased complexity, longer training time, and the loss of interpretability,
     this configuration often achieves higher forecast accuracy than its linear counterpart.
+  id: totrans-363
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 深度 AR——在这种形式下，AR 项通过具有指定数量隐藏层和 ReLU 激活函数的全连接神经网络建模。尽管它增加了复杂性、延长了训练时间并且失去了可解释性，但这种配置通常比线性模型提供更高的预测精度。
 - en: Sparse AR—we can combine AR of high order (with more values at prior time steps)
     and the regularization term.
+  id: totrans-364
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 稀疏 AR——我们可以结合高阶 AR（有更多先前时间步的值）和正则化项。
 - en: Each of the mentioned configurations can be applied to both the target and the
     covariates.
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: 所提到的每种配置可以应用于目标变量和协变量。
 - en: 'To recap, NeuralProphet is built from the following components:'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 总结一下，NeuralProphet 由以下几个组件构成：
 - en: Trend
+  id: totrans-367
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 趋势
 - en: Seasonality
+  id: totrans-368
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 季节性
 - en: Holidays and special events
+  id: totrans-369
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 假期和特殊事件
 - en: Autoregression
+  id: totrans-370
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 自回归
 - en: Lagged regression—lagged values of the covariates modeled internally using a
     feed-forward neural network
+  id: totrans-371
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 滞后回归——滞后值的协变量通过前馈神经网络内部建模
 - en: Future regression—similar to events/holidays, these are the values of the regressors
     that we know in the future (either we know them as given or we have separate forecasts
     of those values)
+  id: totrans-372
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 未来回归——类似于事件/假期，这是我们已知的未来回归值（无论是给定值还是我们对这些值有单独的预测）
 - en: In this recipe, we fit a few configurations of NeuralProphet to the time series
     of daily S&P 500 prices from the years 2010 to 2021\. Similar to the previous
     recipe, we chose the time series of asset prices due to the data accessibility
@@ -1841,720 +2605,1054 @@
     hard if not impossible, so this exercise is just meant to illustrate the process
     of working with the NeuralProphet algorithm, rather than creating the most accurate
     predictions.
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，我们将 NeuralProphet 的几种配置拟合到 2010 至 2021 年的每日 S&P 500 股价时间序列中。与之前的示例类似，我们选择资产价格的时间序列是因为数据的可获取性以及其每日频率。使用机器学习/深度学习预测股价可能非常困难，甚至几乎不可能，因此本练习的目的是展示如何使用
+    NeuralProphet 算法，而不是创造最精确的预测。
 - en: How to do it…
+  id: totrans-374
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作...
 - en: 'Execute the following steps to fit a few configurations of the NeuralProphet
     algorithm to the time series of daily S&P 500 prices:'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，将 NeuralProphet 算法的几种配置拟合到每日 S&P 500 股价的时间序列中：
 - en: 'Import the libraries:'
+  id: totrans-376
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE59]'
+  id: totrans-377
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'Download the historical prices of the S&P 500 index and prepare the DataFrame
     for modeling with NeuralProphet:'
+  id: totrans-378
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载标准普尔 500 指数的历史价格并准备 DataFrame，以便使用 NeuralProphet 进行建模：
 - en: '[PRE60]'
+  id: totrans-379
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: 'Create the train/test split:'
+  id: totrans-380
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建训练/测试集拆分：
 - en: '[PRE61]'
+  id: totrans-381
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: 'Train the default Prophet model and plot the evaluation metrics:'
+  id: totrans-382
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 训练默认的 Prophet 模型并绘制评估指标：
 - en: '[PRE62]'
+  id: totrans-383
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-384
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_16.png)'
+  id: totrans-385
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_16.png)'
 - en: 'Figure 15.16: The evaluation metrics over epochs during NeuralProphet’s training'
+  id: totrans-386
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.16：NeuralProphet 训练过程中每个周期的评估指标
 - en: 'Calculate the predictions and plot the fit:'
+  id: totrans-387
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算预测值并绘制拟合结果：
 - en: '[PRE63]'
+  id: totrans-388
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-389
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_17.png)'
+  id: totrans-390
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_17.png)'
 - en: 'Figure 15.17: NeuralProphet’s fit vs. the actual values of the entire time
     series'
+  id: totrans-391
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.17：NeuralProphet 模型的拟合与整个时间序列的实际值对比
 - en: As we can see, the model’s fitted line follows the overall increasing trend
     (it even adjusts the growth speed over time), but it misses the extreme periods
     and is not following the changes on the local scale.
+  id: totrans-392
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如我们所见，模型的拟合线遵循整体上升趋势（甚至随着时间的推移调整增长速度），但它忽略了极端周期，并未跟随局部尺度上的变化。
 - en: 'Additionally, we can zoom in on the period corresponding to the test set:'
+  id: totrans-393
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 此外，我们还可以放大与测试集对应的时间段：
 - en: '[PRE64]'
+  id: totrans-394
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-395
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_18.png)'
+  id: totrans-396
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_18.png)'
 - en: 'Figure 15.18: NeuralProphet’s fit vs. the actual values in the test set'
+  id: totrans-397
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.18：NeuralProphet 模型的拟合与测试集中的实际值对比
 - en: The conclusions from the plot are very similar to the ones we had in the case
     of the overall fit—the model follows the increasing trend but does not capture
     the local patterns.
+  id: totrans-398
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 从图表得出的结论与整体拟合的结论非常相似——模型遵循上升趋势，但没有捕捉到局部模式。
 - en: 'To evaluate the performance of the test set, we can use the following command:
     `model.test(df_test)`.'
+  id: totrans-399
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了评估测试集的表现，我们可以使用以下命令：`model.test(df_test)`。
 - en: 'Add the AR components to NeuralProphet:'
+  id: totrans-400
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 向 NeuralProphet 中添加 AR 组件：
 - en: '[PRE65]'
+  id: totrans-401
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-402
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_19.png)'
+  id: totrans-403
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_19.png)'
 - en: 'Figure 15.19: NeuralProphet’s fit vs. the actual values of the entire time
     series'
+  id: totrans-404
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.19：NeuralProphet 模型的拟合与整个时间序列的实际值对比
 - en: 'The fit looks much better than the previous one. Again, we take a closer look
     at the test set:'
+  id: totrans-405
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 该拟合效果比之前的要好得多。再次，我们更仔细地查看测试集：
 - en: '[PRE66]'
+  id: totrans-406
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-407
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_20.png)'
+  id: totrans-408
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_20.png)'
 - en: 'Figure 15.20: NeuralProphet’s fit vs. the actual values in the test set'
+  id: totrans-409
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.20：NeuralProphet 模型的拟合与测试集中的实际值对比
 - en: We can see a familiar and concerning pattern—the forecast is lagging after the
     original series. By that, we mean that the forecast is very similar to one of
     the last known values. In other words, the line of the forecast is similar to
     the line of the ground truth, just shifted to the right by one or multiple periods.
+  id: totrans-410
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到一个既熟悉又令人担忧的模式——预测结果滞后于原始序列。这里的意思是，预测值非常接近最后一个已知值。换句话说，预测线与真实值线相似，只不过在时间轴上向右偏移了一个或多个周期。
 - en: 'Add the AR-Net to NeuralProphet:'
+  id: totrans-411
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 向 NeuralProphet 中添加 AR-Net：
 - en: '[PRE67]'
+  id: totrans-412
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-413
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_21.png)'
+  id: totrans-414
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_21.png)'
 - en: 'Figure 15.21: NeuralProphet’s fit vs. the actual values in the test set'
+  id: totrans-415
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 15.21：NeuralProphet 模型的拟合与测试集中的实际值对比
 - en: We can see that the plot of the forecast looks better than the one we obtained
     without using AR-Net. While the patterns still look shifted by a period, they
     are not as overfitted as in the previous case.
+  id: totrans-416
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到，使用 AR-Net 后，预测图比没有使用 AR-Net 时的效果更好。尽管模式仍然看起来相差一个周期，但它们不像之前那样过拟合。
 - en: 'Plot the components and parameters of the model:'
+  id: totrans-417
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制模型的组件和参数：
 - en: '[PRE68]'
+  id: totrans-418
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: 'Executing the snippet generates the following plots:'
+  id: totrans-419
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_22.png)'
+  id: totrans-420
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_22.png)'
 - en: 'Figure 15.22: The components of the fitted NeuralProphet model (including AR-Net)'
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.22：拟合的 NeuralProphet 模型组件（包括 AR-Net）
 - en: 'In the plots, we can see a few patterns:'
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这些图表中，我们可以看到一些模式：
 - en: An increasing trend with a few identified changepoints.
+  id: totrans-423
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个上升趋势，并且有几个已识别的变化点。
 - en: A seasonal peak in late April and a seasonal dip in late September and early
     October.
+  id: totrans-424
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 4 月底的季节性高峰和 9 月底及 10 月初的季节性低谷。
 - en: There are no surprising patterns during the weekdays. However, it is important
     to remember that we should not look at the values of the weekly seasonality for
     Saturday and Sunday. As we are working with daily data available only on business
     days, the predictions should also only be made for the business days, as the intra-week
     seasonality will not be well estimated for the weekends.
+  id: totrans-425
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在工作日内没有出现意外的模式。然而，重要的是要记住，我们不应查看星期六和星期日的周季节性值。由于我们处理的是仅在工作日提供的每日数据，因此预测也应仅针对工作日进行，因为周内季节性不会很好地估算周末的数据。
 - en: Looking at the yearly seasonality of the stock prices can reveal some interesting
     patterns. One of the more famous ones is the January effect, which concerns a
     possible seasonal increase in stock prices in that month. Generally, it is attributed
     to increased buying of assets, which follows price drops in December when investors
     tend to sell some of their assets for tax purposes.
+  id: totrans-426
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看股票价格的年度季节性可以揭示一些有趣的模式。最著名的模式之一是1月效应，它涉及股票价格在1月份可能的季节性上涨。通常，这被归因于资产购买的增加，通常发生在12月的价格下跌之后，投资者倾向于为了税收目的出售部分资产。
 - en: 'Then, we also plot the model’s parameters:'
+  id: totrans-427
   prefs: []
   type: TYPE_NORMAL
+  zh: 接着，我们还绘制了模型的参数：
 - en: '[PRE69]'
+  id: totrans-428
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: 'Executing the snippet generates the following plots:'
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行这段代码会生成以下图表：
 - en: '![](../Images/B18112_15_23.png)'
+  id: totrans-430
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_23.png)'
 - en: 'Figure 15.23: The parameters of the fitted NeuralProphet model (including AR-Net)'
+  id: totrans-431
   prefs: []
   type: TYPE_NORMAL
+  zh: 图15.23：拟合的NeuralProphet模型参数（包括AR-Net）
 - en: There is quite a lot of overlap in the components and parameters plots, hence
     we only focus on the new elements. First, we can look at the plot depicting the
     magnitudes of trend changes. We can consider it together with the plot of the
     trend component in *Figure 15.22*. Then, we can see how the rate of change corresponds
     to the trend over the years. Second, it seems that lag 2 is the most relevant
     of the 10 considered lags.
+  id: totrans-432
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于组件和参数的图表之间有很多重叠，因此我们只关注新的元素。首先，我们可以查看描绘趋势变化幅度的图表。我们可以将其与*图15.22*中的趋势组件图表一起考虑。接着，我们可以看到变化率是如何与多年来的趋势相对应的。其次，似乎滞后期2是所有考虑的10个滞后期中最相关的。
 - en: How it works…
+  id: totrans-433
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: After importing the libraries, we downloaded the daily prices of the S&P 500
     index from the years 2010 to 2021\. We only kept the adjusted close price and
     converted the DataFrame into a format recognized by both Prophet and NeuralProphet,
     that is, a DataFrame with a time column called `ds` and the target time series
     called `y`.
+  id: totrans-434
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入库之后，我们从2010年到2021年下载了标准普尔500指数的每日价格。我们只保留了调整后的收盘价，并将DataFrame转换为Prophet和NeuralProphet都能识别的格式，即一个包含名为`ds`的时间列和目标时间序列`y`的DataFrame。
 - en: In *Step 3*, we set the test size as 60 and sliced the DataFrame into the training
     and test sets.
+  id: totrans-435
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤3*中，我们将测试集大小设置为60，并将DataFrame切分为训练集和测试集。
 - en: NeuralProphet also supports the use of the validation set while training the
     model. We can add it while calling the `fit` method.
+  id: totrans-436
   prefs: []
   type: TYPE_NORMAL
+  zh: NeuralProphet还支持在训练模型时使用验证集。我们可以在调用`fit`方法时添加它。
 - en: In *Step 4*, we instantiated the almost default NeuralProphet model. The only
     hyperparameter we tweaked was `changepoints_range`. We increased the value from
     the default of `0.9` to `0.95`. It means that the model can identify the changepoints
     in the first 95% of data. The rest is left untouched in order to ensure a consistent
     final trend. We increased the default value as we will be focusing on relatively
     short-term predictions.
+  id: totrans-437
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤4*中，我们实例化了几乎默认的NeuralProphet模型。我们调整的唯一超参数是`changepoints_range`。我们将其值从默认的`0.9`增加到`0.95`，这意味着模型可以在前95%的数据中识别变点，其余部分保持不变，以确保最终趋势的一致性。我们之所以增加默认值，是因为我们将关注相对短期的预测。
 - en: In *Step 5*, we calculated the predictions using the `predict` method and the
     entire time series as input. This way, we obtained the fitted values (in-sample
     fit) and the out-of-sample predictions for the test set. At this point, we could
     have also used the `make_future_dataframe` method, which is familiar from the
     original Prophet library.
+  id: totrans-438
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤5*中，我们使用`predict`方法和整个时间序列作为输入来计算预测值。这样，我们得到了拟合值（样本内拟合）和测试集的样本外预测值。此时，我们也可以使用`make_future_dataframe`方法，这在原始Prophet库中是熟悉的。
 - en: In *Step 6*, we added the linear AR terms. We specified the number of lags to
     consider using the `n_lags` argument. Additionally, we added the regularization
     of the AR terms by setting `ar_reg` to `1`. We could have specified the learning
     rate. However, when we do not provide a value, the library uses the learning rate
     range test to find the best value.
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第6步*中，我们添加了线性AR项。我们通过`n_lags`参数指定了考虑的滞后期数。此外，我们通过将`ar_reg`设置为`1`，添加了AR项的正则化。我们本可以指定学习率。然而，当我们不提供值时，库会使用学习率范围测试来找到最佳值。
 - en: When setting the regularization of the AR terms (this applies to all regularization
     in the library), a value of zero results in no regularization. Small values (for
     example, in the range of 0.001 to 1) result in weak regularization. In the case
     of the AR terms, this would mean that there will be more non-zero AR coefficients.
     Large values (for example, in the range of 1 to 100) will significantly limit
     the number of non-zero coefficients.
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: 设置AR项的正则化时（这适用于库中的所有正则化），值为零表示不进行正则化。较小的值（例如，0.001到1之间）表示弱正则化。在AR项的情况下，这意味着会有更多非零的AR系数。较大的值（例如，1到100之间）会显著限制非零系数的数量。
 - en: n *Step 7*, we extended the use of the AR terms from linear AR to AR-Net. We
     kept the other hyperparameters the same as in *Step 6*, but we specified how many
     hidden layers to use (`num_hidden_layers`) and what their size is (`d_hidden`).
+  id: totrans-441
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第7步*中，我们将AR项的使用从线性AR扩展到了AR-Net。我们保持其他超参数与*第6步*相同，但我们指定了要使用多少个隐藏层（`num_hidden_layers`）以及它们的大小（`d_hidden`）。
 - en: In the last step, we plotted NeuralProphet’s components using the `plot_components`
     method and the model’s parameters using the `plot_parameters` method.
+  id: totrans-442
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最后一步，我们使用`plot_components`方法绘制了NeuralProphet的组件，并使用`plot_parameters`方法绘制了模型的参数。
 - en: There’s more…
+  id: totrans-443
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多……
 - en: We have just covered the basics of using NeuralProphet. In this section, we
     mention a few more features of the library.
+  id: totrans-444
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们刚刚介绍了使用NeuralProphet的基础知识。在本节中，我们将提到该库的其他一些功能。
 - en: Adding holidays and special events
+  id: totrans-445
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 添加节假日和特殊事件
 - en: 'One of the very popular features of the original Prophet algorithm that is
     also available in NeuralProphet is the possibility to easily add holidays and
     special dates. For example, when working in retail, we could add sports events
     (such as world championships, or the Super Bowl) or Black Friday, which is not
     an official holiday. In the following snippet, we add the US holidays to our model
     based on AR-Net:'
+  id: totrans-446
   prefs: []
   type: TYPE_NORMAL
+  zh: 原始Prophet算法中非常受欢迎的一个功能，在NeuralProphet中也同样可以使用，就是能够轻松添加节假日和特殊日期。例如，在零售工作中，我们可以添加体育赛事（例如世界锦标赛或超级碗）或黑色星期五，后者并非官方假期。在以下代码片段中，我们基于AR-Net将美国的节假日添加到我们的模型中：
 - en: '[PRE70]'
+  id: totrans-447
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: Additionally, we specify that the holidays also affect the surrounding days,
     that is, one day before and after the holiday. This functionality could be especially
     important if we consider lead-ups and draw-downs after certain dates. For example,
     in retail, we might want to specify a period leading up to Christmas, as that
     is the time when people usually buy gifts.
+  id: totrans-448
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，我们指定节假日也会影响周围的日期，即节假日前一天和节假日后一天。如果我们考虑某些日期的前期准备和后期回落，这一功能可能尤其重要。例如，在零售领域，我们可能希望指定圣诞节前的一个时期，因为那时人们通常会购买礼物。
 - en: By inspecting the components plot, we can see the impact of the holidays over
     time.
+  id: totrans-449
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过检查组件图，我们可以看到节假日对时间的影响。
 - en: '![](../Images/B18112_15_24.png)'
+  id: totrans-450
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_24.png)'
 - en: 'Figure 15.24: The holidays component of the fitted NeuralProphet'
+  id: totrans-451
   prefs: []
   type: TYPE_NORMAL
+  zh: 图15.24：拟合后的NeuralProphet的节假日组件
 - en: Additionally, we can inspect the parameters plot to gain more insights into
     the impact of the particular holidays (and the days around them).
+  id: totrans-452
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，我们可以检查参数图，从中获取更多关于特定节假日（及其周围日期）影响的见解。
 - en: In this case, we have added all US holidays at once. As a result, all the holidays
     also have the same range of surrounding days (one before and one after). However,
     we could manually create a DataFrame with custom holidays and specify the number
     of surrounding days on the specific event level, instead of globally.
+  id: totrans-453
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，我们一次性添加了所有的美国节假日。因此，所有节假日也都有相同的周围日期范围（节假日前一天和节假日后一天）。然而，我们也可以手动创建一个包含自定义节假日的DataFrame，并在特定事件级别指定周围的天数，而不是全局设置。
 - en: Next-step forecast vs. multi-step forecast
+  id: totrans-454
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 下一步预测与多步预测
 - en: 'There are two approaches to forecasting multiple steps into the future using
     NeuralProphet:'
+  id: totrans-455
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用NeuralProphet进行多步预测有两种方法：
 - en: 'We can recursively create one-step ahead forecasts. The process looks as follows:
     we predict a step ahead, add the predicted value to the data, and then forecast
     the next step. We repeat the procedure until we reach the desired forecast horizon.'
+  id: totrans-456
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以递归地创建一步预测。该过程如下：我们预测下一步，将预测值添加到数据中，然后预测下一步。我们重复此过程，直到达到所需的预测时长。
 - en: We can directly forecast multiple steps ahead.
+  id: totrans-457
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以直接预测多个步骤。
 - en: 'By default, NeuralProphet will use the first approach. However, we can use
     the second one by specifying the `n_forecasts` hyperparameter of the `NeuralProphet`
     class:'
+  id: totrans-458
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，NeuralProphet 将使用第一种方法。然而，我们可以通过指定 `NeuralProphet` 类的 `n_forecasts` 超参数来使用第二种方法：
 - en: '[PRE71]'
+  id: totrans-459
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: Below we display only a part of the resulting DataFrame.
+  id: totrans-460
   prefs: []
   type: TYPE_NORMAL
+  zh: 下面我们只展示结果 DataFrame 的一部分。
 - en: '![](../Images/B18112_15_25.png)'
+  id: totrans-461
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_25.png)'
 - en: 'Figure 15.25: Preview of the DataFrame containing 10-step-ahead forecasts'
+  id: totrans-462
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.25：包含 10 步预测的 DataFrame 预览
 - en: 'This time, the DataFrame will contain 10 predictions for each row: `yhat1`,
     `yhat2`, `…`, `yhat10`. To learn how to interpret the table, we can look at the
     last row presented in *Figure 15.25*. The `yhat2` value corresponds to the prediction
     for `2021-12-30`, made 2 days prior to that date. So the number after `yhat` indicates
     the age of the prediction (in this case, expressed in days).'
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
+  zh: 这次，DataFrame 每行将包含 10 个预测值：`yhat1`、`yhat2`、`…`、`yhat10`。要学习如何解读该表，我们可以查看*图 15.25*中展示的最后一行。`yhat2`
+    值对应于 `2021-12-30` 的预测，预测时间为该日期之前的 2 天。因此，`yhat` 后面的数字表示预测的时间跨度（在此案例中以天为单位）。
 - en: 'Alternatively, we can shift this around. By specifying `raw=True` while calling
     the `predict` method, we obtain predictions made on the row’s date, instead of
     a prediction for that date:'
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，我们可以调换这一过程。通过在调用 `predict` 方法时指定 `raw=True`，我们可以获得基于行日期的预测，而不是预测该日期的预测值：
 - en: '[PRE72]'
+  id: totrans-465
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: 'Executing the snippet generated the following preview of the DataFrame:'
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行该代码片段生成了以下 DataFrame 预览：
 - en: '![](../Images/B18112_15_26.png)'
+  id: totrans-467
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_26.png)'
 - en: 'Figure 15.26: Preview of the DataFrame containing the first 5 of the 10-step-ahead
     forecasts'
+  id: totrans-468
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.26：包含前 5 个 10 步预测的 DataFrame 预览
 - en: We can easily track some forecasts in both tables to see how the tables’ structures
     differ.
+  id: totrans-469
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以轻松地在两个表格中跟踪某些预测，看看它们的结构如何不同。
 - en: 'When plotting a multi-step-ahead forecast, we will see multiple lines—each
     originating from a different date of the forecast:'
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
+  zh: 当绘制多步预测时，我们将看到多条线——每条线都来自不同的预测日期：
 - en: '[PRE73]'
+  id: totrans-471
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-472
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_15_27.png)'
+  id: totrans-473
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_27.png)'
 - en: 'Figure 15.27: 10-day-ahead multi-step forecast'
+  id: totrans-474
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.27：10 天后的多步预测
 - en: 'The plot is quite hard to read due to the overlapping lines. We can highlight
     the forecast made for a certain step using the `highlight_nth_step_ahead_of_each_forecast`
     method. The following snippet illustrates how to do it:'
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于线条重叠，图表很难读取。我们可以使用`highlight_nth_step_ahead_of_each_forecast`方法突出显示为某一步预测的内容。以下代码片段演示了如何操作：
 - en: '[PRE74]'
+  id: totrans-476
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_15_28.png)'
+  id: totrans-478
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_15_28.png)'
 - en: 'Figure 15.28: Step 1 of the 10-day multi-step forecast'
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 15.28：10 天多步预测的第一步
 - en: After analyzing *Figure 15.28*, we can conclude that the model is still struggling
     with the predictions and the forecasted values are very close to the last known
     values.
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分析*图 15.28*后，我们可以得出结论：模型在预测上仍然存在困难，预测值非常接近最后已知值。
 - en: Other features
+  id: totrans-481
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 其他功能
 - en: 'NeuralProphet also contains some other interesting features, including:'
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
+  zh: NeuralProphet 还包含一些其他有趣的功能，包括：
 - en: Extensive cross-validation and benchmarking functionalities
+  id: totrans-483
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 广泛的交叉验证和基准测试功能
 - en: The components of the model such as holidays/events, seasonality, or future
     regressors do not need to be additive; they can also be multiplicative
+  id: totrans-484
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 模型的组成部分，如假期/事件、季节性或未来回归因子，既可以是加法的，也可以是乘法的。
 - en: The default loss function is Huber loss, but we can change it to any of the
     other popular loss functions
+  id: totrans-485
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 默认的损失函数是 Huber 损失，但我们可以将其更改为其他流行的损失函数。
 - en: See also
+  id: totrans-486
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: 'Triebe, O., Laptev, N., & Rajagopal, R. 2019\. *Ar-net: A simple autoregressive
     neural network for time-series*. arXiv preprint arXiv:1911.12436.'
+  id: totrans-487
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Triebe, O., Laptev, N., & Rajagopal, R. 2019\. *Ar-net: 一种简单的自回归神经网络用于时间序列预测*。arXiv
+    预印本 arXiv:1911.12436。'
 - en: 'Triebe, O., Hewamalage, H., Pilyugina, P., Laptev, N., Bergmeir, C., & Rajagopal,
     R. 2021\. *Neuralprophet: Explainable forecasting at scale*. arXiv preprint arXiv:2111.15397.'
+  id: totrans-488
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Triebe, O., Hewamalage, H., Pilyugina, P., Laptev, N., Bergmeir, C., & Rajagopal,
+    R. 2021\. *Neuralprophet: 大规模可解释的预测*。arXiv 预印本 arXiv:2111.15397。'
 - en: Summary
+  id: totrans-489
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we explored how we can use deep learning for both tabular and
     time series data. Instead of building the neural networks from scratch, we used
     modern Python libraries which handled most of the heavy lifting for us.
+  id: totrans-490
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们探讨了如何同时使用深度学习处理表格数据和时间序列数据。我们没有从零开始构建神经网络，而是使用了现代的 Python 库，这些库为我们处理了大部分繁重的工作。
 - en: As we have already mentioned, deep learning is a rapidly developing field with
     new neural network architectures being published daily. Hence, it is difficult
     to scratch even just the tip of the iceberg in a single chapter. That is why we
     will now point you toward some of the popular and influential approaches/libraries
     that you might want to explore on your own.
+  id: totrans-491
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们已经提到的，深度学习是一个快速发展的领域，每天都有新的神经网络架构发表。因此，在一个章节中很难仅仅触及冰山一角。这就是为什么我们现在会引导您了解一些流行且具有影响力的方法/库，您可能会想要自己探索。
 - en: Tabular data
+  id: totrans-492
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 表格数据
 - en: Below we list some relevant papers and Python libraries that will definitely
     be good starting points for further exploration of the topic of using deep learning
     with tabular data.
+  id: totrans-493
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下是一些相关的论文和 Python 库，它们绝对是进一步探索使用深度学习处理表格数据这一主题的好起点。
 - en: 'Further reading:'
+  id: totrans-494
   prefs: []
   type: TYPE_NORMAL
+  zh: 进一步阅读：
 - en: 'Huang, X., Khetan, A., Cvitkovic, M., & Karnin, Z. 2020\. *Tabtransformer:
     Tabular data modeling using contextual embeddings*. arXiv preprint arXiv:2012.06678.'
+  id: totrans-495
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Huang, X., Khetan, A., Cvitkovic, M., & Karnin, Z. 2020\. *Tabtransformer:
+    使用上下文嵌入进行表格数据建模*。arXiv 预印本 arXiv:2012.06678。'
 - en: Popov, S., Morozov, S., & Babenko, A. 2019\. *Neural oblivious decision ensembles
     for deep learning on tabular data*. arXiv preprint arXiv:1909.06312.
+  id: totrans-496
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Popov, S., Morozov, S., & Babenko, A. 2019\. *神经无知决策集成方法用于深度学习表格数据*。arXiv 预印本
+    arXiv:1909.06312。
 - en: 'Libraries:'
+  id: totrans-497
   prefs: []
   type: TYPE_NORMAL
+  zh: 库：
 - en: '`pytorch_tabular`—this library offers a framework for using deep learning models
     for tabular data. It provides models such as TabNet, TabTransformer, FT Transformer,
     and a feed-forward network with category embedding.'
+  id: totrans-498
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`pytorch_tabular`—这个库提供了一个框架，用于在表格数据上应用深度学习模型。它提供了像 TabNet、TabTransformer、FT
+    Transformer 和带类别嵌入的前馈网络等模型。'
 - en: '`pytorch-widedeep`—a library based on Google’s Wide and Deep algorithm. It
     not only allows us to use deep learning with tabular data but also facilitates
     the combination of text and images with corresponding tabular data.'
+  id: totrans-499
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`pytorch-widedeep`—基于谷歌的 Wide and Deep 算法的库。它不仅使我们能够使用深度学习处理表格数据，还方便了将文本和图像与相应的表格数据结合起来。'
 - en: Time series
+  id: totrans-500
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 时间序列
 - en: In this chapter, we have covered two deep learning-based approaches to time
     series forecasting—DeepAR and NeuralProphet. We highly recommend also looking
     into the following resources on analyzing and forecasting time series.
+  id: totrans-501
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们介绍了两种基于深度学习的时间序列预测方法——DeepAR 和 NeuralProphet。我们强烈推荐您还可以查阅以下有关时间序列分析和预测的资源。
 - en: 'Further reading:'
+  id: totrans-502
   prefs: []
   type: TYPE_NORMAL
+  zh: 进一步阅读：
 - en: 'Chen, Y., Kang, Y., Chen, Y., & Wang, Z. (2020). “Probabilistic forecasting
     with temporal convolutional neural network”, *Neurocomputing*, 399: 491-501.'
+  id: totrans-503
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Chen, Y., Kang, Y., Chen, Y., & Wang, Z. (2020). “基于时序卷积神经网络的概率预测”， *神经计算*，399:
+    491-501。'
 - en: 'Gallicchio, C., Micheli, A., & Pedrelli, L. 2018\. “Design of deep echo state
     networks”, *Neural Networks*, 108: 33-47.'
+  id: totrans-504
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Gallicchio, C., Micheli, A., & Pedrelli, L. 2018\. “深度回声状态网络的设计”， *神经网络*，108:
+    33-47。'
 - en: 'Kazemi, S. M., Goel, R., Eghbali, S., Ramanan, J., Sahota, J., Thakur, S.,
     ... & Brubaker, M. 2019\. *Time2vec: Learning a vector representation of time*.
     arXiv preprint arXiv:1907.05321.'
+  id: totrans-505
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Kazemi, S. M., Goel, R., Eghbali, S., Ramanan, J., Sahota, J., Thakur, S.,
+    ... & Brubaker, M. 2019\. *Time2vec: 学习时间的向量表示*。arXiv 预印本 arXiv:1907.05321。'
 - en: Lea, C., Flynn, M. D., Vidal, R., Reiter, A., & Hager, G. D. 2017\. Temporal
     convolutional networks for action segmentation and detection. In *proceedings
     of the IEEE Conference on Computer Vision and Pattern Recognition*, 156-165.
+  id: totrans-506
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Lea, C., Flynn, M. D., Vidal, R., Reiter, A., & Hager, G. D. 2017\. 时序卷积网络用于动作分割和检测。见于
+    *IEEE计算机视觉与模式识别会议论文集*，156-165。
 - en: 'Lim, B., Arık, S. Ö., Loeff, N., & Pfister, T. 2021\. “Temporal fusion transformers
     for interpretable multi-horizon time series forecasting”, *International Journal
     of Forecasting*, 37(4): 1748-1764.'
+  id: totrans-507
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Lim, B., Arık, S. Ö., Loeff, N., & Pfister, T. 2021\. “用于可解释的多时间跨度时间序列预测的时序融合变换器”，
+    *国际预测期刊*，37(4): 1748-1764。'
 - en: 'Oreshkin, B. N., Carpov, D., Chapados, N., & Bengio, Y. 2019\. *N-BEATS: Neural
     basis expansion analysis for interpretable time series forecasting*. arXiv preprint
     arXiv:1905.10437.'
+  id: totrans-508
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Oreshkin, B. N., Carpov, D., Chapados, N., & Bengio, Y. 2019\. *N-BEATS：用于可解释时间序列预测的神经基扩展分析*。arXiv预印本arXiv:1905.10437。
 - en: 'Libraries:'
+  id: totrans-509
   prefs: []
   type: TYPE_NORMAL
+  zh: 库：
 - en: '`tsai`—this is a deep learning library built on top of PyTorch and `fastai`.
     It focuses on various time series-related tasks, including classification, regression,
     forecasting, and imputation. Aside from already traditional approaches such as
     LSTMs or GRUs, it implements a selection of state-of-the-art architectures such
     as ResNet, InceptionTime, TabTransformer, and Rocket.'
+  id: totrans-510
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`tsai`—这是一个建立在PyTorch和`fastai`之上的深度学习库，专注于各种时间序列相关的任务，包括分类、回归、预测和填补。除了LSTM或GRU等传统方法外，它还实现了一些最先进的架构，如ResNet、InceptionTime、TabTransformer和Rocket。'
 - en: '`gluonts`—a Python library for probabilistic time series modeling using deep
     learning. It contains models such as DeepAR, DeepVAR, N-BEATS, Temporal Fusion
     Transformer, WaveNet, and many more.'
+  id: totrans-511
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`gluonts`—一个用于使用深度学习进行概率时间序列建模的Python库。它包含像DeepAR、DeepVAR、N-BEATS、Temporal
+    Fusion Transformer、WaveNet等模型。'
 - en: '`darts`—a versatile library for time series forecasting using a variety of
     methods, from statistical models such as ARIMA to deep neural networks. It contains
     implementations of models such as N-BEATS, Temporal Fusion Transformer, and temporal
     convolutional neural networks.'
+  id: totrans-512
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`darts`—一个多功能的时间序列预测库，使用多种方法，从统计模型如ARIMA到深度神经网络。它包含了N-BEATS、Temporal Fusion
+    Transformer和时间卷积神经网络等模型的实现。'
 - en: Other domains
+  id: totrans-513
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 其他领域
 - en: In this chapter, we have focused on showing the applications of deep learning
     in tabular data and time series forecasting. However, there are many more use
     cases and recent developments. For example, FinBERT is a pre-trained NLP model
     used to analyze the sentiment of financial texts, such as earnings call transcripts.
+  id: totrans-514
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们重点展示了深度学习在表格数据和时间序列预测中的应用。然而，还有许多其他的应用案例和最新进展。例如，FinBERT是一个预训练的NLP模型，用于分析财务文本的情感，如财报电话会议的记录。
 - en: On the other hand, we can use the recent developments in generative adversarial
     networks to generate synthetic data for our models. Below, we mention some interesting
     starting points for further exploration of the field of deep learning in a financial
     context.
+  id: totrans-515
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一方面，我们可以利用生成对抗网络的最新进展，为我们的模型生成合成数据。以下，我们提到了一些有趣的起点，供进一步探索深度学习在金融背景下的应用。
 - en: 'Further reading:'
+  id: totrans-516
   prefs: []
   type: TYPE_NORMAL
+  zh: 进一步阅读：
 - en: 'Araci, D. 2019\. *Finbert: Financial sentiment analysis with pre-trained language
     models*. arXiv preprint arXiv:1908.10063.'
+  id: totrans-517
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Araci, D. 2019\. *Finbert：使用预训练语言模型进行财务情感分析*。arXiv预印本arXiv:1908.10063。
 - en: 'Cao, J., Chen, J., Hull, J., & Poulos, Z. 2021\. “Deep hedging of derivatives
     using reinforcement learning”, *The Journal of Financial Data Science*, 3(1):
     10-27.'
+  id: totrans-518
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Cao, J., Chen, J., Hull, J., & Poulos, Z. 2021\. “使用强化学习进行衍生品的深度对冲”，*金融数据科学杂志*，3(1)：10-27。
 - en: Xie, J., Girshick, R., & Farhadi, A. 2016, June. Unsupervised deep embedding
     for clustering analysis. In *International conference on machine learning*, 478-487\.
     PMLR.
+  id: totrans-519
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Xie, J., Girshick, R., & Farhadi, A. 2016年6月。无监督深度嵌入用于聚类分析。在*国际机器学习大会*，478-487\.
+    PMLR。
 - en: Yoon, J., Jarrett, D., & Van der Schaar, M. 2019\. Time-series generative adversarial
     networks. *Advances in neural information processing systems*, 32.
+  id: totrans-520
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Yoon, J., Jarrett, D., & Van der Schaar, M. 2019\. 时间序列生成对抗网络。*神经信息处理系统的进展*，32。
 - en: 'Libraries:'
+  id: totrans-521
   prefs: []
   type: TYPE_NORMAL
+  zh: 库：
 - en: '`tensortrade`—offers a reinforcement learning framework for training, evaluating,
     and deploying trading agents.'
+  id: totrans-522
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`tensortrade`—提供一个强化学习框架，用于训练、评估和部署交易代理。'
 - en: '`FinRL`—an ecosystem consisting of various applications of reinforcement learning
     in the financial context. It covers state-of-the-art algorithms, financial applications
     such as crypto trading or high-frequency trading, and more.'
+  id: totrans-523
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`FinRL`—一个包含多种强化学习应用的生态系统，专注于金融领域。它涵盖了最先进的算法、加密货币交易或高频交易等金融应用，以及更多内容。'
 - en: '`ydata-synthetic`—a library useful for generating synthetic tabular and time
     series data with the use of state-of-the-art generative models, for example, TimeGAN.'
+  id: totrans-524
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`ydata-synthetic`—一个用于生成合成表格数据和时间序列数据的库，使用的是最先进的生成模型，例如TimeGAN。'
 - en: '`sdv`—the name stands for Synthetic Data Vault and it is, as the name suggests,
     another library useful for generating synthetic data. It covers tabular, relational,
     and time series data.'
+  id: totrans-525
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`sdv`—该名称代表合成数据库，顾名思义，它是另一个用于生成合成数据的库，涵盖表格、关系型和时间序列数据。'
 - en: '`transformers`—this is a Python library that allows us to access a range of
     pre-trained transformer models (for example, FinBERT). The company behind the
     library is called Hugging Face, and it offers a platform that enables its users
     to build, train, and deploy ML/DL models.'
+  id: totrans-526
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`transformers`—这是一个 Python 库，使我们能够访问一系列预训练的变换器模型（例如，FinBERT）。这个库背后的公司叫做 Hugging
+    Face，它提供一个平台，允许用户构建、训练和部署机器学习/深度学习模型。'
 - en: '`autogluon`—this library offers AutoML for tabular data, as well as text and
     images. It contains various state-of-the-art ML and DL models.'
+  id: totrans-527
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`autogluon`—这个库为表格数据、文本和图像提供了 AutoML。它包含了多种最先进的机器学习和深度学习模型。'
 - en: Join us on Discord!
+  id: totrans-528
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 加入我们，和我们一起在 Discord 上交流！
 - en: 'To join the Discord community for this book – where you can share feedback,
     ask questions to the author, and learn about new releases – follow the QR code
     below:'
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
+  zh: 要加入本书的 Discord 社区——在这里你可以分享反馈、向作者提问，并了解最新的版本——请扫描下面的二维码：
 - en: '![](../Images/QR_Code203602028422735375.png)'
+  id: totrans-530
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/QR_Code203602028422735375.png)'
 - en: '[https://packt.link/ips2H](https://packt.link/ips2H)'
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://packt.link/ips2H](https://packt.link/ips2H)'
