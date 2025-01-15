@@ -1,11 +1,15 @@
 - en: '2'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '2'
 - en: Data Preprocessing
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 数据预处理
 - en: You often hear in the data science industry that a data scientist typically
     spends close to 80% of their time on getting the data, processing it, cleaning
     it, and so on. And only then the remaining 20% of the time is actually spent on
@@ -13,101 +17,144 @@
     chapter, we have already learned how to download data from various sources. We
     still need to go through a few steps before we can draw actual insights from the
     data.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 你经常会听到数据科学行业中的说法，数据科学家通常花费大约 80% 的时间在获取数据、处理数据、清理数据等方面。只有剩下的 20% 的时间才会用于建模，而建模通常被认为是最有趣的部分。在上一章中，我们已经学会了如何从各种来源下载数据。在我们从数据中提取实际洞察之前，我们仍然需要经过几个步骤。
 - en: In this chapter, we will cover data preprocessing, that is, general wrangling/manipulation
     applied to the data before using it. The goal is not only to enhance the model’s
     performance but also to ensure the validity of any analysis based on that data.
     In this chapter, we will focus on the financial time series, while in the subsequent
     chapters, we will also show how to work with other kinds of data.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将讨论数据预处理，即在使用数据之前应用于数据的一般整理/操作。目标不仅是提高模型的表现，还要确保基于这些数据的任何分析的有效性。在本章中，我们将专注于金融时间序列，而在后续章节中，我们还将展示如何处理其他类型的数据。
 - en: 'In this chapter, we cover the following recipes:'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将涵盖以下内容：
 - en: Converting prices to returns
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 转换价格为收益率
 - en: Adjusting the returns for inflation
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 调整收益率以考虑通货膨胀
 - en: Changing the frequency of time series data
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 改变时间序列数据的频率
 - en: Different ways of imputing missing data
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 填补缺失数据的不同方法
 - en: Changing currencies
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 更换货币
 - en: Different ways of aggregating trade data
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 聚合交易数据的不同方法
 - en: Converting prices to returns
+  id: totrans-11
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 转换价格为收益率
 - en: Many of the models and approaches used for time series modeling require the
     time series to be stationary. We will cover that topic in depth in *Chapter 6*,
     *Time Series Analysis and Forecasting*, however, we can get a quick glimpse of
     it now.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多用于时间序列建模的模型和方法要求时间序列是平稳的。我们将在*第六章*《时间序列分析与预测》中深入讨论这个话题，然而，现在我们可以对其有一个快速的了解。
 - en: Stationarity assumes that the statistics (mathematical moments) of a process,
     such as the series’ mean and variance, do not change over time. Using that assumption,
     we can build models that aim to forecast the future values of the process.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 平稳性假设一个过程的统计量（如序列的均值和方差）随时间不变。基于这一假设，我们可以建立旨在预测该过程未来值的模型。
 - en: However, asset prices are usually non-stationary. Their statistics not only
     change over time, but we can also observe some trends (general patterns over time)
     or seasonality (patterns repeating over fixed time intervals). By transforming
     the prices into returns, we attempt to make the time series stationary.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，资产价格通常是非平稳的。它们的统计量不仅随时间变化，还可以观察到一些趋势（随时间变化的一般模式）或季节性（在固定时间间隔内重复的模式）。通过将价格转换为收益率，我们试图使时间序列平稳。
 - en: Another benefit of using returns, as opposed to prices, is normalization. It
     means that we can easily compare various return series, which would not be that
     simple with raw stock prices, as one stock might start selling at $10, while another
     at $1,000.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用收益率而非价格的另一个好处是规范化。这意味着我们可以轻松比较不同的收益率序列，而使用原始股价则不那么简单，因为一只股票可能从 $10 开始，而另一只股票则从
+    $1,000 开始。
 - en: 'There are two types of returns:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种类型的收益率：
 - en: 'Simple returns: They aggregate over assets—the simple return of a portfolio
     is the weighted sum of the returns of the individual assets in the portfolio.
     Simple returns are defined as:'
+  id: totrans-17
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 简单收益率：它们在资产之间进行聚合——一个投资组合的简单收益率是该投资组合中各个资产收益率的加权和。简单收益率定义为：
 - en: '*R*[t] = (*P*[t] - *P*[t-1])/*P*[t-1] = *P*[t]/*P*[t-1] -1'
+  id: totrans-18
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '*R*[t] = (*P*[t] - *P*[t-1])/*P*[t-1] = *P*[t]/*P*[t-1] -1'
 - en: 'Log returns: They aggregate over time. It is easier to understand with the
     help of an example—the log return for a given month is the sum of the log returns
     of the days within that month. Log returns are defined as:'
+  id: totrans-19
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 对数收益率：它们在时间上进行聚合。通过一个例子更容易理解——给定一个月的对数收益率是该月内各个日期对数收益率的总和。对数收益率定义为：
 - en: '*r*[t] = log(*P*[t]/*P*[t-1]) = log(*P*[t]) - log(*P*[t-1])'
+  id: totrans-20
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '*r*[t] = log(*P*[t]/*P*[t-1]) = log(*P*[t]) - log(*P*[t-1])'
 - en: '*P*[t] is the price of an asset in time *t*. In the preceding case, we do not
     consider dividends, which obviously impact the returns and require a small modification
     of the formulas.'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: '*P*[t] 是时间 *t* 时资产的价格。在前面的例子中，我们没有考虑股息，股息显然会影响收益率，并且需要对公式做出一些小的修改。'
 - en: The best practice while working with stock prices is to use adjusted values
     as they account for possible corporate actions, such as stock splits.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 在处理股票价格时的最佳实践是使用调整后的值，因为它们考虑了可能的公司行为，例如股票分割。
 - en: In general, log returns are often preferred over simple returns. Probably the
     most important reason for that is the fact that if we assume that the stock prices
     are log-normally distributed (which might or might not be the case for the particular
@@ -116,346 +163,505 @@
     to time series modeling. Also, the difference between simple and log returns for
     daily/intraday data will be very small, in accordance with the general rule that
     log returns are smaller in value than simple returns.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常来说，对数回报比简单回报更为常用。可能最重要的原因是，如果我们假设股票价格服从对数正态分布（虽然对于特定时间序列，这可能成立也可能不成立），那么对数回报将服从正态分布。而正态分布与许多经典的时间序列建模统计方法非常契合。此外，对于日常/日内数据，简单回报和对数回报之间的差异通常非常小，这与对数回报通常小于简单回报的普遍规律相符。
 - en: In this recipe, we show how to calculate both types of returns using Apple’s
     stock prices.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本食谱中，我们展示了如何使用苹果公司股票价格计算两种类型的回报。
 - en: How to do it…
+  id: totrans-25
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作……
 - en: 'Execute the following steps to download Apple’s stock prices and calculate
     simple/log returns:'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤下载苹果公司股票价格并计算简单回报/对数回报：
 - en: 'Import the libraries:'
+  id: totrans-27
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE0]'
+  id: totrans-28
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Download the data and keep the adjusted close prices only:'
+  id: totrans-29
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载数据并只保留调整后的收盘价：
 - en: '[PRE1]'
+  id: totrans-30
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Calculate the simple and log returns using the adjusted close prices:'
+  id: totrans-31
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用调整后的收盘价计算简单回报和对数回报：
 - en: '[PRE2]'
+  id: totrans-32
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'Inspect the output:'
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 检查输出结果：
 - en: '[PRE3]'
+  id: totrans-34
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'The resulting DataFrame looks as follows:'
+  id: totrans-35
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 结果DataFrame如下所示：
 - en: '![](../Images/B18112_02_01.png)'
+  id: totrans-36
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_01.png)'
 - en: 'Figure 2.1: Snippet of the DataFrame containing Apple’s adjusted close prices
     and simple/log returns'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 图2.1：包含苹果公司调整后收盘价和简单/对数回报的DataFrame片段
 - en: The first row will always contain a **NaN** (**not a number**) value, as there
     is no previous price to use for calculating the returns.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一行将始终包含**NaN**（**不是数字**）值，因为没有前一个价格可以用来计算回报。
 - en: How it works…
+  id: totrans-39
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: In *Step 2*, we downloaded price data from Yahoo Finance and only kept the adjusted
     close price for the calculation of the returns.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤2*中，我们从Yahoo Finance下载了价格数据，并且只保留了调整后的收盘价，用于回报的计算。
 - en: To calculate the simple returns, we used the `pct_change` method of pandas Series/DataFrame.
     It calculates the percentage change between the current and prior element (we
     can specify the number of lags, but for this specific case the default value of
     1 suffices). Please bear in mind that the prior element is defined as the one
     in the row above the given row. In the case of working with time series data,
     we need to make sure that the data is sorted by the time index.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算简单回报，我们使用了pandas Series/DataFrame的`pct_change`方法。它计算当前元素与前一个元素之间的百分比变化（我们可以指定滞后数，但在此特定情况下，默认值`1`就足够了）。请注意，前一个元素是指给定行上方的元素。如果我们处理的是时间序列数据，需要确保数据按时间索引排序。
 - en: To calculate the log returns, we followed the formula given in the introduction
     to this recipe. When dividing each element of the series by its lagged value,
     we used the `shift` method with a value of `1` to access the prior element. In
     the end, we took the natural logarithm of the divided values by using the `np.log`
     function.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算对数回报，我们遵循了本食谱介绍中的公式。当我们将系列中的每个元素除以其滞后值时，使用了`shift`方法，滞后值为`1`，以访问前一个元素。最后，我们使用`np.log`函数对除法结果取自然对数。
 - en: Adjusting the returns for inflation
+  id: totrans-43
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 调整回报以考虑通货膨胀
 - en: When doing different kinds of analyses, especially long-term ones, we might
     want to consider inflation. **Inflation** is the general rise of the price level
     of an economy over time. Or to phrase it differently, the reduction of the purchasing
     power of money. That is why we might want to decouple the inflation from the increase
     of the stock prices caused by, for example, the companies’ growth or development.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 在进行不同类型的分析时，特别是长期分析时，我们可能需要考虑通货膨胀。**通货膨胀**是指经济中价格水平普遍上升的现象。换句话说，就是货币购买力的下降。这就是为什么我们可能希望将通货膨胀与股价上涨分开考虑，股价上涨可能是由于公司的增长或发展等因素。
 - en: 'We can naturally adjust the prices of stocks directly, but in this recipe,
     we will focus on adjusting the returns and calculating the real returns. We can
     do so using the following formula:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们当然可以直接调整股票价格，但在本教程中，我们将重点介绍调整收益并计算实际收益。我们可以使用以下公式来实现：
 - en: '![](../Images/B18112_02_003.png)'
+  id: totrans-46
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_003.png)'
 - en: where *R*^r[t] is the real return, *R*[t] is the time *t* simple return, and
     ![](../Images/B18112_02_004.png) stands for the inflation rate.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 *R*^r[t] 是实际收益，*R*[t] 是时间 *t* 的简单收益，![](../Images/B18112_02_004.png) 代表通货膨胀率。
 - en: For this example, we use Apple’s stock prices from the years 2010 to 2020 (downloaded
     as in the previous recipe).
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于这个示例，我们使用了2010到2020年期间的苹果公司股票价格（与之前的教程中一样下载）。
 - en: How to do it…
+  id: totrans-49
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'Execute the following steps to adjust the returns for inflation:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤以调整收益以应对通货膨胀：
 - en: 'Import libraries and authenticate:'
+  id: totrans-51
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库并进行认证：
 - en: '[PRE4]'
+  id: totrans-52
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Resample daily prices to monthly:'
+  id: totrans-53
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将日度价格重新采样为月度：
 - en: '[PRE5]'
+  id: totrans-54
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Download inflation data from Nasdaq Data Link:'
+  id: totrans-55
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从Nasdaq Data Link下载通货膨胀数据：
 - en: '[PRE6]'
+  id: totrans-56
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'Running the code generates the following table:'
+  id: totrans-57
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码后会生成如下表格：
 - en: '![](../Images/B18112_02_02.png)'
+  id: totrans-58
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_02.png)'
 - en: 'Figure 2.2: Snippet of the DataFrame containing the values of the Consumer
     Price Index (CPI)'
+  id: totrans-59
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图2.2：包含消费者物价指数（CPI）值的DataFrame片段
 - en: 'Join inflation data to prices:'
+  id: totrans-60
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将通货膨胀数据与价格连接：
 - en: '[PRE7]'
+  id: totrans-61
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Calculate simple returns and inflation rate:'
+  id: totrans-62
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算简单收益和通货膨胀率：
 - en: '[PRE8]'
+  id: totrans-63
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'Adjust the returns for inflation and calculate the real returns:'
+  id: totrans-64
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 调整收益以应对通货膨胀并计算实际收益：
 - en: '[PRE9]'
+  id: totrans-65
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'Running the code generates the following table:'
+  id: totrans-66
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码后会生成如下表格：
 - en: '![](../Images/B18112_02_03.png)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_03.png)'
 - en: 'Figure 2.3: Snippet of the DataFrame containing the calculated inflation-adjusted
     returns'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 图2.3：包含计算后的通货膨胀调整收益的DataFrame片段
 - en: How it works…
+  id: totrans-69
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 工作原理…
 - en: First, we imported the libraries and authenticated with Nasdaq Data Link, which
     we used for downloading the inflation-related data. Then, we had to resample Apple’s
     stock prices to a monthly frequency, as the inflation data is provided monthly.
     To do so, we chained the `resample` method with the `last` method. This way, we
     took the last price of the given month.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们导入了相关库并通过Nasdaq Data Link进行了认证，用于下载与通货膨胀相关的数据。然后，我们需要将苹果公司的股票价格重新采样为月度频率，因为通货膨胀数据是按月提供的。为此，我们将
+    `resample` 方法与 `last` 方法进行了链式调用。这样，我们就获取了给定月份的最后一个价格。
 - en: In *Step 3*, we downloaded the monthly **Consumer Price Index** (**CPI**) values
     from Nasdaq Data Link. It is a metric that examines the weighted average of prices
     of a basket of consumer goods and services, such as food, transportation, and
     so on.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第3步*中，我们从Nasdaq Data Link下载了每月的**消费者物价指数**（**CPI**）值。它是衡量一篮子消费者商品和服务（如食品、交通等）加权平均价格的指标。
 - en: Then, we used a left join to merge the two datasets (prices and CPI). A **left
     join** is a type of operation used for merging tables that returns all rows from
     the left table and the matched rows from the right table while leaving the unmatched
     rows empty.
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们使用左连接合并了两个数据集（价格和CPI）。**左连接**是一种用于合并表格的操作，返回左表中的所有行以及右表中匹配的行，同时将不匹配的行留空。
 - en: By default, the `join` method uses the indices of the tables to carry out the
     actual joining. We can use the `on` argument to specify which column/columns to
     use otherwise.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 默认情况下，`join` 方法使用表格的索引来执行实际的连接。我们可以使用 `on` 参数来指定其他需要使用的列。
 - en: Having all the data in one DataFrame, we used the `pct_change` method to calculate
     the simple returns and the inflation rate. Lastly, we used the formula presented
     in the introduction to calculate the real returns.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 在将所有数据放入一个DataFrame中后，我们使用了 `pct_change` 方法来计算简单收益和通货膨胀率。最后，我们使用介绍中提供的公式来计算实际收益。
 - en: There’s more…
+  id: totrans-75
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多内容…
 - en: We have already explored how to download the inflation data from Nasdaq Data
     Link. Alternatively, we can use a handy library called `cpi`.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经探索了如何从Nasdaq Data Link下载通货膨胀数据。或者，我们可以使用一个名为 `cpi` 的便捷库。
 - en: 'Import the library:'
+  id: totrans-77
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE10]'
+  id: totrans-78
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'At this point, we might encounter the following warning:'
+  id: totrans-79
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 此时，我们可能会遇到以下警告：
 - en: '[PRE11]'
+  id: totrans-80
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'If that is the case, we just need to run the following line of code to update
     the data:'
+  id: totrans-81
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 如果是这种情况，我们只需运行以下代码行来更新数据：
 - en: '[PRE12]'
+  id: totrans-82
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Obtain the default CPI series:'
+  id: totrans-83
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取默认的CPI系列：
 - en: '[PRE13]'
+  id: totrans-84
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Here we download the default CPI index (`CUUR0000SA0: All items in U.S. city
     average, all urban consumers, not seasonally adjusted`), which will work for most
     of the cases. Alternatively, we can provide the `items` and `area` arguments to
     download a more tailor-made series. We can also use the `get_by_id` function to
     download a particular CPI series.'
+  id: totrans-85
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在这里，我们下载默认的CPI指数（`CUUR0000SA0：美国城市平均水平，所有城市消费者，未经季节性调整的所有商品`），它适用于大多数情况。或者，我们可以提供`items`和`area`参数来下载更具针对性的系列。我们还可以使用`get_by_id`函数下载特定的CPI系列。
 - en: 'Convert the object into a `pandas` DataFrame:'
+  id: totrans-86
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将对象转换为`pandas` DataFrame：
 - en: '[PRE14]'
+  id: totrans-87
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'Filter the DataFrame and view the top 12 observations:'
+  id: totrans-88
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 筛选DataFrame并查看前12个观测值：
 - en: '[PRE15]'
+  id: totrans-89
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Running the code generates the following output:'
+  id: totrans-90
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码生成的输出如下：
 - en: '![](../Images/B18112_02_04.png)'
+  id: totrans-91
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_04.png)'
 - en: 'Figure 2.4: The first 12 values of the DataFrame containing the downloaded
     values of the CPI'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2.4：包含CPI下载值的DataFrame的前12个值
 - en: In this step, we used some filtering to compare the data to the data downloaded
     before from Nasdaq Data Link. We used the `query` method to only keep the monthly
     data from the year 2010 onward. We displayed only two selected columns and the
     first 12 observations, for comparison’s sake.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一步，我们使用了一些过滤操作，将数据与之前从Nasdaq Data Link下载的数据进行比较。我们使用`query`方法仅保留2010年及以后的月度数据。为了便于比较，我们只显示了两列选定的列和前12个观测值。
 - en: We will also be using the `cpi` library in later chapters to directly inflate
     the prices using the `inflate` function.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 在后续章节中，我们还将使用`cpi`库，通过`inflate`函数直接对价格进行通胀调整。
 - en: See also
+  id: totrans-95
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: '[https://github.com/palewire/cpi](https://github.com/palewire/cpi)—the GitHub
     repo of the `cpi` library'
+  id: totrans-96
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[https://github.com/palewire/cpi](https://github.com/palewire/cpi) — `cpi`库的GitHub仓库'
 - en: Changing the frequency of time series data
+  id: totrans-97
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 改变时间序列数据的频率
 - en: When working with time series, and especially financial ones, we often need
     to change the frequency (periodicity) of the data. For example, we receive daily
     OHLC prices, but our algorithm works with weekly data. Or we have daily alternative
     data, and we want to match it with our live feed of intraday data.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 在处理时间序列，尤其是金融时间序列时，我们常常需要改变数据的频率（周期性）。例如，我们接收到的是每日的OHLC价格，但我们的算法需要使用每周数据。或者我们有每日的替代数据，并且想将其与我们的实时日内数据流进行匹配。
 - en: 'The general rule of thumb for changing frequency can be broken down into the
     following:'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 改变频率的一般规则可以分解为以下几点：
 - en: Multiply/divide the log returns by the number of time periods.
+  id: totrans-100
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将对数回报乘以或除以时间段数。
 - en: Multiply/divide the volatility by the square root of the number of time periods.
+  id: totrans-101
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将波动率乘以或除以时间段数的平方根。
 - en: 'For any process with independent increments (for example, the geometric Brownian
     motion), the variance of the logarithmic returns is proportional to time. For
     example, the variance of r[t3] - r[t1] is going to be the sum of the following
@@ -464,135 +670,199 @@
     over time (homogeneity) we arrive at the proportionality of the variance to the
     length of the time interval. Which in practice means that the standard deviation
     (volatility) is proportional to the square root of time.'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于任何具有独立增量的过程（例如几何布朗运动），对数回报的方差与时间成正比。例如，r[t3] - r[t1]的方差将是以下两种方差之和：r[t2]−r[t1]和r[t3]−r[t2]，假设*t*[1]≤*t*[2]≤*t*[3]。在这种情况下，当我们假设过程的参数随时间不变（同质性）时，我们得出方差与时间间隔长度成正比的结论。在实践中，这意味着标准差（波动率）与时间的平方根成正比。
 - en: In this recipe, we present an example of how to calculate the monthly realized
     volatilities for Apple using daily returns and then annualize the values. We can
     often encounter annualized volatility when looking at the risk-adjusted performance
     of an investment.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本示例中，我们展示了如何使用日回报计算Apple的月度实际波动率，然后将其年化。我们在分析投资的风险调整绩效时，常常会遇到年化波动率。
 - en: 'The formula for realized volatility is as follows:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际波动率的公式如下：
 - en: '![](../Images/B18112_02_005.png)'
+  id: totrans-105
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_005.png)'
 - en: Realized volatility is frequently used for calculating the daily volatility
     using intraday returns.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际波动率通常用于计算基于日内回报的每日波动率。
 - en: 'The steps we need to take are as follows:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要采取的步骤如下：
 - en: Download the data and calculate the log returns
+  id: totrans-108
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 下载数据并计算对数回报
 - en: Calculate the realized volatility over the months
+  id: totrans-109
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 计算各月的实际波动率
 - en: Annualize the values by multiplying by ![](../Images/B18112_02_006.png), as
     we are converting from monthly values
+  id: totrans-110
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通过乘以![](../Images/B18112_02_006.png)将值年化，因为我们正在将月度值转换为年度值。
 - en: Getting ready
+  id: totrans-111
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备就绪
 - en: We assume you have followed the instructions from the previous recipes and have
     a DataFrame called `df` with a single `log_rtn` column and timestamps as the index.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们假设您已经按照之前的步骤操作，并且拥有一个名为`df`的DataFrame，其中包含一个`log_rtn`列，时间戳作为索引。
 - en: How to do it…
+  id: totrans-113
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'Execute the following steps to calculate and annualize the monthly realized
     volatility:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，计算并年化月度实现的波动率：
 - en: 'Import the libraries:'
+  id: totrans-115
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE16]'
+  id: totrans-116
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Define the function for calculating the realized volatility:'
+  id: totrans-117
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义计算实现波动率的函数：
 - en: '[PRE17]'
+  id: totrans-118
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'Calculate the monthly realized volatility:'
+  id: totrans-119
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算月度实现波动率：
 - en: '[PRE18]'
+  id: totrans-120
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'Annualize the values:'
+  id: totrans-121
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 年化值：
 - en: '[PRE19]'
+  id: totrans-122
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'Plot the results:'
+  id: totrans-123
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制结果：
 - en: '[PRE20]'
+  id: totrans-124
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'Executing the snippet results in the following plots:'
+  id: totrans-125
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_02_05.png)'
+  id: totrans-126
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_05.png)'
 - en: 'Figure 2.5: Apple’s log return series and the corresponding realized volatility
     (annualized)'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 图2.5：苹果的对数收益率序列及相应的实现波动率（年化）
 - en: We can see that the spikes in the realized volatility coincide with some extreme
     returns (which might be outliers).
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以看到，波动率的尖峰与一些极端收益率（可能是异常值）相吻合。
 - en: How it works…
+  id: totrans-129
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的…
 - en: Normally, we could use the `resample` method of a `pandas` DataFrame. Supposing
     we wanted to calculate the average monthly return, we could use `df["log_rtn"].resample("M").mean()`.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 通常，我们可以使用`pandas` DataFrame的`resample`方法。假设我们想要计算每月的平均收益率，我们可以使用`df["log_rtn"].resample("M").mean()`。
 - en: With the `resample` method, we can use any built-in aggregate function of `pandas`,
     such as `mean`, `sum`, `min`, and `max`. However, our case at hand is a bit more
     complex so we first defined a helper function called `realized_volatility`. Because
     we wanted to use a custom function for aggregation, we replicated the behavior
     of `resample` by using a combination of `groupby`, `Grouper`, and `apply`.
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`resample`方法时，我们可以使用`pandas`的任何内置聚合函数，如`mean`、`sum`、`min`和`max`。然而，我们面临的情况有些复杂，因此我们首先定义了一个名为`realized_volatility`的辅助函数。因为我们希望使用自定义函数进行聚合，所以我们通过组合使用`groupby`、`Grouper`和`apply`来复制`resample`的行为。
 - en: We presented the most basic visualization of the results (please refer to *Chapter
     3*, *Visualizing Financial Time Series*, for information about visualizing time
     series).
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们展示了最基本的结果可视化（有关时间序列可视化的详细信息，请参见*第3章*，*金融时间序列的可视化*）。
 - en: Different ways of imputing missing data
+  id: totrans-133
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 缺失数据插补的不同方法
 - en: While working with any time series, it can happen that some data is missing,
     due to many possible reasons (someone forgot to input the data, a random issue
     with the database, and so on). One of the available solutions would be to discard
@@ -602,429 +872,627 @@
     valuable pieces of information because of this single missing value? Probably
     not. And there are many other potential scenarios in which we would rather treat
     the missing values somehow, rather than discarding those observations.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 在处理任何时间序列时，可能会出现一些数据丢失的情况，原因多种多样（有人忘记输入数据、数据库出现随机问题等）。一种可行的解决方案是丢弃缺失值的观测值。然而，假设我们正在同时分析多个时间序列，并且只有其中一个序列由于某些随机错误缺失了一个值。我们是否还要因为这个单一的缺失值而删除其他可能有价值的信息？可能不需要。而且还有许多其他情景，我们更倾向于以某种方式处理缺失值，而不是丢弃这些观测值。
 - en: 'Two of the simplest approaches to imputing missing time series data are:'
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 插补缺失时间序列数据的两种最简单方法是：
 - en: Backward filling—fill the missing value with the next known value
+  id: totrans-136
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 向后填充——用下一个已知的值填充缺失值
 - en: Forward filling—fill the missing value with the previous known value
+  id: totrans-137
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 向前填充——用之前已知的值填充缺失值
 - en: In this recipe, we show how to use those techniques to easily deal with missing
     values in the example of the CPI time series.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个食谱中，我们展示了如何使用这些技术来轻松处理CPI时间序列中的缺失值。
 - en: How to do it…
+  id: totrans-139
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'Execute the following steps to try out different ways of imputing missing data:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，尝试不同的缺失数据插补方法：
 - en: 'Import the libraries:'
+  id: totrans-141
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE21]'
+  id: totrans-142
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Download the inflation data from Nasdaq Data Link:'
+  id: totrans-143
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从Nasdaq Data Link下载通胀数据：
 - en: '[PRE22]'
+  id: totrans-144
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Introduce five missing values at random:'
+  id: totrans-145
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 随机引入五个缺失值：
 - en: '[PRE23]'
+  id: totrans-146
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'In the following table, we can see we have successfully introduced missing
     values into the data:'
+  id: totrans-147
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在下表中，我们可以看到已成功将缺失值引入数据中：
 - en: '![](../Images/B18112_02_06.png)'
+  id: totrans-148
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_06.png)'
 - en: 'Figure 2.6: Preview of the DataFrame with downloaded CPI data and the added
     missing values'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2.6：包含下载的CPI数据和添加缺失值的DataFrame预览
 - en: 'Fill in the missing values using different methods:'
+  id: totrans-150
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用不同方法填充缺失值：
 - en: '[PRE24]'
+  id: totrans-151
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'Inspect the results by displaying the rows in which we created the missing
     values:'
+  id: totrans-152
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 通过显示我们创建缺失值的行来检查结果：
 - en: '[PRE25]'
+  id: totrans-153
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'Running the code results in the following output:'
+  id: totrans-154
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码会产生以下输出：
 - en: '![](../Images/B18112_02_07.png)'
+  id: totrans-155
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_07.png)'
 - en: 'Figure 2.7: Preview of the DataFrame after imputing the missing values'
+  id: totrans-156
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 2.7：插补缺失值后的DataFrame预览
 - en: We can see that backward filling worked for all the missing values we created.
     However, forward filling failed to impute one value. That is because this is the
     first data point in the series, so there is no available value to fill forward.
+  id: totrans-157
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到，后向填充成功填充了我们创建的所有缺失值。然而，前向填充未能填充一个值。这是因为这是序列中的第一个数据点，因此没有可供前向填充的值。
 - en: 'Plot the results for the years 2015 to 2016:'
+  id: totrans-158
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制2015到2016年间的结果：
 - en: '[PRE26]'
+  id: totrans-159
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'Running the snippet generates the following plot:'
+  id: totrans-160
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_02_08.png)'
+  id: totrans-161
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_08.png)'
 - en: 'Figure 2.8: The comparison of backward and forward filling on the CPI time
     series'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2.8：后向填充与前向填充在CPI时间序列中的对比
 - en: In *Figure 2.8*, we can clearly see how both forward and backward filling work
     in practice.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*图 2.8*中，我们可以清楚地看到前向填充和后向填充在实践中的应用效果。
 - en: How it works…
+  id: totrans-164
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: After importing the libraries, we downloaded the 6 years of monthly CPI data
     from Nasdaq Data Link. Then, we selected 5 random indices from the DataFrame to
     artificially create missing values. To do so, we replaced those values with NaNs.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入库之后，我们从Nasdaq Data Link下载了6年的月度CPI数据。然后，我们从DataFrame中随机选择了5个索引，人工创建了缺失值。为此，我们将这些值替换为NaN。
 - en: In *Step 4*, we applied two different imputation methods to our time series.
     We used the `fillna` method of a `pandas` DataFrame and specified the `method`
     argument as `bfill` (backward filling) or `ffill` (forward filling). We saved
     the imputed series as new columns, in order to clearly compare the results. Please
     remember that the `fillna` method replaces the missing values and keeps the other
     values intact.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 4*中，我们对时间序列应用了两种不同的插补方法。我们使用了`pandas` DataFrame的`fillna`方法，并指定`method`参数为`bfill`（后向填充）或`ffill`（前向填充）。我们将插补后的序列保存为新列，以便清晰比较结果。请记住，`fillna`方法会替换缺失值，并保持其他值不变。
 - en: Instead of providing a method of filling the missing data, we could have specified
     a value of our choice, for example, `0` or `999`. However, using an arbitrary
     number might not make much sense in the case of time series data, so that is not
     advised.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们本可以指定填充缺失数据的方法，比如`0`或`999`等数值。然而，在时间序列数据的情况下，使用任意数值可能没有多大意义，因此不推荐这样做。
 - en: We used `np.random.seed(42)` to make the experiment reproducible. Each time
     you run this cell, you will get the same random numbers. You can use any number
     for the seed and the random choice will be different for each of those.
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用`np.random.seed(42)`使实验结果具有可重复性。每次运行此单元时，都会得到相同的随机数。你可以使用任何数字作为种子，并且每次随机选择的结果都会不同。
 - en: In *Step 5*, we inspected the imputed values. For brevity, we have only displayed
     the indices we have randomly selected. We used the `sort_index` method to sort
     them by the date. This way, we can clearly see that the first value was not filled
     using the forward filling, as it is the very first observation in the time series.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 5*中，我们检查了插补后的值。为了简洁起见，我们只显示了随机选择的索引。我们使用`sort_index`方法按日期对其进行了排序。这样，我们可以清楚地看到，第一个值没有使用前向填充进行填充，因为它是时间序列中的第一个观测值。
 - en: Lastly, we plotted all the time series from the years 2015 to 2016\. In the
     plot, we can clearly see how backward/forward filling imputes the missing values.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们绘制了2015到2016年所有时间序列的图表。在图表中，我们可以清楚地看到后向填充和前向填充如何填补缺失值。
 - en: There’s more…
+  id: totrans-171
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多……
 - en: In this recipe, we have explored some simple methods of imputing missing data.
     Another possibility is to use interpolation, to which there are many different
     approaches. As such, in this example, we will use the linear one. Please refer
     to the `pandas` documentation (the link is available in the *See also* subsection)
     for more information about the available methods of interpolation.
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，我们探讨了一些简单的填补缺失数据的方法。另一种可能性是使用插值方法，而插值有许多不同的方式。因此，在本例中，我们将使用线性插值。有关插值方法的更多信息，请参考`pandas`文档（链接在*另见*部分中提供）。
 - en: 'Use linear interpolation to fill the missing values:'
+  id: totrans-173
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用线性插值填充缺失值：
 - en: '[PRE27]'
+  id: totrans-174
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Inspect the results:'
+  id: totrans-175
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 检查结果：
 - en: '[PRE28]'
+  id: totrans-176
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'Running the snippet generates the following output:'
+  id: totrans-177
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下输出：
 - en: '![](../Images/B18112_02_09.png)'
+  id: totrans-178
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_09.png)'
 - en: 'Figure 2.9: Preview of the DataFrame after imputing the missing values with
     linear interpolation'
+  id: totrans-179
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 2.9：使用线性插值填补缺失值后的 DataFrame 预览
 - en: Unfortunately, linear interpolation also cannot deal with the missing value
     located at the very beginning of the time series.
+  id: totrans-180
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 不幸的是，线性插值也无法处理位于时间序列开始位置的缺失值。
 - en: 'Plot the results:'
+  id: totrans-181
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制结果：
 - en: '[PRE29]'
+  id: totrans-182
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'Running the snippet generates the following plot:'
+  id: totrans-183
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图形：
 - en: '![](../Images/B18112_02_10.png)'
+  id: totrans-184
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_10.png)'
 - en: 'Figure 2.10: The comparison of backward and forward filling on the CPI time
     series, including interpolation'
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2.10：CPI 时间序列中向后填充和向前填充的比较，包括插值
 - en: In *Figure 2.10*, we can see how linear interpolation connects the known observations
     with a straight line to impute the missing value.
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*图 2.10*中，我们可以看到线性插值是如何通过一条直线连接已知的观测值来填补缺失值的。
 - en: 'In this recipe, we explored imputing missing data for time series data. However,
     these are not all of the possible approaches. We could have, for example, used
     the moving average of the last few observations to impute any missing values.
     There are certainly a lot of possible methodologies to choose from. In *Chapter
     13*, *Applied Machine Learning: Identifying Credit Default*, we will show how
     to approach the issue of missing values for other kinds of datasets.'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，我们探讨了如何为时间序列数据填补缺失值。然而，这些并不是所有可能的方法。例如，我们本可以使用最后几条观测值的移动平均来填补任何缺失的值。实际上，有许多可能的方法可以选择。在*第
+    13 章*，*应用机器学习：识别信用违约*，我们将展示如何处理其他类型数据集中的缺失值问题。
 - en: See also
+  id: totrans-188
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: '[https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html)—here
     you can see all the available methods of interpolating available in `pandas`.'
+  id: totrans-189
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html](https://pandas.pydata.org/docs/reference/api/pandas.DataFrame.interpolate.html)—在这里，你可以看到`pandas`中所有可用的插值方法。'
 - en: Converting currencies
+  id: totrans-190
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 货币转换
 - en: Another quite common preprocessing step you might encounter while working on
     financial tasks is converting currencies. Imagine you have a portfolio of multiple
     assets, priced in different currencies and you would like to arrive at a total
     portfolio’s worth. The simplest example might be American and European stocks.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个在金融任务中相当常见的预处理步骤是货币转换。假设你有一个由多种资产组成的投资组合，这些资产的定价使用不同的货币，并且你想要计算整个投资组合的总价值。最简单的例子可能是美国股票和欧洲股票。
 - en: In this recipe, we show how to easily convert stock prices from USD to EUR.
     However, the very same steps can be used to convert any pair of currencies.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个示例中，我们展示了如何轻松地将股票价格从 USD 转换为 EUR。然而，完全相同的步骤也可以用于转换任何货币对。
 - en: How to do it…
+  id: totrans-193
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作...
 - en: 'Execute the following steps to convert stock prices from USD to EUR:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤将股票价格从 USD 转换为 EUR：
 - en: 'Import the libraries:'
+  id: totrans-195
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入所需库：
 - en: '[PRE30]'
+  id: totrans-196
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Download Apple’s OHLC prices from January 2020:'
+  id: totrans-197
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载 2020 年 1 月份的 Apple OHLC 价格：
 - en: '[PRE31]'
+  id: totrans-198
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'Instantiate the `CurrencyRates` object:'
+  id: totrans-199
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 实例化`CurrencyRates`对象：
 - en: '[PRE32]'
+  id: totrans-200
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Download the USD/EUR rate for each required date:'
+  id: totrans-201
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载每个所需日期的 USD/EUR 汇率：
 - en: '[PRE33]'
+  id: totrans-202
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'Convert the prices in USD to EUR:'
+  id: totrans-203
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将 USD 价格转换为 EUR：
 - en: '[PRE34]'
+  id: totrans-204
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Running the snippet generates the following preview:'
+  id: totrans-205
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下预览：
 - en: '![](../Images/B18112_02_11.png)'
+  id: totrans-206
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_11.png)'
 - en: 'Figure 2.11: Preview of the DataFrame containing the original prices in USD
     and the ones converted to EUR'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2.11：包含原始 USD 价格和转换为 EUR 价格的 DataFrame 预览
 - en: We can see that we have successfully converted all four columns with prices
     into EUR.
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以看到，所有四列价格已经成功地转换为 EUR。
 - en: How it works…
+  id: totrans-209
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的…
 - en: In *Step 1*, we have imported the required libraries. Then, we downloaded Apple’s
     OHLC prices from January 2020 using the already covered `yfinance` library.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *第 1 步* 中，我们导入了所需的库。然后，我们使用之前介绍过的 `yfinance` 库下载了 2020 年 1 月的 Apple OHLC 数据。
 - en: In *Step 3*, we instantiated the `CurrencyRates` object from the `forex-python`
     library. Under the hood, the library is using the Forex API ([https://theforexapi.com](https://theforexapi.com)),
     which is a free API for accessing current and historical foreign exchange rates
     published by the European Central Bank.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *第 3 步* 中，我们实例化了 `forex-python` 库中的 `CurrencyRates` 对象。该库底层使用了 Forex API（[https://theforexapi.com](https://theforexapi.com)），这是一个免费的
+    API，用于访问欧洲中央银行发布的当前和历史外汇汇率。
 - en: In *Step 4*, we used the `get_rate` method to download the USD/EUR exchange
     rates for all the dates available in the DataFrame with stock prices. To do so
     efficiently, we used list comprehension and stored the outputs in a new column.
     One potential drawback of the library and the present implementation is that we
     need to download each and every exchange rate individually, which might not be
     scalable for large DataFrames.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *第 4 步* 中，我们使用 `get_rate` 方法下载了所有日期的 USD/EUR 汇率，这些日期与股票价格 DataFrame 中的日期匹配。为了高效地执行此操作，我们使用了列表推导并将输出存储在新列中。该库和当前实现的一个潜在缺点是，我们需要单独下载每个汇率，这对于大型
+    DataFrame 来说可能不具备可扩展性。
 - en: 'While using the library, you can sometimes run into the following error: `RatesNotAvailableError:
     Currency Rates Source Not Ready`. The most probable cause is that you are trying
     to get the exchange rates from weekends. The easiest solution is to skip those
     days in the list comprehension/`for` loop and fill in the missing values using
     one of the approaches covered in the previous recipe.'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: '在使用该库时，有时会遇到以下错误：`RatesNotAvailableError: Currency Rates Source Not Ready`。最可能的原因是你尝试获取周末的汇率。最简单的解决方案是跳过这些天的列表推导/`for`
+    循环，并使用之前介绍的某种方法填补缺失值。'
 - en: In the last step, we iterated over the columns of the initial DataFrame (all
     except the exchange rate) and multiplied the USD price by the exchange rate. We
     stored the outcomes in new columns, with `_EUR` subscript.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最后一步，我们遍历了初始 DataFrame 的列（除了汇率列），并将 USD 价格与汇率相乘。我们将结果存储在新列中，列名带有 `_EUR` 下标。
 - en: There’s more…
+  id: totrans-215
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多内容…
 - en: Using the `forex_python` library, we can easily download the exchange rates
     for many currencies at once. To do so, we can use the `get_rates` method. In the
     following snippet, we download the current exchange rates of USD to the 31 available
     currencies. We can naturally specify the date of interest, just as we have done
     before.
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 `forex_python` 库，我们可以轻松地一次性下载多种货币的汇率。为此，我们可以使用 `get_rates` 方法。在下面的代码片段中，我们下载了
+    USD 到 31 种可用货币的当前汇率。我们自然可以指定感兴趣的日期，就像之前那样。
 - en: 'Get the current USD exchange rates to 31 available currencies:'
+  id: totrans-217
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取当前 USD 汇率到 31 种可用货币：
 - en: '[PRE35]'
+  id: totrans-218
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'The first five entries look as follows:'
+  id: totrans-219
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 前五条记录如下所示：
 - en: '[PRE36]'
+  id: totrans-220
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: In this recipe, we have mostly focused on the `forex_python` library, as it
     is quite handy and flexible. However, we might download historical exchange rates
     from many different sources and arrive at the same results (accounting for some
     margin of error depending on the data provider). Quite a few of the data providers
     described in *Chapter 1*, *Acquiring Financial Data*, provide historical exchange
     rates. Below, we show how to get those rates using Yahoo Finance.
+  id: totrans-221
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在这个食谱中，我们主要关注了 `forex_python` 库，因为它非常方便且灵活。然而，我们也可以从许多不同的来源下载历史汇率，并得出相同的结果（根据数据提供商的不同，可能会有一些误差）。在
+    *第 1 章*《获取金融数据》中描述的许多数据提供商提供历史汇率。下面，我们展示如何使用 Yahoo Finance 获取这些汇率。
 - en: 'Download the USD/EUR exchange rate from Yahoo Finance:'
+  id: totrans-222
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从 Yahoo Finance 下载 USD/EUR 汇率：
 - en: '[PRE37]'
+  id: totrans-223
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'Running the snippet results in the following output:'
+  id: totrans-224
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码片段会得到以下输出：
 - en: '![](../Images/B18112_02_12.png)Figure 2.12: Preview of the DataFrame with the
     downloaded exchange rates'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: '![](../Images/B18112_02_12.png)图 2.12：下载的汇率 DataFrame 预览'
 - en: In *Figure 2.12*, we can see one of the limitations of this data source—the
     data for this currency pair is only available since December 2003\. Also, Yahoo
     Finance is providing the OHLC variant of the exchange rates. To arrive at a single
     number used for conversion, you can pick any of the four values (depending on
     the use case) or calculate the mid-value (the middle between low and high values).
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*图2.12*中，我们可以看到此数据源的一个限制——该货币对的数据仅自2003年12月以来可用。另外，Yahoo Finance提供的是外汇汇率的OHLC变种。为了得到一个用于转换的单一数值，可以选择四个值中的任意一个（取决于使用场景），或者计算中间值（低值与高值之间的中间值）。
 - en: See also
+  id: totrans-227
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: '[https://github.com/MicroPyramid/forex-python](https://github.com/MicroPyramid/forex-python)—the
     GitHub repo of the `forex-python` library'
+  id: totrans-228
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[https://github.com/MicroPyramid/forex-python](https://github.com/MicroPyramid/forex-python)—`forex-python`库的GitHub仓库'
 - en: Different ways of aggregating trade data
+  id: totrans-229
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 不同的交易数据聚合方式
 - en: Before diving into building a machine learning model or designing a trading
     strategy, we not only need reliable data, but we also need to aggregate it into
     a format that is convenient for further analysis and appropriate for the models
@@ -1032,81 +1500,112 @@
     information about the price movements of any financial asset. We have already
     seen one form of bars in *Chapter 1*, *Acquiring Financial Data*, in which we
     explored how to download financial data from a variety of sources.
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 在深入构建机器学习模型或设计交易策略之前，我们不仅需要可靠的数据，还需要将其聚合成便于进一步分析和适合我们选择的模型的格式。**条形图**这一术语指的是一种数据表示方式，包含了任何金融资产价格波动的基本信息。我们已经在*第一章*《获取金融数据》中看到过一种条形图形式，我们在其中探讨了如何从各种来源下载金融数据。
 - en: There, we downloaded OHLCV data sampled by some time period, be it a month,
     day, or intraday frequencies. This is the most common way of aggregating financial
     time series data and is known as the **time bars**.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 在那里，我们下载了按某一时间段（如月、日或日内频率）采样的OHLCV数据。这是最常见的金融时间序列数据聚合方式，称为**时间条**。
 - en: 'There are some drawbacks of sampling financial time series by time:'
+  id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 按时间采样金融时间序列有一些缺点：
 - en: Time bars disguise the actual rate of activity in the market—they tend to oversample
     low activity periods (for example, noon) and undersample high activity periods
     (for example, close to market open and close).
+  id: totrans-233
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 时间条掩盖了市场中实际的活动率——它们往往在低活动期（例如中午）过度采样，在高活动期（例如接近市场开盘和收盘时）则采样不足。
 - en: Nowadays, markets are more and more controlled by trading algorithms and bots,
     so they no longer follow human daylight cycles.
+  id: totrans-234
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如今，市场越来越多地由交易算法和机器人控制，因此它们不再遵循人类的日间周期。
 - en: Time-based bars offer poorer statistical properties (for example, serial correlation,
     heteroskedasticity, and non-normality of returns).
+  id: totrans-235
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于时间的条形图提供的统计特性较差（例如序列相关性、异方差性和回报的非正态性）。
 - en: Given that this is the most popular kind of aggregation and the easiest one
     to access, it can also be prone to manipulation (for example, iceberg orders).
+  id: totrans-236
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 鉴于这是最流行的聚合方式，也是最容易获取的一种，它也可能受到操纵的影响（例如冰山订单）。
 - en: Iceberg orders are large orders that were divided into smaller limit orders
     to hide the actual order quantity. They are called “iceberg orders” because the
     visible orders are just the “tip of the iceberg,” while a significant number of
     limit orders is waiting, ready to be placed.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 冰山订单是将大额订单分割成较小的限价单，以隐藏实际的订单数量。它们被称为“冰山订单”，因为可见的订单只是“冰山一角”，而大量的限价单正在等待，随时准备下单。
 - en: 'To overcome those issues and gain a competitive edge, practitioners also use
     other kinds of aggregation. Ideally, they would want to have a bar representation
     in which each bar contains the same amount of information. Some of the alternatives
     they are using include:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了克服这些问题并获得竞争优势，从业者还使用其他类型的聚合方式。理想情况下，他们希望得到一种每个条形图包含相同数量信息的条形图表示。它们正在使用的一些替代方法包括：
 - en: '**Tick bars**—named after the fact that transactions/trades in financial markets
     are often referred to as ticks. For this kind of aggregation, we sample an OHLCV
     bar every time a predefined number of transactions occurs.'
+  id: totrans-239
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**刻度条**——命名源于金融市场中交易通常被称为“刻度”（ticks）。这种聚合方式下，我们每当发生预定数量的交易时，就会采样一个OHLCV条形图。'
 - en: '**Volume bars**—we sample a bar every time a predefined volume (measured in
     any unit, for example, shares, coins, etc.) is exchanged.'
+  id: totrans-240
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**成交量条**——我们每当发生预定量的交易（可以用任何单位衡量，例如股票、币种等）时，就会采样一个条形图。'
 - en: '**Dollar bars**—we sample a bar every time a predefined dollar amount is exchanged.
     Naturally, we can use any other currency of choice.'
+  id: totrans-241
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**美元条形图**——我们每当交换预定的美元金额时就取一个条形图。自然，我们也可以使用其他任何货币。'
 - en: Each of these forms of aggregations has its strengths and weaknesses that we
     should be aware of.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 每种聚合形式都有其优缺点，我们应当注意。
 - en: '**Tick bars** offer a better way of tracking the actual activity in the market,
     together with the volatility. However, a potential issue arises out of the fact
     that one trade can contain any number of units of a certain asset. So, a buy order
     of a single share is treated equally to an order of 10,000 shares.'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: '**交易条形图**提供了一种更好的方式来跟踪市场中的实际活动及其波动性。然而，潜在的问题是，一笔交易可能包含某种资产的任意数量单位。因此，购买一股股票与购买
+    10,000 股股票的订单被视为相同。'
 - en: '**Volume bars** are an attempt at overcoming this problem. However, they come
     with an issue of their own. They do not correctly reflect situations in which
     asset prices change significantly or when stock splits happen. This makes them
     unreliable for comparison between periods affected by such situations.'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: '**成交量条形图**试图克服这一问题。然而，它们自身也存在问题。它们不能准确反映资产价格发生重大变化或股票拆分时的情况。这使得它们在面对受此类事件影响的不同时间段时不太可靠。'
 - en: That is where the third type of bar comes into play—**the dollar bars**. It
     is often considered the most robust way of aggregating price data. Firstly, the
     dollar bars help bridge the gap with price volatility, which is especially important
@@ -1115,174 +1614,257 @@
     dollar bars are resistant to the outstanding amount of the security, so they are
     not affected by actions such as stock splits, corporate buybacks, issuance of
     new shares, and so on.
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 这时第三种类型的条形图——**美元条形图**就派上用场了。它通常被认为是聚合价格数据的最稳健方式。首先，美元条形图有助于弥补价格波动的差距，尤其对像加密货币这样高度波动的市场尤为重要。其次，以美元为单位的采样有助于保持信息的一致性。第二个原因是，美元条形图不受证券未平仓量的影响，因此不会受到诸如股票拆分、公司回购、新股发行等操作的影响。
 - en: In this recipe, we will learn how to create all four types of bars mentioned
     above using trade data coming from Binance, one of the most popular cryptocurrency
     exchanges. We decided to use cryptocurrency data as it is much easier to obtain
     (free of charge) compared to, for example, equity data. However, the presented
     methodology remains the same for other asset classes as well.
+  id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本例中，我们将学习如何使用来自 Binance（最流行的加密货币交易所之一）的交易数据创建上述提到的四种类型的条形图。我们选择使用加密货币数据，因为与股票数据等其他资产类别相比，它更容易获得（且免费）。然而，所展示的方法对于其他资产类别同样适用。
 - en: How to do it…
+  id: totrans-247
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'Execute the following steps to download trade data from Binance and aggregate
     it into four different kinds of bars:'
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，从 Binance 下载交易数据并将其聚合为四种不同类型的条形图：
 - en: 'Import the libraries:'
+  id: totrans-249
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE38]'
+  id: totrans-250
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'Instantiate the Binance client and download the last 500 `BTCEUR` trades:'
+  id: totrans-251
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 实例化 Binance 客户端并下载最后 500 笔 `BTCEUR` 交易：
 - en: '[PRE39]'
+  id: totrans-252
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'Process the downloaded trades into a `pandas` DataFrame:'
+  id: totrans-253
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将下载的交易数据处理为 `pandas` DataFrame：
 - en: '[PRE40]'
+  id: totrans-254
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Executing the code returns the following DataFrame:'
+  id: totrans-255
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码将返回以下 DataFrame：
 - en: '![](../Images/B18112_02_13.png)'
+  id: totrans-256
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_13.png)'
 - en: 'Figure 2.13: The DataFrame containing the last 500 BTC-EUR transactions'
+  id: totrans-257
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 2.13：包含最后 500 笔 BTC-EUR 交易的 DataFrame
 - en: We can see that 500 transactions in the `BTCEUR` market happened over a span
     of approximately nine minutes. For more popular markets, this window can be significantly
     reduced. The `qty` column contains the traded amount of BTC, while `quoteQty`
     contains the EUR price of the traded quantity, which is the same as multiplying
     the `price` column by the `qty` column.
+  id: totrans-258
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到，`BTCEUR`市场中的 500 笔交易发生在大约九分钟的时间内。对于更受欢迎的市场，这一时间窗口可以显著缩短。`qty`列包含交易的 BTC
+    数量，而 `quoteQty` 列包含交易数量的 EUR 价格，这与将 `price` 列与 `qty` 列相乘相同。
 - en: 'Define a function aggregating the raw trades information into bars:'
+  id: totrans-259
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义一个函数，将原始交易信息聚合成条形图：
 - en: '[PRE41]'
+  id: totrans-260
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'Get the time bars:'
+  id: totrans-261
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取时间条形图：
 - en: '[PRE42]'
+  id: totrans-262
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'Running the code generates the following time bars:'
+  id: totrans-263
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码生成以下时间条形图：
 - en: '![](../Images/B18112_02_14.png)'
+  id: totrans-264
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_14.png)'
 - en: 'Figure 2.14: Preview of the DataFrame with time bars'
+  id: totrans-265
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 2.14：带有时间条形图的 DataFrame 预览
 - en: 'Get the tick bars:'
+  id: totrans-266
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取交易条形图：
 - en: '[PRE43]'
+  id: totrans-267
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'Running the code generates the following tick bars:'
+  id: totrans-268
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码生成以下交易条形图：
 - en: '![](../Images/B18112_02_15.png)'
+  id: totrans-269
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_15.png)'
 - en: 'Figure 2.15: Preview of the DataFrame with tick bars'
+  id: totrans-270
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 2.15：带有交易条形图的 DataFrame 预览
 - en: We can see that each group contains exactly 50 trades, just as we intended.
+  id: totrans-271
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到每个组包含的交易正好是 50 笔，正如我们所期望的那样。
 - en: 'Get the volume bars:'
+  id: totrans-272
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取成交量条形图：
 - en: '[PRE44]'
+  id: totrans-273
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'Running the code generates the following volume bars:'
+  id: totrans-274
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码生成以下成交量条形图：
 - en: '![](../Images/B18112_02_16.png)'
+  id: totrans-275
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_16.png)'
 - en: 'Figure 2.16: Preview of the DataFrame with volume bars'
+  id: totrans-276
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 2.16：带有成交量条的 DataFrame 预览
 - en: We can see that all the bars contain approximately the same volume. The last
     one is a bit smaller, simply because we did not have enough total volume in the
     500 trades.
+  id: totrans-277
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到所有条形图的成交量大致相同。最后一根条形图稍微小一些，因为在 500 笔交易中总成交量不足。
 - en: 'Get the dollar bars:'
+  id: totrans-278
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取美元条形图：
 - en: '[PRE45]'
+  id: totrans-279
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'Running the code generates the following dollar bars:'
+  id: totrans-280
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 运行代码生成以下美元条形图：
 - en: '![](../Images/B18112_02_17.png)'
+  id: totrans-281
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_02_17.png)'
 - en: 'Figure 2.17: Preview of the DataFrame with dollar bars'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 2.17：带有美元条形图的 DataFrame 预览
 - en: How it works…
+  id: totrans-283
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: After importing the libraries, we instantiated the Binance client and downloaded
     the 500 most recent trades in the `BTCEUR` market using the `trades` method of
     the Binance client. We chose this one on purpose, as it is not as popular as `BTCUSD`
     and the default 500 trades actually span a few minutes. We could increase the
     number of trades up to 1,000 using the `limit` argument.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入库之后，我们实例化了 Binance 客户端，并使用 Binance 客户端的 `trades` 方法下载了 `BTCEUR` 市场中最近的 500
+    笔交易。我们故意选择了这个市场，因为它不像 `BTCUSD` 那样流行，默认的 500 笔交易实际上跨越了几分钟。我们可以通过 `limit` 参数将交易数量增加到
+    1,000 笔。
 - en: We have used the easiest way to download the 500 most recent trades. However,
     we could do better and recreate the trades over a longer period of time. To do
     so, we could use the `historical_trades` method. It contains an additional argument
@@ -1291,53 +1873,77 @@
     the last known ID to recreate the trade history from a longer period of time.
     However, to do so, we need to have a Binance account, create personal API keys,
     and provide them to the `Client` class.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用了最简单的方式来下载最近的 500 笔交易。然而，我们可以做得更好，通过重建更长时间段内的交易记录。为此，我们可以使用 `historical_trades`
+    方法。该方法包含一个额外的参数 `fromId`，我们可以使用该参数指定从哪个特定交易开始下载。然后，我们可以通过使用最后已知的 ID 将这些 API 调用链式连接，重新构建较长时间段的交易历史。然而，要做到这一点，我们需要拥有
+    Binance 账户，创建个人 API 密钥，并将其提供给 `Client` 类。
 - en: In *Step 3*, we prepared the data for further analysis, that is, we converted
     the response from the Binance client into a `pandas` DataFrame, dropped two columns
     we will not be using, converted the `time` column into `datetime`, and converted
     to columns containing prices and quantities into numeric ones, as they were expressed
     as `object` type, which is a string.
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 3* 中，我们为进一步分析准备了数据，即将 Binance 客户端的响应转换为 `pandas` DataFrame，删除了我们不使用的两列，将
+    `time` 列转换为 `datetime`，并将包含价格和数量的列转换为数值型，因为它们最初是以 `object` 类型表示的，即字符串。
 - en: 'Then, we defined a helper function for calculating the bars per some group.
     The input of the function must be a `DataFrameGroupBy` object, that is, the output
     of applying the `groupby` method to a `pandas` DataFrame. That is because the
     function calculates a bunch of aggregate statistics:'
+  id: totrans-287
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们定义了一个辅助函数来计算每个组的条形图。该函数的输入必须是 `DataFrameGroupBy` 对象，也就是将 `groupby` 方法应用于
+    `pandas` DataFrame 后的输出。这是因为该函数计算了一些聚合统计值：
 - en: OHLC values using the `ohlc` method.
+  id: totrans-288
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用 `ohlc` 方法的 OHLC 值。
 - en: The **volume-weighted average price** (**VWAP**) by applying the `np.average`
     method and using the quantity of the trade as the `weights` argument.
+  id: totrans-289
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通过应用 `np.average` 方法并使用交易数量作为 `weights` 参数来计算 **成交量加权平均价格**（**VWAP**）。
 - en: The total volume as the sum of the traded quantity.
+  id: totrans-290
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 总成交量为交易数量的总和。
 - en: The number of trades in a bar by using the `size` method.
+  id: totrans-291
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用 `size` 方法获取每个条形图中的交易数量。
 - en: Optionally, the function also returns the timestamp of the bar, which is simply
     the last timestamp of the group.
+  id: totrans-292
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 可选地，该函数还返回条形图的时间戳，时间戳就是该组的最后一个时间戳。
 - en: All of those are separate DataFrames, which we ultimately concatenated using
     the `pd.concat` function.
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有这些都是单独的 DataFrame，最终我们使用 `pd.concat` 函数将它们连接起来。
 - en: In *Step 5*, we calculated the time bars. We had to use the `groupby` method
     combined with `pd.Grouper`. We indicated we want to create the groups on the `time`
     column and used a one-minute frequency. Then, we passed the `DataFrameGroupBy`
     object to our `get_bars` function, which returned the time bars.
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 5*中，我们计算了时间条形图。我们必须使用`groupby`方法结合`pd.Grouper`。我们指定要在`time`列上创建分组，并使用一分钟的频率。然后，我们将`DataFrameGroupBy`对象传递给我们的`get_bars`函数，它返回了时间条形图。
 - en: In *Step 6*, we calculated the tick bars. The process was slightly different
     than with time bars, as we first had to create the column on which we want to
     group the trades. The idea was that we group the trades in blocks of 50 (this
@@ -1346,23 +1952,32 @@
     size, rounded the result down (using `np.floor`), and converted it into an integer.
     Then, we grouped the trades using the newly created column and applied the `get_bars`
     function.
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 6*中，我们计算了 tick bars。这个过程与时间条有所不同，因为我们首先需要创建一个列来对交易进行分组。这个想法是将交易按 50 为一组进行分组（这个数字是任意的，应根据分析逻辑来决定）。为了创建这样的分组，我们将行号除以选定的条形大小，向下取整（使用`np.floor`），并将结果转换为整数。然后，我们使用新创建的列对交易进行分组，并应用`get_bars`函数。
 - en: In *Step 7*, we calculated the volume bars. The process was quite similar to
     the tick bars. The difference was in creating the grouping column, which this
     time was based on the cumulative sum of the traded quantity. We selected the bar
     size of 1 BTC.
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 7*中，我们计算了成交量条形图。这个过程与 tick bars 相似。不同之处在于创建分组列，这次是基于已成交量的累积和。我们选择了 1 BTC
+    的条形大小。
 - en: The last step was to calculate the dollar bars. The process was almost identical
     to the volume bars, but we created the grouping column by applying a cumulative
     sum to the `quoteQty` column, instead of the `qty` one used before.
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后一步是计算美元条形图。这个过程几乎与成交量条形图相同，但我们通过对`quoteQty`列应用累积和来创建分组列，而不是之前使用的`qty`列。
 - en: There’s more…
+  id: totrans-298
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多……
 - en: The list of alternative kinds of bars in this recipe is not exhaustive. For
     example, De Prado (2018) suggests using **imbalance bars**, which attempt to sample
     the data when there is an imbalance of buying/selling activity, as this might
@@ -1371,36 +1986,51 @@
     asset, but they do not frequently do both simultaneously. Hence, sampling when
     imbalance events occur helps to focus on large movements and pay less attention
     to periods without interesting activity.
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 本食谱中列举的条形类型并不完全。例如，De Prado（2018）建议使用**不平衡条形图**，它在买卖活动不平衡时采样数据，因为这可能意味着市场参与者之间的信息不对称。这些条形图的逻辑是，市场参与者要么大量购买某一资产，要么大量出售，但他们不会同时做这两件事。因此，在不平衡事件发生时进行采样，有助于聚焦于大幅波动，并减少对没有有趣活动的时期的关注。
 - en: See also
+  id: totrans-300
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: De Prado, M. L. (2018). *Advances in Financial Machine Learning*. John Wiley
     & Sons.
+  id: totrans-301
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: De Prado, M. L. (2018). *金融机器学习进展*。约翰·威利与儿子公司。
 - en: '[https://github.com/binance/binance-connector-python](https://github.com/binance/binance-connector-python)—the
     GitHub repo of the library used for connecting to Binance’s API'
+  id: totrans-302
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '[https://github.com/binance/binance-connector-python](https://github.com/binance/binance-connector-python)——用于连接到
+    Binance API 的库的 GitHub 仓库'
 - en: Summary
+  id: totrans-303
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we have learned how to preprocess financial time series data.
     We started by showing how to calculate returns and potentially adjust them for
     inflation. Then, we covered a few of the popular methods for imputing missing
     values. Lastly, we explained the different approaches to aggregating trade data
     and why choosing the correct one matters.
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们学习了如何预处理金融时间序列数据。我们首先展示了如何计算回报并可能进行通胀调整。接着，我们介绍了几种常见的填补缺失值的方法。最后，我们解释了不同的交易数据聚合方法，以及为什么选择正确的聚合方式很重要。
 - en: We should always pay significant attention to this step, as we not only want
     to enhance our model’s performance but also to ensure the validity of any analysis.
     In the next chapter, we will continue working with the preprocessed data and learn
     how to create time series visualization.
+  id: totrans-305
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们应始终重视此步骤，因为我们不仅希望提高模型的表现，还要确保任何分析的有效性。在下一章中，我们将继续处理预处理的数据，并学习如何创建时间序列可视化。
