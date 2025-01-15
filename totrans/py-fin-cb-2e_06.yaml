@@ -1,0 +1,3814 @@
+- en: '6'
+  id: totrans-0
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: '6'
+- en: Time Series Analysis and Forecasting
+  id: totrans-1
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 时间序列分析与预测
+- en: Time series are omnipresent in both industry and research. We can find examples
+    of time series in commerce, tech, healthcare, energy, finance, and so on. We are
+    mostly interested in the last one, as the time dimension is inherent to trading
+    and many financial/economic indicators. However, pretty much every business generates
+    some sort of time series, for example, its profits collected over time or any
+    other measured KPI. That is why the techniques we cover in the following two chapters
+    can be used for any time series analysis task you might encounter in your line
+    of work.
+  id: totrans-2
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 时间序列在工业和研究领域无处不在。我们可以在商业、技术、医疗、能源、金融等领域找到时间序列的例子。我们主要关注的是金融领域，因为时间维度与交易以及许多金融/经济指标密切相关。然而，几乎每个企业都会生成某种时间序列数据，例如，企业随时间变化的利润或任何其他度量的
+    KPI。因此，本章和下一章介绍的技术可以用于你在工作中可能遇到的任何时间序列分析任务。
+- en: Time series modeling or forecasting can often be approached from different angles.
+    The two most popular are statistical methods and machine learning approaches.
+    Additionally, we will also cover some examples of using deep learning for time
+    series forecasting in *Chapter 15*, *Deep Learning in Finance*.
+  id: totrans-3
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 时间序列建模或预测通常可以从不同的角度进行。最流行的两种方法是统计方法和机器学习方法。此外，我们还将在*第15章*中介绍一些使用深度学习进行时间序列预测的示例，*《金融中的深度学习》*。
+- en: In the past, when we did not have vast computing power available at our disposal
+    and the time series were not that granular (as data was not collected everywhere
+    and all the time), statistical approaches dominated the domain. Recently, the
+    situation has changed, and ML-based approaches are taking the lead when it comes
+    to time series models running in production. However, that does not mean that
+    the classical statistical approaches are not relevant anymore—in fact, far from
+    it. They can still produce state-of-the-art results in cases when we have very
+    little training data (for example, 3 years of monthly data) and the ML models
+    simply cannot learn the patterns from it. Also, we can observe that statistical
+    approaches were used to win quite a few of the most recent M-Competitions (the
+    biggest time series forecasting competition started by Spyros Makridakis).
+  id: totrans-4
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在过去，当我们没有强大的计算能力且时间序列数据不够精细（因为数据并不是随处随时收集）时，统计方法主导了这一领域。近年来，情况发生了变化，基于机器学习的方法在生产环境中的时间序列模型中占据主导地位。然而，这并不意味着经典的统计方法已经不再相关——事实上，远非如此。在数据量非常少的情况下（例如，只有
+    3 年的月度数据），统计方法仍然能够产生最先进的结果，而机器学习模型可能无法从中学习出规律。此外，我们可以看到，统计方法在最近几届 M-Competitions（由
+    Spyros Makridakis 发起的最大时间序列预测竞赛）中赢得了不少奖项。
+- en: In this chapter, we introduce the basics of time series modeling. We start by
+    explaining the building blocks of time series and how to separate them using decomposition
+    methods. Later, we cover the concept of stationarity—why it is important, how
+    to test for it, and ultimately, how to achieve it if the original series is not
+    stationary.
+  id: totrans-5
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 本章将介绍时间序列建模的基础知识。我们首先解释时间序列的组成部分以及如何通过分解方法将其分离。然后，我们将讲解平稳性概念——为什么它很重要，如何进行平稳性检验，最终如果原始序列不是平稳的，如何使其平稳。
+- en: Then, we look at two of the most widely used statistical approaches to time
+    series modeling—exponential smoothing methods and ARIMA class models. In both
+    cases, we show you how to fit the models, evaluate their goodness of fit, and
+    forecast the future values of the time series.
+  id: totrans-6
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 接下来，我们将介绍两种最广泛使用的统计方法——指数平滑法和 ARIMA 类模型。在这两种方法中，我们都会展示如何拟合模型、评估模型的拟合优度，并预测时间序列的未来值。
+- en: 'We cover the following recipes in this chapter:'
+  id: totrans-7
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 本章内容包括以下几个部分：
+- en: Time series decomposition
+  id: totrans-8
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 时间序列分解
+- en: Testing for stationarity in time series
+  id: totrans-9
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 测试时间序列的平稳性
+- en: Correcting for stationarity in time series
+  id: totrans-10
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 校正时间序列的平稳性
+- en: Modeling time series with exponential smoothing methods
+  id: totrans-11
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 使用指数平滑法对时间序列建模
+- en: Modeling time series with ARIMA class models
+  id: totrans-12
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 使用 ARIMA 类模型对时间序列建模
+- en: Finding the best-fitting ARIMA model with auto-ARIMA
+  id: totrans-13
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 使用 auto-ARIMA 寻找最佳拟合的 ARIMA 模型
+- en: Time series decomposition
+  id: totrans-14
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 时间序列分解
+- en: One of the goals of time series decomposition is to increase our understanding
+    of the data by breaking down the series into multiple components. It provides
+    insight in terms of modeling complexity and which approaches to follow in order
+    to accurately capture/model each of the components.
+  id: totrans-15
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 时间序列分解的目标之一是通过将序列分解为多个组件来增加我们对数据的理解。它提供了关于建模复杂性以及为了准确捕捉/建模每个组件应采取哪些方法的见解。
+- en: An example can shed more light on the possibilities. We can imagine a time series
+    with a clear trend, either increasing or decreasing. On one hand, we could use
+    the decomposition to extract the trend component and remove it from our time series
+    before modeling the remaining series. This could help with making the time series
+    stationary (please refer to the following recipe for more details). Then, we can
+    always add it back after the rest of the components have been accounted for. On
+    the other hand, we could provide enough data or adequate features for our algorithm
+    to model the trend itself.
+  id: totrans-16
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一个例子可以更好地阐明这些可能性。我们可以想象一个具有明确趋势的时间序列，可能是增长或下降。一方面，我们可以使用分解方法提取趋势组件，并在建模剩余序列之前将其从时间序列中移除。这有助于使时间序列平稳（有关更多细节，请参见下面的步骤）。然后，在考虑了其余组件之后，我们可以将其重新加回来。另一方面，我们也可以提供足够的数据或适当的特征，供算法自行建模趋势。
+- en: 'The components of time series can be divided into two types: systematic and
+    non-systematic. The systematic ones are characterized by consistency and the fact
+    that they can be described and modeled. By contrast, the non-systematic ones cannot
+    be modeled directly.'
+  id: totrans-17
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 时间序列的组件可以分为两种类型：系统性和非系统性。系统性组件的特点是具有一致性，可以描述并建模。相反，非系统性组件无法直接建模。
+- en: 'The following are the **systematic components**:'
+  id: totrans-18
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 以下是**系统性组件**：
+- en: '**Level**—the mean value in the series.'
+  id: totrans-19
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**水平**—序列中的平均值。'
+- en: '**Trend**—an estimate of the trend, that is, the change in value between successive
+    time points at any given moment. It can be associated with the slope (increasing/decreasing)
+    of the series. In other words, it is the general direction of the time series
+    over a long period of time.'
+  id: totrans-20
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**趋势**—对趋势的估计，即在任何给定时刻，连续时间点之间的值变化。它可以与序列的斜率（增加/减少）相关联。换句话说，它是时间序列在长时间段内的总体方向。'
+- en: '**Seasonality**—deviations from the mean caused by repeating short-term cycles
+    (with fixed and known periods).'
+  id: totrans-21
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**季节性**—由重复的短期周期（具有固定且已知的周期）引起的均值偏差。'
+- en: 'The following is the non-systematic component:'
+  id: totrans-22
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 以下是非系统性组件：
+- en: '**Noise**—the random variation in the series. It consists of all the fluctuations
+    that are observed after removing other components from the time series.'
+  id: totrans-23
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**噪声**—序列中的随机变化。它包括从时间序列中移除其他组件后观察到的所有波动。'
+- en: 'The classical approach to time series decomposition is usually carried out
+    using one of two types of models: additive and multiplicative.'
+  id: totrans-24
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 传统的时间序列分解方法通常使用两种类型的模型之一：加法模型和乘法模型。
+- en: 'An **additive model** can be described by the following characteristics:'
+  id: totrans-25
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**加法模型**可以通过以下特点进行描述：'
+- en: Model’s form—![](../Images/B18112_06_001.png)
+  id: totrans-26
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 模型形式—![](../Images/B18112_06_001.png)
+- en: Linear model—changes over time are consistent in size
+  id: totrans-27
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 线性模型—随时间变化的幅度一致
+- en: The trend is linear (straight line)
+  id: totrans-28
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 趋势是线性的（直线）
+- en: Linear seasonality with the same frequency (width) and amplitude (height) of
+    cycles over time
+  id: totrans-29
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 具有相同频率（宽度）和幅度（高度）的线性季节性变化
+- en: 'A **multiplicative model** can be described by the following characteristics:'
+  id: totrans-30
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**乘法模型**可以通过以下特点进行描述：'
+- en: Model’s form—![](../Images/B18112_06_002.png)
+  id: totrans-31
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 模型形式—![](../Images/B18112_06_002.png)
+- en: Non-linear model—changes over time are not consistent in size, for example,
+    exponential
+  id: totrans-32
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 非线性模型—随时间变化的幅度不一致，例如指数型变化
+- en: A curved, non-linear trend
+  id: totrans-33
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 一条曲线型的非线性趋势
+- en: Non-linear seasonality with increasing/decreasing frequency and amplitude of
+    cycles over time
+  id: totrans-34
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 具有随时间变化的频率和幅度增加/减少的非线性季节性
+- en: To make things more interesting, we can find time series with combinations of
+    additive and multiplicative characteristics, for example, a series with additive
+    trend and multiplicative seasonality.
+  id: totrans-35
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 为了让事情变得更有趣，我们可以找到具有加法和乘法特征组合的时间序列，例如，具有加法趋势和乘法季节性的序列。
+- en: Please refer to the following figure for visualization of the possible combinations.
+    And while real-world problems are never that simple (noisy data with varying patterns),
+    these abstract models offer a simple framework that we can use to analyze our
+    time series before attempting to model/forecast it.
+  id: totrans-36
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 请参考下图以可视化可能的组合。虽然现实世界的问题从来没有那么简单（数据噪声和不断变化的模式），但这些抽象模型提供了一个简单的框架，我们可以用它来分析我们的时间序列，然后再尝试进行建模/预测。
+- en: '![](../Images/B18112_06_01.png)'
+  id: totrans-37
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_01.png)'
+- en: 'Figure 6.1: Additive and multiplicative variants of trend and seasonality'
+  id: totrans-38
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.1：趋势和季节性加法与乘法变体
+- en: 'It can be the case that we do not want to (or simply cannot, due to some models’
+    assumptions) work with a multiplicative model. One possible solution is to transform
+    the multiplicative model into an additive one using logarithmic transformation:'
+  id: totrans-39
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 有时我们可能不想（或者由于某些模型假设不能）使用乘法模型。一个可能的解决方案是通过对数变换将乘法模型转换为加法模型：
+- en: '![](../Images/B18112_06_003.png)'
+  id: totrans-40
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_003.png)'
+- en: In this recipe, we will present how to carry out time series decomposition of
+    monthly US unemployment rates downloaded from the Nasdaq Data Link.
+  id: totrans-41
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本例中，我们将展示如何进行美国月度失业率的时间序列分解，这些数据是从纳斯达克数据链接下载的。
+- en: How to do it...
+  id: totrans-42
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 如何操作...
+- en: 'Execute the following steps to carry out the time series decomposition:'
+  id: totrans-43
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤进行时间序列分解：
+- en: 'Import the libraries and authenticate:'
+  id: totrans-44
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库并进行身份验证：
+- en: '[PRE0]'
+  id: totrans-45
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE0]'
+- en: 'Download the monthly US unemployment rate from the years 2010 to 2019:'
+  id: totrans-46
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 下载2010年至2019年间的美国月度失业率数据：
+- en: '[PRE1]'
+  id: totrans-47
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE1]'
+- en: In *Figure 6.2*, we can see some clear seasonal patterns in the time series.
+    We did not include more recent data in this analysis, as the COVID-19 pandemic
+    caused quite abrupt changes in any patterns observable in the unemployment rate
+    time series. We do not show the code used for generating the plot, as it is very
+    similar to the one used in *Chapter 3*, *Visualizing Financial Time Series*.
+  id: totrans-48
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 在*图 6.2*中，我们可以看到时间序列中一些明显的季节性模式。我们没有将最新数据包含在本次分析中，因为COVID-19大流行对失业率时间序列中的任何可观察模式造成了相当突兀的变化。我们没有展示生成图表所使用的代码，因为它与*第
+    3 章*《可视化金融时间序列》中的代码非常相似。
+- en: '![](../Images/B18112_06_02.png)'
+  id: totrans-49
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_02.png)'
+- en: 'Figure 6.2: Seasonal plot of the US unemployment rate in the years 2010 to
+    2019'
+  id: totrans-50
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.2：2010 至 2019 年间美国失业率的季节性图
+- en: 'Add rolling mean and standard deviation:'
+  id: totrans-51
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 添加滚动平均和标准差：
+- en: '[PRE2]'
+  id: totrans-52
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE2]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-53
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_03.png)'
+  id: totrans-54
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_03.png)'
+- en: 'Figure 6.3: The US unemployment rate together with the rolling average and
+    standard deviation'
+  id: totrans-55
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.3：美国失业率及其滚动平均和标准差
+- en: From the analysis of *Figure 6.3*, we can infer that the trend and seasonal
+    components seem to have a linear pattern. Therefore, we will use additive decomposition
+    in the next step.
+  id: totrans-56
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 从*图 6.3*的分析中，我们可以推断出趋势和季节性成分似乎呈现线性模式。因此，我们将在下一步中使用加法分解。
+- en: 'Carry out the seasonal decomposition using the additive model:'
+  id: totrans-57
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 使用加法模型进行季节性分解：
+- en: '[PRE3]'
+  id: totrans-58
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE3]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-59
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_04.png)'
+  id: totrans-60
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_04.png)'
+- en: 'Figure 6.4: The seasonal decomposition of the US unemployment rate (using an
+    additive model)'
+  id: totrans-61
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.4：美国失业率的季节性分解（使用加法模型）
+- en: 'In the decomposition plot, we can see the extracted component series: trend,
+    seasonal, and random (residual). To evaluate whether the decomposition makes sense,
+    we can look at the random component. If there is no discernible pattern (in other
+    words, the random component is indeed random and behaves consistently over time),
+    then the fit makes sense. In this case, it looks like the variance in the residuals
+    is slightly higher in the first half of the dataset. This can indicate that a
+    constant seasonal pattern is not good enough to accurately capture the seasonal
+    component of the analyzed time series.'
+  id: totrans-62
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在分解图中，我们可以看到提取的成分序列：趋势、季节性和随机（残差）。为了评估分解是否合理，我们可以查看随机成分。如果没有明显的模式（换句话说，随机成分确实是随机的，并且随时间变化一致），那么分解结果是合理的。在这种情况下，看起来残差的方差在数据集的前半部分略高。这可能表明一个常量的季节性模式不足以准确捕捉所分析时间序列的季节性成分。
+- en: How it works...
+  id: totrans-63
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 它是如何工作的...
+- en: After downloading the data in *Step 2*, we used the `rolling` method of a `pandas`
+    DataFrame to calculate the rolling statistics. We specified that we wanted to
+    use the window size of 12 months, as we are working with monthly data.
+  id: totrans-64
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 2*中下载数据后，我们使用`pandas` DataFrame的`rolling`方法计算滚动统计。我们指定了12个月的窗口大小，因为我们处理的是月度数据。
+- en: We used the `seasonal_decompose` function from the `statsmodels` library to
+    carry out the classical decomposition. When doing so, we indicated what kind of
+    model we would like to use—the possible values are `additive` and `multiplicative`.
+  id: totrans-65
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们使用`statsmodels`库中的`seasonal_decompose`函数进行经典分解。在此过程中，我们指明了希望使用的模型类型——可能的值是`additive`（加法）和`multiplicative`（乘法）。
+- en: When using `seasonal_decompose` with an array of numbers, we must specify the
+    frequency of the observations (the `freq` argument) unless we are working with
+    a `pandas` Series object. If we have missing values or want to extrapolate the
+    residuals for the missing periods at the beginning and the end of the time series,
+    we can pass an extra argument `extrapolate_trend='freq'`.
+  id: totrans-66
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 当使用`seasonal_decompose`处理数字数组时，除非我们使用`pandas` Series对象，否则必须指定观测的频率（`freq`参数）。如果存在缺失值或希望为时间序列开始和结束处的缺失周期外推残差，我们可以传递额外的参数`extrapolate_trend='freq'`。
+- en: There’s more…
+  id: totrans-67
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 还有更多……
+- en: 'The seasonal decomposition we have used in this recipe is the most basic approach.
+    It comes with a few disadvantages:'
+  id: totrans-68
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们在本配方中使用的季节性分解是最基本的方法。它有一些缺点：
+- en: As the algorithm uses centered moving averages to estimate the trend, running
+    the decomposition results in missing values of the trend line (and the residuals)
+    at the very beginning and end of the time series.
+  id: totrans-69
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 由于该算法使用居中移动平均来估计趋势，运行分解时，时间序列的开头和结尾会出现趋势线（和残差）的缺失值。
+- en: The seasonal pattern estimated using this approach is assumed to repeat every
+    year. It goes without saying that this is a very strong assumption, especially
+    for longer time series.
+  id: totrans-70
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 使用此方法估算的季节性模式假设每年都会重复一次。不言而喻，这个假设非常强，特别是对于较长时间序列。
+- en: The trend line has a tendency to over-smooth the data, which in turn results
+    in the trend line not responding adequately to sharp or sudden fluctuations.
+  id: totrans-71
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 趋势线有过度平滑数据的倾向，这会导致趋势线无法充分响应剧烈或突发的波动。
+- en: The method is not robust to potential outliers in the data.
+  id: totrans-72
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 该方法对数据中的潜在异常值不稳健。
+- en: Over time, a few alternative approaches to time series decomposition were introduced.
+    In this section, we will also cover seasonal and trend decomposition using **LOESS**
+    (STL decomposition), which is implemented in the `statsmodels` library.
+  id: totrans-73
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 随着时间的推移，出现了几种替代的时间序列分解方法。在这一节中，我们还将介绍使用**LOESS**（STL分解）进行的季节性和趋势分解，这在`statsmodels`库中得到了实现。
+- en: LOESS stands for **locally estimated scatterplot smoothing** and it is a method
+    of estimating non-linear relationships.
+  id: totrans-74
+  prefs: []
+  type: TYPE_NORMAL
+  zh: LOESS代表**局部估计散点平滑**，它是一种估计非线性关系的方法。
+- en: 'We will not go into the details of how STL decomposition works; however, it
+    makes sense to be familiar with its advantages over the other approaches:'
+  id: totrans-75
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们不会深入探讨STL分解的工作原理；然而，了解它相较于其他方法的优势是有意义的：
+- en: STL can handle any kind of seasonality (not restricted to monthly or quarterly,
+    as some other methods are)
+  id: totrans-76
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: STL可以处理任何类型的季节性（不像其他一些方法那样仅限于月度或季度）。
+- en: The user can control the smoothness of the trend
+  id: totrans-77
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 用户可以控制趋势的平滑度。
+- en: The seasonal component can change over time (the rate of change can be controlled
+    by the user)
+  id: totrans-78
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 季节性成分可能随时间变化（变化率可以由用户控制）。
+- en: More robust to outliers—the estimation of the trend and seasonal components
+    is not affected by their presence, while their impact is still visible in the
+    remainder component
+  id: totrans-79
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 对异常值更稳健——趋势和季节性成分的估计不会受到异常值的影响，尽管它们的影响仍然会在残差成分中可见。
+- en: Naturally, it is not a silver-bullet solution and comes with some drawbacks
+    of its own. For example, STL can only be used with additive decomposition and
+    it does not automatically account for trading days/calendar variations.
+  id: totrans-80
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 自然地，它并不是万能的解决方案，并且也有一些自身的缺点。例如，STL仅能用于加法分解，并且不会自动考虑交易日/日历变化。
+- en: There is a recent variant of STL decomposition that can handle multiple seasonalities.
+    For example, a time series of hourly data can exhibit daily/weekly/monthly seasonalities.
+    The approach is called **Multiple Seasonal-Trend Decomposition using LOESS** (**MSTL**)
+    and you can find the reference to it in the *See also* section.
+  id: totrans-81
+  prefs: []
+  type: TYPE_NORMAL
+  zh: STL分解的一个最近变种可以处理多个季节性。例如，一组小时数据的时间序列可以展现出每日/每周/每月的季节性。这种方法被称为**使用LOESS的多重季节性趋势分解**（**MSTL**），你可以在*另见*部分找到相关文献。
+- en: 'We can carry out the STL decomposition with the following snippet:'
+  id: totrans-82
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以通过以下代码片段执行STL分解：
+- en: '[PRE4]'
+  id: totrans-83
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE4]'
+- en: 'Running the code generates the following plot:'
+  id: totrans-84
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行代码会生成以下图表：
+- en: '![](../Images/B18112_06_05.png)'
+  id: totrans-85
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_05.png)'
+- en: 'Figure 6.5: The STL decomposition of the US unemployment time series'
+  id: totrans-86
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图6.5：美国失业时间序列的STL分解
+- en: We can see that the decomposition plots of the STL and classical decompositions
+    are very similar. However, there are some nuances in *Figure 6.5*, connected to
+    the benefits of STL decomposition over the classical one. First, there are no
+    missing values in the trend estimate. Second, the seasonal component is slowly
+    changing over time. You can see it clearly when looking at, for example, the values
+    for January across the years.
+  id: totrans-87
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以看到，STL分解和经典分解的分解图非常相似。然而，在*图6.5*中存在一些细微差别，显示了STL分解相对于经典分解的优势。首先，趋势估计中没有缺失值。其次，季节成分随时间缓慢变化。例如，当你查看不同年份一月的数据时，可以清晰地看到这一点。
+- en: The default value of the `seasonal` argument in `STL` is set to 7, but the authors
+    of the approach suggest using larger values (must be odd integers greater than
+    or equal to 7). Under the hood, the value of that parameter indicates the number
+    of consecutive years to be used in estimating each value of the seasonal component.
+    The larger the chosen value, the smoother the seasonal component becomes. This,
+    in turn, causes fewer of the variations observed in the time series to be attributed
+    to the seasonal component. The interpretation is similar for the `trend` argument,
+    though it represents the number of consecutive observations to be used for estimating
+    the trend component.
+  id: totrans-88
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`STL`中`seasonal`参数的默认值设置为7，但该方法的作者建议使用更大的值（必须是大于或等于7的奇数）。在内部，该参数的值表示在估算季节成分的每个值时所使用的连续年份数。选择的值越大，季节成分越平滑。反过来，这导致时间序列中观察到的波动较少被归因于季节成分。`trend`参数的解释类似，不过它表示用于估算趋势成分的连续观察值数量。'
+- en: We have also mentioned that one of the benefits of the STL decomposition is
+    its higher robustness against outliers. We can use the `robust` argument to switch
+    on a data-dependent weighting function. It re-weights the observations when estimating
+    the LOESS, which becomes **LOWESS** (**locally weighted scatterplot smoothing**)
+    in such a scenario. When using robust estimation, the model can tolerate larger
+    errors that are visible on the residual component’s plot.
+  id: totrans-89
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还提到过，STL分解的一个优点是其对离群值的更高鲁棒性。我们可以使用`robust`参数来启用数据依赖的加权函数。它在估计LOESS时重新加权观察值，在这种情况下，LOESS变成了**LOWESS**（**局部加权散点图平滑**）。在使用鲁棒估计时，模型能够容忍在残差成分图中可见的较大误差。
+- en: In *Figure 6.6* you can see a comparison of fitting two STL decompositions to
+    the US unemployment data—with and without the robust estimation. For the code
+    used to generate the figure, please refer to the notebook in the book’s GitHub
+    repository.
+  id: totrans-90
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*图6.6*中，你可以看到将两种STL分解方法与美国失业数据进行比较——有无鲁棒估计的对比。有关生成该图的代码，请参阅书籍GitHub库中的笔记本。
+- en: '![](../Images/B18112_06_06.png)'
+  id: totrans-91
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_06.png)'
+- en: 'Figure 6.6: The effect of using robust estimation in the STL decomposition
+    process'
+  id: totrans-92
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图6.6：使用鲁棒估计在STL分解过程中的效果
+- en: We can clearly observe the effects of using robust estimation—larger errors
+    are tolerated and the shape of the seasonal component is different over the first
+    few years of the analyzed time series. There is no clear answer whether the robust
+    or non-robust approach is better in this case; it all depends on what we want
+    to use the decomposition for. Seasonal decomposition methods presented in this
+    recipe can also serve as simple outlier detection algorithms. For example, we
+    could decompose the series, extract the residuals, and flag observations as outliers
+    when their residuals are outside 3 times the **interquartile range** (**IQR**).
+    The `kats` library provides an implementation of such an algorithm in its `OutlierDetector`
+    class.
+  id: totrans-93
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以清楚地观察到使用鲁棒估计的效果——较大的误差被容忍，且分析时间序列的前几年中季节性成分的形态有所不同。在这种情况下，鲁棒方法和非鲁棒方法哪个更好并没有明确的答案；这完全取决于我们想用分解做什么。本节中介绍的季节性分解方法也可以作为简单的异常值检测算法。例如，我们可以对序列进行分解，提取残差，并在残差超出
+    3 倍 **四分位距** (**IQR**) 时将观测值标记为异常值。`kats` 库在其 `OutlierDetector` 类中提供了这种算法的实现。
+- en: 'Other available approaches to seasonal decomposition include:'
+  id: totrans-94
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 其他可用的季节性分解方法包括：
+- en: '**Seasonal Extraction in ARIMA Time Series** (**SEATS**) decomposition.'
+  id: totrans-95
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**ARIMA 时间序列中的季节性提取** (**SEATS**) 分解。'
+- en: X11 decomposition—this variant of the decomposition creates a trend-cycle component
+    for all observations and allows the seasonal component to change slowly over time.
+  id: totrans-96
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: X11 分解—这种分解变体为所有观测值创建一个趋势-周期成分，并允许季节性成分随时间缓慢变化。
+- en: Hodrick-Prescott filter—while this method is not really a seasonal decomposition
+    approach, it is a data smoothing technique used to remove short-term fluctuations
+    associated with the business cycle. By removing those, we can reveal the long-term
+    trends. The HP filter is commonly used in macroeconomics. You can find its implementation
+    in the `hpfilter` function of `statsmodels`.
+  id: totrans-97
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 霍德里克-普雷斯科特滤波器—虽然该方法实际上不是一种季节性分解方法，但它是一种数据平滑技术，用于去除与商业周期相关的短期波动。通过去除这些波动，我们可以揭示长期趋势。HP
+    滤波器常用于宏观经济学中。你可以在 `statsmodels` 的 `hpfilter` 函数中找到它的实现。
+- en: See also
+  id: totrans-98
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 另见
+- en: 'Useful references on time series decomposition:'
+  id: totrans-99
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 关于时间序列分解的有用参考资料：
+- en: 'Bandara, K., Hyndman, R. J., & Bergmeir, C. 2021\. “MSTL: A Seasonal-Trend
+    Decomposition Algorithm for Time Series with Multiple Seasonal Patterns.” *arXiv
+    preprint arXiv:2107.13462*.'
+  id: totrans-100
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Bandara, K., Hyndman, R. J., & Bergmeir, C. 2021\. “MSTL：一种用于具有多种季节性模式的时间序列的季节趋势分解算法。”
+    *arXiv 预印本 arXiv:2107.13462*。
+- en: 'Cleveland, R. B., Cleveland, W. S., McRae, J. E., & Terpenning, I. J. 1990\.
+    “A Seasonal Trend Decomposition Procedure Based on LOESS,” *Journal of Official
+    Statistics* *6*(1): 3–73\.'
+  id: totrans-101
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 'Cleveland, R. B., Cleveland, W. S., McRae, J. E., & Terpenning, I. J. 1990\.
+    “基于 LOESS 的季节性趋势分解程序，” *官方统计期刊* *6*(1): 3–73\。'
+- en: 'Hyndman, R.J. & Athanasopoulos, G. 2021\. *Forecasting: Principles and Practice*,
+    3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3'
+  id: totrans-102
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R.J. & Athanasopoulos, G. 2021\. *预测：原理与实践*，第 3 版，OTexts：澳大利亚墨尔本。OTexts.com/fpp3
+- en: Sutcliffe, A. 1993\. *X11 time series decomposition and sampling errors*. Australian
+    Bureau of Statistics.
+  id: totrans-103
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Sutcliffe, A. 1993\. *X11 时间序列分解与抽样误差*。澳大利亚统计局。
+- en: Testing for stationarity in time series
+  id: totrans-104
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 时间序列平稳性检验
+- en: One of the most important concepts in time series analysis is **stationarity**.
+    Plainly speaking, a stationary time series is a series whose properties do not
+    depend on the time at which the series is observed. In other words, stationarity
+    implies that the statistical properties of the **data-generating process** (**DGP**)
+    of a certain time series do not change over time.
+  id: totrans-105
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 时间序列分析中最重要的概念之一是 **平稳性**。简单来说，平稳时间序列是一个其属性不依赖于观察时刻的序列。换句话说，平稳性意味着某一时间序列的 **数据生成过程**
+    (**DGP**) 的统计属性随时间不变。
+- en: Hence, we should not be able to see any trend or seasonal patterns in a stationary
+    time series, as their existence violates the stationarity assumptions. On the
+    other hand, a white noise process is stationary, as it does not matter when we
+    observe it; it will always look pretty much the same at any point in time.
+  id: totrans-106
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 因此，我们不应该在平稳时间序列中看到任何趋势或季节性模式，因为它们的存在违反了平稳性假设。另一方面，白噪声过程是平稳的，因为无论何时观察，它的表现都几乎相同。
+- en: A time series without trend and seasonality but with cyclic behavior can still
+    be stationary because the cycles are not of a fixed length. So unless we explicitly
+    observe a time series, we cannot be sure where the peaks and troughs of the cycles
+    will be located.
+  id: totrans-107
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一个没有趋势和季节性但具有周期性行为的时间序列仍然可以是平稳的，因为这些周期的长度并不固定。因此，除非我们明确观察一个时间序列，否则无法确定周期的峰值和谷值的位置。
+- en: 'To put it more formally, there are multiple definitions of stationarity, some
+    stricter in terms of the assumptions than others. For practical use cases, we
+    can work with the one called **weak stationarity** (or covariance stationarity).
+    For a time series to be classified as (covariance) stationary, it must satisfy
+    the following three conditions:'
+  id: totrans-108
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 更正式地说，平稳性有多种定义，有些在假设上更严格。对于实际使用的情况，我们可以使用所谓的**弱平稳性**（或协方差平稳性）。为了将时间序列分类为（协方差）平稳，它必须满足以下三个条件：
+- en: The mean of the series must be constant
+  id: totrans-109
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 序列的均值必须是恒定的
+- en: The variance of the series must be finite and constant
+  id: totrans-110
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 序列的方差必须是有限且恒定的
+- en: The covariance between periods of identical distance must be constant
+  id: totrans-111
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 相隔相同时间的期数之间的协方差必须是恒定的
+- en: Stationarity is a desired characteristic of time series as it makes modeling
+    and extrapolating (forecasting) into the future more feasible. That is because
+    a stationary series is easier to predict than a non-stationary one, as its statistical
+    properties will be the same in the future as they have been in the past.
+  id: totrans-112
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 平稳性是时间序列的一个理想特征，因为它使得建模和未来预测变得更加可行。这是因为平稳序列比非平稳序列更容易预测，因为其统计特性在未来与过去相同。
+- en: 'Some drawbacks of non-stationary data are:'
+  id: totrans-113
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 非平稳数据的一些缺点包括：
+- en: Variance can be misspecified by the model
+  id: totrans-114
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 方差可能会被模型错误指定
+- en: Worse model fit, resulting in worse forecasts
+  id: totrans-115
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 模型拟合较差，导致预测较差
+- en: We cannot leverage valuable time-dependent patterns in the data
+  id: totrans-116
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们无法利用数据中有价值的时间依赖模式
+- en: While stationarity is a desired trait of a time series, this is not applicable
+    to all statistical models. We would want our time series to be stationary when
+    modeling the series using some kind of auto-regressive model (AR, ARMA, ARIMA,
+    and so on). However, there are also models that do not benefit from stationary
+    time series, for example, those that depend heavily on time series decomposition
+    (exponential smoothing methods or Facebook’s Prophet).
+  id: totrans-117
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 虽然平稳性是时间序列的一个理想特性，但并不是所有统计模型都适用。我们希望在使用某种自回归模型（如 AR、ARMA、ARIMA 等）进行建模时，时间序列是平稳的。然而，也有一些模型不依赖于平稳时间序列，举例来说，依赖时间序列分解的方法（如指数平滑法或
+    Facebook 的 Prophet）。
+- en: 'In this recipe, we will show you how to test the time series for stationarity.
+    To do so, we employ the following methods:'
+  id: totrans-118
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这个示例中，我们将向你展示如何测试时间序列的平稳性。为此，我们将使用以下方法：
+- en: The **Augmented Dickey-Fuller** (**ADF**) test
+  id: totrans-119
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**扩展的迪基-福勒**（**ADF**）检验'
+- en: The **Kwiatkowski-Phillips-Schmidt-Shin** (**KPSS**) test
+  id: totrans-120
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**Kwiatkowski-Phillips-Schmidt-Shin**（**KPSS**）检验'
+- en: Plots of the (partial) autocorrelation function (PACF/ACF)
+  id: totrans-121
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: （部分）自相关函数（PACF/ACF）的图形
+- en: We will investigate the stationarity of monthly unemployment rates in the years
+    2010 to 2019.
+  id: totrans-122
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将研究 2010 至 2019 年间的月度失业率的平稳性。
+- en: Getting ready
+  id: totrans-123
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 准备工作
+- en: We will use the same data that we used in the *Time series decomposition* recipe.
+    In the plot presenting the rolling mean and standard deviation of the unemployment
+    rates (*Figure 6.3*), we have already seen a negative trend over time, suggesting
+    non-stationarity.
+  id: totrans-124
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将使用在 *时间序列分解* 示例中使用的相同数据。在展示失业率滚动均值和标准差的图表中（*图 6.3*），我们已经看到了随时间的负趋势，暗示了非平稳性。
+- en: How to do it...
+  id: totrans-125
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 如何操作...
+- en: 'Execute the following steps to test if the time series of monthly US unemployment
+    rates is stationary:'
+  id: totrans-126
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤来测试美国月度失业率的时间序列是否平稳：
+- en: 'Import the libraries:'
+  id: totrans-127
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库：
+- en: '[PRE5]'
+  id: totrans-128
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE5]'
+- en: 'Define a function for running the ADF test:'
+  id: totrans-129
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 定义运行 ADF 检验的函数：
+- en: '[PRE6]'
+  id: totrans-130
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE6]'
+- en: 'Having defined the function, we can run the test:'
+  id: totrans-131
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 定义好函数后，我们可以运行测试：
+- en: '[PRE7]'
+  id: totrans-132
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE7]'
+- en: 'Running the snippet generates the following summary:'
+  id: totrans-133
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行该代码片段将生成以下摘要：
+- en: '[PRE8]'
+  id: totrans-134
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE8]'
+- en: The null hypothesis of the ADF test states that the time series is not stationary.
+    With a p-value of `0.26` (or equivalently, the test statistic is greater than
+    the critical value for the selected confidence level), we have no reason to reject
+    the null hypothesis, meaning that we can conclude that the series is not stationary.
+  id: totrans-135
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: ADF 检验的原假设指出时间序列不是平稳的。当 p 值为 `0.26`（或等效地，测试统计量大于选定置信水平的临界值）时，我们没有理由拒绝原假设，这意味着我们可以得出结论，序列不是平稳的。
+- en: 'Define a function for running the KPSS test:'
+  id: totrans-136
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 定义一个用于运行 KPSS 检验的函数：
+- en: '[PRE9]'
+  id: totrans-137
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE9]'
+- en: 'Having defined the function, we can run the test:'
+  id: totrans-138
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 定义好函数后，我们可以运行检验：
+- en: '[PRE10]'
+  id: totrans-139
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE10]'
+- en: 'Running the snippet generates the following summary:'
+  id: totrans-140
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下总结：
+- en: '[PRE11]'
+  id: totrans-141
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE11]'
+- en: The null hypothesis of the KPSS test states that the time series is stationary.
+    With a p-value of `0.01` (or a test statistic greater than the selected critical
+    value), we have reasons to reject the null hypothesis in favor of the alternative
+    one, indicating that the series is not stationary.
+  id: totrans-142
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: KPSS 检验的原假设指出时间序列是平稳的。当 p 值为 `0.01`（或测试统计量大于选定的临界值）时，我们有理由拒绝原假设，支持替代假设，表明序列不是平稳的。
+- en: 'Generate the ACF/PACF plots:'
+  id: totrans-143
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 生成 ACF/PACF 图：
+- en: '[PRE12]'
+  id: totrans-144
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE12]'
+- en: 'Running the snippet generates the following plots:'
+  id: totrans-145
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_07.png)'
+  id: totrans-146
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_07.png)'
+- en: 'Figure 6.7: Autocorrelation and Partial Autocorrelation plots of the unemployment
+    rate'
+  id: totrans-147
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.7：失业率的自相关和偏自相关图
+- en: In the ACF plot, we can see that there are significant autocorrelations (above
+    the 95% confidence interval, corresponding to the selected 5% significance level).
+    There are also some significant autocorrelations at lags 1 and 4 in the PACF plot.
+  id: totrans-148
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在 ACF 图中，我们可以看到存在显著的自相关（超出 95% 置信区间，对应选定的 5% 显著性水平）。在 PACF 图中，滞后 1 和滞后 4 也存在一些显著的自相关。
+- en: How it works...
+  id: totrans-149
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 它是如何工作的……
+- en: In *Step 2*, we defined a function used for running the ADF test and printing
+    out the results. We specified `autolag="AIC"` while calling the `adfuller` function,
+    so the number of considered lags is automatically selected based on the **Akaike
+    Information Criterion** (**AIC**). Alternatively, we could select the number of
+    lags manually.
+  id: totrans-150
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 2*中，我们定义了一个用于运行 ADF 检验并打印结果的函数。我们在调用 `adfuller` 函数时指定了 `autolag="AIC"`，因此考虑的滞后数是根据
+    **赤池信息量准则**（**AIC**）自动选择的。或者，我们可以手动选择滞后数。
+- en: For the `kpss` function (*Step 3*), we specified the `regression` argument.
+    A value of `"c"` corresponds to the null hypothesis stating that the series is
+    level-stationary, while `"ct"` corresponds to trend-stationary (removing the trend
+    from the series would make it level-stationary).
+  id: totrans-151
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 对于 `kpss` 函数（*步骤 3*），我们指定了 `regression` 参数。值为 `"c"` 表示原假设认为序列是水平平稳的，而 `"ct"`
+    表示趋势平稳的（去除趋势后序列将变为水平平稳的）。
+- en: For all the tests and the autocorrelation plots, we selected a significance
+    level of 5%, which indicates the probability of rejecting the null hypothesis
+    (H0) when it is, in fact, true.
+  id: totrans-152
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 对于所有的检验和自相关图，我们选择了 5% 的显著性水平，这表示当原假设（H0）实际上为真时，拒绝原假设的概率。
+- en: There’s more…
+  id: totrans-153
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 还有更多……
+- en: In this recipe, we have used the `statsmodels` library to carry out the stationarity
+    tests. However, we had to wrap its functionalities in custom functions to have
+    a nicely presented summary. Alternatively, we can use the stationarity tests from
+    the `arch` library (we will cover the library in more depth when we explore the
+    GARCH models in *Chapter 9*, *Modeling Volatility with GARCH Class Models*).
+  id: totrans-154
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本示例中，我们使用了 `statsmodels` 库进行平稳性检验。然而，我们必须将其功能封装在自定义函数中，以便以清晰的方式呈现总结。或者，我们可以使用
+    `arch` 库中的平稳性检验（当我们在*第 9 章*《使用 GARCH 类模型建模波动率》深入探讨 GARCH 模型时，将详细介绍该库）。
+- en: 'We can carry out the ADF test using the following snippet:'
+  id: totrans-155
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以使用以下代码片段进行 ADF 检验：
+- en: '[PRE13]'
+  id: totrans-156
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE13]'
+- en: 'Which returns a nicely formatted output containing all the relevant information:'
+  id: totrans-157
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 它返回一个格式良好的输出，包含所有相关信息：
+- en: '[PRE14]'
+  id: totrans-158
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE14]'
+- en: 'The `arch` library also contains more stationarity tests, including:'
+  id: totrans-159
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '`arch` 库还包含更多的平稳性检验，包括：'
+- en: The Zivot-Andrews test (also available in `statsmodels`)
+  id: totrans-160
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Zivot-Andrews 检验（`statsmodels` 中也可用）
+- en: The **Phillips-Perron** (**PP**) test (unavailable in `statsmodels`)
+  id: totrans-161
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**菲利普斯-佩龙**（**PP**）检验（`statsmodels` 中不可用）'
+- en: A potential drawback of the ADF and KPSS tests is that they do not allow for
+    the possibility of a structural break, that is, an abrupt change in the mean or
+    other parameters of the data-generating process. The Zivot-Andrews test allows
+    for the possibility of a single structural break in the series, with an unknown
+    time of its occurrence.
+  id: totrans-162
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ADF和KPSS检验的一个潜在缺点是它们不考虑结构性断裂的可能性，即数据生成过程中的均值或其他参数的突变。Zivot-Andrews 检验允许序列中出现一次结构性断裂，并且其发生时间未知。
+- en: 'We can run the test using the following snippet:'
+  id: totrans-163
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以使用以下代码片段运行该测试：
+- en: '[PRE15]'
+  id: totrans-164
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE15]'
+- en: 'Which generates the summary:'
+  id: totrans-165
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这将生成摘要：
+- en: '[PRE16]'
+  id: totrans-166
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE16]'
+- en: Based on the test’s p-value, we cannot reject the null hypothesis stating that
+    the process is not stationary.
+  id: totrans-167
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 根据测试的 p 值，我们无法拒绝原假设，即该过程是非平稳的。
+- en: See also
+  id: totrans-168
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 另见
+- en: 'For more information on the additional stationarity tests, please refer to:'
+  id: totrans-169
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 有关其他平稳性检验的更多信息，请参考：
+- en: 'Phillips, P. C. B. & P. Perron, 1988\. “Testing for a unit root in time series
+    regression,” *Biometrika* 75: 335-346.'
+  id: totrans-170
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 'Phillips, P. C. B. & P. Perron, 1988\. “在时间序列回归中测试单位根，” *Biometrika* 75: 335-346。'
+- en: 'Zivot, E. & Andrews, D.W.K., 1992\. “Further evidence on the great crash, the
+    oil-price shock, and the unit-root hypothesis,” *Journal of Business & Economic
+    Studies*, 10: 251-270.'
+  id: totrans-171
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 'Zivot, E. & Andrews, D.W.K., 1992\. “关于大崩盘、石油价格冲击和单位根假设的进一步证据，” *Journal of
+    Business & Economic Studies*, 10: 251-270。'
+- en: Correcting for stationarity in time series
+  id: totrans-172
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 纠正时间序列的平稳性
+- en: 'In the previous recipe, we learned how to investigate if a given time series
+    is stationary. In this one, we will investigate how to make a non-stationary time
+    series stationary by using one (or multiple) of the following transformations:'
+  id: totrans-173
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在前一个食谱中，我们学习了如何调查一个给定的时间序列是否平稳。在本食谱中，我们将研究如何通过以下一种（或多种）变换方法将非平稳时间序列转化为平稳序列：
+- en: Deflation—accounting for inflation in monetary series using the **Consumer Price
+    Index** (**CPI**)
+  id: totrans-174
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 通货膨胀调整——使用**消费者物价指数**（**CPI**）来调整货币序列中的通货膨胀
+- en: Applying the natural logarithm—making the potential exponential trend closer
+    to linear and reducing the variance of the time series
+  id: totrans-175
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 应用自然对数——使潜在的指数趋势更接近线性，并减少时间序列的方差
+- en: Differencing—taking the difference between the current observation and a lagged
+    value (observation *x* time points before the current observation)
+  id: totrans-176
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 差分——计算当前观测值与滞后值（当前观测值之前 *x* 时间点的观测值）之间的差异
+- en: For this exercise, we will use monthly gold prices from the years 2000 to 2010\.
+    We have chosen this sample on purpose, as over that period the price of gold exhibits
+    a consistently increasing trend—the series is definitely not stationary.
+  id: totrans-177
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 对于本次练习，我们将使用2000年至2010年的月度黄金价格。我们故意选择这个样本，因为在此期间黄金价格呈现持续上涨的趋势——该序列显然是非平稳的。
+- en: How to do it...
+  id: totrans-178
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 如何操作...
+- en: 'Execute the following steps to transform the series from non-stationary to
+    stationary:'
+  id: totrans-179
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤将序列从非平稳转换为平稳：
+- en: 'Import the libraries and authenticate and update the inflation data:'
+  id: totrans-180
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库并验证并更新通货膨胀数据：
+- en: '[PRE17]'
+  id: totrans-181
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE17]'
+- en: In this recipe, we will be using the `test_autocorrelation` helper function,
+    which combines the components we covered in the previous recipe, the ADF and KPSS
+    tests, together with the ACF/PACF plots.
+  id: totrans-182
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 在本食谱中，我们将使用`test_autocorrelation`辅助函数，它结合了我们在前一个食谱中介绍的组件——ADF和KPSS检验，以及ACF/PACF图。
+- en: 'Download the prices of gold and resample to monthly values:'
+  id: totrans-183
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 下载黄金价格并重新采样为月度数据：
+- en: '[PRE18]'
+  id: totrans-184
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE18]'
+- en: We can use the `test_autocorrelation` helper function to test if the series
+    is stationary. We have done so in the notebook (available on GitHub) and the time
+    series of monthly gold prices is indeed not stationary.
+  id: totrans-185
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们可以使用`test_autocorrelation`辅助函数来测试序列是否平稳。我们在笔记本中（可在 GitHub 上找到）已经这样做过了，结果表明，月度黄金价格的时间序列确实是非平稳的。
+- en: 'Deflate the gold prices (to the 2010-12-31 USD values) and plot the results:'
+  id: totrans-186
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 对黄金价格进行通货膨胀调整（调整到 2010-12-31 的美元值），并绘制结果：
+- en: '[PRE19]'
+  id: totrans-187
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE19]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-188
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_08.png)'
+  id: totrans-189
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_08.png)'
+- en: 'Figure 6.8: Monthly gold prices and the deflated time series'
+  id: totrans-190
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.8：月度黄金价格与调整通货膨胀后的时间序列
+- en: We could also adjust the gold prices to another point in time, as long as it
+    is the same point for the entire series.
+  id: totrans-191
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们还可以将黄金价格调整到另一个时间点，只要整个序列中的时间点一致即可。
+- en: 'Apply the natural logarithm to the deflated series and plot it together with
+    the rolling metrics:'
+  id: totrans-192
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 对调整通货膨胀后的序列应用自然对数，并将其与滚动指标一起绘制：
+- en: '[PRE20]'
+  id: totrans-193
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE20]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-194
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_09.png)'
+  id: totrans-195
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_09.png)'
+- en: 'Figure 6.9: Time series after applying the deflation and natural logarithm,
+    together with its rolling statistics'
+  id: totrans-196
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.9：应用通货紧缩和自然对数后的时间序列，以及其滚动统计数据
+- en: From the preceding plot, we can see that the log transformation did its job,
+    that is, it made the exponential trend linear.
+  id: totrans-197
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 从之前的图中，我们可以看到对数转换成功地完成了它的任务，即使指数趋势变为线性。
+- en: 'Use the `test_autocorrelation` (helper function for this chapter) to investigate
+    if the series became stationary:'
+  id: totrans-198
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 使用`test_autocorrelation`（本章的辅助函数）来检查序列是否变为平稳：
+- en: '[PRE21]'
+  id: totrans-199
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE21]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-200
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行该代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_10.png)'
+  id: totrans-201
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_10.png)'
+- en: 'Figure 6.10: The ACF and PACF plots of the transformed time series'
+  id: totrans-202
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.10：转化后的时间序列的自相关和偏自相关图
+- en: 'We also print the results of the statistical tests:'
+  id: totrans-203
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们还打印了统计测试结果：
+- en: '[PRE22]'
+  id: totrans-204
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE22]'
+- en: After inspecting the results of the statistical tests and the ACF/PACF plots,
+    we can conclude that deflation and a natural algorithm were not enough to make
+    the time series of monthly gold prices stationary.
+  id: totrans-205
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 在检查了统计测试结果和自相关/偏自相关图后，我们可以得出结论，通货紧缩和自然算法不足以使月度黄金价格的时间序列变为平稳。
+- en: 'Apply differencing to the series and plot the results:'
+  id: totrans-206
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 对序列应用差分并绘制结果：
+- en: '[PRE23]'
+  id: totrans-207
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE23]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-208
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行该代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_11.png)Figure 6.11: Time series after applying three
+    types of transformations, together with its rolling statistics'
+  id: totrans-209
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: '![](../Images/B18112_06_11.png)图6.11：应用三种类型转换后的时间序列，以及其滚动统计数据'
+- en: The transformed gold prices give the impression of being stationary—the series
+    oscillates around 0 with no visible trend and approximately constant variance.
+  id: totrans-210
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 转化后的黄金价格看起来是平稳的——该序列围绕0波动，没有明显的趋势，且方差大致恒定。
+- en: 'Test if the series became stationary:'
+  id: totrans-211
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 测试序列是否变为平稳：
+- en: '[PRE24]'
+  id: totrans-212
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE24]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-213
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行该代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_12.png)'
+  id: totrans-214
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_12.png)'
+- en: 'Figure 6.12: The ACF and PACF plots of the transformed time series'
+  id: totrans-215
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图6.12：转化后的时间序列的自相关和偏自相关图
+- en: 'We also print the results of the statistical tests:'
+  id: totrans-216
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还打印了统计测试结果：
+- en: '[PRE25]'
+  id: totrans-217
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE25]'
+- en: After applying the first differences, the series became stationary at the 5%
+    significance level (according to both tests). In the ACF/PACF plots, we can see
+    that there were a few significant values of the function at lags 11, 22, and 39\.
+    This might indicate some kind of seasonality or simply be a false signal. Using
+    a 5% significance level means that 5% of the values might lie outside the 95%
+    confidence interval—even when the underlying process does not show any autocorrelation
+    or partial autocorrelation.
+  id: totrans-218
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在应用第一次差分后，序列在5%的显著性水平下变得平稳（根据两个测试）。在自相关/偏自相关图中，我们可以看到在滞后期11、22和39处有几个显著的函数值。这可能表明某种季节性，或者仅仅是一个虚假的信号。使用5%的显著性水平意味着5%的值可能位于95%的置信区间之外——即使潜在过程没有显示任何自相关或偏自相关。
+- en: How it works...
+  id: totrans-219
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 它是如何工作的...
+- en: After importing the libraries, authenticating, and potentially updating the
+    CPI data, we downloaded the monthly gold prices from Nasdaq Data Link. There were
+    some duplicate values in the series. For example, there were entries for 2000-04-28
+    and 2000-04-30, both with the same value. To deal with this issue, we resampled
+    the data to monthly frequency by taking the last available value.
+  id: totrans-220
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在导入库、进行身份验证并可能更新CPI数据后，我们从纳斯达克数据链接下载了月度黄金价格。序列中有一些重复值。例如，2000-04-28和2000-04-30都有相同的值。为了解决这个问题，我们将数据重新采样为月度频率，取每个月的最后一个可用值。
+- en: 'By doing so, we only removed potential duplicates in each month, without changing
+    any of the actual values. In *Step 3*, we used the `cpi` library to deflate the
+    time series by accounting for inflation in the US dollar. The library relies on
+    the CPI-U index recommended by the Bureau of Labor Statistics. To make it work,
+    we created an artificial index column containing dates as objects of the `datetime.date`
+    class. The `inflate` function takes the following arguments:'
+  id: totrans-221
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 通过这样做，我们仅仅删除了每个月中的潜在重复项，而没有更改任何实际的数值。在*步骤3*中，我们使用了`cpi`库，通过考虑美元的通货膨胀来使时间序列进行通货紧缩。该库依赖于美国劳工统计局推荐的CPI-U指数。为了使其工作，我们创建了一个包含日期的人工索引列，日期作为`datetime.date`类的对象。`inflate`函数接受以下参数：
+- en: '`value`—the dollar value we want to adjust.'
+  id: totrans-222
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '`value`—我们希望调整的美元价值。'
+- en: '`year_or_month`—the date that the dollar value comes from.'
+  id: totrans-223
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '`year_or_month`—美元价值的日期来源。'
+- en: '`to`—optionally, the date we want to adjust to. If we don’t provide this argument,
+    the function will adjust to the most recent year.'
+  id: totrans-224
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '`to`——可选参数，表示我们希望调整到的日期。如果不提供此参数，函数将调整到最近的年份。'
+- en: In *Step 4*, we applied the natural logarithm (`np.log`) to all the values to
+    transform what looked like an exponential trend into linear. This operation was
+    applied to prices that had already been corrected for inflation.
+  id: totrans-225
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤4*中，我们对所有值应用了自然对数（`np.log`），将看似指数趋势的值转化为线性趋势。此操作应用于已被通货膨胀调整的价格。
+- en: As the last transformation, we used the `diff` method of a `pandas` DataFrame
+    to calculate the difference between the value in time *t* and time *t-1* (the
+    default setting corresponds to the first difference). We can specify a different
+    number by changing the `period` argument.
+  id: totrans-226
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 作为最后的变换，我们使用了`pandas` DataFrame的`diff`方法，计算时间点*t*和*t-1*之间的差值（默认设置对应的是一阶差分）。我们可以通过更改`period`参数来指定不同的周期数。
+- en: There’s more...
+  id: totrans-227
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 还有更多...
+- en: 'The considered gold prices do not contain obvious seasonality. However, if
+    the dataset shows seasonal patterns, there are a few potential solutions:'
+  id: totrans-228
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 所考虑的黄金价格没有明显的季节性。然而，如果数据集显示出季节性模式，还是有一些潜在的解决方案：
+- en: Adjustment by differencing—instead of using first-order differencing, use a
+    higher-order one, for example, if there is yearly seasonality in monthly data,
+    use `diff(12)`.
+  id: totrans-229
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 通过差分进行调整——不使用一阶差分，而是使用高阶差分。例如，如果每月数据中存在年度季节性，可以使用`diff(12)`。
+- en: Adjustment by modeling—we can directly model the seasonality and then remove
+    it from the series. One possibility is to extract the seasonal component from
+    the `seasonal_decompose` function or another more advanced automatic decomposition
+    algorithm. In this case, we should subtract the seasonal component when using
+    the additive model or divide by it if the model is multiplicative. Another solution
+    would be to use `np.polyfit()` to fit the best polynomial of a chosen order to
+    the selected time series and then subtract it from the original series.
+  id: totrans-230
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 通过建模进行调整——我们可以直接对季节性进行建模，然后将其从序列中去除。一种可能性是从`seasonal_decompose`函数或其他更高级的自动分解算法中提取季节性成分。在这种情况下，如果使用加法模型，我们应该从序列中减去季节性成分；如果模型是乘法的，则应除以季节性成分。另一个解决方案是使用`np.polyfit()`拟合选择的时间序列的最佳多项式，然后从原始序列中减去它。
+- en: The **Box-Cox transformation** is another type of adjustment we can use on the
+    time series data. It combines different exponential transformation functions to
+    make the distribution more similar to the Normal (Gaussian) distribution. We can
+    use the `boxcox` function from the `scipy` library, which allows us to automatically
+    find the value of the `lambda` parameter for the best fit. One condition to be
+    aware of is that all the values in the series must be positive, so the transformation
+    should not be used after calculating the first differences or any other transformations
+    that potentially introduce negative values to the series.
+  id: totrans-231
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**Box-Cox 变换**是我们可以对时间序列数据进行的另一种调整方法。它结合了不同的指数变换函数，使分布更接近正态（高斯）分布。我们可以使用`scipy`库中的`boxcox`函数，它可以帮助我们自动找到最佳拟合的`lambda`参数值。需要注意的一个条件是序列中的所有值必须为正数，因此在计算一阶差分或任何可能引入负值的变换后，不应使用该变换。'
+- en: A library called `pmdarima` (more on this library can be found in the following
+    recipes) contains two functions that employ statistical tests to determine how
+    many times we should differentiate the series in order to achieve stationarity
+    (and also remove seasonality, that is, seasonal stationarity).
+  id: totrans-232
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 一个名为`pmdarima`的库（关于这个库的更多内容可以在以下的食谱中找到）包含了两个函数，它们使用统计测试来确定我们应该对序列进行多少次差分，以实现平稳性（并去除季节性，即季节平稳性）。
+- en: 'We can employ the following tests to investigate stationarity: ADF, KPSS, and
+    Phillips–Perron:'
+  id: totrans-233
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以使用以下测试来检查平稳性：ADF、KPSS和Phillips–Perron：
+- en: '[PRE26]'
+  id: totrans-234
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE26]'
+- en: 'Running the snippet returns the following:'
+  id: totrans-235
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行代码片段会返回以下结果：
+- en: '[PRE27]'
+  id: totrans-236
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE27]'
+- en: For the KPSS test, we can also specify what type of null hypothesis we want
+    to test against. The default is level stationarity (`null="level"`). The results
+    of the tests, or more precisely the need for differencing, suggest that the series
+    without any differencing is not stationary.
+  id: totrans-237
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 对于KPSS测试，我们还可以指定要检验的零假设类型。默认情况下是水平平稳性（`null="level"`）。测试的结果，或更准确地说，差分的需求，表明未进行任何差分的序列是非平稳的。
+- en: 'The library also contains two tests for seasonal differences:'
+  id: totrans-238
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 该库还包含两个季节差分的测试：
+- en: '**Osborn, Chui, Smith, and Birchenhall** (**OCSB**)'
+  id: totrans-239
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**Osborn, Chui, Smith 和 Birchenhall**（**OCSB**）'
+- en: '**Canova-Hansen** (**CH**)'
+  id: totrans-240
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**卡诺瓦-汉森**（**CH**）'
+- en: 'To run them, we also need to specify the frequency of our data. In our case,
+    it is 12, as we are working with monthly data:'
+  id: totrans-241
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 为了运行它们，我们还需要指定数据的频率。在我们的例子中，它是12，因为我们使用的是月度数据：
+- en: '[PRE28]'
+  id: totrans-242
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE28]'
+- en: 'The output is as follows:'
+  id: totrans-243
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 输出结果如下：
+- en: '[PRE29]'
+  id: totrans-244
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE29]'
+- en: The results suggest no seasonality in gold prices.
+  id: totrans-245
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 结果表明黄金价格没有季节性。
+- en: Modeling time series with exponential smoothing methods
+  id: totrans-246
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 使用指数平滑法建模时间序列
+- en: '**Exponential smoothing methods** are one of the two families of classical
+    forecasting models. Their underlying idea is that forecasts are simply weighted
+    averages of past observations. When calculating those averages, more emphasis
+    is put on recent observations. To achieve that, the weights are decaying exponentially
+    with time. These models are suitable for non-stationary data, that is, data with
+    a trend and/or seasonality. Smoothing methods are popular because they are fast
+    (not a lot of computations are required) and relatively reliable when it comes
+    to forecasts’ accuracy.'
+  id: totrans-247
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**指数平滑法**是两大类经典预测模型之一。其基本思想是，预测值仅仅是过去观测值的加权平均。当计算这些平均值时，更加重视最近的观测值。为了实现这一点，权重随着时间的推移呈指数衰减。这些模型适用于非平稳数据，即具有趋势和/或季节性的数据显示。平滑方法受到欢迎，因为它们计算速度快（需要的计算量不多），并且在预测准确性方面相对可靠。'
+- en: Collectively, the exponential smoothing methods can be defined in terms of the
+    **ETS framework** (**Error, Trend, and Season**), as they combine the underlying
+    components in the smoothing calculations. As in the case of the seasonal decomposition,
+    those terms can be combined additively, multiplicatively, or simply left out of
+    the model.
+  id: totrans-248
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 总的来说，指数平滑法可以通过**ETS框架**（**误差、趋势和季节性**）来定义，因为它们在平滑计算中结合了基本成分。如同季节性分解的情况一样，这些成分可以通过加法、乘法组合，或直接从模型中省略。
+- en: 'Please see *Forecasting: Principles and Practice* (Hyndman and Athanasopoulos)
+    for more information on the taxonomy of exponential smoothing methods.'
+  id: totrans-249
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 请参见*《预测：原理与实践》*（Hyndman 和 Athanasopoulos）了解更多关于指数平滑方法的分类信息。
+- en: The simplest model is called **simple exponential smoothing** (**SES**). This
+    class of models is most apt for cases when the considered time series does not
+    exhibit any trend or seasonality. They also work well with series with only a
+    few data points.
+  id: totrans-250
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最简单的模型称为**简单指数平滑法**（**SES**）。这种模型最适合于时间序列没有趋势或季节性的情况。它们也适用于数据点较少的序列。
+- en: The model is parameterized by a smoothing parameter ![](../Images/B18112_06_004.png)
+    with values between 0 and 1\. The higher the value, the more weight is put on
+    recent observations. When ![](../Images/B18112_06_0041.png) = 0, the forecasts
+    for the future are equal to the average of training data. When ![](../Images/B18112_06_0041.png)
+    = 1, all the forecasts have the same value as the last observation in the training
+    set.
+  id: totrans-251
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 该模型由一个平滑参数![](../Images/B18112_06_004.png)进行参数化，其值介于0和1之间。值越大，越重视最近的观测值。当![](../Images/B18112_06_0041.png)
+    = 0时，未来的预测值等于训练数据的平均值。当![](../Images/B18112_06_0041.png) = 1时，所有预测值都与训练集中的最后一个观测值相同。
+- en: The forecasts produced using SES are flat, that is, regardless of the time horizon,
+    all forecasts have the same value (corresponding to the last level component).
+    That is why this method is only suitable for series with neither trend nor seasonality.
+  id: totrans-252
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 使用SES方法生成的预测是平坦的，也就是说，无论时间跨度多长，所有的预测值都相同（对应于最后的水平成分）。这就是为什么这种方法仅适用于没有趋势或季节性的序列。
+- en: '**Holt’s linear trend method** (also known as Holt’s **double exponential smoothing**
+    method) is an extension of SES that accounts for a trend in the series by adding
+    the trend component to the model’s specification. As a consequence, this model
+    should be used when there is a trend in the data, but it still cannot handle seasonality.'
+  id: totrans-253
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**霍尔特线性趋势法**（也称为霍尔特**双重指数平滑法**）是单指数平滑法（SES）的扩展，通过将趋势成分加入模型的规格来考虑数据中的趋势。因此，当数据中存在趋势时，应使用此模型，但它仍然无法处理季节性。'
+- en: One issue with Holt’s model is that the trend is constant in the future, which
+    means that it increases/decreases indefinitely. That is why an extension of the
+    model dampens the trend by adding the dampening parameter, ![](../Images/B18112_06_006.png).
+    It makes the trend converge to a constant value in the future, effectively flattening
+    it.
+  id: totrans-254
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 霍尔特模型的一个问题是，趋势在未来是恒定的，这意味着它会无限增加或减少。这就是为什么模型的扩展通过添加衰减参数来平滑趋势，![](../Images/B18112_06_006.png)。它使得趋势在未来趋向一个常数值，从而有效地将其平滑。
+- en: '![](../Images/B18112_06_007.png) is rarely smaller than `0.8`, as the dampening
+    has a very strong effect for smaller values of ![](../Images/B18112_06_008.png).
+    The best practice is to restrict the values of ![](../Images/B18112_06_008.png)
+    so that they lie between `0.8` and `0.98`. For ![](../Images/B18112_06_010.png)
+    = 1 the damped model is equivalent to the model without dampening.'
+  id: totrans-255
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '![](../Images/B18112_06_007.png)的值很少小于`0.8`，因为对于较小的值，![](../Images/B18112_06_008.png)的衰减效应非常强。最佳实践是将![](../Images/B18112_06_008.png)的值限制在`0.8`到`0.98`之间。当![](../Images/B18112_06_010.png)
+    = 1时，衰减模型等同于没有衰减的模型。'
+- en: Lastly, we will cover the extension of Holt’s method called **Holt-Winters’
+    seasonal smoothing** (also known as Holt-Winters’ triple exponential smoothing).
+    As the name suggests, it accounts for the seasonality in time series. Without
+    going into too much detail, this method is most suitable for data with both trend
+    and seasonality.
+  id: totrans-256
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，我们将介绍霍尔特方法的扩展——**霍尔特-温特季节性平滑**（也称为霍尔特-温特三重指数平滑）。顾名思义，它考虑了时间序列中的季节性。简单来说，该方法最适用于既有趋势又有季节性的数据显示。
+- en: There are two variants of this model and they have either additive or multiplicative
+    seasonalities. In the former one, the seasonal variations are more or less constant
+    throughout the time series. In the latter one, the variations change in proportion
+    to the passing of time.
+  id: totrans-257
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 该模型有两种变体，分别具有加法或乘法季节性。在加法季节性模型中，季节性变化在整个时间序列中大致保持不变。而在乘法季节性模型中，变化会随着时间的推移而按比例变化。
+- en: In this recipe, we will show you how to apply the covered smoothing methods
+    to monthly US unemployment rates (non-stationary data with trend and seasonality).
+    We will fit the model to the prices from 2010 to 2018 and make forecasts for 2019.
+  id: totrans-258
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这个例子中，我们将展示如何将所涵盖的平滑方法应用于美国月度失业率（具有趋势和季节性的非平稳数据）。我们将对2010至2018年的数据进行模型拟合，并对2019年进行预测。
+- en: Getting ready
+  id: totrans-259
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 准备工作
+- en: We will use the same data that we used in the *Time series decomposition* recipe.
+  id: totrans-260
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将使用在*时间序列分解*实例中使用的相同数据。
+- en: How to do it...
+  id: totrans-261
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 如何操作...
+- en: 'Execute the following steps to create forecasts of the US unemployment rate
+    using the exponential smoothing methods:'
+  id: totrans-262
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤，以使用指数平滑方法创建美国失业率的预测：
+- en: 'Import the libraries:'
+  id: totrans-263
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库：
+- en: '[PRE30]'
+  id: totrans-264
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE30]'
+- en: 'Create the train/test split:'
+  id: totrans-265
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 创建训练/测试数据集：
+- en: '[PRE31]'
+  id: totrans-266
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE31]'
+- en: 'Fit two SES models and calculate the forecasts:'
+  id: totrans-267
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 拟合两个SES模型并计算预测：
+- en: '[PRE32]'
+  id: totrans-268
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE32]'
+- en: 'Running the snippet generates the following table:'
+  id: totrans-269
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下表格：
+- en: '![](../Images/B18112_06_13.png)'
+  id: totrans-270
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_13.png)'
+- en: 'Figure 6.13: The values of the fitted coefficients for the first SES model'
+  id: totrans-271
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.13：第一个SES模型拟合系数的值
+- en: We can use the `summary` method to print a more detailed summary of the fitted
+    model.
+  id: totrans-272
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们可以使用`summary`方法打印拟合模型的更详细摘要。
+- en: 'Combine the forecasts with the fitted values and plot them:'
+  id: totrans-273
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 将预测结果与拟合值结合并绘制它们：
+- en: '[PRE33]'
+  id: totrans-274
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE33]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-275
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_14.png)'
+  id: totrans-276
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_14.png)'
+- en: 'Figure 6.14: Modeling time series using SES'
+  id: totrans-277
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.14：使用SES建模时间序列
+- en: 'In *Figure 6.14*, we can observe the characteristic of SES that we described
+    in the introduction to this recipe—the forecast is a flat line. We can also see
+    that the optimal value that was selected by the optimization routine is equal
+    to 1\. Immediately, we can see the consequences of picking such a value: the fitted
+    line of the model is effectively the line of the observed prices shifted to the
+    right and the forecast is simply the last observed value.'
+  id: totrans-278
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 在*图6.14*中，我们可以看到我们在本例介绍中描述的SES特性——预测是一个平坦的线条。我们还可以看到通过优化程序选择的最优值为1。立刻可以看到选择此值的后果：模型的拟合线实际上是观察到的价格线右移的结果，且预测仅仅是最后一个观察值。
+- en: 'Fit three variants of Holt’s linear trend models and calculate the forecasts:'
+  id: totrans-279
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 拟合三种霍尔特线性趋势模型变体并计算预测：
+- en: '[PRE34]'
+  id: totrans-280
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE34]'
+- en: 'Plot the original series together with the models’ forecasts:'
+  id: totrans-281
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 将原始序列与模型的预测一起绘制：
+- en: '[PRE35]'
+  id: totrans-282
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE35]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-283
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_15.png)'
+  id: totrans-284
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_15.png)'
+- en: 'Figure 6.15: Modeling time series using Holt’s Double Exponential Smoothing'
+  id: totrans-285
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.15：使用霍尔特双指数平滑法建模时间序列
+- en: We can already observe an improvement as, compared to the SES forecast, the
+    lines are not flat anymore.
+  id: totrans-286
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们已经能够观察到改善，因为与SES预测相比，线条不再是平的。
+- en: One additional thing worth mentioning is that while we were optimizing a single
+    parameter `alpha` (`smoothing_level`) in the case of the SES, here we are also
+    optimizing `beta` (`smoothing_trend`) and potentially also `phi` (`damping_trend`).
+  id: totrans-287
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 另外值得一提的是，在 SES 的情况下，我们优化了单一参数 `alpha`（`smoothing_level`），而在这里我们不仅优化了 `beta`（`smoothing_trend`），还可能优化了
+    `phi`（`damping_trend`）。
+- en: 'Fit two variants of Holt-Winters’ Triple Exponential Smoothing models and calculate
+    the forecasts:'
+  id: totrans-288
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 拟合两种 Holt-Winters 三重指数平滑法模型并计算预测值：
+- en: '[PRE36]'
+  id: totrans-289
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE36]'
+- en: 'Plot the original series together with the models’ results:'
+  id: totrans-290
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 将原始序列与模型结果一起绘制：
+- en: '[PRE37]'
+  id: totrans-291
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE37]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-292
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成了以下图表：
+- en: '![](../Images/B18112_06_16.png)'
+  id: totrans-293
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_16.png)'
+- en: 'Figure 6.16: Modeling time series using Holt-Winters’ Triple Exponential Smoothing'
+  id: totrans-294
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.16：使用 Holt-Winters 三重指数平滑法建模时间序列
+- en: In the preceding plot, we can see that now the seasonal patterns were also incorporated
+    into the forecasts.
+  id: totrans-295
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在前面的图表中，我们可以看到季节性模式现在也被纳入了预测中。
+- en: How it works...
+  id: totrans-296
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 它是如何工作的……
+- en: After importing the libraries, we fitted two different SES models using the
+    `SimpleExpSmoothing` class and its `fit` method. To fit the model, we only used
+    the training data. We could have manually selected the value of the smoothing
+    parameter (`smoothing_level`), however, the best practice is to let `statsmodels`
+    optimize it for the best fit. This optimization is done by minimizing the sum
+    of squared residuals (errors). We created the forecasts using the `forecast` method,
+    which requires the number of periods we want to forecast for (which, in our case,
+    is equal to the length of the test set).
+  id: totrans-297
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在导入库之后，我们使用 `SimpleExpSmoothing` 类及其 `fit` 方法拟合了两个不同的 SES 模型。为了拟合模型，我们仅使用了训练数据。我们本可以手动选择平滑参数（`smoothing_level`）的值，但最佳实践是让
+    `statsmodels` 为最佳拟合优化该参数。这个优化通过最小化残差（误差）的平方和来完成。我们使用 `forecast` 方法创建了预测值，该方法需要我们希望预测的周期数（在我们的案例中，周期数等于测试集的长度）。
+- en: In *Step 3*, we combined the fitted values (accessed using the `fittedvalues`
+    attribute of the fitted model) and the forecasts inside of a `pandas` DataFrame,
+    together with the observed unemployment rate. We then visualized all the series.
+    To make the plot easier to read, we capped the data to cover the last 2 years
+    of the training set and the test set.
+  id: totrans-298
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 3*中，我们将拟合值（通过拟合模型的 `fittedvalues` 属性访问）和预测值与观察到的失业率一起放入了一个 `pandas` DataFrame
+    中。然后我们将所有序列进行可视化。为了使图表更易读，我们将数据限制为覆盖训练集和测试集的最后两年。
+- en: In *Step 5*, we used the `Holt` class (which is a wrapper around the more general
+    `ExponentialSmoothing` class) to fit Holt’s linear trend model. By default, the
+    trend in the model is linear, but we can make it exponential by specifying `exponential=True`
+    and adding dampening with `damped_trend=True`. As in the case of SES, using the
+    `fit` method with no arguments results in running the optimization routine to
+    determine the optimal values of the parameters. In *Step 6*, we again placed all
+    the fitted values and forecasts into a DataFrame and then we visualized the results.
+  id: totrans-299
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 5*中，我们使用了 `Holt` 类（这是一个包装器，封装了更通用的 `ExponentialSmoothing` 类）来拟合 Holt 的线性趋势模型。默认情况下，模型中的趋势是线性的，但我们可以通过指定
+    `exponential=True` 来使其变为指数型，并通过 `damped_trend=True` 添加阻尼。与 SES 的情况类似，使用 `fit`
+    方法且不带任何参数将运行优化例程，以确定参数的最佳值。在*步骤 6*中，我们再次将所有拟合值和预测结果放入一个 DataFrame 中，并可视化了结果。
+- en: In *Step 7*, we estimated two variants of Holt-Winters’ Triple Exponential Smoothing
+    models. There is no separate class for this model, but we can adjust the `ExponentialSmoothing`
+    class by adding the `seasonal` and `seasonal_periods` arguments. Following the
+    taxonomy of the ETS models, we should indicate that the models have an additive
+    seasonal component. In *Step 8*, we again put all the fitted values and forecasts
+    into a DataFrame and then we visualized the results as a line plot.
+  id: totrans-300
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 7*中，我们估计了两种 Holt-Winters 三重指数平滑法模型。这个模型没有单独的类，但我们可以通过添加 `seasonal` 和 `seasonal_periods`
+    参数来调整 `ExponentialSmoothing` 类。根据 ETS 模型的分类法，我们应该指出这些模型具有加性季节性成分。在*步骤 8*中，我们再次将所有拟合值和预测结果放入一个
+    DataFrame 中，并将结果以折线图的形式可视化。
+- en: When creating an instance of the `ExponentialSmoothing` class, we can additionally
+    pass in the `use_boxcox` argument to automatically apply the Box-Cox transformation
+    to the analyzed time series. Alternatively, we could use the log transformation
+    by passing the `"log"` string to the same argument.
+  id: totrans-301
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在创建`ExponentialSmoothing`类的实例时，我们还可以传递`use_boxcox`参数，以便自动将Box-Cox变换应用于分析的时间序列。或者，我们可以通过传递`"log"`字符串来使用对数变换。
+- en: There’s more...
+  id: totrans-302
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 还有更多...
+- en: In this recipe, we have fitted various exponential smoothing models to forecast
+    the monthly unemployment rate. Each time, we specified what kind of model we were
+    interested in and most of the time, we let `statsmodels` find the best-fitting
+    parameters.
+  id: totrans-303
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本案例中，我们拟合了各种指数平滑模型来预测月度失业率。每次，我们都会指定感兴趣的模型类型，并且大多数时候，我们让`statsmodels`找到最合适的参数。
+- en: However, we could approach the task differently, that is, using a procedure
+    called AutoETS. Without going into much detail, the goal of the procedure is to
+    find the best-fitting flavor of an ETS model, given some constraints we provide
+    upfront. You can read more about how the AutoETS procedure works in the references
+    mentioned in the *See also* section.
+  id: totrans-304
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然而，我们也可以采用不同的方法，即使用一个名为AutoETS的过程。简单来说，该过程的目标是根据我们预先提供的一些约束，找到最适合的ETS模型。你可以在*另见*部分提到的参考文献中详细了解AutoETS过程的工作原理。
+- en: The AutoETS procedure is available in the `sktime` library, which is a library/framework
+    inspired by `scikit-learn`, but with a focus on time series analysis/forecasting.
+  id: totrans-305
+  prefs: []
+  type: TYPE_NORMAL
+  zh: AutoETS过程可以在`sktime`库中使用，该库/框架受到`scikit-learn`的启发，但重点是时间序列分析/预测。
+- en: 'Execute the following steps to find the best ETS model using the AutoETS approach:'
+  id: totrans-306
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤以使用AutoETS方法找到最佳ETS模型：
+- en: 'Import the libraries:'
+  id: totrans-307
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库：
+- en: '[PRE38]'
+  id: totrans-308
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE38]'
+- en: 'Fit the `AutoETS` model:'
+  id: totrans-309
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 拟合`AutoETS`模型：
+- en: '[PRE39]'
+  id: totrans-310
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE39]'
+- en: 'Add the model’s forecast to the plot of the Holt-Winters’ forecasts:'
+  id: totrans-311
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 将模型的预测添加到Holt-Winters预测图中：
+- en: '[PRE40]'
+  id: totrans-312
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE40]'
+- en: 'Running the snippet generates the following plot:'
+  id: totrans-313
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码段生成以下图表：
+- en: '![](../Images/B18112_06_17.png)'
+  id: totrans-314
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_17.png)'
+- en: 'Figure 6.17: The results of the AutoETS forecast plotted over the results of
+    the Holt-Winters’ approach'
+  id: totrans-315
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图6.17：AutoETS预测结果与Holt-Winters方法结果的比较图
+- en: In *Figure 6.17*, we can see that the in-sample fits of the Holt-Winters’ model
+    and AutoETS are very similar. When it comes to the forecast, they do differ and
+    it is hard to say which one better predicts the unemployment rate.
+  id: totrans-316
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 在*图6.17*中，我们可以看到Holt-Winters模型和AutoETS的样本内拟合非常相似。至于预测，它们确实有所不同，很难说哪一个更好地预测了失业率。
+- en: That is why in the next step we calculate the **Mean Absolute Percentage Error**
+    (**MAPE**), which is a popular evaluation metric used in time series forecasting
+    (and other fields).
+  id: totrans-317
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 这就是为什么在下一步中我们计算**平均绝对百分比误差**（**MAPE**）的原因，MAPE是时间序列预测（及其他领域）中常用的评估指标。
+- en: 'Calculate the MAPEs of the Holt-Winters’ forecasts and of AutoETS:'
+  id: totrans-318
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 计算Holt-Winters预测和AutoETS的MAPE：
+- en: '[PRE41]'
+  id: totrans-319
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE41]'
+- en: 'Running the snippet generates the following summary:'
+  id: totrans-320
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行代码段生成以下摘要：
+- en: '[PRE42]'
+  id: totrans-321
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE42]'
+- en: We can see that the accuracy scores (measured by MAPE) of the Holt-Winters’
+    method and the AutoETS approach are very similar.
+  id: totrans-322
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以看到，Holt-Winters方法和AutoETS方法的准确性评分（通过MAPE衡量）非常相似。
+- en: See also
+  id: totrans-323
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 另见
+- en: 'Please see the following references for more information about the ETS methods:'
+  id: totrans-324
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 请参阅以下参考文献，了解有关ETS方法的更多信息：
+- en: 'Hyndman, R. J., Akram, Md., & Archibald, 2008\. “ The admissible parameter
+    space for exponential smoothing models,” *Annals of Statistical Mathematics*,
+    **60** (2): 407–426.'
+  id: totrans-325
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R. J., Akram, Md., & Archibald, 2008\. “指数平滑模型的可接受参数空间，” *统计数学年刊*，**60**（2）：407–426。
+- en: 'Hyndman, R. J., Koehler, A.B., Snyder, R.D., & Grose, S., 2002\. “A state space
+    framework for automatic forecasting using exponential smoothing methods,” *International
+    J. Forecasting*, **18**(3): 439–454.'
+  id: totrans-326
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R. J., Koehler, A.B., Snyder, R.D., & Grose, S., 2002\. “使用指数平滑方法进行自动预测的状态空间框架，”
+    *国际预测期刊*，**18**（3）：439–454。
+- en: 'Hyndman, R. J & Koehler, A. B., 2006\. “Another look at measures of forecast
+    accuracy,” *International Journal of Forecasting*, 22(4): 679-688'
+  id: totrans-327
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R. J & Koehler, A. B., 2006\. “重新审视预测准确性度量，” *国际预测期刊*，22（4）：679-688。
+- en: 'Hyndman, R. J., Koehler, A.B., Ord, J.K., & Snyder, R.D. 2008\. *Forecasting
+    with Exponential Smoothing: The State Space Approach*, Springer-Verlag. [http://www.exponentialsmoothing.net](http://www.exponentialsmoothing.net).'
+  id: totrans-328
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R. J., Koehler, A.B., Ord, J.K., & Snyder, R.D. 2008\. *使用指数平滑进行预测：状态空间方法*，Springer-Verlag.
+    [http://www.exponentialsmoothing.net](http://www.exponentialsmoothing.net)。
+- en: 'Hyndman, R. J. & Athanasopoulos, G. 2021\. *Forecasting: Principles and Practice*,
+    3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3.'
+  id: totrans-329
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R. J. & Athanasopoulos, G. 2021\. *预测：原理与实践*，第 3 版，OTexts：澳大利亚墨尔本。OTexts.com/fpp3。
+- en: 'Winters, P.R. 1960\. “Forecasting sales by exponentially weighted moving averages,”
+    *Management Science* 6(3): 324–342.'
+  id: totrans-330
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Winters, P.R. 1960\. “通过指数加权移动平均法预测销售额，”*管理科学* 6(3)：324–342。
+- en: Modeling time series with ARIMA class models
+  id: totrans-331
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 使用 ARIMA 类模型建模时间序列
+- en: '**ARIMA** models are a class of statistical models that are used for analyzing
+    and forecasting time series data. They aim to do so by describing the autocorrelations
+    in the data. ARIMA stands for Autoregressive Integrated Moving Average and is
+    an extension of a simpler ARMA model. The goal of the additional integration component
+    is to ensure the stationarity of the series. That is because, in contrast to the
+    exponential smoothing models, the ARIMA models require the time series to be stationary.
+    Below we briefly go over the models’ building blocks.'
+  id: totrans-332
+  prefs: []
+  type: TYPE_NORMAL
+  zh: '**ARIMA** 模型是一类统计模型，用于分析和预测时间序列数据。它们通过描述数据中的自相关关系来实现这一目标。ARIMA 代表自回归积分滑动平均模型，是一种比
+    ARMA 模型更为复杂的扩展形式。附加的积分部分旨在确保序列的平稳性。因为与指数平滑模型不同，ARIMA 模型要求时间序列必须是平稳的。接下来我们将简要介绍模型的构建模块。'
+- en: 'AR (autoregressive) model:'
+  id: totrans-333
+  prefs: []
+  type: TYPE_NORMAL
+  zh: AR（自回归）模型：
+- en: This kind of model uses the relationship between an observation and its *p*
+    lagged values
+  id: totrans-334
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 这种模型使用观测值与其 *p* 个滞后值之间的关系。
+- en: In the financial context, the autoregressive model tries to account for the
+    momentum and mean reversion effects
+  id: totrans-335
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 在金融背景下，自回归模型试图解释动量和均值回归效应。
+- en: 'I (integration):'
+  id: totrans-336
+  prefs: []
+  type: TYPE_NORMAL
+  zh: I（积分）：
+- en: Integration, in this case, refers to differencing the original time series (subtracting
+    the value from the previous period from the current period’s value) to make it
+    stationary
+  id: totrans-337
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 在这种情况下，积分指的是对原始时间序列进行差分（将当前期值减去前一期的值）以使其平稳。
+- en: The parameter responsible for integration is *d* (called degree/order of differencing)
+    and indicates the number of times we need to apply differencing
+  id: totrans-338
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 负责积分的参数是 *d*（称为差分的度/阶），表示我们需要应用差分的次数。
+- en: 'MA (moving average) model:'
+  id: totrans-339
+  prefs: []
+  type: TYPE_NORMAL
+  zh: MA（移动平均）模型：
+- en: This kind of model uses the relationship between an observation and the white
+    noise terms (shocks that occurred in the last *q* observations).
+  id: totrans-340
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 这种模型使用观测值与白噪声项之间的关系（过去 *q* 个观测值中发生的冲击）。
+- en: In the financial context, the moving average models try to account for the unpredictable
+    shocks (observed in the residuals) that influence the observed time series. Some
+    examples of such shocks could be natural disasters, breaking news connected to
+    a certain company, etc.
+  id: totrans-341
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 在金融背景下，移动平均模型试图解释影响观察到的时间序列的不可预测的冲击（观察到的残差）。这种冲击的例子可能包括自然灾害、与某公司相关的突发新闻等。
+- en: The white noise terms in the MA model are unobservable. Because of that, we
+    cannot fit an ARIMA model using **ordinary least squares** (**OLS**). Instead,
+    we have to use an iterative estimation method such as **MLE** (**Maximum Likelihood
+    Estimation**).
+  id: totrans-342
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: MA 模型中的白噪声项是不可观察的。由于这一点，我们无法使用 **普通最小二乘法**（**OLS**）来拟合 ARIMA 模型。相反，我们必须使用诸如
+    **最大似然估计**（**MLE**）等迭代估计方法。
+- en: 'All of these components fit together and are directly specified in the commonly
+    used notation: ARIMA (p,d,q). In general, we should try to keep the values of
+    the ARIMA parameters as small as possible in order to avoid unnecessary complexity
+    and prevent overfitting to the training data. One possible rule of thumb would
+    be to keep *d* <= 2, while *p* and *q* should not be higher than 5\. Also, most
+    likely one of the terms (AR or MA) will dominate in the model, leading to the
+    other one having a comparatively small value of the parameter.'
+  id: totrans-343
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 所有这些组件共同作用，并在常用的符号表示法中直接指定：ARIMA (p,d,q)。一般来说，我们应尽量将 ARIMA 参数的值保持尽可能小，以避免不必要的复杂性并防止过拟合训练数据。一个可能的经验法则是将
+    *d* <= 2，而 *p* 和 *q* 不应大于 5\. 此外，通常情况下，模型中的某一项（AR 或 MA）将占主导地位，导致另一项的参数值相对较小。
+- en: 'ARIMA models are very flexible and by appropriately setting their hyperparameters,
+    we can obtain some special cases:'
+  id: totrans-344
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ARIMA 模型非常灵活，通过适当设置它们的超参数，我们可以得到一些特殊的情况：
+- en: 'ARIMA (0,0,0): White noise'
+  id: totrans-345
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (0,0,0)：白噪声
+- en: 'ARIMA (0,1,0) without constant: Random walk'
+  id: totrans-346
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (0,1,0) 无常数项：随机游走
+- en: 'ARIMA (p,0,q): ARMA(p, q)'
+  id: totrans-347
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (p,0,q)：ARMA(p, q)
+- en: 'ARIMA (p,0,0): AR(p) model'
+  id: totrans-348
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (p,0,0)：AR(p) 模型
+- en: 'ARIMA (0,0,q): MA(q) model'
+  id: totrans-349
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (0,0,q)：MA(q) 模型
+- en: 'ARIMA (0,1,2): Damped Holt’s model'
+  id: totrans-350
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (0,1,2)：衰减霍尔特模型
+- en: 'ARIMA (0,1,1) without constant: SES model'
+  id: totrans-351
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (0,1,1) 无常数项：SES 模型
+- en: 'ARIMA (0,2,2): Holt’s linear method with additive errors'
+  id: totrans-352
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ARIMA (0,2,2)：霍尔特的线性法与加性误差
+- en: ARIMA models are still very popular in the industry as they deliver near state-of-the-art
+    performance (mostly for short-horizon forecasts), especially when we are dealing
+    with small datasets. In such cases, more advanced machine and deep learning models
+    are not able to show their true power.
+  id: totrans-353
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ARIMA 模型在工业界仍然非常流行，因为它们提供了接近最先进的性能（主要用于短期预测），特别是在处理小型数据集时。在这种情况下，更高级的机器学习和深度学习模型无法展现其真正的强大能力。
+- en: One of the known weaknesses of the ARIMA models in the financial context is
+    their inability to capture volatility clustering, which is observed in most financial
+    assets.
+  id: totrans-354
+  prefs: []
+  type: TYPE_NORMAL
+  zh: ARIMA 模型在金融领域的已知弱点之一是它们无法捕捉到波动性聚集现象，这在大多数金融资产中都有观察到。
+- en: In this recipe, we will go through all the necessary steps to correctly estimate
+    an ARIMA model and learn how to verify that it is a proper fit for the data. For
+    this example, we will once again use the monthly US unemployment rate from the
+    years 2010 to 2019.
+  id: totrans-355
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本食谱中，我们将通过所有必要的步骤来正确估计 ARIMA 模型，并学习如何验证它是否适合数据。对于这个例子，我们将再次使用 2010 到 2019 年间的美国月度失业率数据。
+- en: Getting ready
+  id: totrans-356
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 准备就绪
+- en: We will use the same data that we used in the *Time series decomposition* recipe.
+  id: totrans-357
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将使用与*时间序列分解*食谱中相同的数据。
+- en: How to do it...
+  id: totrans-358
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 如何操作...
+- en: 'Execute the following steps to create forecasts of the US unemployment rate
+    using ARIMA models:'
+  id: totrans-359
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤，使用 ARIMA 模型创建美国失业率的预测：
+- en: 'Import the libraries:'
+  id: totrans-360
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库：
+- en: '[PRE43]'
+  id: totrans-361
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE43]'
+- en: 'Create the train/test split:'
+  id: totrans-362
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 创建训练/测试集拆分：
+- en: '[PRE44]'
+  id: totrans-363
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE44]'
+- en: We create the train/test split just as we have done in the previous recipe.
+    This way, we will be able to compare the performance of the two types of models.
+  id: totrans-364
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们像之前的做法一样创建训练/测试集拆分。通过这种方式，我们可以比较两种模型的性能。
+- en: 'Apply the log transformation and calculate the first differences:'
+  id: totrans-365
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 应用对数变换并计算第一差分：
+- en: '[PRE45]'
+  id: totrans-366
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE45]'
+- en: 'Running the snippet generates the following figure:'
+  id: totrans-367
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成以下图形：
+- en: '![](../Images/B18112_06_18.png)'
+  id: totrans-368
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_18.png)'
+- en: 'Figure 6.18: Applying transformations to achieve stationarity'
+  id: totrans-369
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.18：应用变换以实现平稳性
+- en: 'Test the stationarity of the differenced series:'
+  id: totrans-370
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 测试差分系列的平稳性：
+- en: '[PRE46]'
+  id: totrans-371
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE46]'
+- en: 'Running the function produces the following output:'
+  id: totrans-372
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行函数产生以下输出：
+- en: '[PRE47]'
+  id: totrans-373
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE47]'
+- en: By analyzing the test results, we can state that the first differences of the
+    log transformed series are stationary. We also look at the corresponding autocorrelation
+    plots.
+  id: totrans-374
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 通过分析测试结果，我们可以得出结论，经过对数转换后的系列的第一差分是平稳的。我们还观察相应的自相关图。
+- en: '![](../Images/B18112_06_19.png)'
+  id: totrans-375
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_19.png)'
+- en: 'Figure 6.19: The autocorrelation plots of the first differences of the log
+    transformed series'
+  id: totrans-376
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.19：对数转换系列的第一差分的自相关图
+- en: 'Fit two different ARIMA models and print their summaries:'
+  id: totrans-377
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 拟合两个不同的 ARIMA 模型并打印其总结：
+- en: '[PRE48]'
+  id: totrans-378
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE48]'
+- en: 'Running the snippet generates the following summary:'
+  id: totrans-379
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成以下总结：
+- en: '![](../Images/B18112_06_20.png)Figure 6.20: The summary of the fitted ARIMA(1,1,1)
+    model'
+  id: totrans-380
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: '![](../Images/B18112_06_20.png)图 6.20：拟合的 ARIMA(1,1,1) 模型总结'
+- en: The first model was a vanilla ARIMA(1,1,1). For the second one, we go with ARIMA(2,1,2).
+  id: totrans-381
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 第一个模型是普通的 ARIMA(1,1,1)。对于第二个模型，我们使用 ARIMA(2,1,2)。
+- en: '[PRE49]'
+  id: totrans-382
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE49]'
+- en: 'Running the snippet generates the following summary:'
+  id: totrans-383
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成以下总结：
+- en: '![](../Images/B18112_06_21.png)'
+  id: totrans-384
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_21.png)'
+- en: 'Figure 6.21: The summary of the fitted ARIMA(2,1,2) model'
+  id: totrans-385
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.21：拟合的 ARIMA(2,1,2) 模型总结
+- en: 'Combine the fitted values with the predictions:'
+  id: totrans-386
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 将拟合值与预测值结合：
+- en: '[PRE50]'
+  id: totrans-387
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE50]'
+- en: 'Running the snippet generates the following table:'
+  id: totrans-388
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成以下表格：
+- en: '![](../Images/B18112_06_22.png)'
+  id: totrans-389
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_22.png)'
+- en: 'Figure 6.22: The predictions from the ARIMA models—raw and transformed back
+    to the original scale'
+  id: totrans-390
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.22：ARIMA 模型的预测——原始值与转换回原始尺度的值
+- en: 'Plot the forecasts and calculate the MAPEs:'
+  id: totrans-391
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 绘制预测并计算 MAPE：
+- en: '[PRE51]'
+  id: totrans-392
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE51]'
+- en: 'Running the snippet generates the following figure:'
+  id: totrans-393
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成以下图形：
+- en: '![](../Images/B18112_06_23.png)'
+  id: totrans-394
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_23.png)'
+- en: 'Figure 6.23: The forecast and the fitted values from the two ARIMA models'
+  id: totrans-395
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.23：两个 ARIMA 模型的预测与拟合值
+- en: 'Now we also zoom into the test set, to clearly see the forecasts:'
+  id: totrans-396
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 现在我们也放大测试集，以清晰地看到预测结果：
+- en: '[PRE52]'
+  id: totrans-397
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE52]'
+- en: 'Running the snippet generates the following figure:'
+  id: totrans-398
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行代码片段生成以下图形：
+- en: '![](../Images/B18112_06_24.png)Figure 6.24: The forecast from the two ARIMA
+    models'
+  id: totrans-399
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: '![](../Images/B18112_06_24.png)图 6.24：两个 ARIMA 模型的预测'
+- en: In *Figure 6.24*, we can see that the forecast of the ARIMA(1,1,1) is virtually
+    a straight line, while ARIMA(2,1,2) did a better job at capturing the pattern
+    of the original series.
+  id: totrans-400
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 在 *图 6.24* 中，我们可以看到 ARIMA(1,1,1) 的预测几乎是直线，而 ARIMA(2,1,2) 更好地捕捉到了原始序列的模式。
+- en: 'Now we calculate the MAPEs:'
+  id: totrans-401
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 现在我们计算 MAPEs：
+- en: '[PRE53]'
+  id: totrans-402
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE53]'
+- en: 'Running the snippet generates the following output:'
+  id: totrans-403
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行该代码片段生成以下输出：
+- en: '[PRE54]'
+  id: totrans-404
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE54]'
+- en: 'Extract the forecast with the corresponding confidence intervals and plot them
+    all together:'
+  id: totrans-405
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 提取预测结果及其相应的置信区间，并将它们一起绘制：
+- en: '[PRE55]'
+  id: totrans-406
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE55]'
+- en: 'Running the snippet generates the following figure:'
+  id: totrans-407
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 运行该代码片段生成以下图形：
+- en: '![](../Images/B18112_06_25.png)'
+  id: totrans-408
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_25.png)'
+- en: 'Figure 6.25: The forecast from the ARIMA(2,1,2) model together with its confidence
+    intervals'
+  id: totrans-409
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.25：ARIMA(2,1,2) 模型的预测结果及其置信区间
+- en: We can see that the forecast is following the shape of the observed values.
+    Additionally, we can see a typical cone-like pattern of the confidence intervals—the
+    longer the horizon of the forecast, the wider the confidence intervals, which
+    correspond to the increasing uncertainty.
+  id: totrans-410
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以看到，预测结果跟随观察值的形状。此外，我们还可以看到置信区间呈典型的圆锥形模式——预测的时间范围越长，置信区间越宽，这与不确定性的增加相对应。
+- en: How it works...
+  id: totrans-411
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 它是如何工作的...
+- en: After creating the training and test sets in *Step 2*, we applied the log transformation
+    and first differences to the training data.
+  id: totrans-412
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在 *步骤 2* 中创建训练集和测试集后，我们对训练数据应用了对数变换和第一次差分。
+- en: If we want to apply differencing to a given series more than once, we should
+    use the `np.diff` function as it implements recursive differencing. Using the
+    `diff` method of a DataFrame/Series with `periods` > 1 results in taking the difference
+    between the current observations and the one from that many `periods` before.
+  id: totrans-413
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 如果我们想对给定的序列应用多次差分操作，我们应使用 `np.diff` 函数，因为它实现了递归差分。使用 DataFrame/Series 的 `diff`
+    方法并设置 `periods` > 1 会得到当前观察值与前 `periods` 个时期的观察值之差。
+- en: In *Step 4*, we tested the stationarity of the first differences of the log
+    transformed series. To do so, we used the custom `test_autocorrelation` function.
+    By looking at the outputs of the statistical tests, we see that the series is
+    stationary at the 5% significance level.
+  id: totrans-414
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在 *步骤 4* 中，我们测试了对对数变换后的序列进行第一次差分后的平稳性。为此，我们使用了自定义的 `test_autocorrelation` 函数。通过查看统计测试的输出，我们看到该序列在
+    5% 的显著性水平下是平稳的。
+- en: When looking at the ACF/PACF plots, we can also clearly see the yearly seasonal
+    pattern (at lags 12 and 24).
+  id: totrans-415
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 查看 ACF/PACF 图时，我们还可以清晰地看到年度季节性模式（在滞后 12 和 24 时）。
+- en: 'In *Step 5*, we fitted two ARIMA models: ARIMA(1,1,1) and ARIMA(2,1,2). First,
+    the series turned out to be stationary after the first differences, so we knew
+    that the order of integration was *d=1*. Normally, we can use the following set
+    of “rules” to determine the values of *p* and *q*.'
+  id: totrans-416
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在 *步骤 5* 中，我们拟合了两个 ARIMA 模型：ARIMA(1,1,1) 和 ARIMA(2,1,2)。首先，序列在进行第一次差分后变得平稳，因此我们知道积分阶数是
+    *d=1*。通常，我们可以使用以下一组“规则”来确定 *p* 和 *q* 的值。
+- en: 'Identifying the order of the AR model:'
+  id: totrans-417
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 确定 AR 模型的阶数：
+- en: The ACF shows a significant autocorrelation up to lag *p* and then trails off
+    afterward
+  id: totrans-418
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ACF 显示显著的自相关系数直到滞后 *p*，然后逐渐衰减。
+- en: As the PACF only describes the direct relationship between an observation and
+    its lag, we would expect no significant correlations beyond lag *p*
+  id: totrans-419
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 由于 PACF 仅描述观察值与其滞后值之间的直接关系，我们预计在滞后 *p* 之外不会有显著的相关性。
+- en: 'Identifying the order of the MA model:'
+  id: totrans-420
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 确定 MA 模型的阶数：
+- en: The PACF shows a significant autocorrelation up to lag *q* and then trails off
+    afterward
+  id: totrans-421
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: PACF 显示显著的自相关系数直到滞后 *q*，然后逐渐衰减。
+- en: The ACF shows significant autocorrelation coefficients up to lag *q* and then
+    will exhibit a sharp decline
+  id: totrans-422
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: ACF 显示显著的自相关系数直到滞后 *q*，然后会出现急剧下降。
+- en: Regarding the manual calibration of ARIMA’s orders, Hyndman and Athanasopoulos
+    (2018) warned that if both *p* and *q* are positive, the ACF/PACF plots might
+    not be helpful in determining the specification of the ARIMA model. In the next
+    recipe, we will introduce an automatic approach to determine the optimal values
+    of ARIMA hyperparameters.
+  id: totrans-423
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 关于 ARIMA 阶数的手动调整，Hyndman 和 Athanasopoulos（2018）警告说，如果 *p* 和 *q* 都为正，ACF/PACF
+    图可能在确定 ARIMA 模型的规格时不太有用。在下一篇食谱中，我们将介绍一种自动方法来确定 ARIMA 超参数的最优值。
+- en: In *Step 6*, we combined the original series with the predictions from the two
+    models. We extracted the fitted values from the ARIMA models and appended the
+    forecasts for 2019 to the end of the series. Because we fitted the models to the
+    log transformed series, we had to reverse the transformation by using the exponent
+    function (`np.exp`).
+  id: totrans-424
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 6*中，我们将原始序列与两个模型的预测结果结合起来。我们从 ARIMA 模型中提取了拟合值，并将 2019 年的预测附加到序列的末尾。由于我们将模型拟合于对数转换后的序列，因此我们需要使用指数函数（`np.exp`）来逆转转换。
+- en: When working with series that can have 0 values, it is safer to use `np.log1p`
+    and `np.exp1m`. This way, we avoid potential errors when taking the logarithm
+    of 0.
+  id: totrans-425
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 当处理可能包含 0 值的序列时，最好使用 `np.log1p` 和 `np.exp1m`。这样，我们可以避免对 0 取对数时可能出现的错误。
+- en: In *Step 7*, we plotted the forecasts and calculated the mean absolute percentage
+    error. The ARIMA(2,1,2) provided much better forecasts than the simple ARIMA(1,1,1).
+  id: totrans-426
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 7*中，我们绘制了预测图并计算了平均绝对百分比误差。ARIMA(2,1,2)提供的预测比简单的ARIMA(1,1,1)要好得多。
+- en: In *Step 8*, we chained the `get_forecast` method of the fitted ARIMA model
+    together with the `summary_frame` method to obtain the forecast and its corresponding
+    confidence intervals. We had to use the `get_forecast` method, as the `forecast`
+    method only returns point forecasts, without any additional information. Lastly,
+    we renamed the columns and plotted them together with the original series.
+  id: totrans-427
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 8*中，我们将拟合 ARIMA 模型的 `get_forecast` 方法与 `summary_frame` 方法结合起来，获得预测值及其相应的置信区间。我们必须使用
+    `get_forecast` 方法，因为 `forecast` 方法仅返回点预测，而没有任何附加信息。最后，我们重命名了列，并将它们与原始序列一起绘制。
+- en: There’s more...
+  id: totrans-428
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 还有更多...
+- en: We have already fitted the ARIMA models and explored the accuracy of their forecasts.
+    However, we can also investigate some goodness-of-fit criteria of the fitted models.
+    Instead of focusing on the out-of-sample performance, we can dive a bit deeper
+    into how well the models fit the training data. We do so by looking at the residuals
+    of the fitted ARIMA models.
+  id: totrans-429
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们已经拟合了 ARIMA 模型并探索了其预测的准确性。然而，我们也可以研究拟合模型的拟合优度标准。我们可以通过深入分析模型对训练数据的拟合情况，而不只是关注外样本性能。我们通过查看拟合
+    ARIMA 模型的残差来实现这一点。
+- en: 'First, we plot diagnostic plots for the residuals of the fitted ARIMA(2,1,2)
+    model:'
+  id: totrans-430
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 首先，我们绘制了拟合 ARIMA(2,1,2) 模型的残差诊断图：
+- en: '[PRE56]'
+  id: totrans-431
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE56]'
+- en: 'Running the snippet generates the following figure:'
+  id: totrans-432
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行这段代码会生成以下图形：
+- en: '![](../Images/B18112_06_26.png)'
+  id: totrans-433
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_26.png)'
+- en: 'Figure 6.26: The diagnostics plot of the fitted ARIMA(2,1,2) model'
+  id: totrans-434
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.26：拟合的 ARIMA(2,1,2) 模型的诊断图
+- en: 'Below we cover the interpretation of each of the plots:'
+  id: totrans-435
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 下面我们将介绍每个图表的解释：
+- en: Standardized residuals over time (top left)—the residuals should behave like
+    white noise, that is, there should be no clear patterns visible. Also, the residuals
+    should have a mean of zero and a uniform variance. In our case, there seem to
+    be more negative values than positive ones, so the mean is also probably negative.
+  id: totrans-436
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 标准化残差随时间变化（左上角）——残差应该表现得像白噪声，也就是说，应该看不到明显的模式。此外，残差应该具有零均值和一致的方差。在我们的案例中，似乎负值比正值更多，因此均值也可能为负。
+- en: The histogram and the KDE estimate (top right)—the KDE curve of the residuals
+    should be very similar to the one of the standard normal distribution (labeled
+    as N(0,1)). We can see that this is not the case for our model, as the distribution
+    is shifted toward the negative values.
+  id: totrans-437
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 直方图和 KDE 估计（右上角）——残差的 KDE 曲线应与标准正态分布（标记为 N(0,1)）的曲线非常相似。我们可以看到，在我们的模型中情况并非如此，因为分布向负值偏移。
+- en: Q-Q plot (bottom left)—the majority of the data points should lie in a straight
+    line. This would indicate that the quantiles of a theoretical distribution (Standard
+    Normal) match the empirical ones. Significant deviations from the diagonal line
+    imply that the empirical distribution is skewed.
+  id: totrans-438
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Q-Q 图（左下角）——大多数数据点应位于一条直线上。这表明理论分布（标准正态分布）的分位数与经验分位数匹配。如果与对角线有显著偏离，意味着经验分布是偏斜的。
+- en: Correlogram (bottom right)—here we are looking at the plot of the autocorrelation
+    function of the residuals. We would expect that the residuals of a well-fitted
+    ARIMA model are not autocorrelated. In our case, we can clearly see correlated
+    residuals at lags 12 and 24\. This is a hint that the model is not capturing the
+    seasonal patterns present in the data.
+  id: totrans-439
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 自相关图（右下角）——在这里，我们观察的是残差的自相关函数图。我们期望一个拟合良好的 ARIMA 模型的残差不应具有自相关性。在我们的案例中，我们可以清楚地看到在滞后期
+    12 和 24 存在相关的残差。这表明模型没有捕捉到数据中的季节性模式。
+- en: To continue investigating the autocorrelation of the residuals, we can also
+    apply Ljung-Box’s test for no autocorrelation. To do so, we use the `test_serial_correlation`
+    method of the fitted ARIMA model. Alternatively, we could use the `acorr_ljungbox`
+    function from `statsmodels`.
+  id: totrans-440
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 为了继续研究残差的自相关性，我们还可以应用 Ljung-Box 检验以测试是否存在自相关。为此，我们可以使用拟合的 ARIMA 模型中的 `test_serial_correlation`
+    方法。或者，我们也可以使用 `statsmodels` 中的 `acorr_ljungbox` 函数。
+- en: '[PRE57]'
+  id: totrans-441
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE57]'
+- en: 'Running the snippet generates the following figure:'
+  id: totrans-442
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行代码片段会生成以下图表：
+- en: '![](../Images/B18112_06_27.png)'
+  id: totrans-443
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_27.png)'
+- en: 'Figure 6.27: The results of the Ljung-Box test for no autocorrelation in the
+    residuals'
+  id: totrans-444
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.27：Ljung-Box 检验结果——残差中无自相关
+- en: All of the returned p-values are below the 5% significance level, which means
+    we should reject the null hypothesis stating there is no autocorrelation in the
+    residuals. It makes sense, as we have already observed a significant yearly correlation
+    caused by the fact that our model is missing the seasonal patterns.
+  id: totrans-445
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 所有返回的 p 值都低于 5% 的显著性水平，这意味着我们应该拒绝原假设，认为残差中不存在自相关。这是合理的，因为我们已经观察到由于模型缺少季节性模式，造成了显著的年度相关性。
+- en: What we should also keep in mind is the number of lags to investigate while
+    performing the Ljung-Box test. Different sources suggest a different number of
+    lags to consider. The default value in `statsmodels` is `min(10, nobs // 5)` for
+    non-seasonal models and `min(2*m, nobs // 5)` for seasonal time series, where
+    `m` denotes the seasonal period. Other commonly used variants include `min(20,nobs
+    − 1)` and `ln(nobs)`. In our case, we did not use a seasonal model, so the default
+    value is 10\. But as we know, the data does exhibit seasonal patterns, so we should
+    have looked at more lags.
+  id: totrans-446
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还需要记住，在执行 Ljung-Box 检验时要考虑的滞后数。不同的资料来源建议考虑不同的滞后数。`statsmodels` 中的默认值是 `min(10,
+    nobs // 5)`，适用于非季节性模型，而季节性时间序列的默认值为 `min(2*m, nobs // 5)`，其中 `m` 表示季节周期。其他常用的变体包括
+    `min(20, nobs − 1)` 和 `ln(nobs)`。在我们的案例中，我们没有使用季节性模型，所以默认值是 10。但正如我们所知，数据确实表现出了季节性模式，因此我们应该考虑更多的滞后数。
+- en: The fitted ARIMA models also contain the `test_normality` and `test_heteroskedasticity`
+    methods, which we could use for further evaluation of the model’s fit. We leave
+    exploring those as an exercise for the reader.
+  id: totrans-447
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 拟合的 ARIMA 模型还包含 `test_normality` 和 `test_heteroskedasticity` 方法，我们可以用它们进一步评估模型的拟合度。我们将这些内容作为练习留给读者自行探索。
+- en: See also
+  id: totrans-448
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 另见
+- en: 'Please see the following references for more information on fitting ARIMA models
+    and helpful sets of rules for manually picking up the correct orders of the models:'
+  id: totrans-449
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 请参考以下资料，了解更多有关拟合 ARIMA 模型的信息，并获取手动选择模型正确阶数的有用规则集合：
+- en: '[https://online.stat.psu.edu/stat510/lesson/3/3.1](https://online.stat.psu.edu/stat510/lesson/3/3.1)'
+  id: totrans-450
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[https://online.stat.psu.edu/stat510/lesson/3/3.1](https://online.stat.psu.edu/stat510/lesson/3/3.1)'
+- en: '[https://people.duke.edu/~rnau/arimrule.htm](https://people.duke.edu/~rnau/arimrule.htm)'
+  id: totrans-451
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[https://people.duke.edu/~rnau/arimrule.htm](https://people.duke.edu/~rnau/arimrule.htm)'
+- en: 'For more information on the Ljung-Box test:'
+  id: totrans-452
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 有关 Ljung-Box 检验的更多信息：
+- en: '[https://robjhyndman.com/hyndsight/ljung-box-test/](https://robjhyndman.com/hyndsight/ljung-box-test/)'
+  id: totrans-453
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '[https://robjhyndman.com/hyndsight/ljung-box-test/](https://robjhyndman.com/hyndsight/ljung-box-test/)'
+- en: Finding the best-fitting ARIMA model with auto-ARIMA
+  id: totrans-454
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 使用 auto-ARIMA 寻找最适合的 ARIMA 模型
+- en: As we have seen in the previous recipe, the performance of an ARIMA model varies
+    greatly depending on the chosen hyperparameters (*p*, *d*, and *q*). We can do
+    our best to choose them based on our intuition, the statistical tests, and the
+    ACF/PACF plots. However, this can prove to be quite difficult to do in practice.
+  id: totrans-455
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 正如我们在前面的教程中看到的，ARIMA 模型的表现会根据所选的超参数（*p*，*d* 和 *q*）有很大差异。我们可以根据直觉、统计检验和 ACF/PACF
+    图来尽力选择这些参数。然而，实际操作中这可能会变得相当困难。
+- en: That is why in this recipe we introduce **auto-ARIMA**, an automated approach
+    to finding the best hyperparameters of the ARIMA class models (including variants
+    such as ARIMAX and SARIMA).
+  id: totrans-456
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 这就是为什么在本教程中我们引入了 **auto-ARIMA**，这是一种自动化方法，用于寻找 ARIMA 类模型（包括 ARIMAX 和 SARIMA
+    等变体）的最佳超参数。
+- en: Without going much into the technical details of the algorithm, it first determines
+    the number of differences using the KPSS test. Then, the algorithm uses a stepwise
+    search to traverse the model space, searching for a model that results in a better
+    fit. A popular choice of evaluation metric used for comparing the models is the
+    **Akaike Information Criterion** (**AIC**). The metric provides a trade-off between
+    the goodness of fit of the model and its simplicity—AIC deals with the risks of
+    overfitting and underfitting. When we compare multiple models, the lower the value
+    of AIC, the better the model. For a more complete description of the auto-ARIMA
+    procedure, please refer to the sources mentioned in the *See also* section.
+  id: totrans-457
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 不深入探讨算法的技术细节，它首先使用 KPSS 测试确定差分的次数。然后，算法使用逐步搜索方法遍历模型空间，寻找一个拟合效果更好的模型。比较模型时，常用的评估指标是
+    **赤池信息量准则**（**AIC**）。该指标提供了模型拟合度与简洁性之间的权衡——AIC 处理了过拟合和欠拟合的风险。当我们比较多个模型时，AIC 值越低，模型越好。有关
+    auto-ARIMA 方法的更完整描述，请参阅 *另见* 部分提到的资料。
+- en: 'The auto-ARIMA framework also works well with the extensions of the ARIMA model:'
+  id: totrans-458
+  prefs: []
+  type: TYPE_NORMAL
+  zh: auto-ARIMA 框架也适用于 ARIMA 模型的扩展：
+- en: '**ARIMAX**—adds exogenous variable(s) to the model.'
+  id: totrans-459
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**ARIMAX**—向模型中添加外生变量。'
+- en: '**SARIMA** (**Seasonal ARIMA**)—extends ARIMA to account for seasonality in
+    the time series. The full specification is SARIMA(p,d,q)(P,D,Q)m, where the capitalized
+    parameters are analogous to the original ones, but they refer to the seasonal
+    component of the time series. *m* refers to the period of seasonality.'
+  id: totrans-460
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: '**SARIMA**（**季节性 ARIMA**）—扩展 ARIMA 以考虑时间序列中的季节性。其完整规格为 SARIMA(p,d,q)(P,D,Q)m，其中大写的参数类似于原始参数，但它们指的是时间序列中的季节性成分。*m*
+    代表季节性的周期。'
+- en: In this recipe, we will once again work with the monthly US unemployment rates
+    from the years 2010 to 2019.
+  id: totrans-461
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本方案中，我们将再次使用 2010 到 2019 年间的美国月度失业率数据。
+- en: Getting ready
+  id: totrans-462
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 准备工作
+- en: We will use the same data that we used in the *Time series decomposition* recipe.
+  id: totrans-463
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们将使用与 *时间序列分解* 方案中相同的数据。
+- en: How to do it...
+  id: totrans-464
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 如何操作...
+- en: 'Execute the following steps to find the best-fitting ARIMA model using the
+    auto-ARIMA procedure:'
+  id: totrans-465
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行以下步骤，使用 auto-ARIMA 方法找到最佳拟合 ARIMA 模型：
+- en: 'Import the libraries:'
+  id: totrans-466
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 导入库：
+- en: '[PRE58]'
+  id: totrans-467
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE58]'
+- en: 'Create the train/test split:'
+  id: totrans-468
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 创建训练/测试集分割：
+- en: '[PRE59]'
+  id: totrans-469
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE59]'
+- en: 'Find the best hyperparameters of the ARIMA model using the auto-ARIMA procedure:'
+  id: totrans-470
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 使用 auto-ARIMA 方法找到 ARIMA 模型的最佳超参数：
+- en: '[PRE60]'
+  id: totrans-471
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE60]'
+- en: 'Executing the snippet generates the following summary:'
+  id: totrans-472
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下摘要：
+- en: '![](../Images/B18112_06_28.png)'
+  id: totrans-473
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_28.png)'
+- en: 'Figure 6.28: The summary of the best-fitting ARIMA model, as identified using
+    the auto-ARIMA procedure'
+  id: totrans-474
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.28：使用 auto-ARIMA 方法识别的最佳拟合 ARIMA 模型的摘要
+- en: The procedure indicated that the best-fitting ARIMA model is ARIMA(2,1,2). But
+    as you can see, the results in *Figure 6.28* and *Figure 6.21* are different.
+    That is because in the latter case, we have fitted the ARIMA(2,1,2) model to the
+    log transformed series, while in this recipe, we have not applied the log transformation.
+  id: totrans-475
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 该程序指示最佳拟合 ARIMA 模型为 ARIMA(2,1,2)。但正如你所看到的，*图 6.28* 和 *图 6.21* 中的结果是不同的。这是因为在后者的情况下，我们将
+    ARIMA(2,1,2) 模型拟合到对数变换后的系列，而在本方案中，我们没有应用对数变换。
+- en: 'Because we indicated `trace=True`, we also see the following information about
+    the models fitted during the procedure:'
+  id: totrans-476
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 由于我们设置了 `trace=True`，我们还可以看到关于过程中拟合的模型的以下信息：
+- en: '[PRE61]'
+  id: totrans-477
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE61]'
+- en: 'Similar to the ARIMA model estimated with the `statsmodels` library, with `pmdarima`
+    (which is in fact a wrapper around `statsmodels`) we can also use the `plot_diagnostics`
+    method to analyze the fit of the model by looking at its residuals:'
+  id: totrans-478
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 类似于使用 `statsmodels` 库估算的 ARIMA 模型，在 `pmdarima`（它实际上是 `statsmodels` 的一个封装）中，我们也可以使用
+    `plot_diagnostics` 方法通过查看残差来分析模型的拟合情况：
+- en: '[PRE62]'
+  id: totrans-479
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE62]'
+- en: 'Executing the snippet generates the following figure:'
+  id: totrans-480
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图形：
+- en: '![](../Images/B18112_06_29.png)Figure 6.29: The diagnostic plots of the best-fitting
+    ARIMA model'
+  id: totrans-481
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: '![](../Images/B18112_06_29.png)图 6.29：最佳拟合 ARIMA 模型的诊断图'
+- en: Similar to the diagnostics plot in *Figure 6.26*, this ARIMA(2,1,2) model is
+    also struggling with capturing the yearly seasonal patterns—we can clearly see
+    that in the correlogram.
+  id: totrans-482
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 类似于 *图 6.26* 中的诊断图，这个 ARIMA(2,1,2) 模型也未能很好地捕捉到年度季节性模式——我们可以从自相关图中清楚地看到这一点。
+- en: 'Find the best hyperparameters of a SARIMA model using the auto-ARIMA procedure:'
+  id: totrans-483
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 使用 auto-ARIMA 方法找到 SARIMA 模型的最佳超参数：
+- en: '[PRE63]'
+  id: totrans-484
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE63]'
+- en: 'Executing the snippet generates the following summary:'
+  id: totrans-485
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下摘要：
+- en: '![](../Images/B18112_06_30.png)'
+  id: totrans-486
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_30.png)'
+- en: 'Figure 6.30: The summary of the best-fitting SARIMA model, as identified using
+    the auto-ARIMA procedure'
+  id: totrans-487
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.30：使用 auto-ARIMA 程序识别的最佳拟合 SARIMA 模型的总结。
+- en: 'Just as we have done before, we will also look at the various residual plots:'
+  id: totrans-488
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 就像我们之前做的那样，我们还将查看各种残差图：
+- en: '[PRE64]'
+  id: totrans-489
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE64]'
+- en: 'Executing the snippet generates the following figure:'
+  id: totrans-490
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图形：
+- en: '![](../Images/B18112_06_31.png)'
+  id: totrans-491
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_31.png)'
+- en: 'Figure 6.31: The diagnostic plots of the best-fitting SARIMA model'
+  id: totrans-492
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 图 6.31：最佳拟合 SARIMA 模型的诊断图。
+- en: We can clearly see that the SARIMA model results in a much better fit than the
+    ARIMA(2,1,2) model.
+  id: totrans-493
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 我们可以清楚地看到，SARIMA 模型比 ARIMA(2,1,2) 模型拟合得更好。
+- en: 'Calculate the forecasts from the two models and plot them:'
+  id: totrans-494
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+  zh: 计算两个模型的预测值并绘制它们：
+- en: '[PRE65]'
+  id: totrans-495
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE65]'
+- en: 'Executing the snippet generates the following plot:'
+  id: totrans-496
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图形：
+- en: '![](../Images/B18112_06_32.png)'
+  id: totrans-497
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_32.png)'
+- en: 'Figure 6.32: The forecasts from the ARIMA and SARIMA models identified using
+    the auto-ARIMA procedure'
+  id: totrans-498
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.32：使用 auto-ARIMA 程序识别的 ARIMA 和 SARIMA 模型的预测结果。
+- en: 'It should not come as a surprise that the SARIMA model is capturing the seasonal
+    patterns better than the ARIMA model. That is also reflected in the performance
+    metrics calculated below. We also calculate the MAPEs:'
+  id: totrans-499
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 不足为奇的是，SARIMA 模型比 ARIMA 模型更好地捕捉到季节性模式。这一点也反映在下面计算的性能指标中。我们还计算了 MAPEs：
+- en: '[PRE66]'
+  id: totrans-500
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE66]'
+- en: 'Executing the snippet generates the following output:'
+  id: totrans-501
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下输出：
+- en: '[PRE67]'
+  id: totrans-502
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE67]'
+- en: How it works...
+  id: totrans-503
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 它是如何工作的……
+- en: After importing the libraries, we created the training and test set just as
+    we have done in the previous recipes.
+  id: totrans-504
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 导入库后，我们创建了训练集和测试集，就像在之前的示例中一样。
+- en: 'In *Step 3*, we used the `auto_arima` function to find the best hyperparameters
+    of the ARIMA model. While using it, we specified that:'
+  id: totrans-505
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤 3*中，我们使用 `auto_arima` 函数来找到 ARIMA 模型的最佳超参数。在使用时，我们指定：
+- en: We wanted to use the augmented Dickey-Fuller test as the stationarity test instead
+    of the KPSS test.
+  id: totrans-506
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们希望使用增广的迪基-富勒检验作为平稳性检验，而不是 KPSS 检验。
+- en: We turned off the seasonality to fit an ARIMA model instead of SARIMA.
+  id: totrans-507
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们关闭了季节性，以便拟合一个 ARIMA 模型，而不是 SARIMA。
+- en: We wanted to estimate a model without an intercept, which is also the default
+    setting when estimating ARIMA in `statsmodels` (under the `trend` argument in
+    the `ARIMA` class).
+  id: totrans-508
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们希望估算一个没有截距的模型，这也是在 `statsmodels` 中估算 ARIMA 时的默认设置（在 `ARIMA` 类的 `trend` 参数下）。
+- en: We wanted to use the stepwise algorithm for identifying the best hyperparameters.
+    When we mark this one as `False`, the function will run an exhaustive grid search
+    (trying out all possible hyperparameter combinations) similarly to the `GridSearchCV`
+    class of `scikit-learn`. When using that scenario, we can indicate the `n_jobs`
+    argument to specify how many models can be fitted in parallel.
+  id: totrans-509
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们想使用逐步算法来识别最佳超参数。当我们将这个设置为`False`时，函数将执行穷尽网格搜索（尝试所有可能的超参数组合），类似于 `scikit-learn`
+    的 `GridSearchCV` 类。当使用这种情况时，我们可以指定 `n_jobs` 参数来指定可以并行拟合的模型数量。
+- en: 'There are also many different settings we can experiment with, for example:'
+  id: totrans-510
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还可以尝试许多不同的设置，例如：
+- en: Selecting the starting value of the hyperparameters for the search.
+  id: totrans-511
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 选择搜索的超参数起始值。
+- en: Capping the maximum values of parameters in the search.
+  id: totrans-512
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 限制搜索中参数的最大值。
+- en: Selecting different statistical tests for determining the number of differences
+    (also seasonal).
+  id: totrans-513
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 选择不同的统计测试来确定差异的数量（也包括季节性差异）。
+- en: Selecting an out-of-sample evaluation period (`out_of_sample_size`). This will
+    make the algorithm fit the models on the data up until a certain point in time
+    (the last observation minus `out_of_sample_size`) and evaluate on the hold-out
+    set. This way of selecting the best model might be preferable when we care more
+    about the forecasting performance than the fit to the training data.
+  id: totrans-514
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 选择一个超出样本的评估期（`out_of_sample_size`）。这将使算法在数据的某个时间点（最后一个观测值减去 `out_of_sample_size`）之前拟合模型，并在保留集上进行评估。当我们更关心预测性能而非训练数据的拟合时，这种选择最佳模型的方法可能更为合适。
+- en: We can cap the maximum time for fitting the model or the max number of hyperparameter
+    combinations to try out. This is especially useful when estimating seasonal models
+    on more granular (for example, weekly) data, as such scenarios tend to take quite
+    a long time to fit.
+  id: totrans-515
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们可以限制拟合模型的最大时间或尝试的最大超参数组合数量。当估算季节性模型时，尤其是在更细粒度的数据（例如，每周数据）上，这一点尤其有用，因为这种情况往往需要较长时间来拟合。
+- en: In *Step 4*, we used the `auto_arima` function to find the best SARIMA model.
+    To do so, we specified `seasonal=True` and indicated that we are working with
+    monthly data by setting `m=12`.
+  id: totrans-516
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在*步骤4*中，我们使用`auto_arima`函数找到了最佳的SARIMA模型。为此，我们指定了`seasonal=True`，并通过设置`m=12`表示我们正在处理月度数据。
+- en: Lastly, we calculated the forecasts coming from the two models using the `predict`
+    method, plotted them together with the ground truth, and calculated the MAPEs.
+  id: totrans-517
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，我们使用`predict`方法计算了两个模型的预测结果，将它们与真实值一起绘制，并计算了MAPE值。
+- en: There’s more...
+  id: totrans-518
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 还有更多内容...
+- en: We can use the auto-ARIMA framework in the `pmdarima` library to estimate even
+    more complex models or entire pipelines, which include transforming the target
+    variable or adding new features. In this section, we show how to do so.
+  id: totrans-519
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们可以使用`pmdarima`库中的auto-ARIMA框架来估计更复杂的模型或整个管道，这些管道包括变换目标变量或添加新特征。在本节中，我们展示了如何执行这些操作。
+- en: 'We start by importing a few more classes:'
+  id: totrans-520
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们从导入更多的类开始：
+- en: '[PRE68]'
+  id: totrans-521
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE68]'
+- en: For the first model, we train an ARIMA model with additional features (exogenous
+    variables). As an experiment, we try to provide features indicating which month
+    a given observation comes from. If this works, we might not need to estimate a
+    SARIMA model to capture the yearly seasonality.
+  id: totrans-522
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 对于第一个模型，我们训练了一个带有附加特征（外生变量）的ARIMA模型。作为实验，我们尝试提供指示给定观测来自哪个月份的特征。如果这样有效，我们可能就不需要估计SARIMA模型来捕捉年度季节性。
+- en: We create **dummy variables** using the `pd.get_dummies` function. Each column
+    contains a Boolean flag indicating if the observation came from the given month
+    or not.
+  id: totrans-523
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们使用`pd.get_dummies`函数创建**虚拟变量**。每一列包含一个布尔标志，指示该观测是否来自给定月份。
+- en: 'We also need to drop the first column from the new DataFrame to avoid the **dummy-variable
+    trap** (perfect multicollinearity). We added the new variables for both the training
+    and test sets:'
+  id: totrans-524
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还需要从新的DataFrame中删除第一列，以避免**虚拟变量陷阱**（完美多重共线性）。我们为训练集和测试集都添加了这些新变量：
+- en: '[PRE69]'
+  id: totrans-525
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE69]'
+- en: 'We then use the `auto_arima` function to find the best-fitting model. The only
+    thing that changes as compared to *Step 3* of this recipe is that we had to specify
+    the exogenous variables using the `exogenous` argument. We indicated all columns
+    except the one containing the target. Alternatively, we could have kept the additional
+    variables in a separate object with identical indices as the target:'
+  id: totrans-526
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然后我们使用`auto_arima`函数来找到最佳拟合的模型。与本食谱的*步骤3*相比，唯一的变化是我们必须通过`exogenous`参数指定外生变量。我们指定了除目标列以外的所有列。或者，我们也可以将附加变量保存在一个具有与目标相同索引的单独对象中：
+- en: '[PRE70]'
+  id: totrans-527
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE70]'
+- en: 'Executing the snippet generates the following summary:'
+  id: totrans-528
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 执行该代码片段生成以下摘要：
+- en: '![](../Images/B18112_06_33.png)'
+  id: totrans-529
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_33.png)'
+- en: 'Figure 6.33: The summary of the ARIMA model with exogenous variables'
+  id: totrans-530
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.33：带外生变量的ARIMA模型的摘要
+- en: We also look at the residuals plots by using the `plot_diagnostics` method.
+    It seems that the autocorrelation issues connected to the yearly seasonality were
+    fixed by including the dummy variables.
+  id: totrans-531
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 我们还通过使用`plot_diagnostics`方法查看残差图。似乎通过包含虚拟变量，解决了与年度季节性相关的自相关问题。
+- en: '![](../Images/B18112_06_34.png)'
+  id: totrans-532
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_34.png)'
+- en: 'Figure 6.34: The diagnostic plots of the ARIMA model with exogenous variables'
+  id: totrans-533
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图 6.34：带外生变量的ARIMA模型的诊断图
+- en: 'Lastly, we also show how to create an entire data transformation and modeling
+    pipeline, which also finds the best-fitting ARIMA model. Our pipeline consists
+    of three steps:'
+  id: totrans-534
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，我们还展示了如何创建整个数据转换和建模管道，该管道同样能找到最佳拟合的ARIMA模型。我们的管道包含三个步骤：
+- en: We apply the log transformation to the target.
+  id: totrans-535
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们对目标变量进行了对数变换。
+- en: We create new features using the `FourierFeaturizer`—explaining Fourier series
+    is outside of the scope of this book. In practice, using them permits us to account
+    for the seasonality in a seasonal time series without using a seasonal model *per
+    se*. To provide a bit more context, it is something similar to what we have done
+    with the month dummies. The `FourierFeaturizer` class supplies decomposed seasonal
+    Fourier terms as an exogenous array of features. We had to specify the seasonal
+    periodicity *m*.
+  id: totrans-536
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们使用`FourierFeaturizer`创建了新的特征——解释傅里叶级数超出了本书的范围。实际上，使用傅里叶变换可以让我们在不使用季节性模型*本身*的情况下，考虑到季节性时间序列中的季节性。为了提供更多背景信息，这与我们使用月份虚拟变量所做的类似。`FourierFeaturizer`类提供了分解后的季节性傅里叶项，作为外生特征数组。我们需要指定季节性周期*
+    m *。
+- en: We find the best-fitting model using the auto-ARIMA procedure. Please keep in
+    mind that when using the pipelines, we have to use the `AutoARIMA` class instead
+    of the `pm.auto_arima` function. Those two offer the same functionalities, just
+    this time we had to use a class to make it compatible with the `Pipeline` functionality.
+  id: totrans-537
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们使用auto-ARIMA过程找到最佳拟合的模型。请记住，当使用管道时，我们必须使用`AutoARIMA`类，而不是`pm.auto_arima`函数。这两个提供相同的功能，只是这次我们必须使用类，以使其与`Pipeline`功能兼容。
+- en: '[PRE71]'
+  id: totrans-538
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE71]'
+- en: 'In the log produced by fitting the pipeline, we can see that the following
+    model was selected as the best one:'
+  id: totrans-539
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在拟合管道时生成的日志中，我们可以看到选择的最佳模型是：
+- en: '[PRE72]'
+  id: totrans-540
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE72]'
+- en: 'The biggest advantage of using the pipeline is that we do not have to carry
+    out all the steps ourselves. We just define a pipeline and then provide a time
+    series as input to the `fit` method. In general, pipelines (also the ones in `scikit-learn`
+    as we will see in *Chapter 13*, *Applied Machine Learning: Identifying Credit
+    Default*) are a great functionality that helps us with:'
+  id: totrans-541
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 使用管道的最大优点是我们不需要自己执行所有步骤。我们只需定义一个管道，然后将时间序列作为输入提供给`fit`方法。通常，管道（包括我们将在*第13章*《应用机器学习：信用违约识别》中看到的`scikit-learn`中的管道）是一个非常有用的功能，帮助我们：
+- en: Making the code reusable
+  id: totrans-542
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 使代码具有可重用性
+- en: Defining a clear order of the operations that are happening on the data
+  id: totrans-543
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 定义在数据上执行的操作的明确顺序
+- en: Avoiding potential data leakage when creating features and splitting the data
+  id: totrans-544
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 在创建特征和拆分数据时，避免潜在的数据泄漏
+- en: A potential disadvantage of using the pipelines is that some operations are
+    not that easy to track anymore (the intermediate results are not stored as separate
+    objects) and it is a bit more difficult to access the particular elements of the
+    pipeline. For example, we cannot run `auto_arima_pipe.summary()` to get the summary
+    of the fitted ARIMA model.
+  id: totrans-545
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 使用管道的一个潜在缺点是某些操作不再那么容易追踪（中间结果没有作为单独的对象存储），并且访问管道中特定元素的难度稍微增加。例如，我们不能运行`auto_arima_pipe.summary()`来获取拟合的ARIMA模型的摘要。
+- en: 'Below, we create forecasts using the `predict` method. Some noteworthy things
+    about this step:'
+  id: totrans-546
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在下面，我们使用`predict`方法创建预测。关于这一步，有几个值得注意的地方：
+- en: We created a new DataFrame containing only the target. We did so to remove the
+    extra columns we created earlier in this recipe.
+  id: totrans-547
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 我们创建了一个新的DataFrame，只包含目标。这样做是为了移除在本食谱中之前创建的额外列。
+- en: When using the `predict` method with a fitted ARIMAX model, we also need to
+    provide the required exogenous variables for the predictions. They are passed
+    as the `X` argument.
+  id: totrans-548
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 在使用拟合的ARIMAX模型的`predict`方法时，我们还需要提供预测所需的外生变量。它们作为`X`参数传递。
+- en: When we use the `predict` method of a pipeline that transforms the target variable,
+    the returned predictions (or fitted values) are expressed on the same scale as
+    the original input. In our case, the following sequence happened under the hood.
+    First, the original time series was log transformed. Then, new features were added.
+    Next, we obtained predictions from the model (still on the log transformed scale).
+    Finally, the predictions were converted to the original scale using the exponent
+    function.
+  id: totrans-549
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 当我们使用转换目标变量的管道的`predict`方法时，返回的预测（或拟合值）是以原始输入的相同尺度表示的。在我们的案例中，幕后发生了以下过程。首先，对原始时间序列进行了对数变换。然后，添加了新的特征。接下来，我们从模型中获得预测（仍然是在对数变换的尺度上）。最后，使用指数函数将预测转换回原始尺度。
+- en: '[PRE73]'
+  id: totrans-550
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+  zh: '[PRE73]'
+- en: 'Running the code generates the following plot:'
+  id: totrans-551
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 运行代码生成了以下图表：
+- en: '![](../Images/B18112_06_35.png)'
+  id: totrans-552
+  prefs: []
+  type: TYPE_IMG
+  zh: '![](../Images/B18112_06_35.png)'
+- en: 'Figure 6.35: The forecasts from the ARIMAX model and the ARIMA pipeline'
+  id: totrans-553
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 图6.35：ARIMAX模型和ARIMA管道的预测
+- en: 'For reference, we also add the scores of those forecasts:'
+  id: totrans-554
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 作为参考，我们还添加了这些预测的评分：
+- en: '[PRE74]'
+  id: totrans-555
+  prefs: []
+  type: TYPE_PRE
+  zh: '[PRE74]'
+- en: Of all the ARIMA models we have tried in this chapter, the pipeline model performed
+    best. However, it still performs significantly worse than the exponential smoothing
+    methods.
+  id: totrans-556
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在本章中我们尝试的所有ARIMA模型中，管道模型表现最好。然而，它的表现仍然明显逊色于指数平滑方法。
+- en: When using the `predict` method of the ARIMA models/pipelines in the `pmdarima`
+    library, we can set the `return_conf_int` argument to `True`. When we do so, the
+    method will not only return the point forecast but also the corresponding confidence
+    intervals.
+  id: totrans-557
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在使用`pmdarima`库中ARIMA模型/管道的`predict`方法时，我们可以将`return_conf_int`参数设置为`True`。这样，方法不仅会返回点预测，还会返回相应的置信区间。
+- en: See also
+  id: totrans-558
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+  zh: 另请参见
+- en: 'Hyndman, R. J. & Athanasopoulos, G. 2021\. “ARIMA Modeling in Fable.” In *Forecasting:
+    Principles and Practice*, 3rd edition, OTexts: Melbourne, Australia. OTexts.com/fpp3\.
+    Accessed on 2022-05-08 – [https://otexts.com/fpp3/arima-r.html](https://otexts.com/fpp3/arima-r.html).'
+  id: totrans-559
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: 'Hyndman, R. J. & Athanasopoulos, G. 2021. “ARIMA建模在Fable中的应用。” 见于 *Forecasting:
+    Principles and Practice*，第3版，OTexts：墨尔本，澳大利亚。OTexts.com/fpp3。访问日期：2022-05-08 –
+    [https://otexts.com/fpp3/arima-r.html](https://otexts.com/fpp3/arima-r.html)。'
+- en: 'Hyndman, R. J. & Khandakar, Y., 2008\. “Automatic time series forecasting:
+    the forecast package for R,” *Journal of Statistical Software*, 27: 1-22.'
+  id: totrans-560
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+  zh: Hyndman, R. J. & Khandakar, Y., 2008. “自动时间序列预测：R的forecast包，” *Journal of Statistical
+    Software*，27：1-22。
+- en: Summary
+  id: totrans-561
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+  zh: 总结
+- en: In this chapter, we have covered the classical (statistical) approaches to time
+    series analysis and forecasting. We learned how to decompose any time series into
+    trend, seasonal, and remainder components. This step can be very helpful in getting
+    a better understanding of the explored time series. But we can also use it directly
+    for modeling purposes.
+  id: totrans-562
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在这一章中，我们涵盖了时间序列分析与预测的经典（统计学）方法。我们学习了如何将任何时间序列分解为趋势、季节性和残差组成部分。这一步骤在更好地理解所探讨的时间序列时非常有帮助。我们也可以直接将其用于建模目的。
+- en: Then, we explained how to test if a time series is stationary, as some of the
+    statistical models (for example, ARIMA) require stationarity. We also explained
+    which steps we can take to transform a non-stationary time series into a stationary
+    one.
+  id: totrans-563
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 然后，我们解释了如何测试时间序列是否平稳，因为一些统计模型（例如ARIMA）要求数据是平稳的。我们还解释了如何将非平稳的时间序列转换为平稳序列的步骤。
+- en: Lastly, we explored two of the most popular statistical approaches to time series
+    forecasting—exponential smoothing methods and ARIMA models. We have also touched
+    upon more modern approaches to estimating such models, which involve automatic
+    tuning and hyperparameter selection.
+  id: totrans-564
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 最后，我们探讨了两种最受欢迎的时间序列预测统计方法——指数平滑方法和ARIMA模型。我们还简要介绍了更现代的方法来估计这些模型，这些方法涉及自动调参和超参数选择。
+- en: In the next chapter, we will explore ML-based approaches to time series forecasting.
+  id: totrans-565
+  prefs: []
+  type: TYPE_NORMAL
+  zh: 在下一章中，我们将探讨基于机器学习的方法进行时间序列预测。

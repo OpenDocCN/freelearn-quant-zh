@@ -1,24 +1,32 @@
 - en: '7'
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: '7'
 - en: Machine Learning-Based Approaches to Time Series Forecasting
+  id: totrans-1
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 基于机器学习的时间序列预测方法
 - en: In the previous chapter, we provided a brief introduction to time series analysis
     and demonstrated how to use statistical approaches (ARIMA and ETS) for time series
     forecasting. While those approaches are still very popular, they are somewhat
     dated. In this chapter, we focus on the more recent, ML-based approaches to time
     series forecasting.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章中，我们简要介绍了时间序列分析，并展示了如何使用统计方法（如ARIMA和ETS）进行时间序列预测。尽管这些方法仍然非常流行，但它们有些过时。在这一章中，我们将重点介绍基于机器学习的时间序列预测方法。
 - en: We start by explaining different ways of validating time series models. Then,
     we move on to the inputs of ML models, that is, the features. We provide an overview
     of selected feature engineering approaches and introduce a tool for automatic
     feature extraction that generates hundreds or thousands of features for us.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先解释不同的时间序列模型验证方法。然后，我们转向机器学习模型的输入，即特征。我们概述了几种特征工程方法，并介绍了一种自动特征提取工具，它能够为我们生成数百或数千个特征。
 - en: Having covered those two topics, we introduce the concept of reduced regression,
     which allows us to reframe the time series forecasting problem as a regular regression
     problem. Thus, it allows us to use popular and battle-tested regression algorithms
@@ -26,357 +34,513 @@
     time series forecasting. Then, we also show how to use Meta’s Prophet algorithm.
     We conclude the chapter by introducing one of the popular AutoML tools, which
     allows us to train and tune dozens of ML models with only a few lines of code.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 在讨论完这两个话题后，我们引入了简化回归的概念，它使我们能够将时间序列预测问题重新框定为常规回归问题。因此，它允许我们使用流行且经过验证的回归算法（如`scikit-learn`、`XGBoost`、`LightGBM`等）来进行时间序列预测。接下来，我们还展示了如何使用Meta的Prophet算法。最后，我们通过介绍一种流行的AutoML工具来结束本章，该工具允许我们仅用几行代码训练和调优数十种机器学习模型。
 - en: 'We cover the following recipes in this chapter:'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章我们将涵盖以下内容：
 - en: Validation methods for time series
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 时间序列的验证方法
 - en: Feature engineering for time series
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 时间序列的特征工程
 - en: Time series forecasting as reduced regression
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将时间序列预测视为简化回归
 - en: Forecasting with Meta’s Prophet
+  id: totrans-9
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用Meta的Prophet进行预测
 - en: AutoML for time series forecasting with PyCaret
+  id: totrans-10
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用PyCaret进行时间序列预测的AutoML方法
 - en: Validation methods for time series
+  id: totrans-11
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 时间序列的验证方法
 - en: In the previous chapter, we trained a few statistical models to forecast the
     future values of time series. To evaluate the models’ performance, we initially
     split the data into training and test sets. However, that is definitely not the
     only approach to model validation.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章中，我们训练了一些统计模型来预测时间序列的未来值。为了评估这些模型的性能，我们最初将数据分为训练集和测试集。然而，这绝对不是验证模型的唯一方法。
 - en: A very popular approach to evaluating models’ performance is called **cross-validation**.
     It is especially useful for choosing the best set of a model’s hyperparameters
     or selecting the best model for the problem we are trying to solve. Cross-validation
     is a technique that allows us to obtain reliable estimates of the model’s generalization
     error by providing multiple estimates of the model’s performance. As such, cross-validation
     can help us greatly when we are dealing with smaller datasets.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种非常流行的评估模型性能的方法叫做**交叉验证**。它特别适用于选择模型的最佳超参数集或为我们试图解决的问题选择最佳模型。交叉验证是一种技术，它通过提供多次模型性能估计，帮助我们获得模型泛化误差的可靠估计。因此，交叉验证在处理较小数据集时非常有用。
 - en: The basic cross-validation scheme is called **k-fold cross-validation**, in
     which we randomly split the training data into *k* folds. Then, we train the model
     using *k*−1 folds and evaluate the performance on the *k*th fold. We repeat this
     process *k* times and average the resulting scores. *Figure 7.1* illustrates the
     procedure.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 基本的交叉验证方案被称为**k折交叉验证**，在这种方法中，我们将训练数据随机划分为*k*个子集。然后，我们使用*k*−1个子集训练模型，并在第*k*个子集上评估模型的性能。我们重复这个过程*k*次，并对结果的分数进行平均。*图7.1*展示了这一过程。
 - en: '![A picture containing bar chart  Description automatically generated](../Images/B18112_07_01.png)'
+  id: totrans-15
   prefs: []
   type: TYPE_IMG
+  zh: '![一张包含柱状图的图片，描述自动生成](../Images/B18112_07_01.png)'
 - en: 'Figure 7.1: Schema of k-fold cross-validation'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7.1：k折交叉验证的示意图
 - en: As you might have already realized, *k*-fold cross-validation is not really
     suited for evaluating time series models, as it does not preserve the order of
     time. For example, in the first round, we train the model using the data from
     the last 4 folds while evaluating it using the first one.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你可能已经意识到的那样，*k*-折交叉验证并不适用于评估时间序列模型，因为它没有保留时间的顺序。例如，在第一轮中，我们使用最后 4 个折叠的数据进行模型训练，并使用第一个折叠进行评估。
 - en: 'As *k*-fold cross-validation is very useful for standard regression and classification
     tasks, we will come back to it and cover it more in-depth in *Chapter 13*, *Applied
     Machine Learning: Identifying Credit Default*.'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于*k*-折交叉验证对于标准回归和分类任务非常有用，我们将在*第13章*《应用机器学习：信用违约识别》中对其进行更深入的讨论。
 - en: Bergmeir *et al.* (2018) show that in the case of a purely autoregressive model,
     the use of standard *k*-fold cross-validation is possible if the considered models
     have uncorrelated errors.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: Bergmeir *et al.*（2018）表明，在纯自回归模型的情况下，如果所考虑的模型具有无相关的误差，使用标准*k*-折交叉验证是可行的。
 - en: Fortunately, we can quite easily adapt the concept of *k*-fold cross-validation
     to the time series domain. The resulting approach is called the **walk-forward
     validation**. In that validation scheme, we expand/slide the training window by
     one (or multiple) fold(s) at a time.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 幸运的是，我们可以相当容易地将*k*-折交叉验证的概念适应到时间序列领域。由此产生的方法称为**前向滚动验证**。在这种验证方案中，我们通过一次增加（或多个）折叠来扩展/滑动训练窗口。
 - en: '*Figure 7.2* illustrates the expanding window variant of the walk-forward validation,
     which is also called anchored walk-forward validation. As you can see, we are
     incrementally increasing the size of the training set, while keeping the next
     fold as a validation set.'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 7.2* 说明了前向滚动验证的扩展窗口变种，这也被称为锚定前向滚动验证。如你所见，我们在逐步增加训练集的大小，同时保持下一个折叠作为验证集。'
 - en: '![](../Images/B18112_07_02.png)'
+  id: totrans-22
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_02.png)'
 - en: 'Figure 7.2: Walk-forward validation with an expanding window'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.2：带扩展窗口的前向滚动验证
 - en: This approach comes with a sort of bias—in the earlier rounds, we use much less
     historical data for training the model than in the latter ones, which makes the
     errors coming from different rounds not directly comparable. For example, in the
     first rounds of validation, the model might simply not have enough training data
     to properly learn the seasonal patterns.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种方法带有一定的偏差——在较早的轮次中，我们使用的历史数据比后期的训练数据要少得多，这使得来自不同轮次的误差不能直接比较。例如，在验证的前几轮中，模型可能没有足够的训练数据来正确学习季节性模式。
 - en: An attempt to solve this problem might be to use a sliding window approach instead
     of an expanding one. As a result, all models are trained with the same amount
     of data so the errors are directly comparable. *Figure 7.3* illustrates the process.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 解决这个问题的一种尝试可能是使用滑动窗口方法，而不是扩展窗口方法。结果是，所有模型都使用相同数量的数据进行训练，因此误差是直接可比的。*图 7.3* 说明了这一过程。
 - en: '![](../Images/B18112_07_03.png)'
+  id: totrans-26
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_03.png)'
 - en: 'Figure 7.3: Walk-forward validation with a sliding window'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.3：带滑动窗口的前向滚动验证
 - en: We could use this approach when we have a lot of training data (and each sliding
     window offers enough for the model to learn the patterns well) or when we do not
     need to look far into the past to learn relevant patterns used to predict the
     future.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我们有大量训练数据时（并且每个滑动窗口提供足够的数据供模型学习模式）或当我们不需要回顾太远的过去来学习用于预测未来的相关模式时，我们可以使用这种方法。
 - en: We can use a **nested cross-validation** approach to get even more accurate
     error estimates while tuning the model’s hyperparameters at the same time. In
     nested CV, there is an outer loop that estimates the model’s performance and the
     inner loop used for hyperparameter tuning. We provide some useful references on
     the topic in the *See also* section.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用**嵌套交叉验证**方法，同时调整模型的超参数，以获得更准确的误差估计。在嵌套交叉验证中，有一个外部循环用于估计模型的性能，而内部循环则用于超参数调整。我们在*另请参阅*部分提供了一些有用的参考资料。
 - en: In this recipe, we show how to use the walk-forward validation (using both expanding
     and sliding windows) to evaluate the forecasts of the US unemployment rate.
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个实例中，我们展示了如何使用前向滚动验证（使用扩展窗口和滑动窗口）来评估美国失业率的预测。
 - en: How to do it…
+  id: totrans-31
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何执行…
 - en: 'Execute the following steps to calculate the model’s performance using walk-forward
     validation:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤来使用前向滚动验证计算模型的性能：
 - en: 'Import the libraries and authenticate:'
+  id: totrans-33
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库并进行身份验证：
 - en: '[PRE0]'
+  id: totrans-34
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Download the monthly US unemployment rate from the years 2010 to 2019:'
+  id: totrans-35
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载2010年至2019年期间的美国月度失业率：
 - en: '[PRE1]'
+  id: totrans-36
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-37
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下图表：
 - en: '![](../Images/B18112_07_04.png)'
+  id: totrans-38
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_04.png)'
 - en: 'Figure 7.4: Monthly US unemployment rate'
+  id: totrans-39
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图7.4：美国月度失业率
 - en: 'Create simple features:'
+  id: totrans-40
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建简单特征：
 - en: '[PRE2]'
+  id: totrans-41
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: As we are avoiding autoregressive features and we know the values of all the
     features into the future, we are able to forecast for an arbitrarily long forecast
     horizon.
+  id: totrans-42
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 由于我们避免使用自回归特征，并且我们知道所有特征的未来值，因此我们能够进行任意长时间范围的预测。
 - en: 'Use one-hot encoding for the month feature:'
+  id: totrans-43
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对月份特征使用独热编码：
 - en: '[PRE3]'
+  id: totrans-44
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Separate the target from the features:'
+  id: totrans-45
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将目标与特征分开：
 - en: '[PRE4]'
+  id: totrans-46
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Define the expanding window walk-forward validation and print the indices of
     the folds:'
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义扩展窗口的前向交叉验证并打印折叠的索引：
 - en: '[PRE5]'
+  id: totrans-48
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Executing the snippet generates the following log:'
+  id: totrans-49
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下日志：
 - en: '[PRE6]'
+  id: totrans-50
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: By analyzing the log and keeping in mind that we are working with monthly data,
     we can see that in the first iteration, the model would be trained using five
     years of data and evaluated using the sixth year. In the second round, it would
     be trained using the first six years of data and evaluated using the seventh year,
     and so on.
+  id: totrans-51
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 通过分析日志并记住我们正在使用按月的数据，我们可以看到在第一次迭代中，模型将使用五年的数据进行训练，并使用第六年进行评估。在第二轮中，模型将使用前六年的数据进行训练，并使用第七年进行评估，依此类推。
 - en: 'Evaluate the model’s performance using the expanding window validation:'
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用扩展窗口验证评估模型的性能：
 - en: '[PRE7]'
+  id: totrans-53
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-54
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下输出：
 - en: '[PRE8]'
+  id: totrans-55
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: The average performance (measured by MAPE) over the cross-validation rounds
     was 13.2%.
+  id: totrans-56
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 通过交叉验证轮次的平均性能（通过MAPE衡量）为13.2%。
 - en: 'Instead of iterating over the splits, we can easily use the `cross_validate`
     function from `scikit-learn`:'
+  id: totrans-57
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以轻松地使用`scikit-learn`中的`cross_validate`函数，而不是手动迭代分割：
 - en: '[PRE9]'
+  id: totrans-58
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-59
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下输出：
 - en: '![](../Images/B18112_07_05.png)'
+  id: totrans-60
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_05.png)'
 - en: 'Figure 7.5: The scores of each of the validation rounds using a walk-forward
     CV with an expanding window'
+  id: totrans-61
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图7.5：使用扩展窗口的前向交叉验证中每一轮验证的得分
 - en: By looking at the scores, we see that they are identical (except for the negative
     sign) to the ones we have obtained by manually iterating over the cross-validation
     splits.
+  id: totrans-62
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 通过查看得分，我们发现它们与我们手动迭代交叉验证分割时获得的得分完全相同（除了负号）。
 - en: 'Define the sliding window validation and print the indices of the folds:'
+  id: totrans-63
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义滑动窗口验证并打印折叠的索引：
 - en: '[PRE10]'
+  id: totrans-64
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-65
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下输出：
 - en: '[PRE11]'
+  id: totrans-66
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'By analyzing the log, we can see the following:'
+  id: totrans-67
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 通过分析日志，我们可以看到以下内容：
 - en: Each time, the model would be trained using exactly five years of data.
+  id: totrans-68
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每次，模型将使用恰好五年的数据进行训练。
 - en: Between the CV rounds, we are moving by 12 months.
+  id: totrans-69
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在交叉验证轮次之间，我们按12个月移动。
 - en: The validation folds correspond to the ones we saw when we used the expanding
     window validation. Hence, we can easily compare the scores to see which approach
     is better.
+  id: totrans-70
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 验证折叠与我们在使用扩展窗口验证时看到的折叠相对应。因此，我们可以轻松比较得分，以查看哪种方法更好。
 - en: 'Evaluate the model’s performance using the sliding window validation:'
+  id: totrans-71
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用滑动窗口验证评估模型的性能：
 - en: '[PRE12]'
+  id: totrans-72
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-73
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下输出：
 - en: '![](../Images/B18112_07_06.png)'
+  id: totrans-74
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_06.png)'
 - en: 'Figure 7.6: The scores of each of the validation rounds using a walk-forward
     CV with a sliding window'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7.6：使用滑动窗口的前向交叉验证中每一轮验证的得分
 - en: By aggregating the MAPE, we arrive at the average score of 9.98%. It seems that
     using 5 years of data in each iteration results in a better average score than
     when using the expanding window. A potential conclusion is that in this particular
     case, more data does not result in a better model. Instead, we can obtain a better
     model when using only the most recent data points.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过聚合MAPE，我们得到了9.98%的平均得分。看来在每次迭代中使用5年的数据比使用扩展窗口更能获得更好的平均得分。一个可能的结论是，在这种特定情况下，更多的数据并不会导致更好的模型。相反，当只使用最新的数据点时，我们可以获得更好的模型。
 - en: How it works….
+  id: totrans-77
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: First, we imported the required libraries and authenticated with Nasdaq Data
     Link. In the second step, we downloaded the monthly US unemployment rate. It is
     the same time series that we worked with in the previous chapter.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们导入了所需的库并进行了Nasdaq Data Link的身份验证。在第二步中，我们下载了美国的月度失业率。这是我们在上一章中使用的相同时间序列。
 - en: 'In *Step 3*, we created two simple features:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 3*中，我们创建了两个简单的特征：
 - en: Linear trend, which is simply the ordinal row number of the ordered time series.
     Based on the inspection of *Figure 7.4*, we saw that the overall trend in the
     unemployment rate is decreasing. We hope that this feature will capture that pattern.
+  id: totrans-80
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 线性趋势，简单来说，就是有序时间序列的序数行号。根据对*图 7.4*的检查，我们看到失业率的整体趋势是下降的。我们希望这个特征能够捕捉到这种模式。
 - en: The month index, which identifies from which calendar month the given observation
     comes.
+  id: totrans-81
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 月份索引，用于标识给定的观测值来自哪个日历月份。
 - en: 'In *Step 4*, we one-hot encoded the month feature using the `get_dummies` function.
     We cover one-hot encoding in depth in *Chapter 13*, *Applied Machine Learning:
     Identifying Credit Default*, and *Chapter 14*, *Advanced Concepts for Machine
@@ -384,152 +548,202 @@
     flag indicating whether the given observation comes from a certain month. Additionally,
     we dropped the first column to avoid perfect multicollinearity (that is, the infamous
     dummy variable trap).'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 4*中，我们使用`get_dummies`函数对月份特征进行了独热编码。我们在*第 13 章*，*应用机器学习：识别信用违约*和*第 14 章*，*机器学习项目的高级概念*中详细讲解了独热编码。简而言之，我们创建了新的列，每一列都是一个布尔标志，表示给定的观测值是否来自某个月份。此外，我们删除了第一列，以避免完美的多重共线性（即著名的虚拟变量陷阱）。
 - en: In *Step 5*, we separated the features from the target using the `pop` method
     of a `pandas` DataFrame.
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 5*中，我们使用`pandas` DataFrame的`pop`方法将特征与目标分开。
 - en: In *Step 6*, we defined the walk-forward validation using the `TimeSeriesSplit`
     class from `scikit-learn`. We indicated we want to have 5 splits and that the
     test size should be 12 months. Ideally, the validation scheme should reflect the
     real-life usage of the model. In this case, we can state that the ML model will
     be used to forecast the monthly unemployment rate 12 months into the future.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 6*中，我们使用`scikit-learn`中的`TimeSeriesSplit`类定义了前向验证。我们指定了要进行5次分割，并且测试集的大小应为12个月。理想情况下，验证方案应当反映模型的实际使用情况。在这种情况下，我们可以说机器学习模型将用于预测未来12个月的月度失业率。
 - en: Then, we used a `for` loop to print the train and validation indices used in
     each of the cross-validation rounds. The indices returned by the `split` method
     of the `TimeSeriesSplit` class are ordinal, but we can easily map those to the
     actual indices of the time series.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们使用`for`循环打印每一轮交叉验证中使用的训练和验证索引。`TimeSeriesSplit`类的`split`方法返回的索引是序数的，但我们可以轻松将其映射到实际的时间序列索引上。
 - en: We decided not to use autoregressive features, as without them we can forecast
     arbitrarily long into the future. Naturally, we can also do so with the AR feature,
     but then we need to handle them appropriately. This specification is simply easier
     for this use case.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们决定不使用自回归特征，因为没有这些特征，我们可以预测未来任意长的时间。自然地，使用AR特征我们也可以做到这一点，但我们需要适当地处理它们。这种规范对于这个用例来说更为简便。
 - en: In *Step 7*, we used a very similar `for` loop, this time to evaluate the model’s
     performance. In each iteration of the loop, we trained the linear regression model
     using that iteration’s training data, created predictions for the corresponding
     validation set, and lastly, calculated the performance expressed as MAPE. We appended
     the CV scores to a list and then we also calculated the average performance over
     all 5 rounds of cross-validation.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 7*中，我们使用了一个非常相似的`for`循环，这次是评估模型的性能。在每次循环中，我们使用该轮的训练数据训练线性回归模型，为对应的验证集创建预测，最后计算性能指标，以MAPE表示。我们将交叉验证得分添加到一个列表中，然后计算所有5轮交叉验证的平均性能。
 - en: Instead of using the custom `for` loop, we can use the `cross_validate` function
     from the `scikit-learn` library. A potential advantage of using it over the loop
     is that it automatically counts the time spent on the fit and prediction steps
     of the model. We showed how to obtain the MAPE and MSE scores using this approach.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用`scikit-learn`库中的`cross_validate`函数，而不是使用自定义的`for`循环。使用它的一个潜在优点是，它会自动计算模型拟合和预测步骤所花费的时间。我们展示了如何使用这种方法获得MAPE和MSE得分。
 - en: One thing to note about using the `cross_validate` function (or other `scikit-learn`
     functionalities such as Grid Search) is that we had to provide the metric names
     as, for example, `"neg_mean_absolute_percentage_error"`. That is the convention
     used in the `metrics` module of `scikit-learn`, that is, the higher values of
     the scorers are better than the lower values. Hence, as we want to minimize those
     metrics, they are negated.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`cross_validate`函数（或其他`scikit-learn`功能，如网格搜索）时需要注意的一点是，我们必须提供度量标准的名称，例如`"neg_mean_absolute_percentage_error"`。这是`scikit-learn`的`metrics`模块中使用的约定，即得分值较高比较低的得分值更好。因此，由于我们希望最小化这些度量标准，它们被取反。
 - en: 'Below, you can find a list of the most popular metrics used for evaluating
     the accuracy of time series forecasts:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下是用于评估时间序列预测准确性的最常见度量标准列表：
 - en: '**Mean Squared Error** (**MSE**)—One of the most popular metrics in machine
     learning. As the unit is not very intuitive (not the same unit as the original
     forecast), we can use MSE to compare the relative performance of various models
     on the same dataset.'
+  id: totrans-91
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**均方误差**（**MSE**）——机器学习中最常见的度量标准之一。由于单位不是很直观（与原始预测的单位不同），我们可以使用MSE来比较各种模型在同一数据集上的相对表现。'
 - en: '**Root Mean Squared Error** (**RMSE**)—By taking the square root of MSE, this
     metric is now at the same scale as the original time series.'
+  id: totrans-92
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**均方根误差**（**RMSE**）——通过取MSE的平方根，这个度量现在与原始时间序列处于相同的尺度。'
 - en: '**Mean Absolute Error** (**MAE**)—Instead of taking the square, we take the
     absolute value of the error. As a result, MAE is expressed on the same scale as
     the original time series. What is more, MAE is more tolerant of outliers, as each
     observation is given the same weight when calculating the average. In the case
     of the squared metrics, the outliers were punished more significantly.'
+  id: totrans-93
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**平均绝对误差**（**MAE**）——我们不是取平方，而是取误差的绝对值。因此，MAE与原始时间序列具有相同的尺度。而且，MAE对异常值的容忍度更高，因为在计算平均值时，每个观测值被赋予相同的权重。而对于平方度量，异常值的惩罚更加显著。'
 - en: '**Mean Absolute Percentage Error** (**MAPE**)—Very similar to MAE, but expressed
     as a percentage. Hence, it is easier to understand for many business stakeholders.
     However, it comes with a serious disadvantage—when the actual value is zero, the
     metric assumes dividing the error by the actual value, which is not mathematically
     possible.'
+  id: totrans-94
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**平均绝对百分比误差**（**MAPE**）——与MAE非常相似，但以百分比表示。因此，对于许多业务相关人员来说，这更容易理解。然而，它有一个严重的缺点——当实际值为零时，度量标准会假设将误差除以实际值，而这是数学上不可行的。'
 - en: Naturally, these are only a few of the selected metrics. It is highly advised
     to dive deeper into those metrics to fully understand their pros and cons. For
     example, RMSE is often favored as an optimization metric, as squares are easier
     to handle than absolute values when mathematical optimization requires taking
     derivatives.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 自然，这些只是选定度量标准中的一部分。强烈建议深入研究这些度量标准，以全面理解它们的优缺点。例如，RMSE通常作为优化度量标准被偏好，因为平方比绝对值更容易处理，特别是在数学优化需要求导时。
 - en: In *Steps 8* and *9*, we showed how to create the validation scheme using the
     sliding window approach. The only difference is the fact that we specified the
     `max_train_size` argument while instantiating the `TimeSeriesSplit` class.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤8*和*9*中，我们展示了如何使用滑动窗口方法创建验证方案。唯一的不同是，我们在实例化`TimeSeriesSplit`类时指定了`max_train_size`参数。
 - en: Sometimes we might be interested in creating a gap between the training and
     validation sets within cross-validation. For example, in the first iteration,
     the training should be done using the first five values and then the evaluation
     should be done on the seventh value. We can easily incorporate such a scenario
     by using the `gap` argument of the `TimeSeriesSplit` class.
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时候我们可能会对在交叉验证中创建训练集和验证集之间的间隔感兴趣。例如，在第一次迭代中，训练应使用前五个值进行，然后评估应在第七个值上进行。我们可以通过使用`TimeSeriesSplit`类的`gap`参数轻松地实现这种场景。
 - en: There’s more…
+  id: totrans-98
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多…
 - en: In this recipe, we have described the standard approach to validating time series
     models. However, there are many more advanced validation approaches. Actually,
     most of them come from the financial domain, as validating models based on financial
     time series proves to be more complex for multiple reasons. We briefly mention
     some of the more advanced approaches below, together with the challenges they
     are trying to fix.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本教程中，我们描述了验证时间序列模型的标准方法。然而，实际上有许多更高级的验证方法。实际上，其中大多数来自金融领域，因为基于金融时间序列验证模型在多个方面更为复杂。我们在下面简要提到了一些更高级的方法，以及它们试图解决的挑战。
 - en: One of the limitations of `TimeSeriesSplit` is that it only works at record-level
     and cannot handle grouping. Imagine we have a dataset of daily stock returns.
     And due to the specification of our trading algorithm, we are evaluating the performance
     on a weekly or monthly level and the observations should not overlap between the
     weekly/monthly groups. *Figure 7.7* illustrates the concept by using the training
     group size of 3 and validation group size of 1.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: '`TimeSeriesSplit`的一个局限性是它只能在记录级别工作，无法处理分组。假设我们有一个日度股票回报的数据集。根据我们的交易算法的规定，我们是在每周或每月的级别上评估模型的性能，并且观察值不应该在每周/每月的分组之间重叠。*图7.7*通过使用训练组大小为3，验证组大小为1来说明这一概念。'
 - en: '![](../Images/B18112_07_07.png)'
+  id: totrans-101
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_07.png)'
 - en: 'Figure 7.7: Schema of group time series validation'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7.7：分组时间序列验证的架构
 - en: To account for such a grouping of the observations (by week or month), we need
     to use **group time series validation**, which is a combination of `scikit-learn`'s
     `TimeSeriesSplit` and `GroupKFold`. There are many implementations of this concept
     on the internet. One of them can be found in the `mlxtend` library.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了考虑这种观察值的分组（按周或按月），我们需要使用**分组时间序列验证**，这是`scikit-learn`的`TimeSeriesSplit`和`GroupKFold`的结合体。互联网上有许多实现这种概念的例子，其中之一可以在`mlxtend`库中找到。
 - en: 'To better illustrate the potential problems with forecasting financial time
     series and evaluating the model’s performance, we have to expand our mental model
     connected to the time series. Such time series actually have two timestamps for
     each observation:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地说明预测金融时间序列和评估模型性能时可能出现的问题，我们必须扩展与时间序列相关的思维模型。这样的时间序列实际上对每个观察值都有两个时间戳：
 - en: A prediction or trade timestamp—when the ML model makes a prediction and we
     are potentially opening a trade.
+  id: totrans-105
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个预测或交易时间戳——当机器学习模型做出预测时，我们可能会开盘交易。
 - en: An evaluation or event timestamp—when the response to the prediction/trade becomes
     available and we can actually calculate the prediction error.
+  id: totrans-106
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个评估或事件时间戳——当预测/交易的响应变得可用时，我们实际上可以计算预测误差。
 - en: For example, we can have a classification model that predicts the price of certain
     stock increases or drops by *X* in the next 5 business days. Based on that prediction,
     we make a trading decision. We might enter a long position. And over the next
@@ -537,39 +751,53 @@
     or take-profit mechanism might be triggered, we might just close the position,
     or any number of possible outcomes. Hence, we can actually evaluate the prediction
     only at the evaluation timestamp, in this case, after 5 business days.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，我们可以有一个分类模型，用来预测某只股票在接下来的5个工作日内价格是上涨还是下跌，变化幅度为*X*。基于这个预测，我们做出交易决策。我们可能会选择做多。在接下来的5天内，可能会发生很多事情。价格可能会或可能不会变动*X*，止损或止盈机制可能会被触发，我们也可能会直接平仓，或者有其他各种可能的结果。因此，我们实际上只能在评估时间戳进行预测评估，在这个例子中，是5个工作日后。
 - en: Such a framework comes with the risk of leaking the information from the test
     set into the training set. As a result, this is very likely to inflate the model’s
     performance. Hence, we need to make sure that all the data is point-in-time, meaning
     that is truly available at the time it is used by the model.
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 这样的框架存在将测试集信息泄露到训练集中的风险。因此，这很可能会夸大模型的性能。因此，我们需要确保所有数据都是基于时间点的，意味着在模型使用数据时，数据在那个时间点是可用的。
 - en: For example, near the training/validation split point, there might be training
     samples whose evaluation time is later than the prediction time of the validation
     samples. Such overlapping samples are most likely correlated or, in other words,
     unlikely to be independent, which leads to leaking the information between the
     sets.
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，在训练/验证分割点附近，可能会有一些训练样本，其评估时间晚于验证样本的预测时间。这些重叠的样本很可能是相关的，换句话说，不太可能是独立的，这会导致集合之间的信息泄露。
 - en: To solve the look-ahead bias, we can apply **purging**. The idea is to drop
     any samples from the training set whose evaluation time is later than the earliest
     prediction time of the validation set. In other words, we remove observations
     whose event time overlaps with the prediction time of the validation set. *Figure
     7.8* presents an example.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了解决前瞻偏差，我们可以应用**清洗**。其思路是从训练集中删除任何评估时间晚于验证集最早预测时间的样本。换句话说，我们去除那些事件时间与验证集预测时间重叠的观测值。*图7.8*展示了一个示例。
 - en: '![](../Images/B18112_07_08.png)'
+  id: totrans-111
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_08.png)'
 - en: 'Figure 7.8: Example of purging'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7.8：清洗的示例
 - en: You can find the code to run a walk-forward cross-validation with purging in
     *Advances in financial machine learning* (De Prado, 2018)or in the `timeseriescv`
     library.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以在*金融机器学习的进展*（De Prado，2018）或`timeseriescv`库中找到运行带清洗的步进交叉验证的代码。
 - en: Purging alone might not be sufficient to remove all the leakage, as there might
     be correlations between the samples over longer periods of time. We can try to
     solve that by applying an **embargo**, which further eliminates training samples
@@ -577,64 +805,92 @@
     into the embargo period, we simply drop that observation from the train set. We
     estimate the required size of the embargo period for the problem at hand. *Figure
     7.9* illustrates applying both purging and embargo.
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 单独进行清洗可能不足以消除所有泄漏，因为样本之间可能存在较长时间跨度的相关性。我们可以尝试通过应用**禁运**来解决这一问题，禁运进一步排除那些跟随验证样本的训练样本。如果一个训练样本的预测时间落在禁运期内，我们会直接从训练集中删除该观测值。我们根据手头的问题估计禁运期所需的大小。*图7.9*展示了同时应用清洗和禁运的例子。
 - en: '![](../Images/B18112_07_09.png)'
+  id: totrans-115
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_09.png)'
 - en: 'Figure 7.9: Example of purging and embargo'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7.9：清洗和禁运的示例
 - en: For more details about purging and embargo (as well as their implementation
     in Python), please refer to *Advances in financial machine learning* (De Prado,
     2018)*.*
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 有关清洗和禁运的更多细节（以及它们在Python中的实现），请参考*金融机器学习的进展*（De Prado，2018）。
 - en: De Prado (2018) also introduced the **combinatorial purged cross-validation
     algorithm**, which combines the concepts of purging and embargoing with backtesting
     (we cover backtesting trading strategies in *Chapter 12*, *Backtesting Trading
     Strategies*) and cross-validation.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: De Prado（2018）还介绍了**组合清洗交叉验证算法**，该算法将清洗和禁运的概念与回测结合（我们在*第12章*，*回测交易策略*中讲解回测交易策略）以及交叉验证。
 - en: See also
+  id: totrans-119
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: 'Bergmeir, C., & Benítez, J. M. 2012\. “On the use of cross-validation for time
     series predictor evaluation,” *Information Sciences*, 191: 192-213.'
+  id: totrans-120
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Bergmeir, C., & Benítez, J. M. 2012. “关于使用交叉验证进行时间序列预测器评估，”*信息科学*，191: 192-213。'
 - en: 'Bergmeir, C., Hyndman, R. J., & Koo, B. 2018\. “A note on the validity of cross-validation
     for evaluating autoregressive time series prediction,” *Computational Statistics
     & Data Analysis*, 120: 70-83.'
+  id: totrans-121
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Bergmeir, C., Hyndman, R. J., & Koo, B. 2018. “关于交叉验证在评估自回归时间序列预测中的有效性的一些说明，”*计算统计与数据分析*，120:
+    70-83。'
 - en: De Prado, M. L. 2018\. *Advances in Financial Machine Learning*. John Wiley
     & Sons.
+  id: totrans-122
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: De Prado, M. L. 2018. *金融机器学习的进展*。John Wiley & Sons。
 - en: 'Hewamalage, H., Ackermann, K., & Bergmeir, C. 2022\. Forecast Evaluation for
     Data Scientists: Common Pitfalls and Best Practices. *arXiv preprint arXiv:2203.10716*.'
+  id: totrans-123
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Hewamalage, H., Ackermann, K., & Bergmeir, C. 2022. 数据科学家的预测评估：常见陷阱与最佳实践。*arXiv预印本
+    arXiv:2203.10716*。
 - en: 'Tashman, L. J. 2000\. “Out-of-sample tests of forecasting accuracy: an analysis
     and review,” *International Journal of Forecasting*, 16(4): 437-450.'
+  id: totrans-124
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Tashman, L. J. 2000. “样本外预测准确性测试：分析与回顾，”*国际预测学杂志*，16(4): 437-450。'
 - en: 'Varma, S., & Simon, R. 2006\. “Bias in error estimation when using cross-validation
     for model selection,” *BMC bioinformatics*, 7(1): 1-8.'
+  id: totrans-125
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Varma, S., & Simon, R. 2006. “使用交叉验证进行模型选择时的误差估计偏差，”*BMC生物信息学*，7(1): 1-8。'
 - en: Feature engineering for time series
+  id: totrans-126
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 时间序列的特征工程
 - en: In the previous chapter, we trained some statistical models using just the time
     series as input. On the other hand, when we want to approach time series forecasting
     from the ML perspective, **feature engineering** becomes crucial. In the time
@@ -643,48 +899,66 @@
     Naturally, feature engineering is not only important for the pure ML models but
     we can use it to enrich the statistical models with external regressors, for example,
     in the ARIMAX model.
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章中，我们仅使用时间序列作为输入训练了一些统计模型。另一方面，当我们从机器学习（ML）角度进行时间序列预测时，**特征工程**变得至关重要。在时间序列的背景下，特征工程意味着创建有用的变量（无论是从时间序列本身还是使用其时间戳生成），以帮助获得准确的预测。自然，特征工程不仅对纯机器学习模型很重要，我们还可以利用它为统计模型丰富外部回归变量，例如，在ARIMAX模型中。
 - en: 'As we have mentioned, there are many ways in which we can create features,
     and it comes down to a deep understanding of the dataset. Examples of feature
     engineering include:'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们提到的，创建特征的方法有很多种，关键在于对数据集的深刻理解。特征工程的示例包括：
 - en: Extracting relevant information from the timestamp. For example, we can extract
     the year, quarter, month, week number, or day of the week.
+  id: totrans-129
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 从时间戳中提取相关信息。例如，我们可以提取年份、季度、月份、周数或星期几。
 - en: Adding relevant information about special days based on the timestamp. For example,
     in the retail industry, we might want to add information about all holidays. To
     get a country-specific holiday calendar, we could use the `holidays` library.
+  id: totrans-130
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于时间戳添加有关特殊日期的相关信息。例如，在零售行业中，我们可能希望添加有关所有假期的信息。要获取特定国家的假期日历，我们可以使用`holidays`库。
 - en: Adding lagged values of the target, similar to the AR models.
+  id: totrans-131
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 添加目标变量的滞后值，类似于AR模型。
 - en: Creating features based on aggregate values (such as minimum, maximum, mean,
     median, or standard deviation) over a rolling or expanding window.
+  id: totrans-132
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于聚合值（如最小值、最大值、均值、中位数或标准差）在滚动或扩展窗口内创建特征。
 - en: Calculating technical indicators.
+  id: totrans-133
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 计算技术指标。
 - en: In a way, feature generation is only limited by the data, your creativity, or
     the available time. In this recipe, we show how to create a selection of features
     based on the timestamp of the time series.
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 在某种程度上，特征生成仅受数据、你的创造力或可用时间的限制。在本教程中，我们展示了如何基于时间序列的时间戳创建一组特征。
 - en: First, we extract the month information and encode it as a dummy variable (one-hot
     encoding). The biggest issue with this approach in the context of time series
     is the lack of cyclical continuity in time. It is easiest to understand with an
     example.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们提取月份信息，并将其编码为虚拟变量（独热编码）。在时间序列的上下文中，这种方法的最大问题是缺乏时间的周期性连续性。通过一个例子可以更容易理解这一点。
 - en: Imagine a scenario of working with energy consumption data. If we use the information
     about the month of the observed consumption, intuitively it makes sense there
     should be a connection between two consecutive months, for example, the connection
@@ -692,326 +966,471 @@
     connection between months further apart, for example, January and July, will probably
     be weaker. The same logic applies to other time-related information as well, for
     example, hours within the day.
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 想象一个使用能源消耗数据的场景。如果我们使用观察到的消耗月份信息，直观上讲，相邻两个月之间应该存在某种联系，例如，12月与1月之间，或1月与2月之间的联系。相比之下，时间相隔较远的月份之间的联系可能较弱，例如，1月与7月之间的联系。相同的逻辑也适用于其他与时间相关的信息，例如，某一天内的小时。
 - en: We present two possible ways of incorporating this information as features.
     The first one is based on trigonometric functions (sine and cosine transformation).
     The second one uses radial basis functions to encode similar information.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们提出了两种将这些信息作为特征纳入的可能方式。第一种方式基于三角函数（正弦和余弦变换）。第二种方式使用径向基函数来编码类似的信息。
 - en: In this recipe, we work with simulated daily data from the years 2017 to 2019\.
     We chose to simulate the data as the main point of the exercise is to show how
     different kinds of encoding time information impact the model. And it is easier
     to show that using simulated data following clear patterns. Naturally, the feature
     engineering methods shown in this recipe can be applied to any time series.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本教程中，我们使用了2017年至2019年的模拟每日数据。我们选择模拟数据，因为本教程的主要目的是展示不同类型的时间信息编码如何影响模型。使用遵循清晰模式的模拟数据更容易展示这一点。自然，本教程中展示的特征工程方法可以应用于任何时间序列。
 - en: How to do it…
+  id: totrans-139
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何实现…
 - en: 'Execute the following steps to create time-related features and fit linear
     models using them as inputs:'
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤以创建与时间相关的特征，并使用它们作为输入拟合线性模型：
 - en: 'Import the libraries:'
+  id: totrans-141
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE13]'
+  id: totrans-142
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Generate a time series with repeating patterns:'
+  id: totrans-143
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 生成具有重复模式的时间序列：
 - en: '[PRE14]'
+  id: totrans-144
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-145
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_10.png)'
+  id: totrans-146
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_10.png)'
 - en: 'Figure 7.10: The generated time series with repeating patterns'
+  id: totrans-147
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.10：生成的具有重复模式的时间序列
 - en: Thanks to the addition of the sine curves and some random noise, we obtained
     a time series with repeating patterns over the years.
+  id: totrans-148
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 由于添加了正弦曲线和一些随机噪声，我们获得了一个具有重复模式的时间序列，且该模式在多年间反复出现。
 - en: 'Store the time series in a new DataFrame:'
+  id: totrans-149
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将时间序列存储在一个新的 DataFrame 中：
 - en: '[PRE15]'
+  id: totrans-150
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Encode the month information as dummies:'
+  id: totrans-151
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将月份信息编码为虚拟特征：
 - en: '[PRE16]'
+  id: totrans-152
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Executing the snippet generates the following preview of the DataFrame with
     dummy-encoded month features:'
+  id: totrans-153
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下预览，显示带有虚拟编码的月份特征的 DataFrame：
 - en: '![](../Images/B18112_07_11.png)'
+  id: totrans-154
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_11.png)'
 - en: 'Figure 7.11: Preview of the dummy-encoded month features'
+  id: totrans-155
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.11：虚拟编码的月份特征预览
 - en: 'Fit a linear regression model and plot the in-sample prediction:'
+  id: totrans-156
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 拟合线性回归模型并绘制样本内预测：
 - en: '[PRE17]'
+  id: totrans-157
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-158
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_12.png)'
+  id: totrans-159
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_12.png)'
 - en: 'Figure 7.12: The fit obtained using linear regression with the month dummies'
+  id: totrans-160
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.12：使用月份虚拟特征进行线性回归得到的拟合
 - en: We can clearly see the stepwise pattern of the fit, corresponding to 12 unique
     values of the month feature. The jaggedness of the fit is caused by the discontinuity
     of the dummy features. With the other approaches, we try to overcome that issue.
+  id: totrans-161
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以清晰地看到拟合的阶梯状模式，对应于月份特征的12个唯一值。拟合的锯齿状是由虚拟特征的不连续性引起的。在其他方法中，我们尝试克服这个问题。
 - en: 'Define functions used for creating the cyclical encoding:'
+  id: totrans-162
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定义用于创建周期性编码的函数：
 - en: '[PRE18]'
+  id: totrans-163
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'Encode the month and day information using cyclical encoding:'
+  id: totrans-164
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用周期性编码对月份和日期信息进行编码：
 - en: '[PRE19]'
+  id: totrans-165
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-166
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_13.png)'
+  id: totrans-167
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_13.png)'
 - en: 'Figure 7.13: Cyclical encoding with sine/cosine transformation'
+  id: totrans-168
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.13：使用正弦/余弦变换的周期性编码
 - en: 'There are two insights we can draw from *Figure 7.13*:'
+  id: totrans-169
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 从*图 7.13*中，我们可以得出两个结论：
 - en: The curves have a step-wise shape when using the months for encoding. When using
     daily frequency, the curves are much smoother.
+  id: totrans-170
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用月份进行编码时，曲线呈阶梯状。使用每日频率时，曲线则平滑得多。
 - en: The plots illustrate the need to use two curves instead of one. As the curves
     have a repetitive (cyclical) pattern, if we drew a straight horizontal line through
     the plot for a single year, we would cross the curve in two places. Hence, a single
     curve would not be enough for the model to understand the observation’s time point,
     as two possibilities exist. Fortunately, with the two curves, there is no such
     issue.
+  id: totrans-171
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 图表说明了使用两条曲线而不是一条曲线的必要性。由于这些曲线具有重复（周期性）模式，如果我们通过图表为某一年绘制一条水平直线，线会与曲线相交两次。因此，单一的曲线不足以让模型理解观察点的时间，因为存在两种可能性。幸运的是，使用两条曲线时没有这个问题。
 - en: 'To clearly see the cyclical representation obtained using this transformation,
     we can plot the sine and cosine values on a scatterplot for a given year:'
+  id: totrans-172
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了清楚地看到通过此转换获得的周期性表示，我们可以将正弦和余弦值绘制在一个散点图上，以表示某一年：
 - en: '[PRE20]'
+  id: totrans-173
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-174
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_14.png)'
+  id: totrans-175
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_14.png)'
 - en: 'Figure 7.14: The cyclical representation of time'
+  id: totrans-176
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.14：时间的周期性表示
 - en: In *Figure 7.14*, we can see that there are no overlapping values. Hence, the
     two curves can be used to identify the given observation’s point in time.
+  id: totrans-177
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在*图 7.14*中，我们可以看到没有重叠的值。因此，两个曲线可以用来确定给定观察点的时间。
 - en: 'Fit a model using the daily sine/cosine features:'
+  id: totrans-178
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用每日正弦/余弦特征拟合模型：
 - en: '[PRE21]'
+  id: totrans-179
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-180
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_15.png)'
+  id: totrans-181
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_15.png)'
 - en: 'Figure 7.15: The fit obtained using linear regression with the cyclical features'
+  id: totrans-182
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.15：使用周期性特征进行线性回归得到的拟合
 - en: 'Create features using the radial basis functions:'
+  id: totrans-183
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用径向基函数创建特征：
 - en: '[PRE22]'
+  id: totrans-184
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-185
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_16.png)'
+  id: totrans-186
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_16.png)'
 - en: 'Figure 7.16: Visualization of the features created using the radial basis function'
+  id: totrans-187
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.16：使用径向基函数创建的特征的可视化
 - en: '*Figure 7.16* presents the 12 curves that we created using the radial basis
     functions and the day number as input. Each curve tells us how close we are to
     a certain day of the year. For example, the first curve measures the distance
     from January 1st. As such, we can observe a peak on the first day of every year,
     and then it decreases symmetrically as we move away from that date.'
+  id: totrans-188
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '*图 7.16* 展示了我们使用径向基函数和天数作为输入创建的 12 条曲线。每条曲线告诉我们与一年中特定日期的接近程度。例如，第一条曲线测量了与 1
+    月 1 日的距离。因此，我们可以观察到每年第一天的峰值，然后随着日期的远离，值对称下降。'
 - en: The basis functions are equally spaced over the input range. We chose to create
     12 curves, as we wanted the radial basis curves to resemble months. This way,
     each function shows the approximate distance to the first day of the month. The
     distance is approximate, as the months have unequal lengths.
+  id: totrans-189
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 基函数在输入范围上等间隔分布。我们选择创建 12 条曲线，因为我们希望径向基曲线类似于月份。这样，每个函数展示了与该月第一天的近似距离。由于月份的天数不等，所得到的距离是近似值。
 - en: 'Fit a model using the RBF features:'
+  id: totrans-190
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用 RBF 特征拟合模型：
 - en: '[PRE23]'
+  id: totrans-191
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-192
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码段会生成以下图表：
 - en: '![](../Images/B18112_07_17.png)'
+  id: totrans-193
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_17.png)'
 - en: 'Figure 7.17: The fit obtained using linear regression with the RBF-encoded
     features'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.17：使用线性回归拟合的 RBF 编码特征的拟合结果
 - en: We can clearly see that using the RBF features resulted in the best fit so far.
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以清楚地看到，使用 RBF 特征获得了迄今为止最好的拟合效果。
 - en: How it works…
+  id: totrans-196
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: 'After importing the libraries, we generated the artificial time series by combining
     two signal lines (created using sine curves) and some random noise. The time series
     we created spans a period of three years (2017 to 2019). Then, we created two
     columns for later use:'
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入库之后，我们通过将两条信号线（使用正弦曲线创建）和一些随机噪声结合起来生成了人工时间序列。我们创建的时间序列跨越了三年的时间（2017 到 2019）。然后，我们创建了两列以供后续使用：
 - en: '`day_nr`—numeric index representing the passage of time. It is equivalent to
     the ordinal row number.'
+  id: totrans-198
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`day_nr`—表示时间流逝的数字索引，等同于顺序行号。'
 - en: '`day_of_year`—The ordinal day of the year.'
+  id: totrans-199
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`day_of_year`—年份中的天数。'
 - en: In *Step 3*, we stored the generated time series in a separate DataFrame. We
     did so in order to store the models’ predictions in that DataFrame.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 3* 中，我们将生成的时间序列存储在一个单独的 DataFrame 中。这样做是为了将模型的预测值存储在该 DataFrame 中。
 - en: In *Step 4*, we created the month dummies using the `pd.get_dummies` method.
     For more details on this approach, please refer to the previous recipe.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 4* 中，我们使用 `pd.get_dummies` 方法创建了月份虚拟变量。有关这种方法的更多细节，请参考之前的食谱。
 - en: In *Step 5*, we fitted a linear regression model to the features and used the
     `predict` method of the fitted model to obtain the fitted values. For predictions,
     we used the same dataset as we used for training, as we were interested only in
     the in-sample fit.
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 5* 中，我们对特征拟合了线性回归模型，并使用拟合模型的 `predict` 方法获取拟合值。为了进行预测，我们使用与训练相同的数据集，因为我们只关心样本内的拟合结果。
 - en: In *Step 6*, we defined the functions used for obtaining cyclical encoding with
     the sine and cosine functions. We created two separate functions, but that is
     a matter of preference and we could have created a single function to create both
     features at once. The `period` argument of the functions corresponds to the number
     of available periods. For example, when encoding the month number, we would use
     12\. For the day number, we would use 365 or 366.
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 6* 中，我们定义了用于通过正弦和余弦函数获取循环编码的函数。我们创建了两个单独的函数，但这只是个人偏好问题，也可以创建一个函数来同时生成这两个特征。函数的
+    `period` 参数对应可用的周期数。例如，在编码月份时，我们使用 12；在编码日期时，我们使用 365 或 366。
 - en: In *Step 7*, we encoded both the month and day information using cyclical encoding.
     We already had the `day_of_year` column with the day number, so we only had to
     extract the month number from `DatetimeIndex`. Then, we created four columns with
     cyclical encoding.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 7* 中，我们使用循环编码对月份和日期信息进行了编码。我们已经有了包含天数的 `day_of_year` 列，所以只需要从 `DatetimeIndex`
+    中提取月份编号。然后，我们创建了四个带有循环编码的列。
 - en: In *Step 8*, we dropped all the columns except for the cyclical encoding of
     the day of the year. Then, we fitted the linear regression model, calculated the
     fitted values, and plotted the results.
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *步骤 8* 中，我们删除了所有列，保留了年份天数的循环编码列。然后，我们拟合了线性回归模型，计算了拟合值并绘制了结果。
 - en: Cyclical encoding has a potentially significant drawback, which is apparent
     when using tree-based models. By design, tree-based models make a split based
     on a single feature at the time. And as we have already explained, the sine/cosine
     features should be considered simultaneously in order to properly identify the
     time points.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 循环编码有一个潜在的重要缺点，这在使用基于树的模型时尤为明显。根据设计，基于树的模型在每次划分时基于单一特征进行分裂。正如我们之前所解释的，正弦/余弦特征应该同时考虑，以便正确识别时间点。
 - en: In *Step 9*, we instantiated the `RepeatingBasisFunction` class, which works
     as a `scikit-learn` transformer. We specified that we wanted 12 RBF curves based
     on the `day_of_year` column and that the input range is from 1 to 365 (there is
@@ -1019,162 +1438,232 @@
     which drops all the other columns that were in the input DataFrame before the
     transformation. Alternatively, we could have specified the value as `"passthrough"`,
     which would keep both the old and new features.
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第9步*中，我们实例化了 `RepeatingBasisFunction` 类，它作为一个 `scikit-learn` 转换器工作。我们指定了要基于
+    `day_of_year` 列生成 12 条 RBF 曲线，并且输入范围是从 1 到 365（样本中没有闰年）。此外，我们指定了 `remainder="drop"`，这将删除所有在转换前输入
+    DataFrame 中的其他列。或者，我们也可以将值指定为 `"passthrough"`，这样既保留旧的特征，又保留新的特征。
 - en: 'It is worth mentioning that there are two key hyperparameters that we can tune
     when using radial basis functions:'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 值得一提的是，使用径向基函数时，我们可以调整两个关键的超参数：
 - en: '`n_periods—`The number of the radial basis functions.'
+  id: totrans-209
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`n_periods—`径向基函数的数量。'
 - en: '`width`—This hyperparameter is responsible for the shape of the bell curves
     created with RBFs.'
+  id: totrans-210
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`width`—这个超参数负责创建 RBF 时钟形曲线的形状。'
 - en: 'We could use a method such as grid search to identify the optimal values of
     the hyperparameters for a given dataset. Please refer to *Chapter 13*, *Applied
     Machine Learning: Identifying Credit Default*, for more information on the grid
     search procedure.'
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用类似网格搜索的方法来识别给定数据集的超参数的最优值。有关网格搜索过程的更多信息，请参阅*第13章*，*应用机器学习：识别信用违约*。
 - en: In *Step 10*, we once again fitted the model, this time using the RBF features
     as input.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*第10步*中，我们再次拟合了模型，这次使用了 RBF 特征作为输入。
 - en: There’s more…
+  id: totrans-213
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多内容……
 - en: In this recipe, we showed how to manually create time-related features. Naturally,
     those were just a few of the thousands of possible features we could create. Fortunately,
     there are Python libraries that facilitate the process of feature engineering/extraction.
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个案例中，我们展示了如何手动创建与时间相关的特征。当然，这些只是我们可以创建的成千上万种特征中的一小部分。幸运的是，有一些 Python 库可以简化特征工程/提取的过程。
 - en: We will show two of those. The first approach comes from the `sktime` library,
     which is a comprehensive library that is the equivalent of `scikit-learn` for
     time series. The second approach leverages a library called `tsfresh`. The library
     allows us to automatically generate hundreds or thousands of features with a few
     lines of code. Under the hood, it uses a combination of established algorithms
     from statistics, time-series analysis, physics, and signal processing.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将展示其中的两个方法。第一个方法来自 `sktime` 库，这是一个全面的库，相当于 `scikit-learn` 在时间序列中的应用。第二个方法则利用了名为
+    `tsfresh` 的库。该库允许我们通过几行代码自动生成数百或数千个特征。在后台，它结合了统计学、时间序列分析、物理学和信号处理中的一些已建立算法。
 - en: We show how to use both approaches in the following steps.
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在以下步骤中展示如何使用这两种方法。
 - en: 'Import the libraries:'
+  id: totrans-217
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE24]'
+  id: totrans-218
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'Extract the datetime features using `sktime`:'
+  id: totrans-219
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用 `sktime` 提取日期时间特征：
 - en: '[PRE25]'
+  id: totrans-220
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'Executing the snippet generates the following preview of a DataFrame containing
     the extracted features:'
+  id: totrans-221
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码段生成以下包含提取特征的 DataFrame 预览：
 - en: '![](../Images/B18112_07_18.png)'
+  id: totrans-222
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_18.png)'
 - en: 'Figure 7.18: Preview of the DataFrame with the extracted features'
+  id: totrans-223
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.18：提取特征的 DataFrame 预览
 - en: In the figure, we can see the extracted features. Depending on the ML algorithm
     we want to use, we might want to further encode those features, for example, using
     dummy variables.
+  id: totrans-224
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在图中，我们可以看到提取的特征。根据我们想要使用的机器学习算法，我们可能需要进一步对这些特征进行编码，例如使用虚拟变量。
 - en: While instantiating the `DateTimeFeatures` class, we provided the `feature_scope`
     argument. In this case, we generated a comprehensive set of features. We can also
     choose the `"minimal"` or `"efficient"` sets.
+  id: totrans-225
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在实例化 `DateTimeFeatures` 类时，我们提供了 `feature_scope` 参数。在此情况下，我们生成了一个全面的特征集。我们也可以选择
+    `"minimal"` 或 `"efficient"` 特征集。
 - en: The extracted features are based on the `DatetimeIndex` of `pandas`. For a comprehensive
     list of all the features that could be extracted from that index, please refer
     to the documentation of `pandas`.
+  id: totrans-226
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 提取的特征是基于 `pandas` 的 `DatetimeIndex`。有关从该索引中可以提取的所有特征的详细列表，请参阅 `pandas` 的文档。
 - en: 'Prepare the dataset for feature extraction with `tsfresh`:'
+  id: totrans-227
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用 `tsfresh` 准备数据集进行特征提取：
 - en: '[PRE26]'
+  id: totrans-228
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: In order to use the feature extraction algorithm, except for the time series
     itself, our DataFrame must contain columns with a date (or an ordinal encoding
     of time) and an ID. The latter is required, as the DataFrame might contain multiple
     time series (in a long format). For example, we could have a DataFrame containing
     daily stock prices from all the constituents of the S&P 500 index.
+  id: totrans-229
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了使用特征提取算法，除了时间序列本身外，我们的 DataFrame 必须包含一个日期列（或时间的顺序编码）和一个 ID 列。后者是必须的，因为 DataFrame
+    可能包含多个时间序列（以长格式存储）。例如，我们可以有一个包含标准普尔 500 指数所有成分股日常股价的 DataFrame。
 - en: 'Create a rolled-up DataFrame for feature extraction:'
+  id: totrans-230
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建一个汇总后的 DataFrame 以进行特征提取：
 - en: '[PRE27]'
+  id: totrans-231
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Executing the snippet generates the following preview of a rolled-up DataFrame:'
+  id: totrans-232
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成汇总 DataFrame 的以下预览：
 - en: '![](../Images/B18112_07_19.png)'
+  id: totrans-233
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_19.png)'
 - en: 'Figure 7.19: Preview of a rolled-up DataFrame'
+  id: totrans-234
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.19：汇总 DataFrame 的预览
 - en: 'We used a sliding window to roll up the DataFrame because we wanted to achieve
     the following:'
+  id: totrans-235
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们使用滑动窗口来汇总 DataFrame，因为我们希望实现以下目标：
 - en: Calculate meaningful aggregate features for time series forecasting. For example,
     we might calculate the min/max values in the last 10 days, or the 20-day Simple
     Moving Average technical indicator. Each time, those calculations involve a time
     window, as calculating those aggregate measures using one observation would simply
     make no sense.
+  id: totrans-236
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 计算对时间序列预测有意义的汇总特征。例如，我们可以计算过去 10 天的最小值/最大值，或者计算 20 天简单移动平均（SMA）技术指标。每次计算时，这些计算都涉及一个时间窗口，因为使用单一观测值来计算这些汇总值显然没有意义。
 - en: Extract the features for all available time points, so we can easily plug them
     into our ML forecasting model. This way, we are basically creating the entire
     training dataset at once.
+  id: totrans-237
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 为所有可用的时间点提取特征，以便我们能够轻松地将它们插入到我们的机器学习预测模型中。通过这种方式，我们基本上一次性创建了整个训练数据集。
 - en: To do so, we used the `roll_time_series` function to create a rolled-up DataFrame,
     which will be then used for feature extraction. We specified the minimum and maximum
     window sizes. In our case, we will discard windows shorter than 7 days and we
     will use a maximum of 30 days.
+  id: totrans-238
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为此，我们使用 `roll_time_series` 函数创建了一个汇总后的 DataFrame，之后该 DataFrame 将用于特征提取。我们指定了最小和最大窗口大小。在我们的情况下，我们将丢弃短于
+    7 天的窗口，并使用最多 30 天的窗口。
 - en: In *Figure 7.19*, we can see the newly added `id` column. As we can see, multiple
     observations have the same values in the `id` column. For example, the value of
     `(a,` `2017-01-08 00:00:00)` indicates that we are using that particular data
@@ -1182,122 +1671,173 @@
     this ID artificially in the previous step) for the time point that includes the
     last 30 days until 2017-01-08\. Having prepared the rolled-up DataFrame, we can
     extract the features.
+  id: totrans-239
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在*图 7.19*中，我们可以看到新添加的 `id` 列。如我们所见，多个观测值在 `id` 列中具有相同的值。例如，值 `(a, 2017-01-08
+    00:00:00)` 表示我们正在使用该特定数据点来提取标记为 `a` 的时间序列的特征（我们在上一步中人为创建了这个 ID），时间点包括到 2017-01-08
+    为止的过去 30 天。准备好汇总 DataFrame 后，我们可以提取特征。
 - en: 'Extract the minimal set of features:'
+  id: totrans-240
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提取最小特征集：
 - en: '[PRE28]'
+  id: totrans-241
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-242
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下输出：
 - en: '[PRE29]'
+  id: totrans-243
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: In the dictionary, we can see all the features that will be created. The `None`
     value implies that the feature has no additional hyperparameters. We chose to
     extract the minimum set, as the other ones would take a significant amount of
     time. Alternatively, we could use `settings.EfficientFCParameters` or `settings.ComprehensiveFCParameters`
     to generate hundreds or thousands of features.
+  id: totrans-244
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在字典中，我们可以看到所有将要创建的特征。`None` 值表示该特征没有额外的超参数。我们选择提取最小集的特征，因为其他特征会消耗大量时间。或者，我们可以使用
+    `settings.EfficientFCParameters` 或 `settings.ComprehensiveFCParameters` 来生成数百或数千个特征。
 - en: 'With the following snippet, we actually extract the features:'
+  id: totrans-245
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 使用以下代码片段，我们实际上提取特征：
 - en: '[PRE30]'
+  id: totrans-246
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'Clean up the index and inspect the features:'
+  id: totrans-247
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 清理索引并检查特征：
 - en: '[PRE31]'
+  id: totrans-248
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-249
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下输出：
 - en: '![](../Images/B18112_07_20.png)'
+  id: totrans-250
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_20.png)'
 - en: 'Figure 7.20: Preview of the features generated with tsfresh'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.20：使用 tsfresh 生成的特征预览
 - en: In *Figure 7.20*, we can see that the minimum window length is 8, while the
     maximum one is 31\. That is as intended, as we indicated we wanted to use the
     minimum size of 7, which translates to 7 prior days plus the current one. Similarly
     for the maximum value.
+  id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*图 7.20*中，我们可以看到最小窗口长度为8，而最大窗口长度为31。这个设计是有意为之，因为我们表示希望使用最小大小7，这相当于过去7天加上当前一天。最大值也是类似的。
 - en: '`sktime` also offers a wrapper around `tsfresh`. We can access the feature
     generation algorithm by using `sktime`''s `TSFreshFeatureExtractor` class.'
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: '`sktime`也为`tsfresh`提供了一个封装。我们可以通过使用`sktime`的`TSFreshFeatureExtractor`类访问特征生成算法。'
 - en: 'It is also worth mentioning that `tsfresh` has three other very interesting
     features:'
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 同时值得一提的是，`tsfresh`还有三个非常有趣的特性：
 - en: A feature selection algorithm based on hypothesis tests. As the library is capable
     of generating hundreds or thousands of features, it is definitely important to
     select the ones that are relevant to our use case. To do so, the library uses
     the *fresh* algorithm, which stands for *feature extraction based on scalable
     hypothesis tests*.
+  id: totrans-255
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于假设检验的特征选择算法。由于该库能够生成数百或数千个特征，因此选择与我们使用场景相关的特征至关重要。为此，库使用了*fresh*算法，即*基于可扩展假设检验的特征提取*。
 - en: The ability to handle feature generation and selection for large datasets by
     employing parallel processing with either multiprocessing on a local machine or
     using Spark or Dask clusters when the data does not fit into a single machine.
+  id: totrans-256
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通过使用多处理本地机器或使用Spark或Dask集群（当数据无法适配单台机器时），处理大数据集的特征生成和选择的能力。
 - en: 'It offers transformer classes (for example, `FeatureAugmenter` or `FeatureSelector`),
     which we can use together with `scikit-learn` pipelines. We cover pipelines in
     *Chapter 13*, *Applied Machine Learning: Identifying Credit Default*.'
+  id: totrans-257
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它提供了转换器类（例如，`FeatureAugmenter`或`FeatureSelector`），我们可以将它们与`scikit-learn`管道一起使用。我们在*第13章*中讨论了管道，*应用机器学习：识别信用违约*。
 - en: '`tsfresh` is only one of the available libraries for automatic feature generation
     for time series data. Other libraries include `feature_engine` and `tsflex`.'
+  id: totrans-258
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '`tsfresh`只是用于时间序列数据自动特征生成的可用库之一。其他库包括`feature_engine`和`tsflex`。'
 - en: Time series forecasting as reduced regression
+  id: totrans-259
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 时间序列预测作为简化回归
 - en: Until now, we have mostly used dedicated time series models for forecasting
     tasks. On the other hand, it would also be interesting to experiment with other
     algorithms that are typically used for solving regression tasks. This way, we
     might improve the performance of our models.
+  id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 迄今为止，我们大多使用专用的时间序列模型来进行预测任务。另一方面，尝试使用通常用于解决回归任务的其他算法也会很有趣。通过这种方式，我们可能会提高模型的表现。
 - en: One of the reasons to use those models is their flexibility. For example, we
     could go beyond univariate setup, that is, we could enrich our dataset with a
     wide variety of additional features. We have covered some approaches to feature
     engineering in the previous recipe. Alternatively, we could add external regressors
     such as time series, which historically proved to be correlated with the target
     of our forecasting exercise.
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这些模型的原因之一是它们的灵活性。例如，我们可以超越单变量设置，也就是，我们可以通过各种附加特征丰富我们的数据集。我们在之前的食谱中涵盖了一些特征工程的方法。或者，我们可以添加历史上已证明与我们预测目标相关的外部回归变量，如时间序列。
 - en: When adding additional time series as external regressors, we should be cautious
     about their availability. If we do not know their future values, we might use
     their lagged values or forecast them separately and feed them back into the initial
     model.
+  id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 当添加额外的时间序列作为外部回归变量时，我们应当小心它们的可用性。如果我们不知道它们的未来值，我们可以使用它们的滞后值，或者单独预测它们并将其反馈到初始模型中。
 - en: Given the temporal dependency of the time series data (relevant for the lagged
     values of the time series), we cannot directly use regression models for time
     series forecasting. First, we need to convert such temporal data into a supervised
@@ -1308,8 +1848,10 @@
     of using an algorithm or model to solve a learning task that it was not originally
     designed for. Hence, in **reduced regression,** we are effectively transforming
     a forecasting task into a tabular regression problem.
+  id: totrans-263
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于时间序列数据的时间依赖性（与时间序列的滞后值相关），我们不能直接使用回归模型进行时间序列预测。首先，我们需要将这类时间数据转换为监督学习问题，然后才能应用传统的回归算法。这个过程被称为**简化**，它将某些学习任务（时间序列预测）分解为更简单的任务。然后，这些任务可以重新组合，提供对原始任务的解决方案。换句话说，简化是指使用一个算法或模型来解决一个它最初并未为之设计的学习任务。因此，在**简化回归**中，我们实际上是将预测任务转化为表格回归问题。
 - en: In practice, reduction uses a sliding window to split the time series into fixed-length
     windows. It will be easier to understand how reduction works with an example.
     Imagine a time series of consecutive numbers from 1 to 100\. Then, we take a sliding
@@ -1319,14 +1861,20 @@
     windows on top of each other, we obtain a tabular format of the data that allows
     us to use traditional regression algorithms for time series forecasting. *Figure
     7.21* illustrates the reduction procedure.
+  id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实际操作中，简化方法使用滑动窗口将时间序列拆分成固定长度的窗口。通过一个例子可以更容易理解简化方法是如何工作的。假设有一个从1到100的连续数字的时间序列。然后，我们使用一个长度为5的滑动窗口。第一个窗口包含1到4的观测值作为特征，第5个观测值作为目标。第二个窗口使用2到5的观测值作为特征，第6个观测值作为目标。以此类推。一旦我们将所有这些窗口堆叠在一起，就得到了一种表格格式的数据，允许我们使用传统的回归算法进行时间序列预测。*图7.21*展示了简化过程。
 - en: '![](../Images/B18112_07_21.png)'
+  id: totrans-265
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_21.png)'
 - en: 'Figure 7.21: Schema of the reduction procedure'
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 图7.21：简化过程示意图
 - en: It is also worth mentioning that there are some nuances to working with reduced
     regression. For example, reduced regression models lose the typical characteristics
     of time series models, that is, they lose the notion of time. As a result, they
@@ -1335,374 +1883,542 @@
     Intuitively, this is similar to modeling only the AR terms. Deseasonalizing and
     detrending the data first makes it easier to find a better fitting model as we
     are not accounting for trend and seasonality on top of the AR terms.
+  id: totrans-267
   prefs: []
   type: TYPE_NORMAL
+  zh: 还值得一提的是，使用简化回归时存在一些细微差别。例如，简化回归模型失去了时间序列模型的典型特征，即失去了时间的概念。因此，它们无法处理趋势和季节性。这也是为什么通常先去趋势和去季节化数据，再进行简化回归是有用的。直观上，这类似于仅建模AR项。首先去季节化和去趋势数据，使得我们可以更容易找到一个更合适的模型，因为我们没有在AR项的基础上考虑趋势和季节性。
 - en: In this recipe, we show an example of a reduced regression procedure using the
     US unemployment rates dataset.
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们展示了使用美国失业率数据集进行简化回归的过程示例。
 - en: Getting ready
+  id: totrans-269
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备工作
 - en: In this recipe, we are working with the already familiar US unemployment rates
     time series. For brevity, we do not repeat the steps on how to download the data.
     You can find the code in the accompanying notebook. For the remainder of the recipe,
     assume that the downloaded data is in a DataFrame called `y`.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们使用的是已经熟悉的美国失业率时间序列。为了简便起见，我们不重复数据下载的步骤。你可以在附带的笔记本中找到相关代码。对于接下来的内容，假设下载的数据已存储在一个名为`y`的DataFrame中。
 - en: How to do it…
+  id: totrans-271
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'Execute the following steps to create 12 steps ahead forecasts of the US unemployment
     rate using reduced regression:'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，以使用简化回归对美国失业率进行12步预测：
 - en: 'Import the libraries:'
+  id: totrans-273
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入所需的库：
 - en: '[PRE32]'
+  id: totrans-274
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Split the time series into training and tests sets:'
+  id: totrans-275
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将时间序列分成训练集和测试集：
 - en: '[PRE33]'
+  id: totrans-276
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-277
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码段生成如下图表：
 - en: '![](../Images/B18112_07_22.png)'
+  id: totrans-278
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_22.png)'
 - en: 'Figure 7.22: The time series divided into training and test sets'
+  id: totrans-279
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图7.22：将时间序列划分为训练集和测试集
 - en: 'Set the forecast horizon to 12 months:'
+  id: totrans-280
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 设置预测视野为12个月：
 - en: '[PRE34]'
+  id: totrans-281
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-282
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下输出：
 - en: '[PRE35]'
+  id: totrans-283
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: Whenever we will use this `fh` object to create forecasts, we will create forecasts
     for the 12 months of 2019.
+  id: totrans-284
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 每当我们使用这个`fh`对象进行预测时，我们将为2019年的12个月创建预测。
 - en: 'Instantiate the reduced regression model, fit it to the data, and create predictions:'
+  id: totrans-285
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 实例化降维回归模型，拟合数据并生成预测：
 - en: '[PRE36]'
+  id: totrans-286
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'Evaluate the performance of the forecasts:'
+  id: totrans-287
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评估预测的性能：
 - en: '[PRE37]'
+  id: totrans-288
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-289
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下图：
 - en: '![](../Images/B18112_07_23.png)'
+  id: totrans-290
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_23.png)'
 - en: 'Figure 7.23: Forecasts vs. actuals using the reduced Random Forest'
+  id: totrans-291
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.23：使用降维随机森林的预测与实际值对比
 - en: The almost flat forecast is most likely connected to the drawback of the reduced
     regression approach we have mentioned in the introduction. By reshaping the data
     into a tabular format, we are effectively losing information about trends and
     seasonality. To account for those, we can first deseasonalize and detrend the
     time series and only then use the reduced regression approach.
+  id: totrans-292
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 几乎平坦的预测结果很可能与我们在引言中提到的降维回归方法的缺点有关。通过将数据重塑为表格格式，我们实际上丧失了趋势和季节性的信息。为了考虑这些因素，我们可以先对时间序列进行去季节性和去趋势处理，然后再使用降维回归方法。
 - en: 'Deseasonalize the time series:'
+  id: totrans-293
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对时间序列进行去季节性处理：
 - en: '[PRE38]'
+  id: totrans-294
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-295
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下图：
 - en: '![](../Images/B18112_07_24.png)'
+  id: totrans-296
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_24.png)'
 - en: 'Figure 7.24: The original time series and the deseasonalized one'
+  id: totrans-297
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.24：原始时间序列和去季节性后的时间序列
 - en: 'To provide more context, we can plot the extracted seasonal component:'
+  id: totrans-298
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了提供更多背景信息，我们可以绘制提取的季节性成分：
 - en: '[PRE39]'
+  id: totrans-299
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-300
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下图：
 - en: '![](../Images/B18112_07_25.png)'
+  id: totrans-301
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_25.png)'
 - en: 'Figure 7.25: The extracted seasonal component'
+  id: totrans-302
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.25：提取的季节性成分
 - en: While analyzing *Figure 7.25*, we should not pay much attention to the x-axis
     labels, as the extracted seasonal pattern is the same for each year.
+  id: totrans-303
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在分析*图 7.25*时，我们不应过于关注x轴标签，因为提取的季节性模式在每年都是相同的。
 - en: 'Detrend the time series:'
+  id: totrans-304
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 去趋势时间序列：
 - en: '[PRE40]'
+  id: totrans-305
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-306
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下图：
 - en: '![](../Images/B18112_07_26.png)'
+  id: totrans-307
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_26.png)'
 - en: 'Figure 7.26: The deseasonalized time series together with the fitted linear
     trend and the corresponding residuals'
+  id: totrans-308
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.26：去季节化时间序列与拟合的线性趋势及相应的残差
 - en: 'In *Figure 7.26*, we can see 3 lines:'
+  id: totrans-309
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在*图 7.26*中，我们可以看到3条线：
 - en: The deseasonalized time series from the previous step
+  id: totrans-310
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 来自上一步的去季节性时间序列
 - en: The linear trend fitted to the deseasonalized time series
+  id: totrans-311
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 拟合到去季节性时间序列的线性趋势
 - en: The residuals, which are created by subtracting the fitted linear trend from
     the deseasonalized time series
+  id: totrans-312
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 残差，是通过从去季节性时间序列中减去拟合的线性趋势得到的
 - en: 'Combine the components into a pipeline, fit it to the original time series,
     and obtain predictions:'
+  id: totrans-313
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将各个组件组合成一个管道，拟合到原始时间序列，并获得预测结果：
 - en: '[PRE41]'
+  id: totrans-314
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'Evaluate the pipeline’s predictions:'
+  id: totrans-315
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评估管道的预测结果：
 - en: '[PRE42]'
+  id: totrans-316
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-317
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下图：
 - en: '![](../Images/B18112_07_27.png)'
+  id: totrans-318
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_27.png)'
 - en: 'Figure 7.27: The fit of the pipeline containing deseasonalization and detrending
     before reduced regression'
+  id: totrans-319
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.27：包含去季节性和去趋势处理后的管道拟合，在执行降维回归之前
 - en: 'By analyzing *Figure 7.27*, we can draw the following conclusions:'
+  id: totrans-320
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 通过分析*图 7.27*，我们可以得出以下结论：
 - en: The shape of the forecast obtained using the pipeline is much more similar to
     the actual values—it captures the trend and seasonality components.
+  id: totrans-321
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用管道获得的预测形态与实际值更为相似——它捕捉了趋势和季节性成分。
 - en: The error measured by MAPE seems to be worse than that of an almost flat line
     forecast visible in *Figure 7.23*.
+  id: totrans-322
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用MAPE测量的误差似乎比*图 7.23*中几乎平坦的预测线还要差。
 - en: 'Evaluate the performance using expanding window cross-validation:'
+  id: totrans-323
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用扩展窗口交叉验证评估性能：
 - en: '[PRE43]'
+  id: totrans-324
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: 'Executing the snippet generates the following DataFrame:'
+  id: totrans-325
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下数据框：
 - en: '![](../Images/B18112_07_28.png)'
+  id: totrans-326
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_28.png)'
 - en: 'Figure 7.28: The DataFrame containing the cross-validation results'
+  id: totrans-327
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.28：包含交叉验证结果的数据框
 - en: 'Additionally, we can investigate the range of dates used for training and evaluating
     the pipeline within the cross-validation procedure:'
+  id: totrans-328
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 此外，我们可以调查在交叉验证过程中用于训练和评估管道的日期范围：
 - en: '[PRE44]'
+  id: totrans-329
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-330
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成如下输出：
 - en: '[PRE45]'
+  id: totrans-331
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: Effectively, we have created a 5-fold cross-validation in which the expanding
     window is growing by 12 months between the folds and we are always evaluating
     using the following 12 months.
+  id: totrans-332
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 实际上，我们创建了一个5折交叉验证，其中扩展窗口在各折之间按12个月增长，并且我们始终使用接下来的12个月进行评估。
 - en: 'Plot the predictions from the cross-validation folds:'
+  id: totrans-333
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制交叉验证折叠的预测结果：
 - en: '[PRE46]'
+  id: totrans-334
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-335
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_29.png)'
+  id: totrans-336
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_29.png)'
 - en: 'Figure 7.29: Forecasts from each of the cross-validation folds plotted against
     the actuals'
+  id: totrans-337
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.29：每个交叉验证折叠的预测结果与实际结果对比图
 - en: 'Create an ensemble forecast using the RF pipeline and AutoARIMA:'
+  id: totrans-338
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用RF管道和AutoARIMA创建一个集成预测：
 - en: '[PRE47]'
+  id: totrans-339
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: In this case, we fitted an AutoARIMA model directly to the original time series.
     However, we could have also deseasonalized and detrended the time series before
     fitting the model. In such a scenario, indicating the seasonal period might not
     have been necessary (depending on how well the seasonality is removed using classical
     decomposition).
+  id: totrans-340
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们直接将AutoARIMA模型拟合到原始时间序列上。然而，我们也可以先对时间序列进行季节性调整和去趋势处理，然后再拟合模型。在这种情况下，指明季节周期可能就不再是必须的（这取决于季节性在经典分解中去除的效果如何）。
 - en: 'Evaluate the ensemble’s predictions:'
+  id: totrans-341
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评估集成模型的预测结果：
 - en: '[PRE48]'
+  id: totrans-342
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-343
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_30.png)'
+  id: totrans-344
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_30.png)'
 - en: 'Figure 7.30: The fit of the ensemble model aggregating the reduced regression
     pipeline and AutoARIMA'
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.30：集成模型拟合，包括减少版回归管道和AutoARIMA
 - en: As we can see in *Figure 7.30*, ensembling the two models results in improved
     performance compared to the reduced Random Forest pipeline.
+  id: totrans-346
   prefs: []
   type: TYPE_NORMAL
+  zh: 如我们在*图 7.30*中看到的，将这两个模型进行集成，相较于减少版的随机森林管道，能显著提高性能。
 - en: How it works…
+  id: totrans-347
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的…
 - en: After importing the libraries, we used the `temporal_train_test_split` function
     to split the data into training and test sets. We kept the last 12 observations
     (the entire 2019) as a test set. We also plotted the time series using the `plot_series`
     function, which is especially useful when we want to plot multiple time series
     in a single plot.
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入库后，我们使用了`temporal_train_test_split`函数将数据分为训练集和测试集。我们保留了最后12个观测值（整个2019年）作为测试集。我们还使用`plot_series`函数绘制了时间序列图，这在我们希望在同一图表中绘制多个时间序列时特别有用。
 - en: In *Step 3*, we defined the `ForecastingHorizon`. In `sktime`, the forecasting
     horizon can be an array of values that are either relative (indicating time differences
     compared to the latest time point in the training data) or absolute (indicating
     specific points in time). In our case, we used the absolute values by providing
     the indices of the test set and setting `is_relative=False`.
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 3*中，我们定义了`ForecastingHorizon`。在`sktime`中，预测时段可以是一个值数组，值可以是相对的（表示与训练数据中最新时间点的时间差）或绝对的（表示特定的时间点）。在我们的例子中，我们使用了绝对值，通过提供测试集的索引并设置`is_relative=False`。
 - en: On the other hand, the relative values of the forecasting horizon include a
     list of steps for which we want to obtain predictions. The relative horizon could
     be very useful when making rolling predictions, as we can reuse it when we add
     new data.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一方面，预测时段的相对值包括一个步骤列表，列出了我们希望获取预测的时间点。相对时段在进行滚动预测时非常有用，因为每次添加新数据时我们都可以重复使用它。
 - en: 'In *Step 4*, we fitted a reduced regression model to the training data. To
     do so, we used the `make_reduction` function and provided three arguments. The
     `estimator` argument is used to indicate any regression model that we would like
@@ -1713,48 +2429,62 @@
     the time series into a tabular dataset. Lastly, the `strategy` argument determines
     the way multi-step forecasts will be created. We can choose one of the following
     strategies to obtain multi-step forecasts:'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 4*中，我们将一个简化的回归模型拟合到训练数据中。为此，我们使用了`make_reduction`函数并提供了三个参数。`estimator`参数用于指明我们希望在简化回归设置中使用的回归模型。在这种情况下，我们选择了随机森林（更多关于随机森林算法的细节可以参考*第14章*，*机器学习项目的高级概念*）。`window_length`表示用于创建简化回归任务的过去观测值数量，也就是将时间序列转化为表格数据集。最后，`strategy`参数决定了多步预测的生成方式。我们可以选择以下策略之一来获得多步预测：
 - en: '`Direct`—This strategy assumes creating a separate model for each horizon we
     are forecasting. In our case, we are forecasting 12 steps ahead. This would mean
     that the strategy would create 12 separate models to obtain the forecasts.'
+  id: totrans-352
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`直接法`—此策略假设为每一个预测的时间段创建一个单独的模型。在我们的案例中，我们预测12步的未来。这意味着该策略将创建12个单独的模型来获取预测结果。'
 - en: '`Recursive`—This strategy assumes fitting a single one-step ahead model. However,
     to create the forecasts, it uses the previous time step’s output as the input
     for the next time step. For example, to obtain the forecast for the second observation
     into the future, it would use the forecast obtained for the first observation
     into the future as part of the feature set.'
+  id: totrans-353
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`递归法`—此策略假设拟合一个单步预测模型。然而，为了生成预测，它使用上一个时间步的输出作为下一个时间步的输入。例如，为了获取未来第二个观测值的预测，它会将未来第一个观测值的预测结果作为特征集的一部分。'
 - en: '`Multioutput`—In this strategy, we use one model to predict all the values
     for the entire forecast horizon. This strategy depends on having a model capable
     of predicting entire sequences in one go.'
+  id: totrans-354
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`多输出法`—在此策略中，我们使用一个模型来预测整个预测时间段内的所有值。此策略依赖于具有一次性预测整个序列能力的模型。'
 - en: After defining the reduced regression model, we fitted it to the training data
     using the `fit` method and obtained predictions using the `predict` method. For
     the latter, we had to provide the forecasting horizon object as the argument.
     Alternatively, we could have provided a list/array of steps for which we wanted
     to obtain the forecasts.
+  id: totrans-355
   prefs: []
   type: TYPE_NORMAL
+  zh: 在定义了简化回归模型之后，我们使用`fit`方法将其拟合到训练数据上，并使用`predict`方法获得预测结果。对于后者，我们需要提供作为参数的预测时间段对象。或者，我们也可以提供一个步骤的列表/数组，来获取相应的预测。
 - en: In *Step 5*, we evaluated the forecast by calculating the MAPE score and plotting
     the forecasts compared to the actual values. To calculate the error metric, we
     used `sktime`'s `mean_absolute_percentage_error` function. An additional benefit
     of using `sktime`'s implementation is that we can easily calculate the **symmetric
     MAPE** (**sMAPE**) by specifying `symmetric=True` while calling the function.
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤5*中，我们通过计算MAPE得分并将预测值与实际值进行对比绘图来评估预测效果。为了计算误差指标，我们使用了`sktime`的`mean_absolute_percentage_error`函数。使用`sktime`实现的额外好处是，我们可以通过在调用该函数时指定`symmetric=True`，轻松计算**对称MAPE**（**sMAPE**）。
 - en: At this point, we have noticed that the reduced regression model is suffering
     from the problem mentioned in the introduction—it does not capture the trend and
     seasonality of the time series. Hence, in the next steps, we showed how to deseasonalize
     and detrend the time series before using the reduced regression approach.
+  id: totrans-357
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一点上，我们注意到，简化回归模型存在引言中提到的问题——它没有捕捉到时间序列的趋势和季节性。因此，在接下来的步骤中，我们展示了如何在使用简化回归方法之前对时间序列进行去季节性和去趋势化处理。
 - en: In *Step 6*, we deseasonalized the original time series. First, we instantiated
     the `Deseasonalizer` transformer. We indicated that there is monthly seasonality
     by providing `sp=12` and chose additive seasonality, as the magnitude of seasonal
@@ -1765,16 +2495,20 @@
     and obtain the deseasonalized time series in a single step, we used the `fit_transform`
     method. After fitting the transformer, the seasonal component can be inspected
     by accessing the `seasonal_` attribute.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤6*中，我们对原始时间序列进行了去季节性处理。首先，我们实例化了`Deseasonalizer`转换器。我们通过提供`sp=12`来指明存在月度季节性，并选择了加性季节性，因为季节性模式的幅度似乎随着时间变化不大。在后台，`Deseasonalizer`类执行了在`statsmodels`库中提供的季节性分解（我们在上一章的*时间序列分解*食谱中讨论过），并去除了时间序列中的季节性成分。为了在一步操作中拟合转换器并获得去季节性后的时间序列，我们使用了`fit_transform`方法。拟合转换器后，可以通过访问`seasonal_`属性来检查季节性成分。
 - en: In *Step 7*, we removed the trend from the deseasonalized time series. First,
     we instantiated the `PolynomialTrendForecaster` class and specified `degree=1`.
     By doing so, we indicated that we were interested in a linear trend. Then, we
     passed the instantiated class to the `Detrender` transformer. Using the already
     familiar `fit_transform` method, we removed the trend from the deseasonalized
     time series.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤7*中，我们从去季节化的时间序列中移除了趋势。首先，我们实例化了`PolynomialTrendForecaster`类，并指定`degree=1`。通过这种方式，我们表示我们对线性趋势感兴趣。然后，我们将实例化的类传递给`Detrender`变换器。使用我们已经熟悉的`fit_transform`方法，我们从去季节化的时间序列中去除了趋势。
 - en: In *Step 8*, we combined all the steps into a pipeline. We instantiated the
     `TransformedTargetForecaster` class, which is used when we first transform the
     time series and only then fit an ML model to create a forecast. As the `steps`
@@ -1784,8 +2518,10 @@
     have already used in *Step 4*. Then, we fitted the entire pipeline to the training
     data and obtained the predictions. In *Step 9*, we evaluated the pipeline’s performance
     by calculating the MAPE and plotting the forecasts versus the actuals.
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤8*中，我们将所有步骤结合成一个管道。我们实例化了`TransformedTargetForecaster`类，它用于在我们首先变换时间序列然后再拟合机器学习模型以进行预测时使用。作为`steps`参数，我们提供了一个包含元组的列表，每个元组包含步骤名称和用于执行该步骤的变换器/估计器。在这个管道中，我们串联了去季节化、去趋势处理，以及我们在*步骤4*中已使用的减少版随机森林模型。然后，我们将整个管道拟合到训练数据上，并获得预测结果。在*步骤9*中，我们通过计算MAPE并绘制预测与实际值的对比图来评估管道的性能。
 - en: In this example, we only focused on creating the model using the original time
     series. Naturally, we can also have other features used for making predictions.
     `sktime` also offers functionalities to create pipelines containing relevant transformations
@@ -1793,55 +2529,75 @@
     the given transformers to X (features). We might also want to apply some transformations
     to X and other ones to the `y` (target). In such a case, we can pass the `TransformedTargetForecaster`
     containing any transformers that need to be applied to `y` as a step of the `ForecastingPileline`.
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们仅专注于使用原始时间序列创建模型。当然，我们也可以使用其他特征进行预测。`sktime`还提供了创建包含相关变换的回归器管道的功能。然后，我们应该使用`ForecastingPipeline`类将给定的变换器应用到X（特征）上。我们还可能希望对X应用某些变换，对`y`（目标）应用其他变换。在这种情况下，我们可以将包含需要应用于`y`的任何变换器的`TransformedTargetForecaster`作为`ForecastingPipeline`的一步传入。
 - en: 'In *Step 10*, we carried out an additional evaluation step. We used the walk-forward
     cross-validation using an expanding window to evaluate the model’s performance.
     To define the cross-validation scheme, we used the `ExpandingWindowSplitter` class.
     As inputs, we had to provide:'
+  id: totrans-362
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤10*中，我们进行了额外的评估步骤。我们使用了向前滚动交叉验证，采用扩展窗口来评估模型的性能。为了定义交叉验证方案，我们使用了`ExpandingWindowSplitter`类。作为输入，我们需要提供：
 - en: '`fh`—The forecasting horizon. As we wanted to evaluate 12-steps-ahead forecasts,
     we provided a list of integers from 1 to 12.'
+  id: totrans-363
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`fh`—预测的时间范围。由于我们想评估12步 ahead的预测，因此我们提供了一个从1到12的整数列表。'
 - en: '`initial_window`—The length of the initial training window. We set it to 60,
     which corresponds to 5 years of training data.'
+  id: totrans-364
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`initial_window`—初始训练窗口的长度。我们将其设置为60，表示5年的训练数据。'
 - en: '`step_length`—This value indicates how many periods the expanding window is
     actually expanding by. We set it to 12, so each fold will have an extra year of
     training data.'
+  id: totrans-365
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`step_length`—此值表示扩展窗口每次实际扩展的周期数。我们将其设置为12，因此每个折叠都会增加一年的训练数据。'
 - en: 'After defining the validation scheme, we used the `evaluate` function to assess
     the performance of the pipeline defined in *Step 8*. While using the `evaluate`
     function, we also had to specify the `strategy` argument, which defined the approach
     to ingesting new data when the window expands. The options are as follows:'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 定义验证方案后，我们使用了`evaluate`函数来评估*步骤8*中定义的管道的性能。在使用`evaluate`函数时，我们还必须指定`strategy`参数，用于定义在窗口扩展时如何获取新数据。选项如下：
 - en: '`refit`—The model is refitted in each training window.'
+  id: totrans-367
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`refit`—在每个训练窗口中，模型都会被重新拟合。'
 - en: '`update`—The forecaster is updated with the new training in the window, but
     it is not refitted.'
+  id: totrans-368
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`update`—预测器使用窗口中的新训练数据进行更新，但不会重新拟合。'
 - en: '`no-update_params`—The model is fitted to the first training window, and then
     it is reused without fitting or updating the model.'
+  id: totrans-369
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`no-update_params`——模型在第一个训练窗口中拟合，然后在没有重新拟合或更新模型的情况下重复使用。'
 - en: In *Step 11*, we used the `plot_series` function combined with a list comprehension
     to plot the original time series and the predictions obtained in each of the validation
     folds.
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤11*中，我们使用了`plot_series`函数，并结合列表推导来绘制原始时间序列和在每个验证折叠中获得的预测。
 - en: In the last two steps, we created and evaluated an ensemble model. First, we
     instantiated the `EnsembleForecaster` class and provided a list of tuples containing
     the names of the models and their respective classes/definitions. For this ensemble,
@@ -1851,178 +2607,252 @@
     the aggregation strategy used to create the final forecasts. In this case, the
     prediction of the ensemble model was the average of the predictions of the individual
     models. Other options include taking the median, minimum, or maximum values.
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最后两步中，我们创建并评估了一个集成模型。首先，我们实例化了`EnsembleForecaster`类，并提供了包含模型名称及其相应类/定义的元组列表。对于这个集成模型，我们结合了带有月度季节性的AutoARIMA模型（一个SARIMA模型）和在*步骤8*中定义的降维随机森林管道。此外，我们使用了`aggfunc`参数的默认值`"mean"`。该参数决定了用于生成最终预测的聚合策略。在此案例中，集成模型的预测是单个模型预测的平均值。其他选项包括使用中位数、最小值或最大值。
 - en: After instantiating the model, we used the already familiar `fit` and `predict`
     methods to fit the model and obtain the predictions.
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实例化模型后，我们使用了已经熟悉的`fit`和`predict`方法来拟合模型并获得预测结果。
 - en: There’s more…
+  id: totrans-373
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多……
 - en: 'In this recipe, we covered reduced regression using `sktime`. As we have already
     mentioned, `sktime` is a framework offering all the tools you might need while
     working with time series. Below, we list some of the advantages of using `sktime`
     and its features:'
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本教程中，我们介绍了使用`sktime`进行降维回归。如前所述，`sktime`是一个框架，提供了在处理时间序列时可能需要的所有工具。以下是使用`sktime`及其功能的一些优点：
 - en: The library is suitable not only for working with time series forecasting but
     also regression, classification, and clustering. Additionally, it also provides
     feature extraction functionalities.
+  id: totrans-375
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该库不仅适用于时间序列预测，还适用于回归、分类和聚类任务。此外，它还提供了特征提取功能。
 - en: '`sktime` offers a few naive models, which are very useful for creating benchmarks.
     For example, we can use the `NaiveForecaster` model to create forecasts that are
     simply the last known value. Alternatively, we can use the last known seasonal
     value, for example, the forecast for January 2019 would be the value of the time
     series in January 2018.'
+  id: totrans-376
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`sktime`提供了一些简单的模型，这些模型在创建基准时非常有用。例如，我们可以使用`NaiveForecaster`模型来创建预测，该预测仅仅是最后一个已知值。或者，我们可以使用最后一个已知的季节性值，例如，2019年1月的预测将是2018年1月时序数据的值。'
 - en: It provides a unified API as a wrapper around many popular time series libraries,
     such as `statsmodels`, `pmdarima`, `tbats`, or Meta’s Prophet. To inspect all
     the available forecasting models, we can execute the `all_estimators("forecaster",
     as_dataframe=True)` command.
+  id: totrans-377
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它提供了一个统一的API，作为许多流行时间序列库的封装器，如`statsmodels`、`pmdarima`、`tbats`或Meta的Prophet。要查看所有可用的预测模型，我们可以执行`all_estimators("forecaster",
+    as_dataframe=True)`命令。
 - en: By using reduction, it is possible to forecast using all the estimators compatible
     with the `scikit-learn` API.
+  id: totrans-378
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 通过使用降维，能够使用所有与`scikit-learn` API兼容的估算器进行预测。
 - en: '`sktime` provides functionalities for hyperparameter tuning with temporal cross-validation.
     Additionally, we can also tune hyperparameters connected to the reduction process,
     such as the number of lags or the window length.'
+  id: totrans-379
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`sktime`提供了带有时间交叉验证的超参数调优功能。此外，我们还可以调优与降维过程相关的超参数，如滞后数量或窗口长度。'
 - en: The library offers a wide range of performance evaluation metrics (not available
     in `scikit-learn`) and allows us to easily create custom scorers.
+  id: totrans-380
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该库提供了广泛的性能评估指标（在`scikit-learn`中不可用），并允许我们轻松创建自定义评分器。
 - en: The library extends `scikit-learn`'s pipelines to combine multiple transformers
     (detrending, deseasonalizing, and so on) with forecasting algorithms.
+  id: totrans-381
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该库扩展了`scikit-learn`的管道功能，允许将多个转换器（如去趋势、去季节性等）与预测算法结合使用。
 - en: The library provides AutoML capabilities to automatically determine the best
     forecaster from a wide range of models and their hyperparameters.
+  id: totrans-382
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该库提供了 AutoML 功能，可以自动从众多模型及其超参数中确定最佳预测器。
 - en: See also
+  id: totrans-383
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 参见
 - en: 'Löning, M., Bagnall, A., Ganesh, S., Kazakov, V., Lines, J., & Király, F. J.
     2019\. sktime: A Unified Interface for Machine Learning with Time Series. *arXiv
     preprint arXiv:1909.07872*.'
+  id: totrans-384
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 'Löning, M., Bagnall, A., Ganesh, S., Kazakov, V., Lines, J., & Király, F. J.
+    2019\. sktime: A Unified Interface for Machine Learning with Time Series. *arXiv
+    preprint arXiv:1909.07872*.'
 - en: Forecasting with Meta’s Prophet
+  id: totrans-385
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 Meta 的 Prophet 进行预测
 - en: In the previous recipe, we showed how to reframe a time series forecasting problem
     in order to use popular machine learning models that are commonly used for regression
     tasks. This time, we present a model specifically designed for time series forecasting.
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的示例中，我们展示了如何重新构造时间序列预测问题，以便使用常用于回归任务的流行机器学习模型。这次，我们展示的是一个专门为时间序列预测设计的模型。
 - en: '**Prophet** was introduced by Facebook (now Meta) back in 2017 and since then,
     it has become a very popular tool for time series forecasting. Some of the reasons
     for its popularity:'
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
+  zh: '**Prophet** 是由 Facebook（现为 Meta）在 2017 年推出的，从那时起，它已经成为一个非常流行的时间序列预测工具。它流行的一些原因：'
 - en: Most of the time, it produces reasonable results/forecasts out of the box.
+  id: totrans-388
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 大多数情况下，它能够直接提供合理的结果/预测。
 - en: It was designed to forecast business-related time series.
+  id: totrans-389
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它是为预测与业务相关的时间序列而设计的。
 - en: It works best with daily time series with a strong seasonal component and at
     least a few seasons of training data.
+  id: totrans-390
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它最适用于具有强季节性成分的每日时间序列，并且至少需要一些季节的训练数据。
 - en: It can model any number of seasonalities (such as hourly, daily, weekly, monthly,
     quarterly, or yearly).
+  id: totrans-391
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它可以建模任意数量的季节性（例如按小时、每日、每周、每月、每季度或每年）。
 - en: The algorithm is quite robust to missing data and shifts in trend (it uses automatic
     changepoint detection for that).
+  id: totrans-392
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 该算法对缺失数据和趋势变化具有相当强的鲁棒性（它通过自动变化点检测来应对这一点）。
 - en: It easily accounts for holidays and special events.
+  id: totrans-393
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 它能够轻松地考虑假期和特殊事件。
 - en: Compared to autoregressive models (such as ARIMA), it does not require stationary
     time series.
+  id: totrans-394
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与自回归模型（如 ARIMA）相比，它不需要平稳时间序列。
 - en: We can employ business/domain knowledge to tune the forecasts by adjusting the
     human-interpretable hyperparameters of the model.
+  id: totrans-395
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以通过调整模型的易于理解的超参数，运用业务/领域知识来调整预测。
 - en: We can use additional regressors to improve the model’s predictive performance.
+  id: totrans-396
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以使用额外的回归量来提高模型的预测性能。
 - en: Naturally, the model is by no means perfect and it suffers from its own set
     of issues. In the *See also* section, we listed a few references showing the model’s
     weaknesses.
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
+  zh: 自然地，这个模型并不完美，存在一些问题。在 *参见* 部分，我们列出了一些参考资料，展示了该模型的弱点。
 - en: 'The creators of Prophet approached the time series forecasting problem as a
     curve-fitting exercise (which raises quite a lot of controversies in the data
     science community) rather than explicitly looking at the time-based dependencies
     of each observation within a time series. As a result, Prophet is an additive
     model (a form of generalized additive models or GAMs) and can be presented as
     follows:'
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
+  zh: Prophet 的创建者将时间序列预测问题视为一个曲线拟合的练习（这在数据科学社区引发了不少争议），而不是明确地分析时间序列中每个观测值的时间依赖性。因此，Prophet
+    是一个加性模型（属于广义加性模型或 GAMs 的一种形式），可以表示如下：
 - en: '![](../Images/B18112_07_001.png)'
+  id: totrans-399
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_001.png)'
 - en: 'where:'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中：
 - en: '*g(t)*—Growth term, which is piecewise linear, logistic, or flat. The trend
     component models the non-periodic changes in the time series.'
+  id: totrans-401
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*g(t)* — 增长项，具有分段线性、逻辑或平坦形式。趋势成分模型捕捉时间序列中的非周期性变化。'
 - en: '*h(t)*—Describes the effects of holidays and special days (which potentially
     occur on an irregular basis). They are added to the model as dummy variables.'
+  id: totrans-402
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*h(t)* — 描述假期和特殊日期的影响（这些日期可能不规则出现）。它们作为虚拟变量添加到模型中。'
 - en: '*s(t)*—Describes various seasonal patterns modeled using the Fourier series.'
+  id: totrans-403
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*s(t)* — 描述使用傅里叶级数建模的各种季节性模式。'
 - en: '*![](../Images/B18112_07_002.png)*—Error term, which is assumed to be normally
     distributed.'
+  id: totrans-404
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*![](../Images/B18112_07_002.png)* — 误差项，假设其服从正态分布。'
 - en: The logistic growth trend is especially useful for modeling saturated (or capped)
     growth. For example, when we are forecasting the number of customers in a given
     country, we should not forecast more than the total number of the country’s inhabitants.
     With Prophet, we can also account for the saturating minimum.
+  id: totrans-405
   prefs: []
   type: TYPE_NORMAL
+  zh: 逻辑增长趋势特别适用于建模饱和（或受限）增长。例如，当我们预测某个国家的客户数量时，我们不应预测超过该国人口总数的客户数量。使用Prophet，我们还可以考虑饱和的最小值。
 - en: GAMs are simple yet powerful models that are gaining popularity. They assume
     that relationships between individual features and the target follow smooth patterns.
     Those can be linear or non-linear. Then, those relationships can be estimated
@@ -2031,323 +2861,463 @@
     taken in Holt-Winters’ exponential smoothing method. The GAM formulation used
     by Prophet has its advantages. First, it decomposes easily. Second, it accommodates
     new components, for example, when we identify a new source of seasonality.
+  id: totrans-406
   prefs: []
   type: TYPE_NORMAL
+  zh: 广义加性模型（GAM）是简单却强大的模型，正在获得越来越多的关注。它们假设各个特征与目标之间的关系遵循平滑模式。这些关系可以是线性的，也可以是非线性的。然后，这些关系可以同时估计并加和，生成模型的预测值。例如，将季节性建模为加性组件与Holt-Winters指数平滑方法中的做法相同。Prophet使用的GAM公式有其优势。首先，它易于分解。其次，它能容纳新的组件，例如，当我们识别出新的季节性来源时。
 - en: Another important aspect of Prophet is the inclusion of changepoints in the
     process of estimating the trend, which makes the trend curve more flexible. Thanks
     to changepoints, the trend can be adjusted to sudden changes in the patterns,
     for example, the changes to sales patterns caused by the COVID pandemic. Prophet
     has an automatic procedure for detecting changepoints, but it can also accept
     manual inputs in the form of dates.
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
+  zh: Prophet的另一个重要特点是，在估计趋势的过程中包括变化点，这使得趋势曲线更加灵活。由于变化点的存在，趋势可以调整为适应模式中的突变，例如COVID疫情引起的销售模式变化。Prophet具有自动检测变化点的程序，但也可以接受手动输入日期。
 - en: Prophet is estimated using a Bayesian approach (thanks to using Stan, which
     is a programming language for statistical inference written in C++), which allows
     for automatic changepoint selection, creating confidence intervals using methods
     like **Markov Chain Monte Carlo** (**MCMC**) or the **Maximum A Posteriori** (**MAP**)
     estimate.
+  id: totrans-408
   prefs: []
   type: TYPE_NORMAL
+  zh: Prophet是使用贝叶斯方法估计的（得益于使用Stan，它是一个用C++编写的统计推断编程语言），该方法允许自动选择变化点，并使用**马尔科夫链蒙特卡罗**（**MCMC**）或**最大后验估计**（**MAP**）等方法创建置信区间。
 - en: In this recipe, we show how to forecast daily gold prices using data from the
     years 2015 to 2019\. While we very well realize that the model will be unlikely
     to accurately forecast the gold prices, we use them as an illustration of how
     to train and use the model.
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们展示了如何使用2015至2019年的数据预测每日黄金价格。虽然我们非常清楚该模型不太可能准确预测黄金价格，但我们将其作为训练和使用模型的示例。
 - en: How to do it…
+  id: totrans-410
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 如何操作…
 - en: 'Execute the following steps to forecast daily gold prices with the Prophet
     model:'
+  id: totrans-411
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤来使用Prophet模型预测每日黄金价格：
 - en: 'Import the libraries and authenticate with Nasdaq Data Link:'
+  id: totrans-412
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库并使用纳斯达克数据链接进行身份验证：
 - en: '[PRE49]'
+  id: totrans-413
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: 'Download the daily gold prices:'
+  id: totrans-414
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 下载每日黄金价格：
 - en: '[PRE50]'
+  id: totrans-415
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-416
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_31.png)'
+  id: totrans-417
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_31.png)'
 - en: 'Figure 7.31: Daily gold prices from the years 2015 to 2019'
+  id: totrans-418
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图7.31：2015年至2019年的每日黄金价格
 - en: 'Rename the columns:'
+  id: totrans-419
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 重命名列：
 - en: '[PRE51]'
+  id: totrans-420
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'Split the series into the training and test sets:'
+  id: totrans-421
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将系列分为训练集和测试集：
 - en: '[PRE52]'
+  id: totrans-422
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: We arbitrarily chose to use the last quarter of `2019` as the test set. Hence,
     we will create a model forecasting around 60 observations in the future.
+  id: totrans-423
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们任意选择了`2019`年的最后一个季度作为测试集。因此，我们将创建一个预测未来约60个观测值的模型。
 - en: 'Create the instance of the model and fit it to the data:'
+  id: totrans-424
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 创建模型实例并将其拟合到数据：
 - en: '[PRE53]'
+  id: totrans-425
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: 'Forecast the gold prices for the fourth quarter of 2019 and plot the results:'
+  id: totrans-426
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 预测2019年第四季度的黄金价格并绘制结果：
 - en: '[PRE54]'
+  id: totrans-427
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-428
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/Image22541.png)'
+  id: totrans-429
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/Image22541.png)'
 - en: 'Figure 7.32: The forecast obtained using Prophet'
+  id: totrans-430
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图7.32：使用Prophet获得的预测
 - en: 'To interpret the figure, we should know that:'
+  id: totrans-431
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 为了解释该图，我们需要知道：
 - en: The black dots are the actual observations of the gold price.
+  id: totrans-432
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 黑色的点是黄金价格的实际观测值。
 - en: The blue line representing the fit does not match the observations exactly,
     as the model smooths out the noise in the data (also reducing the chance of overfitting).
+  id: totrans-433
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 代表拟合的蓝线与观测值并不完全匹配，因为模型对数据中的噪音进行了平滑处理（这也减少了过拟合的可能性）。
 - en: Prophet attempts to quantify uncertainty, which is represented by the light
     blue intervals around the fitted line. The interval is calculated assuming that
     the average frequency and magnitude of trend changes in the future will be the
     same as in the historical data.
+  id: totrans-434
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Prophet 尝试量化不确定性，这通过拟合线周围的浅蓝色区间表示。该区间的计算假设未来趋势变化的平均频率和幅度将与历史数据中的趋势变化相同。
 - en: It is also possible to create an interactive plot using `plotly`. To do so,
     we need to use the `plot_plotly` function instead of the `plot` method.
+  id: totrans-435
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 还可以使用 `plotly` 创建交互式图表。为此，我们需要使用 `plot_plotly` 函数，而不是 `plot` 方法。
 - en: 'Additionally, it is worth mentioning that the prediction DataFrame contains
     quite a lot of columns with potentially useful information:'
+  id: totrans-436
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 此外，值得一提的是，预测数据框包含了很多可能有用的列：
 - en: '[PRE55]'
+  id: totrans-437
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: 'Using the snippet, we can see all the columns:'
+  id: totrans-438
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 使用代码片段，我们可以看到所有的列：
 - en: '[PRE56]'
+  id: totrans-439
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: 'By analyzing the list, we can see all the components returned by the Prophet
     model. Naturally, we see the forecast (`yhat`) and its corresponding confidence
     intervals `(''yhat_lower''` and `''yhat_upper''`). Additionally, we see all the
     individual components of the model (such as trends, holiday effects, and seasonalities)
     together with their confidence intervals. Those might be interesting to us because
     of the following considerations:'
+  id: totrans-440
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 通过分析列表，我们可以看到 Prophet 模型返回的所有组件。自然地，我们看到了预测（`yhat`）及其对应的置信区间（`'yhat_lower'`
+    和 `'yhat_upper'`）。此外，我们还看到了模型的所有个别组件（如趋势、假期效应和季节性），以及它们的置信区间。这些可能对我们有用，考虑到以下几个方面：
 - en: As Prophet is an additive model, we can sum up all the components to arrive
     at the final forecast. Hence, we can look at those values as a type of feature
     importance, which can be used to explain the forecast.
+  id: totrans-441
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 由于 Prophet 是一种加性模型，我们可以将所有组件相加，得到最终的预测结果。因此，我们可以将这些值视为一种特征重要性，可以用来解释预测结果。
 - en: We could also use the Prophet model to obtain those component values and then
     feed them to another model (for example, a tree-based model) as features.
+  id: totrans-442
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们还可以使用 Prophet 模型来获取这些组件的值，然后将它们作为特征输入到另一个模型（例如基于树的模型）中。
 - en: 'Add changepoints to the plot:'
+  id: totrans-443
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 向图表中添加变化点：
 - en: '[PRE57]'
+  id: totrans-444
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-445
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_33.png)'
+  id: totrans-446
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_33.png)'
 - en: 'Figure 7.33: The model’s fit together with the identified changepoints'
+  id: totrans-447
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.33：模型的拟合与识别出的变化点
 - en: We can also look up the exact dates that were identified as changepoints using
     the `changepoints` method of a fitted Prophet model.
+  id: totrans-448
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们还可以使用拟合后的 Prophet 模型的 `changepoints` 方法查找被识别为变化点的确切日期。
 - en: 'Inspect the decomposition of the time series:'
+  id: totrans-449
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 检查时间序列的分解：
 - en: '[PRE58]'
+  id: totrans-450
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-451
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_34.png)'
+  id: totrans-452
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_34.png)'
 - en: 'Figure 7.34: The decomposition plot showing the individual components of the
     Prophet model'
+  id: totrans-453
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.34：展示 Prophet 模型个别组件的分解图
 - en: We do not spend much time inspecting the components, as the time series of gold
     prices probably does not have many seasonal effects or should not be impacted
     by the US holidays. That is especially true for the holidays, as the stock market
     is closed on major holidays. Therefore, the effect of these holidays may be reflected
     by the market on the days before and after. As we have mentioned before, we are
     aware of that and we just wanted to show how Prophet works.
+  id: totrans-454
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们没有花太多时间检查组件，因为黄金价格的时间序列可能没有太多季节性影响，或者不应受到美国假期的影响。这尤其适用于假期，因为股市在主要假期时会休市。因此，这些假期的影响可能会在假期前后由市场反映出来。正如我们之前提到的，我们对此有所了解，我们只是想展示
+    Prophet 是如何工作的。
 - en: One thing to note is that the weekly seasonality is noticeably different for
     Saturday and Sunday. That is caused by the fact that the gold prices are collected
     during weekdays. Hence, we can safely ignore the weekend patterns.
+  id: totrans-455
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 有一点需要注意的是，周季节性在星期六和星期天之间明显不同。这是由于黄金价格数据是在工作日收集的。因此，我们可以安全地忽略周末的模式。
 - en: However, it is interesting to observe the trend component, which we can also
     see plotted in *Figure 7.33*, together with the detected changepoints.
+  id: totrans-456
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 然而，有趣的是观察趋势组件，我们可以在*图 7.33*中看到它，并且与检测到的变化点一起呈现。
 - en: 'Merge the test set with the forecasts:'
+  id: totrans-457
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将测试集与预测结果合并：
 - en: '[PRE59]'
+  id: totrans-458
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: 'Plot the test values vs. predictions:'
+  id: totrans-459
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制测试值与预测值的对比图：
 - en: '[PRE60]'
+  id: totrans-460
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-461
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段生成了以下图表：
 - en: '![](../Images/B18112_07_35.png)'
+  id: totrans-462
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_35.png)'
 - en: 'Figure 7.35: Forecast vs ground truth'
+  id: totrans-463
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.35：预测值与实际值对比
 - en: As we can see in *Figure 7.35*, the model’s prediction is quite off. As a matter
     of fact, the 80% confidence interval (the default setting, we can change it using
     the `interval_width` hyperparameter) does not capture almost any of the actual
     values.
+  id: totrans-464
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在*图 7.35*中看到的，模型的预测结果偏差较大。实际上，80% 置信区间（默认设置，我们可以通过 `interval_width` 超参数来更改）几乎没有捕捉到任何实际值。
 - en: How it works…
+  id: totrans-465
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的…
 - en: After importing the libraries, we downloaded the daily gold prices from Nasdaq
     Data Link.
+  id: totrans-466
   prefs: []
   type: TYPE_NORMAL
+  zh: 在导入库之后，我们从 Nasdaq Data Link 下载了每日黄金价格数据。
 - en: 'In *Step 3*, we renamed the columns of the DataFrame in order to make it compatible
     with Prophet. The algorithm requires two columns:'
+  id: totrans-467
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 3*中，我们重命名了数据框的列，以使其与 Prophet 兼容。该算法需要两列数据：
 - en: '`ds`—Indicating the timestamp'
+  id: totrans-468
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`ds`—表示时间戳'
 - en: '`y`—The target variable'
+  id: totrans-469
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`y`—目标变量'
 - en: In *Step 4*, we split the DataFrame into training and test sets. We arbitrarily
     chose to use the fourth quarter of 2019 as the test set.
+  id: totrans-470
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 4*中，我们将数据框拆分为训练集和测试集。我们任意选择了 2019 年第四季度作为测试集。
 - en: 'In *Step 5*, we instantiated the Prophet model. While doing so, we specified
     a few settings:'
+  id: totrans-471
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 5*中，我们实例化了 Prophet 模型。期间，我们指定了一些设置：
 - en: We set `changepoint_range` to `0.9`, which means that the algorithm can identify
     changepoints in the first 90% of the training dataset. By default, Prophet adds
     25 changepoints in the first 80% of the time series. In this case, we wanted to
     capture the more recent trends as well.
+  id: totrans-472
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们将 `changepoint_range` 设置为 `0.9`，这意味着算法可以在训练数据集的前 90% 中识别变化点。默认情况下，Prophet
+    会在时间序列的前 80% 中添加 25 个变化点。在这种情况下，我们希望捕捉到较新的趋势。
 - en: We added the monthly seasonality by using the `add_seasonality` method with
     values suggested by Prophet’s documentation. Specifying `period` as `30.5` means
     that we expect the patterns to repeat themselves after roughly 30.5 days. The
     other parameter—`fourier_order`—can be used to specify the number of Fourier terms
     that are used to build the particular seasonal component (in this case, monthly).
     In general, the higher the order, the more flexible the seasonality component.
+  id: totrans-473
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们使用 `add_seasonality` 方法并按照 Prophet 文档建议的值添加了月度季节性。指定 `period` 为 `30.5` 意味着我们期望模式大约每
+    30.5 天重复一次。另一个参数—`fourier_order`—可以用来指定用于构建特定季节性成分（在此情况下为月度季节性）的 Fourier 项数。通常来说，阶数越高，季节性成分越灵活。
 - en: We used the `add_country_holidays` method to add the US holidays to the model.
     We have used the default calendar (available via the `holidays` library), but
     it is also possible to add custom events that are not available in the calendar.
@@ -2356,554 +3326,805 @@
     affected as well. For example, in a retail scenario, we might expect the traffic/sales
     to be lower in the days following Christmas. On the other hand, we might expect
     a peak just before Christmas.
+  id: totrans-474
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们使用 `add_country_holidays` 方法将美国假期添加到模型中。我们使用的是默认日历（通过 `holidays` 库可用），但也可以添加日历中没有的自定义事件。例如，黑色星期五就是一个例子。还值得一提的是，在提供自定义事件时，我们还可以指定是否预期周围的日期也会受到影响。例如，在零售场景中，我们可能会预期圣诞节后几天的客流/销售会较低。另一方面，我们也许会预期圣诞节前夕会出现销售高峰。
 - en: Then, we fitted the model using the `fit` method.
+  id: totrans-475
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们使用 `fit` 方法拟合了模型。
 - en: In *Step 6*, we used the fitted model to obtain predictions. To create forecasts
     with Prophet, we had to create a special DataFrame using the `make_future_dataframe`
     method. While doing so, we indicated that we want to forecast for the length of
     the test set (by default, this is measured in days) and that we wanted to use
     business days. That part is important, as we do not have gold prices for the weekends.
     Then, we created the predictions using the `predict` method of the fitted model.
+  id: totrans-476
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 6*中，我们使用拟合后的模型获得了预测结果。为了使用 Prophet 创建预测，我们需要使用 `make_future_dataframe`
+    方法创建一个特殊的数据框。在此过程中，我们指定了希望预测的测试集长度（默认情况下以天数为单位），并且我们希望使用工作日。这一点很重要，因为我们没有周末的黄金价格数据。然后，我们使用拟合模型的
+    `predict` 方法生成预测结果。
 - en: In *Step 7*, we added the identified changepoints to the plot using the `add_changepoints_to_plot`
     function. One thing to note here is that we had to use the `gca` method of the
     created figure to get its current axis. We had to use it to correctly identify
     to which plot we wanted to add the changepoints.
+  id: totrans-477
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 7*中，我们使用`add_changepoints_to_plot`函数将识别出的变更点添加到图表中。这里有一点需要注意的是，我们必须使用所创建图形的`gca`方法来获取其当前坐标轴。我们必须使用它来正确识别我们想要将变更点添加到哪个图表中。
 - en: In *Step 8*, we inspected the components of the model. To do so, we used the
     `plot_components` method with the prediction DataFrame as the method’s argument.
+  id: totrans-478
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 8*中，我们检查了模型的各个组件。为此，我们使用了`plot_components`方法，并将预测数据框作为方法的参数。
 - en: In *Step 9*, we merged the test set with the prediction DataFrame. We used a
     left join, which returns all the rows from the left table (test set) and the matched
     rows from the right table (prediction DataFrame) while leaving the unmatched rows
     empty.
+  id: totrans-479
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 9*中，我们将测试集与预测数据框合并。我们使用了左连接，它返回左表（测试集）中的所有行以及右表（预测数据框）中匹配的行，而未匹配的行则为空。
 - en: Finally, we plotted the predictions (together with the confidence intervals)
     and the ground truth to visually evaluate the model’s performance.
+  id: totrans-480
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们绘制了预测结果（连同置信区间）和真实值，以便直观地评估模型的性能。
 - en: There’s more…
+  id: totrans-481
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多…
 - en: Prophet offers quite a lot of interesting functionalities. While it is definitely
     too much to mention in a single recipe, we wanted to highlight two things.
+  id: totrans-482
   prefs: []
   type: TYPE_NORMAL
+  zh: Prophet 提供了很多有趣的功能。虽然在一个单一的实例中提到所有这些功能显然太多，但我们想强调两点。
 - en: Built-in cross-validation
+  id: totrans-483
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 内置交叉验证
 - en: 'In order to properly evaluate the model’s performance (and potentially tune
     its hyperparameters), we do need a validation framework. Prophet implements the
     already familiar walk-forward cross-validation in its `cross_validation` function.
     In this subsection, we show how to use it:'
+  id: totrans-484
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了正确评估模型的表现（并可能调整其超参数），我们确实需要一个验证框架。Prophet 在其`cross_validation`函数中实现了我们已经熟悉的前向交叉验证。在这一小节中，我们展示了如何使用它：
 - en: 'Import the libraries:'
+  id: totrans-485
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE61]'
+  id: totrans-486
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: 'Run Prophet’s cross-validation:'
+  id: totrans-487
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 运行 Prophet 的交叉验证：
 - en: '[PRE62]'
+  id: totrans-488
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: 'We have specified that we want:'
+  id: totrans-489
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们已经指定我们想要：
 - en: The initial window to contain 3 years of data (a year contains approximately
     252 trading days)
+  id: totrans-490
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 初始窗口包含 3 年的数据（一年大约有 252 个交易日）
 - en: A forecast horizon of 60 days
+  id: totrans-491
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 预测期为 60 天
 - en: The forecasts to be calculated every 60 days
+  id: totrans-492
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 每 60 天计算一次预测
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-493
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码段会生成以下输出：
 - en: '![](../Images/B18112_07_36.png)'
+  id: totrans-494
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_36.png)'
 - en: 'Figure 7.36: The output of Prophet’s cross-validation'
+  id: totrans-495
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.36：Prophet 交叉验证的输出
 - en: The DataFrame contains the predictions (including the confidence intervals)
     and the actual value for a combination of `cutoff` dates (the last time point
     in the training set used to generate the forecast) and `ds` dates (the date in
     the validation set for which the forecast was generated). In other words, the
     procedure creates a forecast for every observed point between `cutoff` and `cutoff
     + horizon`.
+  id: totrans-496
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 数据框包含了预测值（包括置信区间）和实际值，针对一组`cutoff`日期（用于生成预测的训练集中的最后一个时间点）和`ds`日期（用于生成预测的验证集中的日期）。换句话说，这个过程为每个介于`cutoff`和`cutoff
+    + horizon`之间的观察点生成预测。
 - en: 'The algorithm also informed us what it was going to do:'
+  id: totrans-497
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 算法还告诉我们它将要做什么：
 - en: '[PRE63]'
+  id: totrans-498
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: 'Calculate the aggregated performance metrics:'
+  id: totrans-499
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算聚合性能指标：
 - en: '[PRE64]'
+  id: totrans-500
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: 'Executing the snippet generates the following output:'
+  id: totrans-501
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码段会生成以下输出：
 - en: '![](../Images/B18112_07_37.png)'
+  id: totrans-502
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_37.png)'
 - en: 'Figure 7.37: The first 10 lines of the performance overview'
+  id: totrans-503
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.37：性能概览的前 10 行
 - en: '*Figure 7.37* presents the first 10 rows of the DataFrame containing the aggregated
     performance scores from our cross-validation. As per our cross-validation scheme,
     the entire DataFrame contains all the horizons until `60 days`.'
+  id: totrans-504
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: '*图 7.37*展示了包含我们交叉验证结果的聚合性能得分的前 10 行数据框。根据我们的交叉验证方案，整个数据框包含了直到`60天`的所有预测期。'
 - en: Please refer to Prophet’s documentation for the exact logic behind the aggregated
     performance metrics generated by the `performance_metrics` function.
+  id: totrans-505
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 请参阅 Prophet 文档，了解由`performance_metrics`函数生成的聚合性能指标背后的确切逻辑。
 - en: 'Plot the MAPE score:'
+  id: totrans-506
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 绘制 MAPE 得分：
 - en: '[PRE65]'
+  id: totrans-507
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-508
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码段会生成以下图表：
 - en: '![](../Images/B18112_07_38.png)'
+  id: totrans-509
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_38.png)'
 - en: 'Figure 7.38: The MAPE score over horizons'
+  id: totrans-510
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.38：不同预测期的 MAPE 得分
 - en: The dots in *Figure 7.38* represent the absolute percent error for each prediction
     in the cross-validation DataFrame. The blue line represents the MAPE. The average
     is taken over a rolling window of the dots. For more information about the rolling
     window, please refer to Prophet’s documentation.
+  id: totrans-511
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 7.38* 中的点表示交叉验证数据框中每个预测的绝对百分比误差。蓝线表示 MAPE。平均值是在点的滚动窗口上计算的。有关滚动窗口的更多信息，请参阅
+    Prophet 的文档。'
 - en: Tuning the model
+  id: totrans-512
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 调整模型
 - en: 'As we have already seen, Prophet has quite a few tunable hyperparameters. The
     authors of the library suggest that the following hyperparameters might be worth
     tuning in order to achieve a better fit:'
+  id: totrans-513
   prefs: []
   type: TYPE_NORMAL
+  zh: 如我们已经看到的，Prophet 有相当多的可调超参数。该库的作者建议以下超参数可能值得调优，以实现更好的拟合：
 - en: '`changepoint_prior_scale`—Possibly the most impactful hyperparameter, which
     determines the flexibility of the trend. Particularly, how much the trend changes
     at the trend changepoints. A too-small value will make the trend less flexible
     and might cause the trend to underfit, while a too-large value might cause the
     trend to overfit (and potentially capture the yearly seasonality as well).'
+  id: totrans-514
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`changepoint_prior_scale`—可能是最具影响力的超参数，它决定了趋势的灵活性。特别是，趋势在趋势变化点的变化程度。过小的值会使趋势变得不那么灵活，可能导致趋势欠拟合，而过大的值可能会导致趋势过拟合（并可能捕捉到年度季节性）。'
 - en: '`seasonality_prior_scale`—A hyperparameter controlling the flexibility of the
     seasonality terms. Large values allow the seasonality to fit significant fluctuations,
     while small values shrink the seasonality’s magnitude. The default value of 10
     applies basically no regularization.'
+  id: totrans-515
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`seasonality_prior_scale`—一个控制季节性项灵活性的超参数。较大的值允许季节性拟合显著的波动，而较小的值则会收缩季节性的幅度。默认值为
+    10，基本上不进行正则化。'
 - en: '`holidays_prior_scale`—Very similar to `seasonality_prior_scale`, but controls
     the flexibility to fit holiday effects.'
+  id: totrans-516
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`holidays_prior_scale`—与 `seasonality_prior_scale` 非常相似，但它控制拟合假期效应的灵活性。'
 - en: '`seasonality_mode`—We can choose either additive or multiplicative seasonality.
     The best way to choose this one is to inspect the time series and see if the magnitude
     of seasonal fluctuations grows with the passage of time.'
+  id: totrans-517
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`seasonality_mode`—我们可以选择加法季节性或乘法季节性。选择此项的最佳方法是检查时间序列，看看季节性波动的幅度是否随着时间的推移而增大。'
 - en: '`changepoint_range`—This parameter corresponds to the percentage of the time
     series in which the algorithm can identify changepoints. A rule of thumb to identify
     a good value for this hyperparameter is to look at the model’s fit in the last
     1−`changepoint_range` percent of training data. If the model is doing a bad job
     there, we might want to increase the value of the hyperparameter.'
+  id: totrans-518
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`changepoint_range`—此参数对应于算法可以识别变化点的时间序列百分比。确定此超参数的良好值的一条经验法则是查看模型在训练数据的最后
+    1−`changepoint_range` 百分比中的拟合情况。如果模型在这一部分的表现不佳，我们可能需要增加该超参数的值。'
 - en: As in the other cases, we might want to use a procedure like grid search (combined
     with cross-validation) to identify the best set of hyperparameters, while trying
     to avoid/minimize the risk of overfitting to the training data.
+  id: totrans-519
   prefs: []
   type: TYPE_NORMAL
+  zh: 与其他情况一样，我们可能希望使用像网格搜索（结合交叉验证）这样的过程来识别最佳的超参数集，同时尽量避免/最小化对训练数据的过拟合风险。
 - en: See also
+  id: totrans-520
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 另见
 - en: Rafferty, G. 2021\. *Forecasting Time Series Data with Facebook Prophet*. Packt
     Publishing Ltd.
+  id: totrans-521
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Rafferty, G. 2021. *使用 Facebook Prophet 进行时间序列预测*。Packt Publishing Ltd.
 - en: 'Taylor, S. J., & Letham, B. 2018\. “Forecasting at scale,” *The American Statistician*,
     72(1): 37-45.'
+  id: totrans-522
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: Taylor, S. J., & Letham, B. 2018. “大规模预测，” *美国统计学家*，72(1)：37-45。
 - en: AutoML for time series forecasting with PyCaret
+  id: totrans-523
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用 PyCaret 进行时间序列预测的 AutoML
 - en: We have already spent some time explaining how to build ML models for time series
     forecasting, how to create relevant features, and how to use dedicated models
     (such as Meta’s Prophet) for the task. It is only fitting to conclude the chapter
     with an extension of all of the mentioned parts—an AutoML tool.
+  id: totrans-524
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经花了一些时间解释了如何构建时间序列预测的机器学习模型，如何创建相关特征，以及如何使用专门的模型（例如 Meta 的 Prophet）来完成任务。将本章以对前述所有部分的扩展——一个
+    AutoML 工具来结束，是再合适不过了。
 - en: One of the available tools is PyCaret, which is an open-source, low-code ML
     library. The goal of the tool is to automate machine learning workflows. Using
     PyCaret, we can train and tune dozens of popular ML models with only a few lines
     of code. While it was originally built for classic regression and classification
     tasks, it also has a dedicated time series module, which we will present in this
     recipe.
+  id: totrans-525
   prefs: []
   type: TYPE_NORMAL
+  zh: 可用的工具之一是 PyCaret，它是一个开源、低代码的机器学习库。该工具的目标是自动化机器学习工作流程。通过 PyCaret，我们可以仅用几行代码训练和调优众多流行的机器学习模型。虽然它最初是为经典回归和分类任务构建的，但它也有一个专门的时间序列模块，我们将在本例中介绍。
 - en: The PyCaret library is essentially a wrapper around several popular machine
     learning libraries and frameworks such as `scikit-learn`, XGBoost, LightGBM, CatBoost,
     Optuna, Hyperopt, and a few more. And to be more precise, PyCaret’s time series
     module is built on top of the functionalities provided by `sktime`, for example,
     its reduction framework and pipelining capabilities.
+  id: totrans-526
   prefs: []
   type: TYPE_NORMAL
+  zh: PyCaret 库本质上是多个流行的机器学习库和框架（如 `scikit-learn`、XGBoost、LightGBM、CatBoost、Optuna、Hyperopt
+    等）的封装。更准确地说，PyCaret 的时间序列模块建立在 `sktime` 提供的功能之上，例如它的降维框架和管道能力。
 - en: In this recipe, we will use the PyCaret library to find the best model for predicting
     the monthly US unemployment rate.
+  id: totrans-527
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本例中，我们将使用 PyCaret 库来寻找最适合预测美国月度失业率的模型。
 - en: Getting ready
+  id: totrans-528
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 准备工作
 - en: In this recipe, we will use the same dataset we have already used in the previous
     recipes. You can find more information on how to download and prepare the time
     series in the *Validation methods for time series* recipe.
+  id: totrans-529
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本例中，我们将使用在前面几个例子中已经使用过的相同数据集。你可以在《*时间序列验证方法*》一节中找到有关如何下载和准备时间序列的更多信息。
 - en: How to do it…
+  id: totrans-530
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 操作步骤…
 - en: 'Execute the following steps to forecast the US unemployment rates using PyCaret:'
+  id: totrans-531
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行以下步骤，使用 PyCaret 预测美国失业率：
 - en: 'Import the libraries:'
+  id: totrans-532
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 导入库：
 - en: '[PRE66]'
+  id: totrans-533
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'Set up the experiment:'
+  id: totrans-534
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 设置实验：
 - en: '[PRE67]'
+  id: totrans-535
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'Executing the snippet generates the following experiment summary:'
+  id: totrans-536
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段后生成以下实验总结：
 - en: '![](../Images/B18112_07_39.png)'
+  id: totrans-537
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_39.png)'
 - en: 'Figure 7.39: The summary of PyCaret’s experiment'
+  id: totrans-538
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.39：PyCaret 实验总结
 - en: We can see that the library automatically took the last 6 observations as the
     test set and identified monthly seasonality in the provided time series.
+  id: totrans-539
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们可以看到，该库自动将最后 6 个观测值作为测试集，并识别出所提供时间序列中的月度季节性。
 - en: 'Explore the time series using visualizations:'
+  id: totrans-540
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用可视化工具探索时间序列：
 - en: '[PRE68]'
+  id: totrans-541
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-542
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段后生成以下图表：
 - en: '![](../Images/B18112_07_40.png)'
+  id: totrans-543
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_40.png)'
 - en: 'Figure 7.40: Diagnostics plots of the time series'
+  id: totrans-544
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.40：时间序列的诊断图
 - en: 'While most of the plots are already familiar, the new one is the periodogram.
     We can use it (together with the fast Fourier transform plot) to study the frequency
     components of the analyzed time series. While this might be outside of the scope
     of this book, we can mention the following highlights of interpreting those plots:'
+  id: totrans-545
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 虽然大部分图表已经很熟悉，但新的图表是周期图。我们可以结合快速傅里叶变换图来研究分析时间序列的频率成分。虽然这可能超出了本书的范围，但我们可以提到以下解释这些图表的要点：
 - en: Peaking around 0 can indicate the need to difference the time series. It could
     be indicative of a stationary ARMA process.
+  id: totrans-546
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在 0 附近的峰值可能表示需要对时间序列进行差分。这可能表明是一个平稳的 ARMA 过程。
 - en: Peaking at some frequency and its multiples indicates seasonality. The lowest
     of those frequencies is called the **fundamental frequency**. Its inverse is the
     seasonal period of the model. For example, a fundamental frequency of 0.0833 corresponds
     to the seasonal period of 12, as 1/0.0833 = 12.
+  id: totrans-547
   prefs:
   - PREF_IND
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在某个频率及其倍数上出现峰值表示季节性。最低的这些频率称为**基本频率**。其倒数即为模型的季节周期。例如，基本频率为 0.0833 时，对应的季节周期为
+    12，因为 1/0.0833 = 12。
 - en: 'Using the following snippet, we can visualize the cross-validation scheme that
     will be used for the experiment:'
+  id: totrans-548
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 使用以下代码片段，我们可以可视化将在实验中使用的交叉验证方案：
 - en: '[PRE69]'
+  id: totrans-549
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-550
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行代码片段后生成以下图表：
 - en: '![](../Images/B18112_07_41.png)'
+  id: totrans-551
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_41.png)'
 - en: 'Figure 7.41: An example of 5-fold walking cross-validation using expanding
     window'
+  id: totrans-552
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.41：使用扩展窗口进行的 5 折走步交叉验证示例
 - en: In the accompanying notebook, we also show some of the other available plots,
     for example, seasonal decomposition, **fast Fourier transform** (**FFT**), and
     more.
+  id: totrans-553
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 在随附的笔记本中，我们还展示了一些其他可用的图表，例如，季节性分解、**快速傅里叶变换**（**FFT**）等。
 - en: 'Run statistical tests on the time series:'
+  id: totrans-554
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对时间序列进行统计检验：
 - en: '[PRE70]'
+  id: totrans-555
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE70]'
 - en: 'Executing the snippet generates the following DataFrame with the results of
     various tests:'
+  id: totrans-556
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下 DataFrame，展示各种测试结果：
 - en: '![](../Images/B18112_07_42.png)'
+  id: totrans-557
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_42.png)'
 - en: 'Figure 7.42: DataFrame with the results of various statistical tests'
+  id: totrans-558
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.42：包含各种统计测试结果的 DataFrame
 - en: 'We can also carry out only subsets of all the tests. For example, we can execute
     the summary tests using the following snippet:'
+  id: totrans-559
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 我们还可以仅执行所有测试的子集。例如，我们可以使用以下代码片段执行摘要测试：
 - en: '[PRE71]'
+  id: totrans-560
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE71]'
 - en: 'Find the five best-fitting pipelines:'
+  id: totrans-561
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 找出五个最适合的管道：
 - en: '[PRE72]'
+  id: totrans-562
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE72]'
 - en: 'Executing the snippet generates the following DataFrame with the performance
     overview:'
+  id: totrans-563
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下 DataFrame，展示性能概览：
 - en: '![](../Images/B18112_07_43.png)'
+  id: totrans-564
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_43.png)'
 - en: 'Figure 7.43: DataFrame with the cross-validation scores of all the fitted models'
+  id: totrans-565
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.43：所有拟合模型的交叉验证得分的 DataFrame
 - en: 'Inspecting the `best_pipelines` object prints the best pipelines:'
+  id: totrans-566
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 检查 `best_pipelines` 对象将打印出最佳管道：
 - en: '[PRE73]'
+  id: totrans-567
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE73]'
 - en: 'Tune the best pipelines:'
+  id: totrans-568
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 调优最佳管道：
 - en: '[PRE74]'
+  id: totrans-569
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE74]'
 - en: 'After tuning, the best-performing pipelines are the following:'
+  id: totrans-570
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 调优后，表现最佳的管道如下：
 - en: '[PRE75]'
+  id: totrans-571
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE75]'
 - en: Calling the `tune_model` method also prints out the cross-validation performance
     summary of each of the tuned models. For brevity, we do not print it here. However,
     you can inspect the accompanying notebook to see how the performance has changed
     as a result of tuning.
+  id: totrans-572
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 调用 `tune_model` 方法还会打印出每个调优后模型的交叉验证性能摘要。为简洁起见，我们这里不打印出来。然而，你可以查看随附的笔记本，看看调优后性能的变化。
 - en: 'Blend the five tuned pipelines:'
+  id: totrans-573
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 混合这五个调优后的管道：
 - en: '[PRE76]'
+  id: totrans-574
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE76]'
 - en: 'Create the predictions using the blended model and plot the forecasts:'
+  id: totrans-575
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用混合模型创建预测并绘制预测图：
 - en: '[PRE77]'
+  id: totrans-576
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE77]'
 - en: 'Executing the snippet also generates the test set performance summary:'
+  id: totrans-577
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段还会生成测试集的性能摘要：
 - en: '![](../Images/B18112_07_44.png)'
+  id: totrans-578
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_44.png)'
 - en: 'Figure 7.44: The scores calculated using the predictions for the test set'
+  id: totrans-579
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.44：使用测试集预测计算的得分
 - en: 'Then, we plot the forecast for the test set:'
+  id: totrans-580
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 然后，我们绘制测试集的预测图：
 - en: '[PRE78]'
+  id: totrans-581
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE78]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-582
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_45.png)'
+  id: totrans-583
   prefs:
   - PREF_IND
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_45.png)'
 - en: 'Figure 7.45: The time series, together with the predictions made for the test
     set'
+  id: totrans-584
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 图 7.45：时间序列及对测试集所做的预测
 - en: 'Finalize the model:'
+  id: totrans-585
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 完成模型：
 - en: '[PRE79]'
+  id: totrans-586
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE79]'
 - en: 'Executing the snippet generates the following plot:'
+  id: totrans-587
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成以下图表：
 - en: '![](../Images/B18112_07_46.png)'
+  id: totrans-588
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/B18112_07_46.png)'
 - en: 'Figure 7.46: Out-of-sample prediction for the first 6 months of 2020'
+  id: totrans-589
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 7.46：2020 年前 6 个月的样本外预测
 - en: 'Just by looking at the plot, it seems that the forecasts are plausible and
     contain a clearly identifiable seasonal pattern. We can also generate and print
     the predictions we have already seen in the plot:'
+  id: totrans-590
   prefs: []
   type: TYPE_NORMAL
+  zh: 仅凭图表来看，似乎预测是合理的，并且包含了一个清晰可识别的季节性模式。我们还可以生成并打印出我们在图表中已经看到的预测：
 - en: '[PRE80]'
+  id: totrans-591
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE80]'
 - en: 'Executing the snippet generates the following predictions for the next 6 months:'
+  id: totrans-592
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行该代码片段会生成接下来 6 个月的预测结果：
 - en: '[PRE81]'
+  id: totrans-593
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE81]'
 - en: How it works…
+  id: totrans-594
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 它是如何工作的……
 - en: After importing the libraries, we set up the experiment. First, we instantiated
     an object of the `TSForecastingExperiment` class. Then, we used the `setup` method
     to provide the DataFrame with the time series, the forecast horizon, the number
@@ -2911,37 +4132,52 @@
     that we are interested in forecasting 6 months ahead and that we want to use 5
     walk-forward cross-validation folds using an expanding window (the default variant).
     It is also possible to use the sliding window.
+  id: totrans-595
   prefs: []
   type: TYPE_NORMAL
+  zh: 导入库后，我们设置了实验。首先，我们实例化了 `TSForecastingExperiment` 类的一个对象。然后，我们使用 `setup` 方法为
+    DataFrame 提供时间序列、预测时间范围、交叉验证折数以及会话 ID。在我们的实验中，我们指定了要预测未来 6 个月，并且我们希望使用 5 折滚动验证，采用扩展窗口（默认变体）。也可以使用滑动窗口。
 - en: 'PyCaret offers two APIs: the functional one and the object-oriented one (using
     classes). In this recipe, we are presenting the latter.'
+  id: totrans-596
   prefs: []
   type: TYPE_NORMAL
+  zh: PyCaret 提供了两种 API：函数式 API 和面向对象式 API（使用类）。在本例中，我们展示了后者。
 - en: 'While setting up the experiment, we could also indicate whether we want to
     apply some transformation to the target time series. We could select one of the
     following options: `"box-cox"`, `"log"`, `"sqrt"`, `"exp"`, `"cos"`.'
+  id: totrans-597
   prefs: []
   type: TYPE_NORMAL
+  zh: 在设置实验时，我们还可以指示是否希望对目标时间序列应用某些转换。我们可以选择以下选项之一：`"box-cox"`、`"log"`、`"sqrt"`、`"exp"`、`"cos"`。
 - en: 'To extract the training and test sets from the experiment, we can use the following
     commands: `exp.get_config("y_train")` and `exp.get_config("y_test")`.'
+  id: totrans-598
   prefs: []
   type: TYPE_NORMAL
+  zh: 要从实验中提取训练集和测试集，我们可以使用以下命令：`exp.get_config("y_train")` 和 `exp.get_config("y_test")`。
 - en: In *Step 3*, we carried out a quick EDA of the time series using the `plot_model`
     method of the `TSForecastingExperiment` object. To generate different plots, we
     simply changed the `plot` argument of the method.
+  id: totrans-599
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤3*中，我们使用`TSForecastingExperiment`对象的`plot_model`方法对时间序列进行了快速的探索性数据分析（EDA）。为了生成不同的图表，我们只需更改该方法的`plot`参数。
 - en: In *Step 4*, we looked into a variety of statistical tests using the `check_stats`
     method of the `TSForecastingExperiment` class.
+  id: totrans-600
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤4*中，我们使用`TSForecastingExperiment`类的`check_stats`方法检查了多种统计检验。
 - en: In *Step 5*, we used the `compare_models` method to train a selection of statistical
     and machine learning models and evaluate their performance using the selected
     cross-validation scheme. We indicated that we wanted to select the five best pipelines
     based on the MAPE score. We set `turbo=False` to also train models that might
     be a bit more time-consuming to train (for example, Prophet, BATS, and TBATS).
+  id: totrans-601
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤5*中，我们使用`compare_models`方法训练了一系列统计学和机器学习模型，并使用选定的交叉验证方案评估它们的表现。我们指示要根据MAPE分数选择五个最佳的管道。我们设置了`turbo=False`，以便训练那些可能需要更多时间来训练的模型（例如，Prophet、BATS和TBATS）。
 - en: PyCaret uses the concept of pipelines as sometimes the “model” is actually built
     from several steps. For example, we might first detrend and deseasonalize the
     time series before fitting a regression model. For example, a `Random Forest w/
@@ -2950,29 +4186,40 @@
     the reduced Random Forest is fitted. The conditional part by deseasonalizing refers
     to first checking with a statistical test if there is seasonality in the time
     series. If it is detected, then deseasonalization is applied.
+  id: totrans-602
   prefs: []
   type: TYPE_NORMAL
+  zh: PyCaret使用管道的概念，因为有时“模型”实际上是由多个步骤构建的。例如，我们可能会先去趋势并去季节化时间序列，然后再拟合回归模型。例如，`Random
+    Forest w/ Cond. Deseasonalize & Detrending`模型是一个`sktime`管道，它首先对时间序列进行条件去季节化。然后，应用去趋势化，最后拟合减少的随机森林。去季节化的条件部分是首先通过统计测试检查时间序列中是否存在季节性。如果检测到季节性，则应用去季节化。
 - en: 'There are a few things worth mentioning at this step:'
+  id: totrans-603
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一阶段，有一些值得注意的事项：
 - en: We can extract the DataFrame with the performance comparison using the `pull`
     method.
+  id: totrans-604
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以使用`pull`方法提取带有性能比较的DataFrame。
 - en: We can use the `models` method to print a list of all the available models,
     together with their reference (to the original library, as PyCaret is a wrapper),
     and an indication of whether the model is taking more time to train and is hidden
     behind the `turbo` flag.
+  id: totrans-605
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们可以使用`models`方法打印所有可用模型的列表，以及它们的引用（指向原始库，因为PyCaret是一个包装器），并指示模型是否需要更多时间进行训练，并且是否被`turbo`标志隐藏。
 - en: We can also decide whether we only want to train some of the models (using the
     `include` argument of the `compare_models` method) or whether we want to train
     all the models except for a selected few (using the `exclude` argument).
+  id: totrans-606
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 我们还可以决定是否只训练某些模型（使用`compare_models`方法的`include`参数），或者是否训练所有模型，除了选择的几个（使用`exclude`参数）。
 - en: 'In *Step 6*, we tuned the best pipelines. To do so, we used list comprehension
     to iterate over the identified pipelines and then used the `tune_model` method
     to carry out hyperparameter tuning. By default, it uses a randomized grid search
@@ -2980,172 +4227,240 @@
     using a grid of hyperparameters provided by the authors of the library. Those
     work as a good starting point, and in case we want to adjust them, we can easily
     do so.'
+  id: totrans-607
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤6*中，我们对最佳管道进行了调优。为此，我们使用列表推导式遍历已识别的管道，然后使用`tune_model`方法进行超参数调优。默认情况下，它使用随机网格搜索（在*第13章*《应用机器学习：识别信用违约》中有更多介绍），并使用库的作者提供的超参数网格。这些参数作为一个良好的起点，如果我们想调整它们，可以很容易地做到。
 - en: In *Step 7*, we create an ensemble model, which is a blend of the five best
     pipelines (tuned versions). We decided to take the mean of the forecasts created
     by the individual models. Alternatively, we could use the median or voting. The
     latter is a voting scheme in which each model is weighed by the provided weights.
     For example, we could create weights based on the cross-validation error, that
     is, the lower the error, the larger the weight.
+  id: totrans-608
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤7*中，我们创建了一个集成模型，它是五个最佳管道（调优后的版本）的组合。我们决定采用各个模型生成的预测值的均值。或者，我们也可以使用中位数或投票。后者是一种投票机制，每个模型根据提供的权重进行加权。例如，我们可以根据交叉验证误差创建权重，即误差越小，权重越大。
 - en: In *Step 8*, we created predictions using the blended models. To do so, we used
     the `predict_model` method and provided the blended model as the method’s argument.
     At this point, the `predict_model` method creates a forecast for the test set.
+  id: totrans-609
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 8*中，我们使用混合模型创建了预测。为此，我们使用了`predict_model`方法，并将混合模型作为该方法的参数。在此时，`predict_model`方法会为测试集生成预测。
 - en: We also used the already familiar `plot_model` method to create a plot. When
     provided with a model, the `plot_model` method can display the model’s in-sample
     fit, the predictions on the test set, the out-of-sample predictions, or the model’s
     residuals.
+  id: totrans-610
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还使用了已熟悉的`plot_model`方法来创建图表。当提供一个模型时，`plot_model`方法可以展示模型的样本内拟合情况、测试集上的预测、样本外预测或模型的残差。
 - en: Similar to the case of the `plot_model` method, we can also use the `check_stats`
     method together with the created model. When we pass the estimator, the method
     will perform the statistical tests on the model’s residuals.
+  id: totrans-611
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于`plot_model`方法的情况，我们也可以结合已创建的模型使用`check_stats`方法。当我们传入估计器时，该方法会对模型的残差进行统计检验。
 - en: In *Step 9*, we finalized the model using the `finalize_model` method. As we
     have seen in *Step 8*, the predictions we obtained were for the test set. In PyCaret’s
     terminology, finalizing the model means that we take the model from the previous
     stages (without changing the selected hyperparameters) and then train the model
     using the entire dataset (both training and test sets). Having done so, we can
     create forecasts for the future.
+  id: totrans-612
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*步骤 9*中，我们使用`finalize_model`方法最终确定了模型。正如我们在*步骤 8*中所见，我们获得的预测是针对测试集的。在 PyCaret
+    的术语中，最终确定模型意味着我们将之前阶段的模型（不更改已选超参数）带入，并使用整个数据集（包括训练集和测试集）重新训练该模型。这样，我们就可以为未来创建预测。
 - en: After finalizing the model, we used the same `predict_model` and `plot_model`
     methods to create and plot the forecasts for the first 6 months of 2020 (which
     are outside of our dataset). While calling the methods, we passed the finalized
     model as the `estimator` argument.
+  id: totrans-613
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最终确定模型后，我们使用相同的`predict_model`和`plot_model`方法来创建并绘制 2020 年前 6 个月的预测（这些数据不在我们的数据集内）。调用这些方法时，我们将最终确定的模型作为`estimator`参数传入。
 - en: There’s more…
+  id: totrans-614
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 还有更多内容……
 - en: 'PyCaret is a very versatile library and we have only scratched the surface
     of what it offers. For brevity’s sake, we only mention some of its features:'
+  id: totrans-615
   prefs: []
   type: TYPE_NORMAL
+  zh: PyCaret 是一个非常多功能的库，我们仅仅触及了它所提供的表面功能。为了简洁起见，我们只提到它的一些特性：
 - en: Mature classification and regression AutoML capabilities. In this recipe, we
     have only used the time series module.
+  id: totrans-616
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 成熟的分类和回归 AutoML 能力。在这个教程中，我们只使用了时间序列模块。
 - en: Anomaly detection for time series.
+  id: totrans-617
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 时间序列的异常检测。
 - en: Integration with MLFlow for experiment logging.
+  id: totrans-618
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 与 MLFlow 的集成，用于实验日志记录。
 - en: Using the time series module, we can easily train a single model instead of
     all of the available ones. We can do so using the `create_model` method. As the
     `estimator` argument, we need to pass the name of the model. We can get the names
     of the available models using the `models` method. Additionally, depending on
     the model we choose, we might want to pass some kwargs. For example, we might
     want to specify the order parameters of ARIMA models.
+  id: totrans-619
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用时间序列模块，我们可以轻松地训练单一模型，而不是所有可用模型。我们可以通过`create_model`方法做到这一点。作为`estimator`参数，我们需要传入模型的名称。我们可以通过`models`方法获取可用模型的名称。此外，依据所选模型，我们可能还需要传递一些额外的参数。例如，我们可能需要指定
+    ARIMA 模型的阶数参数。
 - en: As we have seen in the list of available models, except for the classic statistical
     models, PyCaret also offers selected ML models using the reduced regression approach.
     Those models also detrend and conditionally deseasonalize the time series to make
     it easier for the regression model to capture the autoregressive properties of
     the data.
+  id: totrans-620
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 正如我们在可用模型列表中看到的，除了经典的统计模型外，PyCaret 还提供了使用简化回归方法选择的机器学习模型。这些模型还会去趋势化并有条件地去季节化时间序列，从而使回归模型更容易捕捉数据的自回归特性。
 - en: You might also want to explore the `autots` library, which is another AutoML
     tool for time series forecasting.
+  id: totrans-621
   prefs: []
   type: TYPE_NORMAL
+  zh: 你也许还想探索一下`autots`库，它是另一个用于时间序列预测的 AutoML 工具。
 - en: Summary
+  id: totrans-622
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 摘要
 - en: In this chapter, we have covered the ML-based approaches to time series forecasting.
     We started with an extensive overview of validation approaches relevant to the
     time series domain. Furthermore, some of those were created to account for the
     intricacies of validating time series predictions in the financial domain.
+  id: totrans-623
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一章中，我们介绍了基于机器学习的时间序列预测方法。我们首先全面概述了与时间序列领域相关的验证方法。此外，其中一些方法是为了应对金融领域中验证时间序列预测的复杂性而设计的。
 - en: Then, we explored feature engineering and the concept of reduced regression,
     which allows us to use any regression algorithms for a time series forecasting
     task. Lastly, we covered Meta’s Prophet algorithm and PyCaret—a low-code tool
     that automates machine learning workflows.
+  id: totrans-624
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们探索了特征工程和降维回归的概念，这使我们能够使用任何回归算法来进行时间序列预测任务。最后，我们介绍了Meta的Prophet算法和PyCaret——一个低代码工具，能够自动化机器学习工作流程。
 - en: 'While exploring time series forecasting, we tried to introduce the most relevant
     Python libraries. However, there are quite a few other interesting positions worth
     mentioning. You can find some of them below:'
+  id: totrans-625
   prefs: []
   type: TYPE_NORMAL
+  zh: 在探索时间序列预测时，我们尝试介绍了最相关的Python库。然而，还有很多其他有趣的库值得一提。你可以在下面找到其中一些：
 - en: '`autots`—AutoTS is an alternative AutoML library for time series forecasting.'
+  id: totrans-626
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`autots`——AutoTS是另一个时间序列预测的AutoML库。'
 - en: '`darts`—Similar to `sktime`, it offers an entire framework for working with
     time series. The library contains a wide variety of models, starting with classic
     models such as ARIMA and ending with various popular neural network architectures
     used for time series forecasting.'
+  id: totrans-627
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`darts`——类似于`sktime`，它提供了一个完整的时间序列工作框架。该库包含了各种模型，从经典的ARIMA模型到用于时间序列预测的各种流行神经网络架构。'
 - en: '`greykite`—LinkedIn’s Greykite library for time series forecasting, including
     its Silverkite algorithm.'
+  id: totrans-628
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`greykite`——LinkedIn的Greykite时间序列预测库，包括其Silverkite算法。'
 - en: '`kats`—A toolkit to analyze time series analysis developed by Meta. The library
     attempts to provide a one-stop shop for time series analysis, including tasks
     such as detection (for example, changepoint), forecasting, feature extraction,
     and more.'
+  id: totrans-629
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`kats`——Meta开发的时间序列分析工具包。该库尝试提供一个一站式的时间序列分析平台，包括检测（例如变点）、预测、特征提取等任务。'
 - en: '`merlion`—Salesforce’s ML library for time series analysis.'
+  id: totrans-630
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`merlion`——Salesforce的机器学习库，用于时间序列分析。'
 - en: '`orbit`—Uber’s library for Bayesian time series forecasting and inference.'
+  id: totrans-631
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`orbit`——Uber的贝叶斯时间序列预测和推理库。'
 - en: '`statsforecast`—The library offers a collection of popular time series forecasting
     models (for example, autoARIMA and ETS), which are further optimized for high
     performance using `numba`.'
+  id: totrans-632
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`statsforecast`——这个库提供了一些流行的时间序列预测模型（例如autoARIMA和ETS），并通过`numba`进一步优化以提高性能。'
 - en: '`stumpy`—A library that efficiently computes the matrix profile, which can
     be used for many time series-related tasks.'
+  id: totrans-633
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`stumpy`——一个高效计算矩阵配置文件的库，可用于许多时间序列相关任务。'
 - en: '`tslearn`—A toolkit for time series analysis.'
+  id: totrans-634
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`tslearn`——一个用于时间序列分析的工具包。'
 - en: '`tfp.sts`—A library in TensorFlow Probability used for forecasting using structural
     time series models.'
+  id: totrans-635
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`tfp.sts`——TensorFlow Probability中的一个库，用于使用结构化时间序列模型进行预测。'
 - en: Join us on Discord!
+  id: totrans-636
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 加入我们的Discord社区！
 - en: 'To join the Discord community for this book – where you can share feedback,
     ask questions to the author, and learn about new releases – follow the QR code
     below:'
+  id: totrans-637
   prefs: []
   type: TYPE_NORMAL
+  zh: 要加入本书的Discord社区——在这里你可以分享反馈、向作者提问并了解新版本发布——请扫描下面的二维码：
 - en: '![](../Images/QR_Code203602028422735375.png)'
+  id: totrans-638
   prefs: []
   type: TYPE_IMG
+  zh: '![](../Images/QR_Code203602028422735375.png)'
 - en: '[https://packt.link/ips2H](https://packt.link/ips2H)'
+  id: totrans-639
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://packt.link/ips2H](https://packt.link/ips2H)'
