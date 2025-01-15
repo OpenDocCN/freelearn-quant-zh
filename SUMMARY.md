@@ -6,3 +6,4 @@
 +   [机器学习算法交易教程第二版](docs/ml-algo-trd-2e/README.md)
 +   [精通 Python 金融第二版](docs/ms-py-fin-2e/README.md)
 +   [Python 算法交易秘籍](docs/py-algo-trd-cb/README.md)
++   [Python 金融秘籍第二版](docs/py-fin-cb-2e/README.md)
