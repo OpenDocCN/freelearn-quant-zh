@@ -1,0 +1,2120 @@
+- en: '12'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Backtesting Trading Strategies
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the previous chapters, we gained the knowledge necessary to create trading
+    strategies. On the one hand, we could use technical analysis to identify trading
+    opportunities. On the other, we could use some of the other techniques we have
+    already covered in the book. We could try to use knowledge about factor models
+    or volatility forecasting. Or, we could use portfolio optimization techniques
+    to determine the optimal quantity of assets for our investment. One crucial thing
+    that is still missing is evaluating how such a strategy would have performed if
+    we had implemented it in the past. That is the goal of backtesting, which we explore
+    in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Backtesting** can be described as a realistic simulation of our trading strategy,
+    which assesses its performance using historical data. The underlying idea is that
+    the backtest performance should be indicative of future performance when the strategy
+    is actually used on the market. Naturally, this will not always be the case and
+    we should keep that in mind when experimenting.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are multiple ways of approaching backtesting, however, we should always
+    remember that a backtest should faithfully represent how markets operate, how
+    trades are executed, what orders are available, and so on. For example, forgetting
+    to account for transaction costs can quickly turn a “profitable” strategy into
+    a failed experiment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have already mentioned the generic uncertainty around predictions in the
+    ever-changing financial markets. However, there are also some implementation aspects
+    that can bias the results of backtests and increase the risk of confusing in-sample
+    performance with generalizable patterns that will also hold out of sample. We
+    briefly mention some of those below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Look-ahead bias**: This potential flaw emerges when we develop a trading
+    strategy using historical data before it was actually known/available. Some examples
+    include corrections of reported financial statements after their publication,
+    stock splits, or reverse splits.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Survivorship bias**: This bias arises when we backtest only using data about
+    securities that are currently active/tradeable. By doing so, we omit the assets
+    that have disappeared over time (due to bankruptcy, delisting, acquisition, and
+    so on). Most of the time, those assets did not perform well and our strategies
+    can be skewed by failing to include those, as those assets could have been picked
+    up in the past when they were still available in the markets.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Outlier detection and treatment**: The main challenge is to discern the outliers
+    that are not representative of the analyzed period as opposed to the ones that
+    are an integral part of the market behavior.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Representative sample period**: As the goal of the backtest is to provide
+    an indication of future performance, the sample data should reflect the current,
+    and potentially also future, market behavior. By not spending enough time on this
+    part, we can miss some crucial market regime aspects such as volatility (too few/many
+    extreme events) or volume (too few data points).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Meeting investment objectives and constraints over time**: It can happen
+    that a strategy leads to good performance at the very end of the evaluation period.
+    However, in some periods when it was active, it resulted in unacceptably high
+    losses or volatility. We could potentially track those by using rolling performance/risk
+    metrics, for example, the value-at-risk or the Sharpe/Sortino ratio.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Realistic trading environment**: We have already mentioned that failing to
+    include transaction costs can greatly impact the end result of a backtest. What
+    is more, real-life trading involves further complications. For example, it might
+    not be possible to execute all trades at all times or at the target price. Some
+    of the things to consider are **slippage** (the difference between the expected
+    price of a trade and the price at which the trade is executed), the availability
+    of a counterparty for short positions, broker fees, and so on. The realistic environment
+    also accounts for the fact that we might make a trading decision based on the
+    close prices of one day, but the trade will be (potentially) executed based on
+    the open prices of the next trading day. It can happen that the order we prepare
+    will not be executed due to large price differences.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Multiple testing**: When running multiple backtests, we might discover spurious
+    results or a strategy that overfits the test sample and produces suspiciously
+    positive results that are unlikely to hold for out-of-sample data encountered
+    during live trading. Also, we might leak prior knowledge of what works and what
+    does not into the design of strategies, which can lead to further overfitting.
+    Some things that we can consider are: reporting the number of trials, calculating
+    the minimum backtest length, using some sort of optimal stopping rule, or calculating
+    metrics that account for the effect of multiple testing (for example, the deflated
+    Sharpe ratio).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In this chapter, we show how to run backtests of various trading strategies
+    using two approaches: vectorized and event-driven. We will go into the details
+    of each of the approaches later on, but now we can state that the first one works
+    well for a quick test to see if there is any potential in the strategy. On the
+    other hand, the latter is more suited for thorough and rigorous testing, as it
+    tries to account for many of the potential issues mentioned above.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The key learning of this chapter is how to set up a backtest using popular Python
+    libraries. We will be showing a few examples of strategies built on the basis
+    of popular technical indicators or a strategy using mean-variance portfolio optimization.
+    With that knowledge, you can backtest any strategy you can come up with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We present the following recipes in this chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vectorized backtesting with pandas
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Event-driven backtesting with backtrader
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting a long/short strategy based on the RSI
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting a buy/sell strategy based on Bollinger bands
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting a moving average crossover strategy using crypto data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting a mean-variance portfolio optimization
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Vectorized backtesting with pandas
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: As we mentioned in the introduction to this chapter, there are two approaches
+    to carrying out backtests. The simpler one is called **vectorized backtesting**.
+    In this approach, we multiply a signal vector/matrix (containing an indicator
+    of whether we are entering or closing a position) by the vector of returns. By
+    doing so, we calculate the performance over a certain period of time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Due to its simplicity, this approach cannot deal with many of the issues we
+    described in the introduction, for example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need to manually align the timestamps to avoid look-ahead bias.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There is no explicit position sizing.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All performance measurements are calculated manually at the very end of the
+    backtest.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Risk-management rules like stop-loss are not easy to incorporate.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: That is why we should use vectorized backtesting mostly if we are dealing with
+    simple trading strategies and want to explore their initial potential in a few
+    lines of code.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this recipe, we backtest a very simple strategy with the following set of
+    rules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We enter a long position if the close price is above the 20-day Simple Moving
+    Average (SMA)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We close the position when the close price goes below the 20-day SMA
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Short selling is not allowed
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The strategy is unit agnostic (we can enter a position of 1 share or 1000 shares)
+    because we only care about the percentage change in the prices
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We backtest this strategy using Apple’s stock and its historical prices from
+    the years 2016 to 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to backtest a simple strategy using the vectorized
+    approach:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download Apple’s stock prices from the years 2016 to 2021 and keep only the
+    adjusted close price:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Calculate the log returns and the 20-day SMA of the close prices:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Create a position indicator:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Using the following snippet, we count how many times we entered a long position:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The answer is 56.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Visualize the strategy over 2021:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Executing the snippet generates the following figure:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_01.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 12.1: The preview of our trading strategy based on the simple moving
+    average'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: In *Figure 12.1,* we can clearly see how our strategy works—in the periods when
+    the close price is above the 20-day SMA, we do have an open position. This is
+    indicated by the value of 1 in the column containing the position information.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Calculate the strategy’s daily and cumulative returns:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Add the buy-and-hold strategy for comparison:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Plot the strategies’ cumulative returns:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Executing the snippet generates the following figure:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.2: The cumulative returns of our strategy and the buy-and-hold benchmark'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Figure 12.2,* we can see the cumulative returns of both strategies. The
+    initial conclusion could be that the simple strategy outperformed the buy-and-hold
+    strategy over the considered time period. However, this form of a simplified backtest
+    does not consider quite a lot of crucial aspects (for example, trading using the
+    close price, it assumes lack of slippage and transaction costs, and so on) that
+    can dramatically change the final outcome. In the *There’s more...* section, we
+    will see how quickly the results change when we account for transaction costs
+    alone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: At the very beginning, we imported the libraries and downloaded Apple’s stock
+    prices from the years 2016 to 2021\. We only kept the adjusted close price for
+    the backtest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 3*, we calculated the log returns and the 20-day SMA. To calculate
+    the technical indicator, we used the `rolling` method of a `pandas` DataFrame.
+    However, we could have just as well used the already explored `TA-Lib` library.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We calculated the log returns, as they have a convenient property of summing
+    up over time. If we held the position for 10 days and are interested in the final
+    return of the position, we can simply sum up the log returns from those 10 days.
+    For more information, please refer to *Chapter 2*, *Data Preprocessing*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 4*, we created a column with information on whether we have an open
+    position (long only) or not. As we have decided, we enter the position when the
+    close price is above the 20-day SMA. We exit the position when the close price
+    goes below the SMA. We have also encoded this column in the DataFrame as an integer.
+    In *Step 5*, we plotted the close price, the 20-day SMA, and the column with the
+    position flag. To make the plot more readable, we only plotted the data from 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Step 6* is the most important one in the vectorized backtest. There, we calculated
+    the strategy’s daily and cumulative returns. To calculate the daily return, we
+    multiplied the log return of that day with the shifted position flag. The position
+    vector is shifted by 1 to avoid the look-ahead bias. In other words, the flag
+    is generated using all the information up to and including time *t*. We can only
+    use that information to open a position on the next trading day, that is, at time
+    *t+1*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An inquisitive reader might already spot another bias that is occurring with
+    our backtest. We are correctly assuming that we can only buy on the next trading
+    day, however, the log return is calculated as we have bought on day *t+1* using
+    the close price of time *t*, which can be very untrue depending on the market
+    conditions. We will see how to overcome this issue with event-driven backtesting
+    in the next recipes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, we used the `cumsum` method to calculate the cumulative sum of the log
+    returns, which corresponds to the cumulative return. Lastly, we applied the exponent
+    function using the `apply` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 7*, we calculated the cumulative returns of a buy-and-hold strategy.
+    For this one, we simply used the log returns for the calculations, skipping the
+    step in which we multiplied the returns with the position flag.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the last step, we plotted the cumulative returns of both strategies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: From the initial backtest, it seems that the simple strategy is outperforming
+    the buy-and-hold strategy. But we have also seen that over the 6 years, we have
+    entered a long position 56 times. The total number of trades doubles, as we also
+    exited those positions. Depending on the broker, this can result in quite significant
+    transaction costs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given that transaction costs are frequently quoted in fixed percentages, we
+    can simply calculate by how much the portfolio has changed between successive
+    time steps, calculate the transaction costs on that basis, and then subtract them
+    directly from our strategy’s returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the steps below, we show how to account for the transaction costs in a vectorized
+    backtest. For simplicity, we assume that the transaction costs are 1%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to account for transaction costs in the vectorized
+    backtest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Calculate daily transaction costs:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: In this snippet, we calculated if there is a change in our portfolio (absolute
+    value, as we can enter or exit a position) and then multiplied that value by the
+    transaction costs expressed as a percentage.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Calculate the strategy’s performance accounting for transaction costs:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Plot the cumulative returns of all the strategies:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Executing the snippet generates the following figure:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.3: Cumulative returns of all strategies, including the one with transaction
+    costs'
+  prefs: []
+  type: TYPE_NORMAL
+- en: After accounting for transaction costs, the performance decreased significantly
+    and is worse than that of the buy-and-hold. And to be entirely fair, we should
+    also account for the initial and terminal transaction costs in the buy-and-hold
+    strategy, as we had to buy and sell the asset once.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Event-driven backtesting with backtrader
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The second approach to backtesting is called **event-driven backtesting**. In
+    this approach, a backtesting engine simulates the time dimension of the trading
+    environment (you can think about it as a `for` loop going through the time and
+    executing all the actions sequentially). This imposes more structure on the backtest,
+    including the use of historical calendars to define when trades can actually be
+    executed, when prices are available, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Event-driven backtesting aims to simulate all the actions and constraints encountered
+    when executing a certain strategy while allowing for much more flexibility than
+    the vectorized approach. For example, this approach allows for simulating potential
+    delays in orders’ execution, slippage costs, and so on. In an ideal scenario,
+    a strategy encoded for an event-driven backtest could be easily converted into
+    one working with live trading engines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Nowadays, there are quite a few event-driven backtesting libraries available
+    for Python. In this chapter, we introduce one of the most popular ones—`backtrader`.
+    Key features of this framework include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A vast amount of available technical indicators (`backtrader` also provides
+    a wrapper around the popular TA-Lib library) and performance measures.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ease of building and applying new indicators.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Multiple data sources are available (including Yahoo Finance and Nasdaq Data
+    Link), with the possibility to load external files.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simulating many aspects of real brokers, such as different types of orders (market,
+    limit, and stop), slippage, commission, going long/short, and so on.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Comprehensive and interactive visualization of the prices, TA indicators, trading
+    signals, performance, and so on.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Live trading with selected brokers.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For this recipe, we consider a basic strategy based on the simple moving average.
+    As a matter of fact, it is almost identical to the one we backtested in the previous
+    recipe using the vectorized approach. The logic of the strategy is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When the close price becomes higher than the 20-day SMA, buy one share.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When the close price becomes lower than the 20-day SMA and we have a share,
+    sell it.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We can only have a maximum of one share at any given time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: No short selling is allowed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We run the backtesting of this strategy using Apple’s stock prices from the
+    year 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this recipe (and in the rest of the chapter), we will be using two helper
+    functions used for printing logs—`get_action_log_string` and `get_result_log_string`.
+    Additionally, we will use a custom `MyBuySell` observer to display the position
+    markers in different colors. You can find the definitions of those helpers in
+    the `strategy_utils.py` file available on GitHub.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At the time of writing, the version of `backtrader` available at PyPI (the
+    Python Package Index) is not the latest. Installing with a simple `pip install
+    backtrader` command will install a version containing quite a few issues, for
+    example, with loading the data from Yahoo Finance. To overcome this, you should
+    install the latest version from GitHub. You can do so using the following snippet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to backtest a simple strategy using the event-driven
+    approach:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download data from Yahoo Finance:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: To make the code more readable, we first present the general outline of the
+    class defining the trading strategy and then introduce the separate methods in
+    the following substeps.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The template of the strategy is presented below:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `__init__` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `log` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `notify_order` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `notify_trade` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `next` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `start` and `stop` methods are defined as follows:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Set up the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Run the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following (abbreviated) log:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: The log contains information about all the created and executed trades, as well
+    as the operation results in case the position was closed.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Plot the results:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_04.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.4: Summary of our strategy’s behavior/performance over the backtested
+    period'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Figure 12.4,* we can see Apple’s stock price, the 20-day SMA, the buy and
+    sell orders, and the evolution of our portfolio’s value over time. As we can see,
+    this strategy made $48 over the backtest’s duration. While considering the performance,
+    please bear in mind that the strategy is only operating with a single stock, while
+    keeping most of the available resources in cash.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The key idea of working with `backtrader` is that there is the main brain of
+    the backtest—`Cerebro`—and by using different methods, we provide it with historical
+    data, the designed trading strategy, additional metrics we want to calculate (for
+    example, the portfolio value over the investment horizon, or the overall Sharpe
+    ratio), information about commissions/slippage, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are two ways of creating strategies: using signals (`bt.Signal`) or defining
+    a full strategy (`bt.Strategy`). Both yield the same results, however, the lengthier
+    approach (created using `bt.Strategy`) provides more logging of what is actually
+    happening in the background. This makes it easier to debug and keep track of all
+    operations (the level of detail included in the logging depends on our needs).
+    That is why we start by showing that approach in this recipe.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can find the equivalent strategy built using the signal approach in the
+    book’s GitHub repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After importing the libraries and helper functions in *Step 1*, we downloaded
+    price data from Yahoo Finance using the `bt.feeds.YahooFinanceData` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also add data from a CSV file, a `pandas` DataFrame, Nasdaq Data Link,
+    and other sources. For a list of available options, please refer to the documentation
+    of `bt.feeds`. We show how to load data from a `pandas` DataFrame in the Notebook
+    on GitHub.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 3*, we defined the trading strategy as a class inheriting from `bt.Strategy`.
+    Inside the class, we defined the following methods (we were actually overwriting
+    them to make them tailor-made for our needs):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`__init__`: In this method, we defined the objects that we would like to keep
+    track of. In our example, these were the close price, a placeholder for the order,
+    and the TA indicator (SMA).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`log`: This method is defined for logging purposes. It logs the date and the
+    provided string. We used the helper functions `get_action_log_string` and `get_result_log_string`
+    to create the strings with various order-related information.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`notify_order`: This method reports the status of the order (position). In
+    general, on day *t*, the indicator can suggest opening/closing a position based
+    on the close price (assuming we are working with daily data). Then, the (market)
+    order will be carried out on the next trading day (using the open price of time
+    *t+1*). However, there is no guarantee that the order will be executed, as it
+    can be canceled or we might have insufficient cash. This method also removes any
+    pending order by setting `self.order = None`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`notify_trade`: This method reports the results of trades (after the positions
+    are closed).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`next`: This method contains the trading strategy’s logic. First, we checked
+    whether there was an order already pending, and did nothing if there was. The
+    second check was to see whether we already had a position (enforced by our strategy,
+    this is not a must) and if we did not, we checked whether the close price was
+    higher than the moving average. A positive outcome resulted in an entry to the
+    log and the placing of a buy order using `self.order = self.buy()`. This is also
+    the place where we can choose the stake (number of assets we want to buy). The
+    default is 1 (equivalent to using `self.buy(size=1)`).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`start`/`stop`: These methods are executed at the very beginning/end of the
+    backtest and can be used, for example, for reporting the portfolio value.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In *Step 4*, we set up the backtest, that is, we executed a series of operations
+    connected to Cerebro:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We created the instance of `bt.Cerebro` and set `stdstats=False`, in order to
+    suppress a lot of default elements of the plot. By doing so, we avoided cluttering
+    the output. Instead, we manually picked the interesting elements (observers and
+    indicators).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We added the data using the `adddata` method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We set up the amount of available money using the `setcash` method of the `broker`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We added the strategy using the `addstrategy` method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We added the observers using the `addobserver` method. We selected two observers:
+    the custom `BuySell` observer used for displaying the buy/sell decisions on the
+    plot (denoted by green and red triangles), and the `Value` observer used for tracking
+    the evolution of the portfolio’s value over time.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The last steps involved running the backtest with `cerebro.run()` and plotting
+    the results with `cerebro.plot()`. In the latter step, we disabled displaying
+    the volume charts to avoid cluttering the graph.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some additional points about backtesting with `backtrader`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: By design, `Cerebro` should only be used once. If we want to run another backtest,
+    we should create a new instance, not add something to it after starting the calculations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In general, a strategy built using `bt.Signal` uses only one signal. However,
+    we can combine multiple signals based on different conditions by using `bt.SignalStrategy`
+    instead.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When we do not specify otherwise, all orders are placed for one unit of the
+    asset.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`backtrader` automatically handles the warm-up period. In this case, no trade
+    can be carried out until there are enough data points to calculate the 20-day
+    SMA. When considering multiple indicators at once, `backtrader` automatically
+    selects the longest necessary period.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There’s more...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: It is worth mentioning that `backtrader` has parameter optimization capabilities,
+    which we present in the code that follows. The code is a modified version of the
+    strategy from this recipe, in which we optimize the number of days used for calculating
+    the SMA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When tuning the values of the strategy’s parameters, you can create a simpler
+    version of the strategy that does not log that much information (start value,
+    creating/executing orders, and so on.). You can find an example of the modified
+    strategy in the script `sma_strategy_optimization.py`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following list provides details of modifications to the code (we only show
+    the relevant ones, as the bulk of the code is identical to the code used before):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Instead of using `cerebro.addstrategy`, we use `cerebro.optstrategy`, and provide
+    the defined strategy object and the range of parameter values:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: We modify the `stop` method to also log the considered value of the `ma_period`
+    parameter.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We increase the number of CPU cores when running the extended backtesting:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'We present the results in the following summary (please bear in mind that the
+    order of parameters can be shuffled when using multiple cores):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: We see that the strategy performed best when we used 27 days for calculating
+    the SMA.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We should always keep in mind that tuning the hyperparameters of a strategy
+    comes together with a higher risk of overfitting!
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'You can refer to the following book for more information about algorithmic
+    trading and building successful trading strategies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Chan, E. (2013). *Algorithmic Trading: Winning Strategies and Their Rationale*
+    (Vol. 625). John Wiley & Sons.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting a long/short strategy based on the RSI
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The **relative strength index** (**RSI**) is an indicator that uses the closing
+    prices of an asset to identify oversold/overbought conditions. Most commonly,
+    the RSI is calculated using a 14-day period, and it is measured on a scale from
+    0 to 100 (it is an oscillator). Traders usually buy an asset when it is oversold
+    (if the RSI is below 30), and sell when it is overbought (if the RSI is above
+    70). More extreme high/low levels, such as 80-20, are used less frequently and,
+    at the same time, imply stronger momentum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this recipe, we build a trading strategy with the following rules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can go long and short.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For calculating the RSI, we use 14 periods (trading days).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enter a long position if the RSI crosses the lower threshold (standard value
+    of 30) upward; exit the position when the RSI becomes larger than the middle level
+    (value of 50).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Enter a short position if the RSI crosses the upper threshold (standard value
+    of 70) downward; exit the position when the RSI becomes smaller than 50.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Only one position can be open at a time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We evaluate the strategy on Meta’s stock in 2021 and apply a commission of 0.1%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to implement and backtest a strategy based on the
+    RSI:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Define the signal strategy based on `bt.SignalStrategy`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download data:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Set up and run the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'After running the snippet, we see the following output:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Plot the results:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_05.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.5: Summary of our strategy’s behavior/performance over the backtested
+    period'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We look at the triangles in pairs. The first triangle in a pair indicates opening
+    a position (going long if the triangle is green and facing up; going short if
+    the triangle is red and facing down). The next triangle in the opposite direction
+    indicates closing of a position. We can match the opening and closing of positions
+    with the RSI located in the lower part of the chart. Sometimes, there are multiple
+    triangles of the same color in sequence. That is because the RSI fluctuates around
+    the line of opening a position, crossing it multiple times. But the actual position
+    is only opened on the first instance of a signal (no accumulation is the default
+    setting of all backtests).
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this recipe, we presented the second approach to defining strategies in `backtrader`,
+    that is, using signals. A signal is represented as a number, for example, the
+    difference between the current data point and some TA indicator. If the signal
+    is positive, it is an indication to go long (buy). A negative one is an indication
+    to take a short position (sell). The value of 0 means there is no signal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: After importing the libraries and the helper functions, we defined the trading
+    strategy using `bt.SignalStrategy`. As this is a strategy involving multiple signals
+    (various entry/exit conditions), we had to use `bt.SignalStrategy` instead of
+    simply `bt.Signal`. First, we defined the indicator (RSI), with selected arguments.
+    We also added the second instance of the RSI indicator, just to show that `backtrader`
+    provides an easy way to use indicators from the popular TA-Lib library (the library
+    must be installed for the code to work). The trading strategy does not depend
+    on this second indicator—it is only plotted for reference. In general, we could
+    add an arbitrary number of indicators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Even when adding indicators for reference only, their existence influences the
+    “warm-up period.” For example, if we additionally included a 200-day SMA indicator,
+    no trade would be carried out before there exists at least one value for the SMA
+    indicator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next step was to define signals. To do so, we used the `bt.CrossUp`/`bt.CrossDown`
+    indicators, which returned 1 if the first series (price) crossed the second (upper
+    or lower RSI threshold) from below/above, respectively. For entering a short position,
+    we made the signal negative, by adding a minus in front of the `bt.CrossDown`
+    indicator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can disable printing any indicator, by adding `plot=False` to the function
+    call.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is a description of the available signal types:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`LONGSHORT`: This type takes into account both long and short indications from
+    the signal.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`LONG`: Positive signals indicate going long; negative ones are used for closing
+    the long position.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SHORT`: Negative signals indicate going short; positive ones are used for
+    closing the short position.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`LONGEXIT`: A negative signal is used to exit a long position.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SHORTEXIT`: A positive signal is used to exit a short position.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Exiting positions can be more complex, which in turn enables users to build
+    more sophisticated strategies. We describe the logic below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`LONG`: If there is a `LONGEXIT` signal, it is used for exiting the long position,
+    instead of the behavior mentioned above. If there is a `SHORT` signal and no `LONGEXIT`
+    signal, the `SHORT` signal is used to close the long position before opening a
+    short one.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`SHORT`: If there is a `SHORTEXIT` signal, it is used for exiting the short
+    position, instead of the behavior mentioned above. If there is a `LONG` signal
+    and no `SHORTEXIT` signal, the `LONG` signal is used to close the short position
+    before opening a long one.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: As you might have already realized, the signal is calculated for every time
+    point (as visualized at the bottom of the plot), which effectively creates a continuous
+    stream of positions to be opened/closed (the signal value of 0 is not very likely
+    to happen). That is why, by default, `backtrader` disables accumulation (the constant
+    opening of new positions, even when we have one already opened) and concurrency
+    (generating new orders without hearing back from the broker whether the previously
+    submitted ones were executed successfully).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As the last step of defining the strategy, we added tracking of all the signals,
+    by using the `signal_add` method. For exiting the positions, the conditions we
+    used (RSI value higher/lower than 50) resulted in a Boolean, which we had to negate
+    when exiting a long position: in Python, `-True` has the same meaning as `-1`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 3*, we downloaded Meta’s stock prices from 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then, we set up the backtest. Most of the steps should already be familiar,
+    that is why we focus only on the new ones:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adding a sizer using the `addsizer` method—we did not have to do it at this
+    point, as by default, `backtrader` uses the stake of 1, that is, 1 unit of the
+    asset will be purchased/sold. However, we wanted to show at which point we can
+    modify the order size when creating a trading strategy using the signal approach.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Setting up the commission to 0.1% using the `setcommission` method of the `broker`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We also accessed and printed the portfolio’s current value before and after
+    running the backtest. To do so, we used the `getvalue` method of `broker`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the very last step, we plotted the results of the backtest.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this recipe, we have introduced a couple of new concepts to the backtesting
+    framework—sizers and commission. There are a few more useful things we can experiment
+    with using those two components.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Going “all-in”
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Before, our simple strategy only went long or short with a single unit of the
+    asset. However, we can easily modify this behavior to use all the available cash.
+    We simply add the `AllInSizer` sizer using the `addsizer` method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Running the backtest generates the following result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result is clearly better than what we achieved using only a single unit
+    at a time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fixed commission per share
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In our initial backtest of the RSI-based strategy, we used a 0.1% commission
+    fee. However, some brokers might have a different commission scheme, for example,
+    a fixed commission per share.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To incorporate such information, we need to define a custom class storing the
+    commission scheme. We can inherit from `bt.CommInfoBase` and add the required
+    information:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: The most important aspects of the definition are the fixed commission of $0.03
+    per share and the way that the commission is calculated in the `_getcommission`
+    method. We take the absolute value of the size and multiply it by the fixed commission.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can then easily input that information into the backtest. Building on top
+    of the previous example with the “all-in” strategy, the code would look as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the following result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: These numbers lead to the conclusion that the 0.01% commission was actually
+    higher than 3 cents per share.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fixed commission per order
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Other brokers might offer a fixed commission per order. In the following snippet,
+    we define a custom commission scheme in which we pay $2.5 per order, regardless
+    of its size.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We changed the value of the `commission` parameter and the way commission is
+    calculated in the `_getcommission` method. This time, this method always returns
+    the $2.5 we specified before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We do not include the backtest setup, as it would be almost identical to the
+    previous one. We only need to pass a different class using the `addcommissioninfo`
+    method. The result of the backtest is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: See also
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Below, you might find useful references to `backtrader`''s documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To read more about sizers: [https://www.backtrader.com/docu/sizers-reference/](https://www.backtrader.com/docu/sizers-reference/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'To read more about commission schemes and the available parameters: [https://www.backtrader.com/docu/commission-schemes/commission-schemes/](https://www.backtrader.com/docu/commission-schemes/commission-schemes/
+    )'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting a buy/sell strategy based on Bollinger bands
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Bollinger bands are a statistical method, used for deriving information about
+    the prices and volatility of a certain asset over time. To obtain the Bollinger
+    bands, we need to calculate the moving average and standard deviation of the time
+    series (prices), using a specified window (typically 20 days). Then, we set the
+    upper/lower bands at K times (typically 2) the moving standard deviation above/below
+    the moving average.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The interpretation of the bands is quite simple: the bands widen with an increase
+    in volatility and contract with a decrease in volatility.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this recipe, we build a simple trading strategy that uses Bollinger bands
+    to identify underbought and oversold levels and then trade based on those areas.
+    The rules of the strategy are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Buy when the price crosses the lower Bollinger band upward.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sell (only if stocks are in possession) when the price crosses the upper Bollinger
+    band downward.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: All-in strategy—when creating a buy order, buy as many shares as possible.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Short selling is not allowed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We evaluate the strategy on Microsoft’s stock in 2021\. Additionally, we set
+    the commission to be equal to 0.1%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to implement and backtest a strategy based on the
+    Bollinger bands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: To make the code more readable, we first present the general outline of the
+    class defining the trading strategy and then introduce the separate methods in
+    the following substeps.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Define the strategy based on the Bollinger bands:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'When defining strategies using the strategy approach, there is quite some boilerplate
+    code. That is why in the following substeps, we only mention the methods that
+    are different from the ones we have previously explained. You can also find the
+    strategy’s entire code in the book’s GitHub repository:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'The `__init__` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `next_open` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download data:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Set up the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Run the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the backtest generates the following (abbreviated) log:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Plot the results:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_06.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 12.6: Summary of our strategy’s behavior/performance over the backtested
+    period'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: We can see that the strategy managed to make money, even after accounting for
+    commission costs. The flat periods in the portfolio’s value represent periods
+    when we did not have an open position.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Investigate different returns metrics:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the code generates the following output:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Extract daily portfolio returns and plot them:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '![](../Images/B18112_12_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.7: Daily portfolio returns of the strategy based on Bollinger bands'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can see that the flat periods in the portfolio’s returns in *Figure 12.7*
+    correspond to the periods during which we had no open positions, as can be seen
+    in *Figure 12.6*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are a lot of similarities between the code used for creating the Bollinger
+    bands-based strategy and that used in the previous recipes. That is why we only
+    discuss the novelties and refer you to the *Event-driven backtesting with backtrader*
+    recipe for more details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we were going all-in in this strategy, we had to use a method called `cheat_on_open`.
+    This means that we calculated the signals using day *t*’s close price, but calculated
+    the number of shares we wanted to buy based on day *t+1*’s open price. To do so,
+    we had to set `cheat_on_open=True` when instantiating the `Cerebro` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a result, we also defined a `next_open` method instead of `next` within the
+    `Strategy` class. This clearly indicated to `Cerebro` that we were cheating on
+    open. Before creating a potential buy order, we manually calculated the maximum
+    number of shares we could buy using the open price from day *t+1*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When calculating the buy/sell signals based on the Bollinger bands, we used
+    the `CrossOver` indicator. It returned the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 1 if the first data (price) crossed the second data (indicator) upward
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: -1 if the first data (price) crossed the second data (indicator) downward
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We can also use `CrossUp` and `CrossDown` functions when we want to consider
+    crossing from only one direction. The buy signal would look like this: `self.buy_signal
+    = bt.ind.CrossUp(self.datas[0], self.b_band.lines.bot)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The last addition included utilizing analyzers—`backtrader` objects that help
+    to evaluate what is happening with the portfolio. In this recipe, we used two
+    analyzers:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Returns`: A collection of different logarithmic returns, calculated over the
+    entire timeframe: total compound return, the average return over the entire period,
+    and the annualized return.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`TimeReturn`: A collection of returns over time (using a provided timeframe,
+    in this case, daily data).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We can obtain the same result as from the `TimeReturn` analyzer by adding an
+    observer with the same name: `cerebro.addobserver(bt.observers.TimeReturn)`. The
+    only difference is that the observer will be plotted on the main results plot,
+    which is not always desired.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We have already seen how to extract the daily returns from the backtest. This
+    creates a perfect opportunity to combine that information with the functionalities
+    of the `quantstats` library. Using the following snippet, we can calculate a variety
+    of metrics to evaluate our portfolio’s performance in detail. Additionally, we
+    compare the performance of our strategy to a simple buy-and-hold strategy (which,
+    for simplicity, does not include the transaction costs):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following report:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: For brevity’s sake, we only present the few main pieces of information available
+    in the report.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Chapter 11*, *Asset Allocation*, we mentioned that an alternative library
+    to `quantstats` is `pyfolio`. The latter has the potential disadvantage of not
+    being actively maintained anymore. However, `pyfolio` is nicely integrated with
+    `backtrader`. We can easily add a dedicated analyzer (`bt.analyzers.PyFolio`).
+    For an example of implementation, please see the book’s GitHub repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backtesting a moving average crossover strategy using crypto data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'So far, we have created and backtested a few strategies on stocks. In this
+    recipe, we cover another popular asset class—cryptocurrencies. There are a few
+    key differences in handling crypto data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cryptos can be traded 24/7
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Cryptos can be traded using fractional units
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: As we want our backtests to closely resemble real-life trading, we should account
+    for those crypto-specific characteristics in our backtests. Fortunately, the `backtrader`
+    framework is very flexible and we can slightly adjust our already-established
+    approach to handle this new asset class.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some brokers also allow for buying fractional shares of stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this recipe, we backtest a moving average crossover strategy with the following
+    rules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We are only interested in Bitcoin and use daily data from 2021.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We use two moving averages with window sizes of 20-days (fast one) and 50-days
+    (slow one).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the fast MA crosses over the slow one upward, we allocate 70% of available
+    cash to buying BTC.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If the fast MA crosses over the slow one downward, we sell all the BTC we have.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Short selling is not allowed.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to implement and backtest a strategy based on the
+    moving average crossover:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Define the commission scheme allowing for fractional trades:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: To make the code more readable, we first present the general outline of the
+    class defining the trading strategy and then introduce the separate methods in
+    the following substeps.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Define the SMA crossover strategy:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `__init__` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `next` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download the `BTC-USD` data:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Set up the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Run the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following (abbreviated) log:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: In the excerpt from the full log, we can see that we are now operating with
+    fractional positions. Also, the strategy has generated quite significant returns—we
+    have approximately quadrupled the initial portfolio’s value.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Plot the results:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_12_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 12.8: Summary of our strategy’s behavior/performance over the backtested
+    period'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have already established that we have generated >300% returns using our strategy.
+    However, we can also see in *Figure 12.8* that the great performance might simply
+    be due to the gigantic increase in BTC’s price over the considered period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using code identical to the code used in the previous recipe, we can compare
+    the performance of our strategy to the simple buy-and-hold strategy. This way,
+    we can verify how our active strategy performed compared to a static benchmark.
+    We present the abbreviated performance comparison below, while the code can be
+    found in the book’s GitHub repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: Unfortunately, our strategy did not outperform the benchmark over the analyzed
+    timeframe. This confirms our initial suspicion that the good performance is connected
+    to the increase in BTC’s price over the considered period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: After importing the libraries, we defined a custom commission scheme in order
+    to allow for fractional shares. Before, when we created a custom commission scheme,
+    we inherited from `bt.CommInfoBase` and we modified the `_getcommission` method.
+    This time, we inherited from `bt.CommissionInfo` and modified the `getsize` method
+    to return a fractional value depending on the available cash and the asset’s price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 3* (and its substeps) we defined the moving average crossover strategy.
+    By this recipe, most of the code will already look very familiar. A new thing
+    we have applied here is the different type of order, that is, `order_target_percent`.
+    Using this type of order indicates that we want the given asset to be X% of our
+    portfolio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is a very convenient method because we leave the exact order size calculations
+    to `backtrader`. If, at the moment of issuing the order, we are below the specified
+    target percentage, we will buy more of the asset. If we are above it, we will
+    sell some amount of the asset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For exiting the position, we indicate that we want BTC to be 0% of our portfolio,
+    which is equivalent to selling all we have. By using `order_target_percent` with
+    the target of zero, we do not have to track/access the current number of units
+    we possess.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 4*, we downloaded the daily BTC prices (in USD) from 2021\. In the
+    following steps, we set up the backtest, ran it, and plotted the results. The
+    only thing worth mentioning is that we had to add the custom commission scheme
+    (containing the fractional share logic) using the `addcommissioninfo` method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In the recipe, we have introduced the target order. `backtrader` offers three
+    types of target orders:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`order_target_percent`: Indicates the percentage of the current portfolio’s
+    value we want to have in the given asset'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`order_target_size`: Indicates the target number of units of a given asset
+    we want to have in the portfolio'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`order_target_value`: Indicates the asset’s target value in monetary units
+    that we want to have in the portfolio'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Target orders are very useful when we know the target percentage/value/size
+    of a given asset, but do not want to spend additional time calculating whether
+    we should buy additional units or sell them to arrive at the target.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also one more important thing to mention about fractional shares. In
+    this recipe, we have defined a custom commission scheme that accounts for the
+    fractional shares and then we used the target orders to buy/sell the asset. This
+    way, when the engine was calculating the number of units to trade in order to
+    arrive at the target, it knew it could use fractional values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, there is another way of using fractional shares without defining a
+    custom commission scheme. We simply need to manually calculate the number of shares
+    we want to buy/sell and create an order with a given stake. We did something very
+    similar in the previous recipe, but there, we rounded the potential fractional
+    values to an integer. For an implementation of the SMA crossover strategy with
+    manual fractional order size calculations, please refer to the book’s GitHub repository.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backtesting a mean-variance portfolio optimization
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the previous chapter, we covered asset allocation and mean-variance optimization.
+    Combining mean-variance optimization with a backtest would be an interesting exercise,
+    especially because it involves working with multiple assets at once.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this recipe, we backtest the following allocation strategy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We consider the FAANG stocks.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Every Friday after the market closes, we find the tangency portfolio (maximizing
+    the Sharpe ratio). Then, we create target orders to match the calculated optimal
+    weights on Monday when the market opens.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We assume we need to have at least 252 data points to calculate the expected
+    returns and the covariance matrix (using the Ledoit-Wolf approach).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For this exercise, we download the prices of the FAANG stocks from 2020 to 2021\.
+    Due to the warm-up period we set up for calculating the weights, the trading actually
+    happens only in 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: As we will be working with fractional shares in this recipe, we need to use
+    the custom commission scheme (`FractionalTradesCommission`) defined in the previous
+    recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to implement and backtest a strategy based on the
+    mean-variance portfolio optimization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: To make the code more readable, we first present the general outline of the
+    class defining the trading strategy and then introduce the separate methods in
+    the following substeps.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Define the strategy:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The `next` method is defined as:'
+  prefs:
+  - PREF_IND
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs:
+  - PREF_IND
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download the prices of the FAANG stocks and store the data feeds in a list:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Set up the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Run the backtest:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the backtest generates the following log:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: We will not spend time evaluating the strategy, as this would be very similar
+    to what we did in the previous recipe. Thus, we leave it as a potential exercise
+    for the reader. It could also be interesting to test the performance of this strategy
+    against a benchmark *1/n* portfolio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is worth mentioning that some of the orders failed. We will describe the
+    reason for it in the following section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works…
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: After importing the libraries, we defined the strategy using mean-variance optimization.
+    In the `__init__` method, we defined a counter that we used to determine if we
+    had enough data points to run the optimization routine. The selected 252 days
+    is arbitrary and you can experiment with different values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the `next` method, there are multiple new components:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first add 1 to the day counter and check if we have enough observations.
+    If not, we simply proceed to the next trading day.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We extract the current date from the price data and check if it is a Friday.
+    If not, we proceed to the next trading day.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We calculate the current allocation by accessing the position size of each asset
+    and multiplying it by the close price of the given day. Lastly, we divide each
+    asset’s worth by the total portfolio’s value and print the weights.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We need to extract the last 252 data points for each stock for our optimization
+    routine. The `self.datas` object is an iterable containing all the data feeds
+    we pass to `Cerebro` when setting up the backtest. We create a dictionary and
+    populate it with arrays containing the 252 data points. We extract those using
+    the `get` method. Then, we create a `pandas` DataFrame from the dictionary containing
+    the prices.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We find the weights maximizing the Sharpe ratio using the `pypfopt` library.
+    Please refer to the previous chapter for more details. We also print the new weights.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For each of the assets, we place a target order (using the `order_target_percent`
+    method) with the target being the optimal portfolio weight. As we are working
+    with multiple assets this time, we need to indicate for which asset we are placing
+    an order. We do so by specifying the `data` argument.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Under the hood, `backtrader` uses the `array` module for storing the matrix-like
+    objects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 3*, we created a list containing all the data feeds. We simply iterated
+    over the tickers of the FAANG stocks, downloaded the data for each one of them,
+    and appended the object to the list.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 4*, we set up the backtest. A lot of the steps are already very familiar
+    by now, including setting up the fractional shares commission scheme. The new
+    component was adding the data, as we iteratively added each of the downloaded
+    data feeds using the already covered `adddata` method. At this point, we also
+    had to provide the name of the data feeds using the `name` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the very last step, we ran the backtest. As we have mentioned before, the
+    new thing we can observe here is the failing orders. These are caused by the fact
+    that we are calculating the portfolio weights on Friday using the close prices
+    and preparing the orders on the same day. On Monday’s market open, the prices
+    are different, and not all the orders can be executed. We tried to account for
+    that using fractional shares and setting the commission to 0, but the differences
+    can still be too big for this simple approach to work. A possible solution would
+    be to always keep some cash on the side to cover the potential price differences.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To do so, we could assume that we purchase the stocks with ~90% of our portfolio’s
+    worth while keeping the rest in cash. For that, we could use the `order_target_value`
+    method. We could calculate the target value for each asset using the portfolio
+    weights and 90% of the monetary value of our portfolio. Alternatively, we could
+    use the `DiscreteAllocation` approach of `pypfopt`, which we mentioned in the
+    previous chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we have extensively covered the topic of backtesting. We started
+    with the simpler approach, that is, vectorized backtesting. While it is not as
+    rigorous and robust as the event-driven approach, it is often faster to implement
+    and execute, due to its vectorized nature. Afterward, we combined the exploration
+    of the event-driven backtesting framework with the knowledge we obtained in the
+    previous chapters, for example, calculating various technical indicators and finding
+    the optimal portfolio weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We spent the most time using the `backtrader` library, due to its popularity
+    and flexibility when it comes to implementing various scenarios. However, there
+    are many alternative backtesting libraries on the market. You might also want
+    to investigate the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`vectorbt` ([https://github.com/polakowo/vectorbt](https://github.com/polakowo/vectorbt)):
+    A `pandas`-based library for efficient backtesting of trading strategies at scale.
+    The author of the library also offers a pro (paid) version of the library with
+    more features and improved performance.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`bt` ([https://github.com/pmorissette/bt](https://github.com/pmorissette/bt)):
+    A library offering a framework based on reusable and flexible blocks containing
+    the strategy’s logic. It supports multiple instruments and outputs detailed statistics
+    and charts.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`backtesting.py` ([https://github.com/kernc/backtesting.py](https://github.com/kernc/backtesting.py)):
+    A backtesting framework built on top of `backtrader`.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`fastquant` ([https://github.com/enzoampil/fastquant](https://github.com/enzoampil/fastquant)):
+    A wrapper library around `backtrader` that aims to reduce the amount of boilerplate
+    code we need to write in order to run a backtest for popular trading strategies,
+    for example, the moving average crossover.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`zipline` ([https://github.com/quantopian/zipline](https://github.com/quantopian/zipline)
+    / [https://github.com/stefan-jansen/zipline-reloaded](https://github.com/stefan-jansen/zipline-reloaded)):
+    The library used to be the most popular (based on GitHub stars) and probably the
+    most complex of the open-source backtesting libraries. However, as we have already
+    mentioned, Quantopian was closed and the library is not maintained anymore. You
+    can use the fork (`zipline-reloaded`) maintained by Stefan Jansen.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Backtesting is a fascinating field and there is much more to learn about it.
+    Below, you can also find some very interesting references for more robust approaches
+    to backtesting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bailey, D. H., Borwein, J., Lopez de Prado, M., & Zhu, Q. J. (2016). “The probability
+    of backtest overfitting.” *Journal of Computational Finance, forthcoming*.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bailey, D. H., & De Prado, M. L. (2014). “The deflated Sharpe ratio: correcting
+    for selection bias, backtest overfitting, and non-normality.” *The Journal of
+    Portfolio Management*, *40* (5), 94-107.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bailey, D. H., Borwein, J., Lopez de Prado, M., & Zhu, Q. J. (2014). “Pseudo-mathematics
+    and financial charlatanism: The effects of backtest overfitting on out-of-sample
+    performance.” *Notices of the American Mathematical Society*, *61* (5), 458-471.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: De Prado, M. L. (2018). *Advances in Financial Machine Learning*. John Wiley
+    & Sons.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

@@ -1,0 +1,1689 @@
+- en: '9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Modeling Volatility with GARCH Class Models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In *Chapter 6*, *Time Series Analysis and Forecasting*, we looked at various
+    approaches to modeling time series. However, models such as **ARIMA** (**Autoregressive
+    Integrated Moving Average**) cannot account for volatility that is not constant
+    over time (heteroskedastic). We have already explained that some transformations
+    (such as log or Box-Cox transformations) can be used to adjust for modest changes
+    in volatility, but we would like to go a step further and model it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we focus on **conditional heteroskedasticity**, which is a
+    phenomenon caused when an increase in volatility is correlated with a further
+    increase in volatility. An example might help to understand this concept. Imagine
+    the price of an asset going down significantly due to some breaking news related
+    to the company. Such a sudden price drop could trigger certain risk management
+    tools of investment funds, which start selling the stocks as a result of the previous
+    decrease in price. This could result in the price plummeting even further. Conditional
+    heteroskedasticity was also clearly visible in the *Investigating stylized facts
+    of asset returns* recipe, in which we showed that returns exhibit volatility clustering.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We would like to briefly explain the motivation for this chapter. Volatility
+    is an incredibly important concept in finance. It is synonymous with risk and
+    has many applications in quantitative finance. Firstly, it is used in options
+    pricing, as the Black-Scholes model relies on the volatility of the underlying
+    asset. Secondly, volatility has a significant impact on risk management, where
+    it is used to calculate metrics such as the **Value-at-Risk** (**VaR**) of a portfolio,
+    the Sharpe ratio, and many more. Thirdly, volatility is also present in trading.
+    Normally, traders make decisions based on predictions of the assets’ prices either
+    rising or falling. However, we can also trade based on predicting whether there
+    will be movement in any direction, that is, whether there will be volatility.
+    **Volatility trading** is particularly appealing when certain world events (for
+    example, pandemics) are driving markets to move erratically. An example of a product
+    interesting to volatility traders might be the **Volatility Index** (**VIX**),
+    which is based on the movements of the S&P 500 index.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By the end of the chapter, we will have covered a selection of GARCH (Generalized
+    AutoregressiveConditional Heteroskedasticity) models—both univariate and multivariate—which
+    are some of the most popular ways of modeling and forecasting volatility. Knowing
+    the basics, it is quite simple to implement more advanced models. We have already
+    mentioned the importance of volatility in finance. By knowing how to model it,
+    we can use such forecasts to replace the previously used naïve ones in many practical
+    use cases in the fields of risk management or derivatives valuation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will cover the following recipes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modeling stock returns’ volatility with ARCH models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modeling stock returns’ volatility with GARCH models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Forecasting volatility using GARCH models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Multivariate volatility forecasting with the CCC-GARCH model
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Forecasting the conditional covariance matrix using DCC-GARCH
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modeling stock returns’ volatility with ARCH models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, we approach the problem of modeling the conditional volatility
+    of stock returns with the **Autoregressive Conditional Heteroskedasticity** (**ARCH**)
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To put it simply, the ARCH model expresses the variance of the error term as
+    a function of past errors. To be a bit more precise, it assumes that the variance
+    of the errors follows an autoregressive model. The entire logic of the ARCH method
+    can be represented by the following equations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_003.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The first equation represents the return series as a combination of the expected
+    return μ and the unexpected return ![](../Images/B18112_09_004.png). ![](../Images/B18112_09_005.png)
+    has white noise properties—the conditional mean equal to zero and the time-varying
+    conditional variance ![](../Images/B18112_09_006.png).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Error terms are serially uncorrelated but do not need to be serially independent,
+    as they can exhibit conditional heteroskedasticity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_007.png) is also known as the mean-corrected return,
+    error term, innovations, or—most commonly—residuals.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In general, ARCH (and GARCH) models should only be fitted to the residuals
+    of some other model applied to the original time series. When estimating volatility
+    models, we can assume different specifications of the mean process, for example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A zero-mean process—this implies that the returns are only described by the
+    residuals, for example, ![](../Images/B18112_09_008.png)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A constant mean process (![](../Images/B18112_09_009.png))
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mean estimated using linear models such as AR, ARMA, ARIMA, or the more recent
+    heterogeneous autoregressive (HAR) process
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the second equation, we represent the error series in terms of a stochastic
+    component ![](../Images/B18112_09_010.png) and a conditional standard deviation
+    ![](../Images/B18112_09_011.png), which governs the typical size of the residuals.
+    The stochastic component can also be interpreted as standardized residuals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The third equation presents the ARCH formula, where ![](../Images/B18112_09_012.png)
+    and ![](../Images/B18112_09_013.png). Some important points about the ARCH model
+    include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ARCH model explicitly recognizes the difference between the unconditional
+    and the conditional variance of the time series.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It models the conditional variance as a function of past residuals (errors)
+    from a mean process.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: It assumes the unconditional variance to be constant over time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The ARCH model can be estimated using the ordinary least squares (OLS) method.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We must specify the number of prior residuals (*q*) in the model—similarly to
+    the AR model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The residuals should look like observations of a discrete white noise—zero-mean
+    and stationary (no trends or seasonal effects, that is, no evident serial correlation).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the original ARCH notation, as well as in the `arch` library in Python, the
+    lag hyperparameter is denoted with *p*. However, we use *q* as the corresponding
+    symbol, in line with the GARCH notation introduced in the next recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The biggest strength of the ARCH model is that the volatility estimates it produces
+    exhibit excess kurtosis (fat tails as compared to Normal distribution), which
+    is in line with the empirical observations about stock returns. Naturally, there
+    are also weaknesses. The first one is that the model assumes the same effects
+    of positive and negative volatility shocks, which is simply not the case. Secondly,
+    it does not explain variations in volatility. That is why the model is likely
+    to over-forecast volatility, as it is slow to respond to large, isolated shocks
+    in the returns series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this recipe, we fit the ARCH(1) model to Google’s daily stock returns from
+    the years 2015 to 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to fit the ARCH(1) model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Specify the risky asset and the time horizon:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download data from Yahoo Finance:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Calculate the daily returns:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the code generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_01.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 9.1: Google’s simple returns from the years 2015 to 2021'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: In the plot, we can observe a few sudden spikes and clear examples of volatility
+    clustering.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Specify the ARCH model:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Estimate the model and print the summary:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the code returns the following summary:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Plot the residuals and the conditional volatility:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the code results in the following plots:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_02.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.2: Standardized residuals and the annualized conditional volatility
+    of the fitted ARCH model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can observe some standardized residuals that are large (in magnitude) and
+    correspond to highly volatile periods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In *Steps 2* to *4*, we downloaded Google’s daily stock prices and calculated
+    simple returns. When working with ARCH/GARCH models, convergence warnings are
+    likely to occur in the case of very small numbers. This is caused by instabilities
+    in the underlying optimization algorithms of the `scipy` library. To overcome
+    this issue, we multiplied the returns by 100 to express them as percentages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 5*, we defined the ARCH(1) model. For the mean model, we selected the
+    zero-mean approach, which is suitable for many liquid financial assets. Another
+    viable choice here could be a constant mean. We can use those approaches as opposed
+    to, for example, ARMA models because the serial dependence of the return series
+    might be very limited.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 6*, we fitted the model using the `fit` method. Additionally, we passed
+    `disp="off"` to the `fit` method to suppress output from the optimization steps.
+    To fit the model using the `arch` library, we had to take similar steps to the
+    familiar `scikit-learn` approach: we first defined the model and then fitted it
+    to the data. One difference would be the fact that with `arch`, we had to provide
+    the data object while creating the instance of the model, instead of passing it
+    to the `fit` method as we would have done in `scikit-learn`. Then, we printed
+    the model’s summary by using the `summary` method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 7*, we also inspected the standardized residuals and the conditional
+    volatility series by plotting them. The standardized residuals were computed by
+    dividing the residuals by the conditional volatility. We passed `annualize="D"`
+    to the `plot` method in order to annualize the conditional volatility series from
+    daily data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A few more noteworthy points about ARCH models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Selecting the zero-mean process is useful when working on residuals from a separately
+    estimated model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To detect ARCH effects, we can look at the correlogram of the squared residuals
+    from a certain model (such as the ARIMA model). We need to make sure that the
+    mean of these residuals is equal to zero. We can use the Partial Autocorrelation
+    Function (PACF) plot to infer the value of *q*, similarly to the approach used
+    in the case of the AR model (please refer to the *Modeling time series with ARIMA
+    class models* recipe for more details).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: To test the validity of the model, we can inspect whether the standardized residuals
+    and squared standardized residuals exhibit no serial autocorrelation (for example,
+    using the Ljung-Box or Box-Pierce test with the `acorr_ljungbox` function from
+    `statsmodels`). Alternatively, we can employ the **Lagrange Multiplier test**
+    (the LM test, also known as Engle’s Test for Autoregressive Conditional Heteroscedasticity)
+    to make sure that the model captures all ARCH effects. To do so, we can use the
+    `het_arch` function from `statsmodels`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In the following snippet, we test the residuals of the ARCH model with the
+    LM test:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Running the code returns the following tuple:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first two values in the tuple are the LM test statistic and its corresponding
+    p-value. The latter two are the f-statistic for the F test (an alternative approach
+    to testing for ARCH effects) and its corresponding p-value. We can see that both
+    p-values are below the customary significance level of 0.05, which leads us to
+    reject the null hypothesis stating that the residuals are homoskedastic. This
+    means that the ARCH(1) model fails to capture all ARCH effects in the residuals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The documentation of the `het_arch` function suggests that if the residuals
+    are coming from a regression model, we should correct for the number of estimated
+    parameters in that model. For example, if the residuals were coming from an ARMA(2,
+    1) model, we should pass an additional argument to the `het_arch` function, `ddof
+    = 3`, where `ddof` stands for the degrees of freedom.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Additional resources are available here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Engle, R. F. 1982., “Autoregressive conditional heteroscedasticity with estimates
+    of the variance of United Kingdom inflation,” *Econometrica*, 50(4): 987-1007'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modeling stock returns’ volatility with GARCH models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this recipe, we present how to work with an extension of the ARCH model,
+    namely the **Generalized Autoregressive Conditional Heteroskedasticity** (**GARCH**)
+    model. GARCH can be considered an ARMA model applied to the variance of a time
+    series—the AR component was already expressed in the ARCH model, while GARCH additionally
+    adds the moving average part.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The equation of the GARCH model can be presented as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_001.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_002.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_016.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'While the interpretation is very similar to the ARCH model presented in the
+    previous recipe, the difference lies in the last equation, where we can observe
+    an additional component. Parameters are constrained to meet the following: ![](../Images/B18112_09_017.png),
+    and ![](../Images/B18112_09_018.png).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the GARCH model, there are additional constraints on coefficients. For example,
+    in the case of a GARCH(1,1) model, ![](../Images/B18112_09_019.png) must be less
+    than 1\. Otherwise, the model is unstable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The two hyperparameters of the GARCH model can be described as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*p:* The number of lag variances'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*q:* The number of lag residual errors from a mean process'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A GARCH(0, *q*) model is equivalent to an ARCH(q) model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One way of inferring the lag orders for ARCH/GARCH models is to use the squared
+    residuals from a model used to predict the mean of the original time series. As
+    the residuals are centered around zero, their squares correspond to their variance.
+    We can inspect the ACF/PACF plots of the squared residuals in order to identify
+    patterns in the autocorrelation of the series’ variance (similarly to what we
+    have done to identify the orders of an ARMA/ARIMA model).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In general, the GARCH model shares the strengths and weaknesses of the ARCH
+    model, with the difference that it better captures the effects of past shocks.
+    Please see the *There’s more...* section to learn about some extensions of the
+    GARCH model that account for the original model’s shortcomings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this recipe, we apply the GARCH(1,1) model to the same data as in the previous
+    recipe, in order to clearly highlight the difference between the two modeling
+    approaches.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to estimate the GARCH(1,1) model in Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Specify the GARCH model:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Estimate the model and print the summary:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the code returns the following summary:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: According to *Market Risk Analysis*, the usual range of values of the parameters
+    in a stable market would be ![](../Images/B18112_09_020.png) and ![](../Images/B18112_09_021.png).
+    However, we should keep in mind that while these ranges will most likely not strictly
+    apply, they already give us some idea of what kinds of values we should be expecting.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: We can see that, compared to the ARCH model, the log-likelihood increased, which
+    means that the GARCH model fits the data better. However, we should be cautious
+    when drawing such conclusions. The log-likelihood will most likely increase every
+    time we add more predictors (as we have done with GARCH). In case the number of
+    predictors changes, we should run a likelihood-ratio test in order to compare
+    the goodness-of-fit criteria of two nested regression models.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Plot the residuals and the conditional volatility:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'In the plots below, we can observe the effect of including the extra component
+    (lagged conditional volatility) into the model specification:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_03.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.3: Standardized residuals and the annualized conditional volatility
+    of the fitted GARCH model'
+  prefs: []
+  type: TYPE_NORMAL
+- en: When using ARCH, the conditional volatility series exhibits many spikes, and
+    then immediately returns to a low level. In the case of GARCH, as the model also
+    includes lagged conditional volatility, it takes more time to return to the level
+    observed before the spike.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this recipe, we used the same data as in the previous one to compare the
+    results of the ARCH and GARCH models. For more information on downloading data,
+    please refer to *Steps 1* to *4* in the *Modeling stock returns’ volatility with
+    ARCH models* recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Due to the convenience of the `arch` library, it was very easy to adjust the
+    code used previously to fit the ARCH model. To estimate the GARCH model, we had
+    to specify the type of volatility model we wanted to use and set an additional
+    argument: `q=1`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For comparison’s sake, we left the mean process as a zero-mean process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this chapter, we have already used two models to explain and potentially
+    forecast the conditional volatility of a time series. However, there are numerous
+    extensions of the GARCH model, as well as different configurations with which
+    we can experiment in order to find the best-fitting model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the GARCH framework, aside from the hyperparameters (such as *p* and *q*,
+    in the case of the vanilla GARCH model), we can modify the models described next.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conditional mean model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As explained before, we apply the GARCH class models to residuals obtained
+    after fitting another model to the series. Some popular choices for the mean model
+    are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Zero-mean
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Constant mean
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Any variant of the ARIMA model (including potential seasonality adjustment,
+    as well as external regressors)—some popular choices in the literature are ARMA
+    or even AR models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Regression models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We should be aware of one thing when modeling the conditional mean. For example,
+    we may first fit an ARMA model to our time series and then fit a GARCH model to
+    the residuals of the first model. However, this is not the preferred way. That
+    is because, in general, the ARMA estimates will be inconsistent (or consistent
+    but inefficient, in the case when there are only AR terms and no MA terms), which
+    will also impact the following GARCH estimates. The inconsistency arises because
+    the first model (ARMA/ARIMA) assumes conditional homoskedasticity, while we are
+    explicitly modeling conditional heteroskedasticity with the GARCH model in the
+    second step. That is why the preferred way is to estimate both models simultaneously,
+    for example, using the `arch` library (or the `rugarch` package for R).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conditional volatility model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There are numerous extensions to the GARCH framework. Some popular models include:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'GJR-GARCH: A variant of the GARCH model that takes into account the asymmetry
+    of the returns (negative returns tend to have a stronger impact on volatility
+    than positive ones)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'EGARCH: Exponential GARCH'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'TGARCH: Threshold GARCH'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'FIGARCH: Fractionally integrated GARCH, used with non-stationary data'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'GARCH-MIDAS: In this class of models, volatility is decomposed into a short-term
+    GARCH component and a long-term component driven by an additional explanatory
+    variable'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Multivariate GARCH models, such as CCC-/DCC-GARCH
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The first three models use slightly different approaches to introduce asymmetry
+    into the conditional volatility specification. This is in line with the belief
+    that negative shocks have a stronger impact on volatility than positive shocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distribution of errors
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the *Investigating stylized facts of asset returns* recipe, we saw that the
+    distribution of returns is not Normal (skewed, with heavy tails). That is why
+    distributions other than Gaussian might be more fitting for errors in the GARCH
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some possible choices are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Student’s t-distribution
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skew-t distribution (Hansen, 1994)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Generalized Error Distribution (GED)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Skewed Generalized Error Distribution (SGED)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The `arch` library not only provides most of the models and distributions mentioned
+    above, but it also allows for the use of your own volatility models/distributions
+    of errors (as long as they fit into a predefined format). For more information
+    on this, please refer to the excellent documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Additional resources are available here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Alexander, C. 2008\. *Market Risk Analysis, Practical Financial Econometrics*
+    (Vol. 2). John Wiley & Sons.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bollerslev, T., 1986\. “Generalized Autoregressive Conditional Heteroskedasticity.
+    *Journal of Econometrics*, 31, (3): 307–327\. : [https://doi.org/10.1016/0304-4076(86)90063-1](https://doi.org/10.1016/0304-4076(86)90063-1)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Glosten, L. R., Jagannathan, R., and Runkle, D. E., 1993\. “On the relation
+    between the expected value and the volatility of the nominal excess return on
+    stocks,” *The Journal of Finance*, 48 (5): 1779–1801: https://doi.org/10.1111/j.1540-6261.1993.tb05128.x'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hansen, B. E., 1994\. “Autoregressive conditional density estimation,” *International
+    Economic Review*, 35(3): 705–730: https://doi.org/10.2307/2527081'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Documentation of the `arch` library—[https://arch.readthedocs.io/en/latest/index.html](https://arch.readthedocs.io/en/latest/index.html)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Forecasting volatility using GARCH models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the previous recipes, we have seen how to fit ARCH/GARCH models to a return
+    series. However, the most interesting/relevant case of using ARCH class models
+    would be to forecast the future values of the volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are three approaches to forecasting volatility using GARCH class models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analytical — due to the inherent structure of ARCH class models, analytical
+    forecasts are always available for the one step-ahead forecast. Multi-step analytical
+    forecasts can be obtained using a forward recursion; however, that is only possible
+    for models that are linear in the square of the residuals (such as GARCH or Heterogeneous
+    ARCH).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simulation—simulation-based forecasts use the structure of an ARCH class model
+    to forward simulate possible volatility paths using the assumed distribution of
+    residuals. In other words, they use random number generators (assuming specific
+    distributions) to draw the standardized residuals. This approach creates *x* possible
+    volatility paths and then produces the average as the final forecast. Simulation-based
+    forecasts are always available for any horizon. As the number of simulations increases
+    toward infinity, the simulation-based forecasts will converge to the analytical
+    forecasts.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bootstrap (also known as the Filtered Historical Simulation)—those forecasts
+    are very similar to the simulation-based forecasts with the difference that they
+    generate (to be precise, draw with replacement) the standardized residuals using
+    the actual input data and the estimated parameters. This approach requires a minimal
+    amount of in-sample data to use prior to producing the forecasts.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Due to the specification of ARCH class models, the first out-of-sample forecast
+    will always be fixed, regardless of which approach we use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this recipe, we fit a GARCH(1,1) model with Student’s t distributed residuals
+    to Microsoft’s stock returns from the years 2015 to 2020\. Then, we create 3-step
+    ahead forecasts for each day of 2021.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to create 3-step ahead volatility forecasts using
+    a GARCH model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download data from Yahoo Finance and calculate simple returns:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Specify the GARCH model:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Define the split date and fit the model:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Create and inspect the analytical forecasts:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_04.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 9.4: Analytical forecasts for horizons 1, 2, and 3'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Using the snippet below, we can inspect the generated forecasts.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '![](../Images/B18112_09_05.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 9.5: Table presenting the analytical forecasts for horizons 1, 2, and
+    3'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Each column contains the *h*-step ahead forecasts generated on the date indicated
+    by the index. When the forecasts are created, the date from the `Date` column
+    corresponds to the last data point used to generate the forecasts. For example,
+    the columns with the date 2021-01-08 contain the forecasts for January 9, 10,
+    and 11\. Those forecasts were created using data up to and including January 8.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Create and inspect the simulation forecasts:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_06.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 9.6: Simulation-based forecasts for horizons 1, 2, and 3'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Create and inspect the bootstrap forecasts:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_07.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.7: Bootstrap-based forecasts for horizons 1, 2, and 3'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Inspecting the three plots leads to the conclusion that the shape of the volatility
+    forecasts from the three different methods is very similar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In the first two steps, we imported the required libraries and downloaded Microsoft’s
+    stock prices from the years 2015 to 2021\. We calculated the simple returns and
+    multiplied the values by 100 to avoid potential convergence issues during optimization.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 3*, we specified our GARCH model, that is, a zero-mean GARCH(1, 1)
+    with residuals following Student’s t distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 4*, we defined a date (a `datetime` object) used for splitting the
+    training and test sets. Then, we fitted the model using the `fit` method. This
+    time, we specified the `last_obs` argument to indicate when the training set ends.
+    We passed in the value of `datetime(2021, 1, 1)`, which means that the last observation
+    actually used for training would be the last date of December 2020.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 5*, we created the analytical forecasts using the `forecast` method
+    of a fitted GARCH model. We specified the forecast horizon and the start date
+    (which is the same as the `last_obs`, which we provided when fitting the model).
+    Then, we plotted the forecasts for each horizon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In general, using the `forecast` method returns an `ARCHModelForecast` object
+    with 4 main attributes that we might find useful:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`mean`—the forecast of the conditional mean'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`variance`—the forecast of the conditional variance of the process'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`residual_variance`—the forecast of the residual variance. These values will
+    differ from the ones stored in `variance` (for horizons larger than 1) whenever
+    the model has mean dynamics, for example, an AR process.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`simulations`—an object containing the individual simulations (only for the
+    simulation and bootstrap approaches) used for generating the forecasts.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In *Steps 6* and *7*, we generated the analogical 3-step ahead forecasts using
+    the simulation and bootstrap methods. We only added the optional `method` argument
+    to the `forecast` method to indicate which forecasting approach we would like
+    to use. By default, those methods use 1,000 simulations to create the forecasts,
+    but we can change this number to our liking.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We can quite easily visually compare the differences in the forecasts obtained
+    using various forecasting approaches. In this case, we would like to compare the
+    analytical and bootstrap approaches over 2020\. We chose 2020 as this was the
+    last year used in the training sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to compare 10-step ahead volatility forecasts over
+    the year 2020:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Estimate the 10-step ahead volatility forecasts for 2020 using the analytical
+    and bootstrap approaches:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: While creating the forecasts, we changed the horizon and the start date. We
+    recovered the residual variance from the fitted models, filtered for the forecasts
+    made in 2020, and then took the square root to convert the variance into volatility.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Get the conditional volatility for 2020:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Create the hedgehog plot:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_08.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.8: Comparison of analytical and bootstrap-based approaches to volatility
+    forecasting'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A hedgehog plot is a useful kind of visualization for showing the differences
+    between the two forecasting approaches over a longer period of time. In this case,
+    we plotted the 10-step ahead forecasts every 10 days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What is interesting to note is the peak in volatility that occurred in March
+    2020\. We can see that close to the peak, the GARCH model is predicting a decrease
+    in volatility over the next few days. To get a better understanding of how that
+    forecast was created, we can refer to the underlying data. By inspecting the DataFrames
+    containing the observed volatility and the forecasts, we can state that the peak
+    happened on March 17, while the plotted forecast was created using data up until
+    March 16\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When inspecting a single volatility model at a time, it might be easier to use
+    the `hedgehog_plot` method of the fitted `arch_model` to create a similar plot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multivariate volatility forecasting with the CCC-GARCH model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we have already considered multiple univariate conditional
+    volatility models. That is why, in this recipe, we move to the multivariate setting.
+    As a starting point, we consider Bollerslev’s **Constant Conditional Correlation
+    GARCH** (**CCC-GARCH**) model. The idea behind it is quite simple. The model consists
+    of *N* univariate GARCH models, related to each other via a constant conditional
+    correlation matrix **R**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Like before, we start with the model’s specification:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_022.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_023.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_024.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: In the first equation, we represent the return series. The key difference between
+    this representation and the one presented in previous recipes is the fact that
+    this time, we are considering multivariate returns. That is why **r**[t] is actually
+    a vector of returns **r**[t] = (*r*[1t], …, *r*[nt]). The mean and error terms
+    are represented analogically. To highlight this, we use bold font when considering
+    vectors or matrices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second equation shows that the error terms come from a Multivariate Normal
+    distribution with zero means and a conditional covariance matrix ![](../Images/B18112_09_025.png)
+    (of size N x N).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The elements of the conditional covariance matrix are defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Diagonal: ![](../Images/B18112_09_026.png)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Off-diagonal: ![](../Images/B18112_09_027.png)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The third equation presents the decomposition of the conditional covariance
+    matrix. **D**[t] represents a matrix containing the conditional standard deviations
+    on the diagonal, and **R** is a correlation matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The key ideas of the model are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model avoids the problem of guaranteeing positive definiteness of ![](../Images/B18112_09_028.png)
+    by splitting it into variances and correlations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The conditional correlations between error terms are constant over time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Individual conditional variances follow a univariate GARCH(1,1) model.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In this recipe, we estimate the CCC-GARCH model on a series of stock returns
+    for three US tech companies. For more details about the estimation of the CCC-GARCH
+    model, please refer to the *How it works...* section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to estimate the CCC-GARCH model in Python:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Import the libraries:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Specify the risky assets and the time horizon:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Download data from Yahoo Finance:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Calculate the daily returns:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running the snippet generates the following plot:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_09.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 9.9: Simple returns of Apple, Google, and Microsoft'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Define lists for storing objects:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Estimate the univariate GARCH models:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Store the results in DataFrames:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The following table contains the estimated coefficients for each return series:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_10.png)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: 'Figure 9.10: Coefficients of the estimated univariate GARCH models'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Calculate the constant conditional correlation matrix (R):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Calculate the one-step ahead forecast of the conditional covariance matrix:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The calculated one-step ahead forecast looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can compare this matrix to the one obtained using a more complex DCC-GARCH
+    model, which we cover in the next recipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In *Steps 2* and *Step 3*, we downloaded the daily stock prices of Google, Microsoft,
+    and Apple. Then, we calculated simple returns and multiplied them by 100 to avoid
+    encountering convergence errors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 5*, we defined empty lists for storing elements required at later
+    stages: GARCH coefficients, conditional volatilities, standardized residuals,
+    and the models themselves (used for forecasting).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 6*, we iterated over the columns of the DataFrame containing the stock
+    returns and fitted a univariate GARCH model to each of the series. We stored the
+    results in the predefined lists. Then, we wrangled the data in order to have objects
+    such as residuals in DataFrames, to make working with them easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 8*,we calculated the constant conditional correlation matrix (**R**)
+    as the unconditional correlation matrix of **z**[t]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_029.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, **z**[t] stands for time *t* standardized residuals from the univariate
+    GARCH models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the last step, we obtained one-step ahead forecasts of the conditional covariance
+    matrix **H**[t+1]. To do so, we did the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We created a matrix **D**[t+1]of zeros, using `np.zeros`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We stored the one-step ahead forecasts of conditional variances from univariate
+    GARCH models in a list called `diag`.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using `np.fill_diagonal`, we placed the elements of the list called `diag` on
+    the diagonal of the matrix **D**[t+1]
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Following equation 3 from the introduction, we obtained the one-step ahead forecast
+    using matrix multiplication (`np.matmul`).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: See also
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Additional resources are available here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Bollerslev, T.1990\. “Modeling the Coherence in Short-Run Nominal Exchange
+    Rates: A Multivariate Generalized ARCH Approach,” *Review of Economics and Statistics*,
+    72(3): 498–505: https://doi.org/10.2307/2109358'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Forecasting the conditional covariance matrix using DCC-GARCH
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this recipe, we cover an extension of the CCC-GARCH model: Engle’s **Dynamic
+    Conditional Correlation GARCH** (**DCC-GARCH**) model. The main difference between
+    the two is that in the latter, the conditional correlation matrix is not constant
+    over time—we work with **R**[t] instead of **R**.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are some nuances in terms of estimation, but the outline is similar to
+    the CCC-GARCH model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Estimate the univariate GARCH models for conditional volatility
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Estimate the DCC model for conditional correlations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the second step of estimating the DCC model, we use a new matrix **Q**[t],
+    representing a proxy correlation process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_033.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_034.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![](../Images/B18112_09_035.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: The first equation describes the relationship between the conditional correlation
+    matrix **R**[t] and the proxy process **Q**[t]. The second equation represents
+    the dynamics of the proxy process. The last equation shows the definition of ![](../Images/B18112_09_036.png),
+    which is defined as the unconditional correlation matrix of standardized residuals
+    from the univariate GARCH models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This representation of the DCC model uses an approach called **correlation
+    targeting**. It means that we are effectively reducing the number of parameters
+    we need to estimate to two: ![](../Images/B18112_09_043.png) and ![](../Images/B18112_09_044.png).
+    This is similar to volatility targeting in the case of univariate GARCH models,
+    further described in the *There’s more...* section.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the time of writing, there is no Python library that we can use to estimate
+    DCC-GARCH models. One solution would be to write such a library from scratch.
+    Another, more time-efficient solution would be to use a well-established R package
+    for that task. That is why in this recipe, we also introduce how to efficiently
+    make Python and R work together in one Jupyter notebook (this can also be done
+    in a normal `.py` script). The `rpy2` library is an interface between both languages.
+    It enables us to not only run both R and Python in the same notebook but also
+    to transfer objects between the two environments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this recipe, we use the same data as in the previous one, in order to highlight
+    the differences in the approach and results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting ready
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'For details on how to easily install R, please refer to the following resources:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[https://cran.r-project.org/](https://cran.r-project.org/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '[https://docs.anaconda.com/anaconda/user-guide/tasks/using-r-language/](https://docs.anaconda.com/anaconda/user-guide/tasks/using-r-language/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you use `conda` as your package manager, the process of setting everything
+    up can be greatly simplified. If you just install `rpy2` using the `conda install
+    rpy2` command, the package manager will automatically install the latest version
+    of R and some other required dependencies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before executing the following code, please make sure to run the code from the
+    previous recipe to have the data available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How to do it...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Execute the following steps to estimate a DCC-GARCH model in Python (using
+    R):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Set up the connection between Python and R using `rpy2`:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Install the `rmgarch` R package and load it:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: We only need to install the `rmgarch` package once. After doing so, you can
+    safely comment out the line starting with `install.packages`.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'Import the dataset into R:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Using the preceding command, we print the first five rows of the R `data.frame`:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Define the model specification:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Estimate the model:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The following table contains the model’s specification summary, estimated coefficients,
+    as well as a selection of goodness-of-fit criteria:'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Calculate the five-step ahead forecasts:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Access the forecasts:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'The following image shows the five-step ahead forecasts of the conditional
+    covariance matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can now compare this forecast (the first step) to the one obtained using
+    a simpler CCC-GARCH model. The values of the one-step ahead conditional covariance
+    forecasts are very similar for CCC- and DCC-GARCH models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How it works...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this recipe, we used the same data as in the previous recipe, in order to
+    compare the results of the CCC- and DCC-GARCH models. For more information on
+    downloading the data, please refer to *Steps 1* to *4* in the previousrecipe.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To work with Python and R at the same time, we used the `rpy2` library. In this
+    recipe, we presented how to use the library in combination with Jupyter Notebook.
+    For more details on how to use the library in a `.py` script, please refer to
+    the official documentation. Also, we do not delve into the details of R code in
+    general, as this is outside the scope of this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 1*, aside from loading any libraries, we also had to use the following
+    magic command: `%load_ext rpy2.ipython`. It enabled us to run R code by adding
+    `%%R` to the beginning of a cell in the Notebook. For that reason, please assume
+    that any code block in this chapter is a separate Notebook cell (see the Jupyter
+    Notebook in the accompanying GitHub repository for more information).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 2*, we had to install the required R dependencies. To do so, we used
+    the `install.packages` function, and we specified the repository we wanted to
+    use.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In *Step 3*, we moved the `pandas` DataFrame into the R environment. To do so,
+    we passed the extra code `-i returns`, together with the `%%R` magic command.
+    We could have imported the data in any of the ensuing steps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When you want to move a Python object to R, do some manipulation/modeling,
+    and move the final results back to Python, you can use the following syntax: `%%R
+    -i input_object -o output_object`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 4*, we defined the DCC-GARCH model’s specification. First, we defined
+    the univariate GARCH specification (for conditional volatility estimation) using
+    `ugarchspec`. This function comes from a package called `rugarch`, which is the
+    framework for univariate GARCH modeling. By not specifying the ARMA parameters,
+    we chose a constant mean model. For the volatility, we used a GARCH(1,1) model
+    with normally distributed innovations. Secondly, we also specified the DCC model.
+    To do so, we:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Replicated the univariate specification for each returns series – in this case,
+    three
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Specified the order of the DCC model—in this case, DCC(1,1)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Specified the multivariate distribution—in this case, Multivariate Normal
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We could see the summary of the specification by calling the `dcc_spec` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In *Step 5*, we estimated the model by calling the `dccfit` function with the
+    specification and data as arguments. Afterward, we obtained five-step ahead forecasts
+    by using the `dccforecast` function, which returned nested objects such as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`H`: the conditional covariance matrix'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`R`: the conditional correlation matrix'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`Q`: the proxy process for the correlation matrix'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`mu`: the conditional mean'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Each one of them contained five-step ahead forecasts, stored in lists.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There’s more...
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we would also like to go over a few more details on estimating
+    GARCH models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Estimation details
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the first step of estimating the DCC-GARCH model, we can additionally use
+    an approach called **variance targeting**. The idea is to reduce the number of
+    parameters we need to estimate in the GARCH model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To do so, we can slightly modify the GARCH equation. The original equation
+    runs as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_037.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Unconditional volatility is defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_038.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can now plug it into the GARCH equation and produce the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_039.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In the last step, we replace the unconditional volatility with the sample variance
+    of the returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](../Images/B18112_09_040.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'By doing so, we have one less parameter to estimate for each GARCH equation.
+    Also, the unconditional variance implied by the model is guaranteed to be equal
+    to the unconditional sample variance. To use variance targeting in practice, we
+    add an extra argument to the `ugarchspec` function call: `ugarchspec(..., variance.targeting
+    = TRUE)`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Univariate and multivariate GARCH models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: It is also worth mentioning that `rugarch` and `rmgarch` work nicely together,
+    as they were both developed by the same author and created as a single go-to framework
+    for estimating GARCH models in R. We have already gained some experience with
+    this when we used the `ugarchspec` function in the first step of estimating the
+    DCC-GARCH model. There is much more to discover in terms of that package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Parallelizing the estimation of multivariate GARCH models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Lastly, the estimation process of the DCC-GARCH model can be easily parallelized,
+    with the help of the `parallel` R package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To potentially speed up computations with parallelization, we reused the majority
+    of the code from this recipe and added a few extra lines. First, we had to set
+    up a cluster by using `makePSOCKcluster` from the `parallel` package and indicated
+    that we would like to use three cores. Then, we defined the parallelizable specification
+    using `multifit`. Lastly, we fitted the DCC-GARCH model. The difference here,
+    compared to the previously used code, is that we additionally passed the `fit`
+    and `cluster` arguments to the function call. When we are done with the estimation,
+    we stop the cluster. You can find the entire snippet below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using the preceding code, we can significantly speed up the estimation of the
+    DCC-GARCH model. The improvement in performance is mostly visible when dealing
+    with large volumes of data. Also, the approach of using the `parallel` package
+    together with `multifit` can be used to speed up the calculations of various GARCH
+    and ARIMA models from the `rugarch` and `rmgarch` packages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: See also
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Additional resources:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Engle, R.F., 2002\. “Dynamic Conditional Correlation: A Simple Class of Multivariate
+    Generalized Autoregressive Conditional Heteroskedasticity Models,” Journal of
+    Business and Economic *Statistics*, 20(3): 339–350: [https://doi.org/10.1198/073500102288618487](https://doi.org/10.1198/073500102288618487)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Ghalanos, A. (2019). The `rmgarch` models: Background and properties. (Version
+    1.3–0): [https://cran.r-project.org/web/packages/rmgarch/vignettes/The_rmgarch_models.pdf](https://cran.r-project.org/web/packages/rmgarch/vignettes/The_rmgarch_models.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`rpy2`''s documentation: [https://rpy2.github.io/](https://rpy2.github.io/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Volatility modeling and forecasting have attracted significant attention in
+    recent years, largely due to their importance in financial markets. In this chapter,
+    we have covered the practical application of GARCH models (both univariate and
+    multivariate) to volatility forecasting. By knowing how to model volatility using
+    GARCH class models, we can use more accurate volatility forecasts to replace the
+    naïve estimates in many practical use cases, for example, risk management, volatility
+    trading, and derivatives valuation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have focused on GARCH models due to their ability to capture volatility clustering.
+    However, there are other approaches to volatility modeling. For example, regime-switching
+    models assume that there are certain repeating patterns (regimes) in data. Therefore,
+    we should be able to predict future states by using parameter estimates based
+    on past observations.
+  prefs: []
+  type: TYPE_NORMAL
