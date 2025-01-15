@@ -1,4 +1,4 @@
-![](../Images/New_Packt_Logo.png)
+![](img/New_Packt_Logo.png)
 
 [packt.com](http://packt.com)
 
@@ -22,7 +22,7 @@
 
 如果你喜欢这本书，可能会对 Packt 的其他书籍感兴趣：
 
-[![](../Images/9781803231143.png)](https://www.packtpub.com/product/hands-on-financial-modeling-with-excel-for-microsoft-365-second-edition/9781803231143)
+![](https://www.packtpub.com/product/hands-on-financial-modeling-with-excel-for-microsoft-365-second-edition/9781803231143)
 
 **Excel 微软 365 第二版实战财务建模**
 
@@ -46,7 +46,7 @@ ISBN: 978-1-80323-114-3
 
 +   通过预测资产负债表和损益表来构建财务模型
 
-[![](../Images/9781803242811.png)](Other_Books_You_May_Enjoy.xhtml)
+![](img/Other_Books_You_May_Enjoy.xhtml)
 
 **开发高频交易系统**
 
@@ -78,6 +78,6 @@ ISBN: 978-1-80324-281-1
 
 # 分享你的想法
 
-现在你已经完成了*《金融Python实战手册（第二版）》*，我们非常希望听到你的反馈！如果你是从亚马逊购买的这本书，请[点击这里直接前往亚马逊的书籍评价页面](https://packt.link/r/1803243198)，分享你的反馈或在购买页面留下评论。
+现在你已经完成了*《金融 Python 实战手册（第二版）》*，我们非常希望听到你的反馈！如果你是从亚马逊购买的这本书，请[点击这里直接前往亚马逊的书籍评价页面](https://packt.link/r/1803243198)，分享你的反馈或在购买页面留下评论。
 
 你的评价对我们和技术社区都非常重要，将帮助我们确保提供优质的内容。

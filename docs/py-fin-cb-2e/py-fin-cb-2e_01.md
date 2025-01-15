@@ -69,19 +69,19 @@
 
     运行代码会生成以下数据框的预览：
 
-![](../Images/B18112_01_01.png)
+![](img/B18112_01_01.png)
 
 图 1.1：展示下载的股票价格数据框的预览
 
-请求的结果是一个`pandas` DataFrame（2,769行），包含日常**开盘、最高、最低和收盘**（**OHLC**）价格，以及调整后的收盘价和成交量。
+请求的结果是一个`pandas` DataFrame（2,769 行），包含日常**开盘、最高、最低和收盘**（**OHLC**）价格，以及调整后的收盘价和成交量。
 
-Yahoo Finance会自动调整**股票拆分**的收盘价，即当公司将其现有股票分割成多个新股票时，通常是为了提高股票的流动性。调整后的收盘价不仅考虑了拆股，还考虑了股息。
+Yahoo Finance 会自动调整**股票拆分**的收盘价，即当公司将其现有股票分割成多个新股票时，通常是为了提高股票的流动性。调整后的收盘价不仅考虑了拆股，还考虑了股息。
 
 ## 它是如何工作的…
 
-`download`函数非常直观。在最基本的情况下，我们只需要提供股票代码（符号），它将尝试下载自1950年以来的所有可用数据。
+`download`函数非常直观。在最基本的情况下，我们只需要提供股票代码（符号），它将尝试下载自 1950 年以来的所有可用数据。
 
-在前面的例子中，我们下载了一个特定范围（2011到2021年）的每日数据。
+在前面的例子中，我们下载了一个特定范围（2011 到 2021 年）的每日数据。
 
 `download`函数的一些附加功能包括：
 
@@ -93,7 +93,7 @@ Yahoo Finance会自动调整**股票拆分**的收盘价，即当公司将其现
 
 +   指定`progress=False`将禁用进度条。
 
-+   `interval`参数可以用于下载不同频率的数据。只要请求的时间段小于60天，我们也可以下载日内数据。
++   `interval`参数可以用于下载不同频率的数据。只要请求的时间段小于 60 天，我们也可以下载日内数据。
 
 ## 还有更多...
 
@@ -113,7 +113,7 @@ aapl_data.history()
 
 使用`Ticker`类的主要优点是我们可以下载比仅价格更多的信息。一些可用的方法包括：
 
-+   `info`—输出一个包含股票及其公司详细信息的JSON对象，例如公司的全名、简短的业务总结、上市的交易所，以及一系列财务指标，如贝塔系数
++   `info`—输出一个包含股票及其公司详细信息的 JSON 对象，例如公司的全名、简短的业务总结、上市的交易所，以及一系列财务指标，如贝塔系数
 
 +   `actions`—输出公司行动信息，例如股息和拆股
 
@@ -125,13 +125,13 @@ aapl_data.history()
 
 +   `earnings`/`quarterly_earnings`—显示过去几年/季度的盈利信息
 
-+   `financials`/`quarterly_financials`—包含财务信息，如税前收入、净收入、毛利润、EBIT等
++   `financials`/`quarterly_financials`—包含财务信息，如税前收入、净收入、毛利润、EBIT 等
 
-请参阅相应的Jupyter笔记本，以获取更多这些方法的示例和输出。
+请参阅相应的 Jupyter 笔记本，以获取更多这些方法的示例和输出。
 
 ## 另见
 
-欲查看可下载数据的完整列表，请参考`yfinance`的GitHub仓库（[https://github.com/ranaroussi/yfinance](https://github.com/ranaroussi/yfinance)）。
+欲查看可下载数据的完整列表，请参考`yfinance`的 GitHub 仓库（[`github.com/ranaroussi/yfinance`](https://github.com/ranaroussi/yfinance)）。
 
 你可以查看一些其他库，用于从 Yahoo Finance 下载数据：
 
@@ -151,7 +151,7 @@ aapl_data.history()
 
 ## 做好准备
 
-在下载数据之前，我们需要在 Nasdaq Data Link 创建一个账户（[https://data.nasdaq.com/](https://data.nasdaq.com/)），然后验证我们的电子邮件地址（否则在下载数据时可能会出现异常）。我们可以在个人资料中找到自己的 API 密钥（[https://data.nasdaq.com/account/profile](https://data.nasdaq.com/account/profile)）。
+在下载数据之前，我们需要在 Nasdaq Data Link 创建一个账户（[`data.nasdaq.com/`](https://data.nasdaq.com/)），然后验证我们的电子邮件地址（否则在下载数据时可能会出现异常）。我们可以在个人资料中找到自己的 API 密钥（[`data.nasdaq.com/account/profile`](https://data.nasdaq.com/account/profile)）。
 
 ## 如何操作…
 
@@ -189,7 +189,7 @@ aapl_data.history()
 
     运行代码后将生成以下 DataFrame 预览：
 
-![](../Images/B18112_01_02.png)
+![](img/B18112_01_02.png)
 
 图 1.2：下载的价格信息预览
 
@@ -226,7 +226,7 @@ aapl_data.history()
     df.head() 
     ```
 
-1.  运行代码会生成以下 DataFrame 预览：![](../Images/B18112_01_03.png)
+1.  运行代码会生成以下 DataFrame 预览：![](img/B18112_01_03.png)
 
     图 1.3：下载的价格数据预览
 
@@ -242,7 +242,7 @@ aapl_data.history()
 
     运行代码会生成以下 DataFrame 预览：
 
-![](../Images/B18112_01_04.png)
+![](img/B18112_01_04.png)
 
 图 1.4：透视后的 DataFrame 预览
 
@@ -252,15 +252,15 @@ aapl_data.history()
 
 ## 另请参见
 
-+   [https://docs.data.nasdaq.com/docs/python](https://docs.data.nasdaq.com/docs/python)——Python的`nasdaqdatalink`库的文档。
++   [`docs.data.nasdaq.com/docs/python`](https://docs.data.nasdaq.com/docs/python)——Python 的`nasdaqdatalink`库的文档。
 
-+   [https://data.nasdaq.com/publishers/zacks](https://data.nasdaq.com/publishers/zacks)——Zacks投资研究是一个提供各种可能与您的项目相关的金融数据的供应商。请记住，这些数据不是免费的（你总是可以在购买访问权限之前查看数据的预览）。
++   [`data.nasdaq.com/publishers/zacks`](https://data.nasdaq.com/publishers/zacks)——Zacks 投资研究是一个提供各种可能与您的项目相关的金融数据的供应商。请记住，这些数据不是免费的（你总是可以在购买访问权限之前查看数据的预览）。
 
-+   [https://data.nasdaq.com/publishers](https://data.nasdaq.com/publishers)——所有可用数据提供商的列表。
++   [`data.nasdaq.com/publishers`](https://data.nasdaq.com/publishers)——所有可用数据提供商的列表。
 
-# 从Intrinio获取数据
+# 从 Intrinio 获取数据
 
-另一个有趣的金融数据来源是Intrinio，它提供对其免费（有限制）数据库的访问。以下列表仅展示了我们可以通过Intrinio下载的一些有趣的数据点：
+另一个有趣的金融数据来源是 Intrinio，它提供对其免费（有限制）数据库的访问。以下列表仅展示了我们可以通过 Intrinio 下载的一些有趣的数据点：
 
 +   日内历史数据
 
@@ -278,19 +278,19 @@ aapl_data.history()
 
 +   30+技术指标
 
-大部分数据是免费的，但对API调用频率有一定限制。仅美国股票和ETF的实时价格数据需要另一种订阅。
+大部分数据是免费的，但对 API 调用频率有一定限制。仅美国股票和 ETF 的实时价格数据需要另一种订阅。
 
-在这个示例中，我们遵循了前面的例子，下载了2011到2021年的苹果股票价格。这是因为API返回的数据不仅仅是一个`pandas`数据框，且需要进行一些有趣的预处理。
+在这个示例中，我们遵循了前面的例子，下载了 2011 到 2021 年的苹果股票价格。这是因为 API 返回的数据不仅仅是一个`pandas`数据框，且需要进行一些有趣的预处理。
 
 ## 准备工作
 
-在下载数据之前，我们需要在[https://intrinio.com](https://intrinio.com)注册以获取API密钥。
+在下载数据之前，我们需要在[`intrinio.com`](https://intrinio.com)注册以获取 API 密钥。
 
-请参见以下链接([https://docs.intrinio.com/developer-sandbox](https://docs.intrinio.com/developer-sandbox))以了解沙盒API密钥（免费版）包含的信息。
+请参见以下链接([`docs.intrinio.com/developer-sandbox`](https://docs.intrinio.com/developer-sandbox))以了解沙盒 API 密钥（免费版）包含的信息。
 
 ## 如何操作……
 
-执行以下步骤从Intrinio下载数据：
+执行以下步骤从 Intrinio 下载数据：
 
 1.  导入库：
 
@@ -299,14 +299,14 @@ aapl_data.history()
     import pandas as pd 
     ```
 
-1.  使用你的个人API密钥进行身份验证，并选择API：
+1.  使用你的个人 API 密钥进行身份验证，并选择 API：
 
     ```py
     intrinio.ApiClient().set_api_key("YOUR_KEY_HERE")
     security_api = intrinio.SecurityApi() 
     ```
 
-    你需要将`YOUR_KEY_HERE`替换为你自己的API密钥。
+    你需要将`YOUR_KEY_HERE`替换为你自己的 API 密钥。
 
 1.  请求数据：
 
@@ -339,15 +339,15 @@ aapl_data.history()
 
     输出结果如下：
 
-![](../Images/B18112_01_05.png)
+![](img/B18112_01_05.png)
 
-图1.5：下载的价格信息预览
+图 1.5：下载的价格信息预览
 
-结果数据框包含OHLC价格和交易量，以及它们的调整值。不过，这还不是全部，我们不得不删除一些额外的列，以便让表格适合页面。数据框还包含信息，如拆分比例、股息、价值变化、百分比变化，以及52周滚动最高和最低值。
+结果数据框包含 OHLC 价格和交易量，以及它们的调整值。不过，这还不是全部，我们不得不删除一些额外的列，以便让表格适合页面。数据框还包含信息，如拆分比例、股息、价值变化、百分比变化，以及 52 周滚动最高和最低值。
 
 ## 如何运作……
 
-导入所需的库后，第一步是使用API密钥进行身份验证。然后，我们选择了要在本食谱中使用的API——在股票价格的情况下，它是`SecurityApi`。
+导入所需的库后，第一步是使用 API 密钥进行身份验证。然后，我们选择了要在本食谱中使用的 API——在股票价格的情况下，它是`SecurityApi`。
 
 为了下载数据，我们使用了`SecurityApi`类的`get_security_stock_prices`方法。我们可以指定的参数如下：
 
@@ -359,13 +359,13 @@ aapl_data.history()
 
 +   `page_size`—定义每页返回的观察数据数量；我们将其设置为一个较大的数字，以便在一次请求中收集所有所需的数据，无需使用`next_page`令牌
 
-API返回一个类似JSON的对象。我们访问了响应的字典形式，然后将其转换为DataFrame。我们还使用`pandas` DataFrame的`set_index`方法将日期设为索引。
+API 返回一个类似 JSON 的对象。我们访问了响应的字典形式，然后将其转换为 DataFrame。我们还使用`pandas` DataFrame 的`set_index`方法将日期设为索引。
 
 ## 还有更多...
 
-在本节中，我们展示了Intrinio的一些更有趣的功能。
+在本节中，我们展示了 Intrinio 的一些更有趣的功能。
 
-免费层级并不包括所有信息。有关我们可以免费下载哪些数据的更详细概述，请参阅以下文档页面：[https://docs.intrinio.com/developer-sandbox](https://docs.intrinio.com/developer-sandbox)。
+免费层级并不包括所有信息。有关我们可以免费下载哪些数据的更详细概述，请参阅以下文档页面：[`docs.intrinio.com/developer-sandbox`](https://docs.intrinio.com/developer-sandbox)。
 
 ### 获取可口可乐的实时股价
 
@@ -375,7 +375,7 @@ API返回一个类似JSON的对象。我们访问了响应的字典形式，然�
 security_api.get_security_realtime_price("KO") 
 ```
 
-代码片段的输出是以下JSON：
+代码片段的输出是以下 JSON：
 
 ```py
 {'ask_price': 57.57,
@@ -414,15 +414,15 @@ df = pd.DataFrame(r.news_dict)
 df.head() 
 ```
 
-这段代码返回以下DataFrame：
+这段代码返回以下 DataFrame：
 
-![](../Images/B18112_01_06.png)
+![](img/B18112_01_06.png)
 
 图 1.6：可口可乐公司相关新闻的预览
 
 ### 查找与搜索短语相关的公司
 
-运行以下代码片段会返回一份公司列表，这些公司是Intrinio的Thea AI根据提供的查询字符串识别的：
+运行以下代码片段会返回一份公司列表，这些公司是 Intrinio 的 Thea AI 根据提供的查询字符串识别的：
 
 ```py
 r = intrinio.CompanyApi().recognize_company("Intel")
@@ -432,7 +432,7 @@ df
 
 如我们所见，除了明显的搜索结果外，还有相当多的公司在其名称中也包含了“intel”这一词。
 
-![](../Images/B18112_01_07.png)
+![](img/B18112_01_07.png)
 
 图 1.7：“intel”这一词相关公司的预览
 
@@ -451,9 +451,9 @@ df = pd.DataFrame(response.intraday_prices_dict)
 df 
 ```
 
-这将返回一个包含日内价格数据的DataFrame。
+这将返回一个包含日内价格数据的 DataFrame。
 
-![](../Images/B18112_01_08.png)
+![](img/B18112_01_08.png)
 
 图 1.8：下载的日内价格预览
 
@@ -466,21 +466,21 @@ r = security_api.get_security_latest_earnings_record(identifier="KO")
 print(r) 
 ```
 
-API调用的输出包含了大量有用的信息。例如，我们可以看到财报电话会议发生的具体时间。这些信息可能用于实施在市场开盘时执行的交易策略。
+API 调用的输出包含了大量有用的信息。例如，我们可以看到财报电话会议发生的具体时间。这些信息可能用于实施在市场开盘时执行的交易策略。
 
-![](../Images/B18112_01_09.png)
+![](img/B18112_01_09.png)
 
 图 1.9：可口可乐最新的财报
 
 ## 另见
 
-+   [https://docs.intrinio.com/documentation/api_v2/getting_started](https://docs.intrinio.com/documentation/api_v2/getting_started)—探索API的起点
++   [`docs.intrinio.com/documentation/api_v2/getting_started`](https://docs.intrinio.com/documentation/api_v2/getting_started)—探索 API 的起点
 
-+   [https://docs.intrinio.com/documentation/api_v2/limits](https://docs.intrinio.com/documentation/api_v2/limits)—查询限制的概述
++   [`docs.intrinio.com/documentation/api_v2/limits`](https://docs.intrinio.com/documentation/api_v2/limits)—查询限制的概述
 
-+   [https://docs.intrinio.com/developer-sandbox](https://docs.intrinio.com/developer-sandbox)—免费沙盒环境中包含内容的概述
++   [`docs.intrinio.com/developer-sandbox`](https://docs.intrinio.com/developer-sandbox)—免费沙盒环境中包含内容的概述
 
-+   [https://docs.intrinio.com/documentation/python](https://docs.intrinio.com/documentation/python)—Python SDK 的详细文档
++   [`docs.intrinio.com/documentation/python`](https://docs.intrinio.com/documentation/python)—Python SDK 的详细文档
 
 # 从 Alpha Vantage 获取数据
 
@@ -500,7 +500,7 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
 
 ## 准备工作
 
-在下载数据之前，我们需要在 [https://www.alphavantage.co/support/#api-key](https://www.alphavantage.co/support/#api-key) 注册并获取 API 密钥。在某些限制范围内（每分钟 5 次 API 请求；每天 500 次 API 请求），API 及所有端点是免费的（不包括实时股票价格）。
+在下载数据之前，我们需要在 [`www.alphavantage.co/support/#api-key`](https://www.alphavantage.co/support/#api-key) 注册并获取 API 密钥。在某些限制范围内（每分钟 5 次 API 请求；每天 500 次 API 请求），API 及所有端点是免费的（不包括实时股票价格）。
 
 ## 如何操作……
 
@@ -543,7 +543,7 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
 
     `data` DataFrame 包含所有请求的信息。我们获取了 1,000 个每日 OHLC（开盘、最高、最低、收盘）价格、交易量和市值。值得注意的是，所有的 OHLC 价格都以两种货币提供：欧元（EUR，按照我们的请求）和美元（USD，默认货币）。
 
-    ![](../Images/B18112_01_10.png)
+    ![](img/B18112_01_10.png)
 
     图 1.10：下载的价格、交易量和市值预览
 
@@ -558,7 +558,7 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
 
     运行该命令将返回当前汇率的 DataFrame：
 
-![](../Images/B18112_01_11.png)
+![](img/B18112_01_11.png)
 
 图 1.11：BTC-USD 汇率
 
@@ -568,11 +568,11 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
 
 在*步骤 3*中，我们使用`get_digital_currency_daily`方法下载了每日比特币价格。此外，我们指定了希望获取欧元（EUR）价格。默认情况下，该方法将返回请求的欧元价格以及其美元（USD）等价价格。
 
-最后，我们使用`get_digital_currency_exchange_rate`方法下载了实时的BTC/USD汇率。
+最后，我们使用`get_digital_currency_exchange_rate`方法下载了实时的 BTC/USD 汇率。
 
 ## 还有更多...
 
-到目前为止，我们使用了`alpha_vantage`库作为中介来从Alpha Vantage下载信息。然而，数据提供商的功能发展速度快于第三方库，学习访问其API的其他方式可能会很有趣。
+到目前为止，我们使用了`alpha_vantage`库作为中介来从 Alpha Vantage 下载信息。然而，数据提供商的功能发展速度快于第三方库，学习访问其 API 的其他方式可能会很有趣。
 
 1.  导入所需的库：
 
@@ -603,17 +603,17 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
     df 
     ```
 
-    运行上述代码片段将返回以下下载的DataFrame预览：
+    运行上述代码片段将返回以下下载的 DataFrame 预览：
 
-    ![](../Images/B18112_01_12.png)
+    ![](img/B18112_01_12.png)
 
-    图 1.12：显示包含比特币日内价格的DataFrame预览
+    图 1.12：显示包含比特币日内价格的 DataFrame 预览
 
-    我们首先定义了用于请求信息的基础URL。然后，定义了一个字典，包含请求的附加参数，包括个人API密钥。在我们的函数调用中，我们指定了要下载以美元表示的日内ETH价格，并且每30分钟采样一次。我们还指明了需要完整的输出（通过指定`outputsize`参数）。另一个选项是`compact`输出，它会下载最新的100个观察值。
+    我们首先定义了用于请求信息的基础 URL。然后，定义了一个字典，包含请求的附加参数，包括个人 API 密钥。在我们的函数调用中，我们指定了要下载以美元表示的日内 ETH 价格，并且每 30 分钟采样一次。我们还指明了需要完整的输出（通过指定`outputsize`参数）。另一个选项是`compact`输出，它会下载最新的 100 个观察值。
 
-    在准备好请求的参数后，我们使用了`requests`库中的`get`函数。我们提供了基础URL和`parameters`字典作为参数。获取请求响应后，我们可以通过`json`方法以JSON格式访问它。最后，我们将感兴趣的元素转换为`pandas` DataFrame。
+    在准备好请求的参数后，我们使用了`requests`库中的`get`函数。我们提供了基础 URL 和`parameters`字典作为参数。获取请求响应后，我们可以通过`json`方法以 JSON 格式访问它。最后，我们将感兴趣的元素转换为`pandas` DataFrame。
 
-    Alpha Vantage的文档展示了另一种稍有不同的下载数据方法，即通过创建一个包含所有参数的长URL。自然，这也是一种可能性，但上面介绍的选项稍显简洁。要查看文档中展示的完全相同的请求URL，您可以运行`r.request.url`。
+    Alpha Vantage 的文档展示了另一种稍有不同的下载数据方法，即通过创建一个包含所有参数的长 URL。自然，这也是一种可能性，但上面介绍的选项稍显简洁。要查看文档中展示的完全相同的请求 URL，您可以运行`r.request.url`。
 
 1.  下载未来三个月内的收益公告：
 
@@ -630,23 +630,23 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
 
     运行代码片段将返回以下输出：
 
-![](../Images/B18112_01_13.png)
+![](img/B18112_01_13.png)
 
-图 1.13：显示包含下载的收益信息的DataFrame预览
+图 1.13：显示包含下载的收益信息的 DataFrame 预览
 
-获取API请求的响应与之前的示例非常相似，但处理输出的方法却大不相同。
+获取 API 请求的响应与之前的示例非常相似，但处理输出的方法却大不相同。
 
 `r.content`的输出是一个`bytes`对象，包含查询结果的文本。为了模拟一个内存中的普通文件，我们可以使用`io`模块中的`BytesIO`类。然后，我们可以使用`pd.read_csv`函数正常加载这个模拟的文件。
 
-在随附的笔记本中，我们展示了Alpha Vantage的更多功能，例如获取季度收益数据、下载即将上市的IPO日历，并使用`alpha_vantage`的`TimeSeries`模块下载股票价格数据。
+在随附的笔记本中，我们展示了 Alpha Vantage 的更多功能，例如获取季度收益数据、下载即将上市的 IPO 日历，并使用`alpha_vantage`的`TimeSeries`模块下载股票价格数据。
 
 ## 另见
 
-+   [https://www.alphavantage.co/](https://www.alphavantage.co/)—Alpha Vantage 主页
++   [`www.alphavantage.co/`](https://www.alphavantage.co/)—Alpha Vantage 主页
 
-+   [https://www.alphavantage.co/documentation/](https://www.alphavantage.co/documentation/)—API文档
++   [`www.alphavantage.co/documentation/`](https://www.alphavantage.co/documentation/)—API 文档
 
-+   [https://github.com/RomelTorres/alpha_vantage](https://github.com/RomelTorres/alpha_vantage)—用于访问 Alpha Vantage 数据的第三方库的 GitHub 仓库
++   [`github.com/RomelTorres/alpha_vantage`](https://github.com/RomelTorres/alpha_vantage)—用于访问 Alpha Vantage 数据的第三方库的 GitHub 仓库
 
 # 从 CoinGecko 获取数据
 
@@ -694,7 +694,7 @@ Alpha Vantage 是另一家流行的数据供应商，提供高质量的金融数
 
     运行上面的代码片段将返回以下 DataFrame：
 
-![](../Images/B18112_01_14.png)
+![](img/B18112_01_14.png)
 
 图 1.14：包含请求的比特币价格的 DataFrame 预览
 
@@ -728,7 +728,7 @@ trending_coins = cg.get_search_trending()
 
 使用上面的代码片段，我们获得了以下 DataFrame：
 
-![](../Images/B18112_01_15.png)
+![](img/B18112_01_15.png)
 
 图 1.15：包含 7 个热门币种及其相关信息的 DataFrame 预览
 
@@ -746,11 +746,11 @@ cg.get_price(ids="bitcoin", vs_currencies="usd")
 {'bitcoin': {'usd': 47312}} 
 ```
 
-在随附的笔记本中，我们展示了`pycoingecko`的一些其他功能，例如以除美元外的不同货币获取加密货币价格、下载CoinGecko上支持的所有加密货币列表（超过9,000种货币）、获取每种加密货币的详细市场数据（市值、24小时交易量、历史最高价等），以及加载最受欢迎的交易所列表。
+在随附的笔记本中，我们展示了`pycoingecko`的一些其他功能，例如以除美元外的不同货币获取加密货币价格、下载 CoinGecko 上支持的所有加密货币列表（超过 9,000 种货币）、获取每种加密货币的详细市场数据（市值、24 小时交易量、历史最高价等），以及加载最受欢迎的交易所列表。
 
 ## 另见
 
-你可以在这里找到`pycoingecko`库的文档：[https://github.com/man-c/pycoingecko](https://github.com/man-c/pycoingecko)。
+你可以在这里找到`pycoingecko`库的文档：[`github.com/man-c/pycoingecko`](https://github.com/man-c/pycoingecko)。
 
 # 概述
 
@@ -758,24 +758,24 @@ cg.get_price(ids="bitcoin", vs_currencies="usd")
 
 其他数据源包括：
 
-+   IEX Cloud ([https://iexcloud.io/](https://iexcloud.io/))—一个提供各种金融数据的平台。该平台的一个显著特点是基于Stocktwits上的活动（Stocktwits是一个投资者和交易者的在线社区）提供的每日和每分钟情绪评分。然而，该API仅在付费计划中可用。你可以使用官方Python库`pyex`来访问IEX Cloud的数据。
++   IEX Cloud ([`iexcloud.io/`](https://iexcloud.io/))—一个提供各种金融数据的平台。该平台的一个显著特点是基于 Stocktwits 上的活动（Stocktwits 是一个投资者和交易者的在线社区）提供的每日和每分钟情绪评分。然而，该 API 仅在付费计划中可用。你可以使用官方 Python 库`pyex`来访问 IEX Cloud 的数据。
 
-+   Tiingo ([https://www.tiingo.com/](https://www.tiingo.com/))和`tiingo`库。
++   Tiingo ([`www.tiingo.com/`](https://www.tiingo.com/))和`tiingo`库。
 
-+   CryptoCompare ([https://www.cryptocompare.com/](https://www.cryptocompare.com/))—该平台通过API提供广泛的与加密货币相关的数据。这个数据供应商的独特之处在于他们提供了订单簿数据。
++   CryptoCompare ([`www.cryptocompare.com/`](https://www.cryptocompare.com/))—该平台通过 API 提供广泛的与加密货币相关的数据。这个数据供应商的独特之处在于他们提供了订单簿数据。
 
-+   Twelve Data ([https://twelvedata.com/](https://twelvedata.com/))。
++   Twelve Data ([`twelvedata.com/`](https://twelvedata.com/))。
 
-+   polygon.io ([https://polygon.io/](https://polygon.io/))—一个可靠的数据供应商，提供实时和历史数据（股票、外汇和加密货币）。被Google、Robinhood和Revolut等公司信任。
++   polygon.io ([`polygon.io/`](https://polygon.io/))—一个可靠的数据供应商，提供实时和历史数据（股票、外汇和加密货币）。被 Google、Robinhood 和 Revolut 等公司信任。
 
-+   Shrimpy ([https://www.shrimpy.io/](https://www.shrimpy.io/))和`shrimpy-python`—Shrimpy开发者API的官方Python库。
++   Shrimpy ([`www.shrimpy.io/`](https://www.shrimpy.io/))和`shrimpy-python`—Shrimpy 开发者 API 的官方 Python 库。
 
 在下一章，我们将学习如何对下载的数据进行预处理，以便进一步分析。
 
-# 加入我们的Discord社区！
+# 加入我们的 Discord 社区！
 
-要加入本书的Discord社区——在这里你可以分享反馈、向作者提问并了解新版本——请扫描下面的二维码：
+要加入本书的 Discord 社区——在这里你可以分享反馈、向作者提问并了解新版本——请扫描下面的二维码：
 
-![](../Images/QR_Code203602028422735375.png)
+![](img/QR_Code203602028422735375.png)
 
-[https://packt.link/ips2H](https://packt.link/ips2H)
+[`packt.link/ips2H`](https://packt.link/ips2H)
