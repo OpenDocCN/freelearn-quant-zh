@@ -1,7 +1,9 @@
 - en: Chapter 7. Reinforcement Learning for Financial Markets
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第7章 强化学习在金融市场中的应用
 - en: Humans don't learn from millions of labeled examples. Instead, we often learn
     from positive or negative experiences that we associate with our actions. Children
     that touch a hot stove once will never touch it again. Learning from experiences
@@ -9,8 +11,10 @@
     learning** (**RL**). RL allows us to learn sophisticated decision-making rules
     while having no data at all. Through this approach, several high-profile breakthroughs
     occurred in AI, such as AlphaGo, which beat the world Go champion in 2016.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 人类并不是通过成千上万的标注样本来学习的。相反，我们通常通过与行动相关的正面或负面经验来学习。孩子们如果第一次触摸热炉子，就再也不会触摸它。通过经验和随之而来的奖励或惩罚学习是**强化学习**（**RL**）背后的核心思想。强化学习使我们能够在完全没有数据的情况下学习复杂的决策规则。通过这种方法，AI领域取得了多个重要突破，例如AlphaGo，在2016年战胜了世界围棋冠军。
 - en: In finance, reinforcement learning, also known as RL, is making inroads as well.
     In its 2017 report, *Machine learning in investment management* ([https://www.ahl.com/machine-learning](https://www.ahl.com/machine-learning)),
     Man AHL outlined a reinforcement system for order routing in the FX and futures
@@ -18,60 +22,83 @@
     an order, funds can usually choose from different brokers and place their orders
     at different times. The goal is to fill the order as cheaply as possible. This
     also means minimizing the market impact, as large orders can lift prices of stocks.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在金融领域，强化学习（Reinforcement Learning，简称RL）也在逐渐取得进展。在2017年的报告中，*《投资管理中的机器学习》* ([https://www.ahl.com/machine-learning](https://www.ahl.com/machine-learning))，Man
+    AHL概述了一种用于外汇和期货市场订单路由的强化学习系统。订单路由是量化金融中的经典问题。在下单时，资金通常可以选择不同的经纪商，并在不同的时间提交订单。目标是以尽可能低的成本完成订单。这也意味着要最小化市场影响，因为大额订单可能会推高股票价格。
 - en: Traditional algorithms with colorful names such as *Sniper* or *Guerilla* rely
     on statistics from historical data and smart engineering. The RL-based routing
     system learned an optimal routing policy by itself. The advantage is that this
     system can adapt to changing markets and because of that it outperforms traditional
     methods in data-rich markets such as the FX market.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 传统的算法，如*Sniper*或*Guerilla*，依赖于历史数据的统计信息和智能工程。而基于强化学习的路由系统则能自主学习出最优的路由策略。其优势在于该系统可以适应变化的市场，因此在数据丰富的市场（如外汇市场）中，它比传统方法更具优势。
 - en: However, RL can do more. Researchers at OpenAI have used RL to predict when
     agents will collaborate or fight. Meanwhile at DeepMind, researchers there have
     used RL to yield new insights into the workings of the frontal cortex in the brain
     and the role of the dopamine hormone.
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，强化学习的应用不止如此。OpenAI的研究人员利用强化学习预测代理何时会合作或对抗。同时，DeepMind的研究人员也利用强化学习获得了关于大脑前额皮质运作及多巴胺激素作用的新见解。
 - en: This chapter will start with an intuitive introduction to RL using a simple
     "catch the fruit" game. We will then dive into the underlying theory before covering
     more advanced RL applications. The examples in this chapter rely on visualizations
     that are not easily rendered in Kaggle kernels. In order to simplify them, the
     example algorithms are also not optimized for GPU usage. It is, therefore, best
     to run these examples on your local machine.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章将通过一个简单的“接水果”游戏，直观地介绍强化学习。然后我们将深入探讨其背后的理论，再进一步讲解更高级的强化学习应用。本章中的示例依赖于需要可视化的内容，而这些内容在Kaggle内核中无法轻松渲染。为了简化这些示例，代码并没有针对GPU进行优化。因此，最好在本地机器上运行这些示例。
 - en: The algorithms in this chapter run relatively quickly, so you won't have to
     wait too long for them to run. The chapter code was written on a Mid-2012 MacBook
     Pro, and no example took longer than 20 minutes to run on that machine. Of course,
     you can also run the code on Kaggle, however the visualizations will not work
     there.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中的算法运行速度相对较快，因此你不必等待太长时间才能运行完毕。本章的代码是在2012年中期的MacBook Pro上编写的，没有任何示例在该机器上运行超过20分钟。当然，你也可以在Kaggle上运行这些代码，但可视化效果无法在Kaggle上显示。
 - en: Catch – a quick guide to reinforcement learning
+  id: totrans-7
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Catch——强化学习快速指南
 - en: Catch is a straightforward arcade game that you might have played as a child.
     Fruits fall from the top of the screen, and the player has to catch them with
     a basket. For every fruit caught, the player scores a point. For every fruit lost,
     the player loses a point.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: Catch是一个简单的街机游戏，你可能在小时候玩过。水果从屏幕上方掉下来，玩家需要用篮子接住它们。每接住一颗水果，玩家得一分；每丢失一颗水果，玩家扣一分。
 - en: 'The goal here is to let the computer play Catch by itself. We will be using
     a simplified version in this example in order to make the task easier:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的目标是让计算机独立地玩接水果游戏。为了简化任务，我们将在这个示例中使用一个简化版本：
 - en: '![Catch – a quick guide to reinforcement learning](img/B10354_07_01.jpg)'
+  id: totrans-10
   prefs: []
   type: TYPE_IMG
+  zh: '![Catch – a quick guide to reinforcement learning](img/B10354_07_01.jpg)'
 - en: The "Catch" game that we will be creating
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将要创建的“接水果”游戏
 - en: While playing Catch, the player decides between three possible actions. They
     can move the basket to the left, to the right, or make it stay put.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 在玩接水果游戏时，玩家需要在三种可能的动作之间做出选择。他们可以将篮子移动到左边、右边，或让篮子保持原位。
 - en: The basis for this decision is the current state of the game; in other words,
     the positions of the falling fruit and of the basket. Our goal is to create a
     model that, given the content of the game screen, chooses the action that leads
@@ -79,48 +106,64 @@
     problem. We could ask expert human players to play the game multiple times and
     record their actions. Then, we could train a model to choose the "correct" action
     that mirrors the expert players.
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 做出决策的基础是游戏的当前状态；换句话说，就是掉落的水果和篮子的位置。我们的目标是创建一个模型，给定游戏画面的内容，选择出能够获得最高分数的动作。这个任务可以看作是一个简单的分类问题。我们可以让专家级的玩家多次玩游戏并记录他们的动作。然后，我们可以训练一个模型，选择出与专家玩家相匹配的“正确”动作。
 - en: 'This is not how humans learn, however. Humans can learn a game such as Catch
     by themselves, without guidance. This is very useful, because imagine if you had
     to hire a bunch of experts to perform a task thousands of times every time you
     wanted to learn something as simple as Catch: it would be expensive and slow.'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，这并不是人类学习的方式。人类可以在没有指导的情况下自己学习像接水果这样的游戏。这非常有用，因为想象一下，如果每次你想学像接水果这样简单的游戏时，你都必须雇佣一群专家进行成千上万次的操作：那会非常昂贵且缓慢。
 - en: 'In reinforcement learning, the model trains from experience, rather than labeled
     data. Instead of providing the model with the correct actions, we provide it with
     rewards and punishments. The model receives information about the current state
     of the environment, for example, the computer game screen. It then outputs an
     action, such as a joystick movement. The environment reacts to this action and
     provides the next state, along with any rewards:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 在强化学习中，模型是通过经验进行训练的，而不是标记数据。我们不是给模型提供正确的动作，而是给它提供奖励和惩罚。模型接收环境当前状态的信息，例如，计算机游戏屏幕。然后，它输出一个动作，比如摇杆的移动。环境对这个动作作出反应，并提供下一个状态以及任何奖励：
 - en: '![Catch – a quick guide to reinforcement learning](img/B10354_07_02.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
+  zh: '![Catch – a quick guide to reinforcement learning](img/B10354_07_02.jpg)'
 - en: RL scheme
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习框架
 - en: The model then learns to find actions that lead to maximum rewards. There are
     many ways this can work in practice. Right now, we are going to look at **Q-learning**.
     Q-learning made a splash when it was used to train a computer to play Atari video
     games. Today, it is still a relevant concept. Most modern RL algorithms are based
     on some adaptation of Q-learning.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，模型学习找到能够带来最大奖励的动作。实际上，这有许多种方法可以实现。目前，我们将关注**Q学习**。Q学习在用来训练计算机玩Atari电子游戏时引起了广泛关注。今天，它仍然是一个相关的概念。大多数现代强化学习算法都是基于Q学习的某些改编。
 - en: An excellent way to understand Q-learning is to compare playing Catch with playing
     chess. In both games, you are given a state, *s*. With chess, this is the position
     of the figures on the board. In Catch, this is the location of the fruit and the
     basket. The player then has to take an action, *a*. In chess, this is moving a
     figure. In Catch, this is moving the basket left or right or remaining in the
     current position.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 理解Q学习的一个好方法是将玩接水果游戏与下棋进行比较。在这两种游戏中，你都给定了一个状态，*s*。在国际象棋中，这是棋盘上棋子的摆放位置；在接水果中，这是水果和篮子的位置。然后，玩家必须采取一个动作，*a*。在国际象棋中，这是移动棋子；在接水果中，这是将篮子向左或向右移动，或保持当前的位置。
 - en: As a result, there will be some reward, *r,* and a new state, ![Catch – a quick
     guide to reinforcement learning](img/B10354_07_001.jpg). The problem with both Catch
     and chess is that the rewards do not appear immediately after the action.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果将会有一定的奖励，*r*，以及一个新的状态，![Catch – a quick guide to reinforcement learning](img/B10354_07_001.jpg)。接水果和国际象棋的问题在于，奖励并不会在动作后立即出现。
 - en: In Catch, you only earn rewards when the fruits hit the basket or fall on the
     floor, and in chess, you only earn a reward when you win or lose the game. This
     means that rewards are sparsely distributed. Most of the time, *r* will be zero.
@@ -130,16 +173,21 @@
     assignment problem. Because rewards are delayed, good chess players do not choose
     their plays only by the immediate reward. Instead, they choose the expected future
     reward.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 在“Catch”游戏中，只有当水果击中篮子或掉落在地上时，才能获得奖励；在象棋中，只有当你赢得或输掉比赛时，才会获得奖励。这意味着奖励是稀疏分布的。大多数时候，*r*将为零。即使有奖励，这也不一定是由于紧接着前一步的行动造成的。某个较早时采取的行动可能导致了胜利。确定是哪一步行动导致了奖励，通常被称为“信用分配问题”。由于奖励是延迟的，优秀的棋手不会仅凭即时奖励来选择自己的下一步棋。相反，他们会选择期望的未来奖励。
 - en: 'For example, they do not only think about whether they can eliminate an opponent''s
     figure in the next move, they also consider how taking a specific action now will
     help them in the long run. In Q-learning, we choose our action based on the highest
     expected future reward. We use a **Q-function** to calculate this. This is a mathematical
     function that takes two arguments: the current state of the game, and a given
     action. We can write this as *Q(state, action)*.'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，他们不仅仅考虑是否能在下一步消除对方的棋子，还会考虑当前采取特定行动将如何在长远来看帮助自己。在Q学习中，我们根据最高的期望未来奖励来选择行动。我们使用**Q函数**来计算这一点。这是一个数学函数，包含两个参数：游戏的当前状态和一个给定的行动。我们可以将其写作*Q(state,
+    action)*。
 - en: 'While in state *s*, we estimate the future reward for each possible action,
     *a*. We assume that after we have taken action *a* and moved to the next state,
     ![Catch – a quick guide to reinforcement learning](img/B10354_07_002.jpg), everything
@@ -151,55 +199,81 @@
     – a quick guide to reinforcement learning](img/B10354_07_005.jpg) by the factor
     gamma, ![Catch – a quick guide to reinforcement learning](img/B10354_07_006.jpg).
     We, therefore, arrive at an expected reward of this:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 在状态*s*下，我们会为每个可能的行动*a*估算未来奖励。我们假设在采取行动*a*并移动到下一个状态之后，![Catch – 强化学习快速指南](img/B10354_07_002.jpg)，一切都会顺利进行。给定状态和行动的期望未来奖励，*q(s,a)*，是通过即时奖励加上之后的期望未来奖励来计算的，![Catch
+    – 强化学习快速指南](img/B10354_07_003.jpg)。我们假设下一步行动，![Catch – 强化学习快速指南](img/B10354_07_004.jpg)，是最优的。由于未来具有不确定性，我们通过因子gamma对![Catch
+    – 强化学习快速指南](img/B10354_07_005.jpg)进行折扣，![Catch – 强化学习快速指南](img/B10354_07_006.jpg)。因此，我们得出以下期望奖励：
 - en: '![Catch – a quick guide to reinforcement learning](img/B10354_07_007.jpg)'
+  id: totrans-24
   prefs: []
   type: TYPE_IMG
+  zh: '![Catch – 强化学习快速指南](img/B10354_07_007.jpg)'
 - en: Note
+  id: totrans-25
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: We discount future rewards in RL for the same reason we discount
     future returns in finance. They are uncertain. Our choice here reflects how much
     we value future returns.'
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：我们在强化学习中折扣未来奖励，原因与我们在金融中折扣未来收益相同。它们是不确定的。我们在这里的选择反映了我们对未来收益的重视程度。'
 - en: Good chess players are very good at estimating future rewards in their head.
     In other words, their Q-function, *Q(s,a),* is very precise.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 优秀的棋手非常擅长在脑海中估算未来奖励。换句话说，他们的Q函数，*Q(s,a)*，非常精确。
 - en: Most chess practice revolves around developing a better Q-function. Players
     peruse many old games to learn how specific moves played out in the past, and
     how likely a given action is to lead to victory. However, this raises the question,
     how can a machine estimate a good Q-function? This is where neural networks come
     into play.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数象棋练习都围绕着开发更好的Q函数展开。玩家浏览许多旧的棋局，学习过去具体的棋步是如何进行的，以及某个特定行动有多大可能导致胜利。然而，这引出了一个问题：机器如何评估一个好的Q函数？这就是神经网络派上用场的地方。
 - en: Q-learning turns RL into supervised learning
+  id: totrans-29
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Q学习将强化学习转化为监督学习
 - en: 'When playing a game, we generate lots of "experiences." These experiences consist
     of the following:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 在进行游戏时，我们会生成大量的“经验”。这些经验包括以下内容：
 - en: The initial state, *s*
+  id: totrans-31
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 初始状态，*s*
 - en: The action taken, *a*
+  id: totrans-32
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 所采取的行动，*a*
 - en: The reward earned, *r*
+  id: totrans-33
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 获得的奖励，*r*
 - en: The state that followed, ![Q-learning turns RL into supervised learning](img/B10354_07_008.jpg)
+  id: totrans-34
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 接下来的状态，![Q-learning将RL转化为监督学习](img/B10354_07_008.jpg)
 - en: 'These experiences are our training data. We can frame the problem of estimating
     *Q(s,a)* as a regression problem. To solve this, we can use a neural network.
     Given an input vector consisting of *s* and *a*, the neural network is supposed
@@ -207,286 +281,404 @@
     supervised learning](img/B10354_07_009.jpg). If we are good at predicting *Q(s,a)*
     for different states *s* and actions *a*, we will have a good approximation of
     the Q-function.'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些经验就是我们的训练数据。我们可以将估计*Q(s,a)*的问题看作一个回归问题。为了解决这个问题，我们可以使用神经网络。给定一个由*s*和*a*组成的输入向量，神经网络应该预测*Q(s,a)*的值，等于目标值：![Q-learning将RL转化为监督学习](img/B10354_07_009.jpg)。如果我们能够准确预测不同状态*s*和动作*a*的*Q(s,a)*值，那么我们就能很好地逼近Q函数。
 - en: Note
+  id: totrans-36
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: We estimate ![Q-learning turns RL into supervised learning](img/B10354_07_010.jpg)
     through the same neural network as *Q(s,a)*. This leads to some instability as
     our targets now change as the networks learn, just as with **generative adversarial
     networks (GANs)**.'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：我们通过与*Q(s,a)*相同的神经网络来估计![Q-learning将RL转化为监督学习](img/B10354_07_010.jpg)。这会导致一些不稳定性，因为随着网络的学习，我们的目标值也会变化，就像**生成对抗网络（GANs）**一样。'
 - en: 'Given a batch of experiences, ![Q-learning turns RL into supervised learning](img/B10354_07_011.jpg),
     the training process then looks as follows:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 给定一批经验，![Q-learning将RL转化为监督学习](img/B10354_07_011.jpg)，训练过程如下所示：
 - en: For each possible action, ![Q-learning turns RL into supervised learning](img/B10354_07_012.jpg),
     (left, right, stay), predict the expected future reward, ![Q-learning turns RL
     into supervised learning](img/B10354_07_013.jpg), using the neural network.
+  id: totrans-39
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 对于每个可能的动作，![Q-learning将RL转化为监督学习](img/B10354_07_012.jpg)，（左、右、停留），使用神经网络预测期望的未来奖励，![Q-learning将RL转化为监督学习](img/B10354_07_013.jpg)。
 - en: Choose the highest value of the three predictions as the max, ![Q-learning turns
     RL into supervised learning](img/B10354_07_014.jpg).
+  id: totrans-40
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 选择三个预测值中的最大值作为最大值，![Q-learning将RL转化为监督学习](img/B10354_07_014.jpg)。
 - en: Calculate ![Q-learning turns RL into supervised learning](img/B10354_07_015.jpg).
     This is the target value for the neural network.
+  id: totrans-41
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算![Q-learning将RL转化为监督学习](img/B10354_07_015.jpg)。这是神经网络的目标值。
 - en: Train the neural network using a loss function. This is a function that calculates
     how near or far the predicted value is from the target value. Here, we will use
     ![Q-learning turns RL into supervised learning](img/B10354_07_016.jpg) as the
     loss function. Effectively, we want to minimize the squared error between prediction
     and target. The factor of 0.5 is just there to make the gradient nicer.
+  id: totrans-42
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用损失函数训练神经网络。这个函数计算预测值与目标值之间的距离或差距。在这里，我们将使用![Q-learning将RL转化为监督学习](img/B10354_07_016.jpg)作为损失函数。实际上，我们希望最小化预测值与目标值之间的平方误差。0.5的系数仅仅是为了让梯度更加平滑。
 - en: During gameplay, all the experiences are stored in a replay memory. This acts
     like a simple buffer in which we store ![Q-learning turns RL into supervised learning](img/B10354_07_017.jpg)
     pairs. The `ExperienceReplay` class also handles preparing the data for training.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 在游戏过程中，所有经验都存储在回放记忆中。它就像一个简单的缓冲区，我们在其中存储![Q-learning将RL转化为监督学习](img/B10354_07_017.jpg)对。`ExperienceReplay`类还负责为训练准备数据。
 - en: 'Check out the following code:'
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 查看以下代码：
 - en: '[PRE0]'
+  id: totrans-45
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Let''s pause for a second and break down the code that we''ve just created:'
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们暂停一下，分析一下我们刚刚创建的代码：
 - en: Firstly, we implement the experience replay buffer as a Python class. A replay
     buffer object is responsible for storing experiences and generating training data.
     Therefore, it has to implement some of the most critical pieces of the Q-learning
     algorithm.
+  id: totrans-47
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，我们将经验回放缓冲区实现为一个Python类。回放缓冲区对象负责存储经验并生成训练数据。因此，它必须实现Q-learning算法中的一些关键部分。
 - en: 'To initialize a replay object, we need to let it know how large its buffer
     should be and what the discount rate, ![Q-learning turns RL into supervised learning](img/B10354_07_018.jpg),
     is. The replay memory itself is a list of lists following this scheme:'
+  id: totrans-48
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 要初始化回放对象，我们需要告知它缓冲区的大小以及折扣率![Q-learning将RL转化为监督学习](img/B10354_07_018.jpg)。回放记忆本身是一个列表的列表，遵循以下结构：
 - en: '[PRE1]'
+  id: totrans-49
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Within this, `experience` is a tuple holding the experience information and `game_over`
     is a binary Boolean value indicating whether the game was over after this step.
+  id: totrans-50
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在此过程中，`experience`是一个元组，包含了经验信息，而`game_over`是一个二进制布尔值，表示游戏在此步骤后是否结束。
 - en: When we want to remember a new experience, we add it to our list of experiences.
     Since we cannot store infinite experiences, we delete the oldest experience if
     our buffer exceeds its maximum length.
+  id: totrans-51
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 当我们想要记住一个新的经验时，我们将其添加到我们的经验列表中。由于我们不能存储无限的经验，如果缓冲区超过了最大长度，我们将删除最旧的经验。
 - en: With the `get_batch` function, we can obtain a single batch of training data.
     To calculate ![Q-learning turns RL into supervised learning](img/B10354_07_019.jpg),
     we need a neural network as well, so we need to pass a Keras model to use the
     function.
+  id: totrans-52
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用`get_batch`函数，我们可以获得一个单独的训练数据批次。为了计算![Q-learning将强化学习转化为监督学习](img/B10354_07_019.jpg)，我们也需要一个神经网络，因此我们需要传递一个Keras模型来使用该函数。
 - en: Before we start generating a batch, we need to know how many experiences we
     have stored in our replay buffer, how many possible actions there are, and how
     many dimensions a game state has.
+  id: totrans-53
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在我们开始生成一个批次之前，我们需要知道我们在回放缓冲区中存储了多少经验，可能的动作有多少，以及游戏状态有多少维度。
 - en: Then we need to set up placeholder arrays for the inputs and targets we want
     to train the neural network on.
+  id: totrans-54
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后，我们需要为输入和目标设置占位符数组，这些是我们希望神经网络训练的数据。
 - en: We loop over the experience replay in a random order until we have either sampled
     all stored experiences or filled the batch.
+  id: totrans-55
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们随机遍历经验回放，直到我们已经抽取了所有存储的经验或填充了批次。
 - en: We load the experience data as well as the `game_over` indicator from the replay
     buffer.
+  id: totrans-56
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们从回放缓冲区加载经验数据以及`game_over`指示器。
 - en: We add state *s* to the input matrix. Later, the model will train to map from
     this state to the expected reward.
+  id: totrans-57
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们将状态*s*添加到输入矩阵中。之后，模型将训练以从这个状态映射到预期奖励。
 - en: We then fill the expected reward for all actions with the expected reward calculated
     by the current model. This ensures that our model only trains on the action that
     was actually taken since the loss for all other actions is zero.
+  id: totrans-58
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后，我们用当前模型计算的预期奖励填充所有动作的预期奖励。这确保了我们的模型只在实际采取的动作上进行训练，因为所有其他动作的损失为零。
 - en: Next, we calculate ![Q-learning turns RL into supervised learning](img/B10354_07_020.jpg).
     We simply assume that for the next state, ![Q-learning turns RL into supervised
     learning](img/B10354_07_021.jpg), or `state_tp1` in code, the neural network will
     estimate the expected reward perfectly. As the network trains, this assumption
     slowly becomes true.
+  id: totrans-59
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 接下来，我们计算![Q-learning将强化学习转化为监督学习](img/B10354_07_020.jpg)。我们假设对于下一个状态，![Q-learning将强化学习转化为监督学习](img/B10354_07_021.jpg)，或者在代码中为`state_tp1`，神经网络将完美地估计预期奖励。随着网络训练的进行，这一假设会逐渐变为真实。
 - en: Finally, if the game ended after state *S*, the expected reward from the action,
     *a,* should be the received reward, *r*. If it did not end, then the expected
     reward should be the received reward as well as the discounted expected future
     reward.
+  id: totrans-60
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最后，如果游戏在状态*S*后结束，则从动作*a*获得的预期奖励应该是实际获得的奖励*r*。如果没有结束，则预期奖励应为实际获得的奖励加上折扣后的预期未来奖励。
 - en: Defining the Q-learning model
+  id: totrans-61
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 定义Q-learning模型
 - en: 'Now it is time to define the model that will learn a Q-function for Catch.
     It turns out that a relatively simple model can already learn the function well.
     We need to define the number of possible actions as well as the grid size. There
     are three possible actions, which are *move left*, *stay in position*, and *move
     right*. Additionally, the game is being played on a 10x10-pixel grid:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是时候定义将为接球游戏学习Q函数的模型了。事实证明，一个相对简单的模型就能够很好地学习这个函数。我们需要定义可能的动作数量以及网格大小。共有三种可能的动作，分别是*向左移动*、*保持原地*和*向右移动*。此外，游戏是在一个10x10像素的网格上进行的：
 - en: '[PRE2]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'As this is a regression problem, the final layer has no activation function,
     and the loss is a mean squared error loss. We optimize the network using stochastic
     gradient descent without momentum or any other bells and whistles:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于这是一个回归问题，最后一层没有激活函数，损失函数是均方误差损失。我们使用随机梯度下降优化网络，不使用动量或其他任何花里胡哨的东西：
 - en: '[PRE3]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: Training to play Catch
+  id: totrans-66
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 训练玩接球游戏
 - en: The final ingredient to Q-learning is exploration. Everyday life shows that
     sometimes you have to do something weird and/or random to find out whether there
     is something better than your daily trot.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: Q-learning的最后一个要素是探索。日常生活表明，有时你必须做一些奇怪的和/或随机的事情，以发现是否有比你每天的常规更好的选择。
 - en: The same goes for Q-learning. By always choosing the best option, you might
     miss out on some unexplored paths. To avoid this, the learner will sometimes choose
     a random option, and not necessarily the best one.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: Q学习也是如此。通过始终选择最佳选项，你可能会错过一些未曾探索的路径。为了避免这种情况，学习者有时会选择一个随机选项，而不一定是最佳的选项。
 - en: 'Now we can define the training method:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以定义训练方法：
 - en: '[PRE4]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Before we go further, again let''s break down the code so we can see what we''re
     doing:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 在继续之前，让我们再次分解代码，看看我们在做什么：
 - en: We want to keep track of the progress of our Q-learner, so we count the wins of
     the model over time.
+  id: totrans-72
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们希望跟踪 Q-learner 的进展，因此我们会统计模型随时间变化的胜利次数。
 - en: We now play for a number of games, specified by the `epoch` argument. At the
     beginning of a game, we first reset the game, set the `game_over` indicator to
     `False`, and observe the initial state of the game.
+  id: totrans-73
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们现在将进行若干游戏，由`epoch`参数指定。游戏开始时，我们首先重置游戏，将`game_over`指示器设置为`False`，并观察游戏的初始状态。
 - en: We will then be playing frame by frame until the game is over.
+  id: totrans-74
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后我们将逐帧播放，直到游戏结束。
 - en: At the start of a frame cycle, we save the previously observed input as `input_tm1`,
     the input at time *t* minus one.
+  id: totrans-75
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在每个帧周期开始时，我们将之前观察到的输入保存为`input_tm1`，即时间 *t* 减去一的输入。
 - en: Now comes the exploration part. We draw a random number between zero and one.
     If the number is smaller than `epsilon`, we pick a random action. This technique
     is also called "epsilon greedy," as we pick a random action with a probability
     of epsilon and greedily choose the action promising the highest rewards otherwise.
+  id: totrans-76
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在进入探索部分。我们生成一个介于 0 和 1 之间的随机数。如果这个数小于`epsilon`，我们选择一个随机动作。这个技术也被称为“epsilon
+    贪婪”，因为我们以 epsilon 的概率选择随机动作，否则就贪婪地选择预期奖励最高的动作。
 - en: If we choose a non-random action, we let the neural network predict the expected
     rewards for all actions. We then pick the action with the highest expected reward.
+  id: totrans-77
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果我们选择一个非随机动作，我们让神经网络预测所有动作的预期奖励。然后我们选择预期奖励最高的动作。
 - en: We now act with our chosen or random action and observe a new state, a reward,
     and information about whether the game is over. The game gives a reward of one
     if we win, so we eventually have to increase our win counter.
+  id: totrans-78
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们现在根据选择的动作或随机动作进行操作，并观察一个新的状态、奖励以及游戏是否结束的信息。如果我们赢了，游戏会给我们一个奖励值 1，因此我们最终需要增加我们的胜利计数器。
 - en: We store the new experience in our experience replay buffer.
+  id: totrans-79
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们将新的经验存储在我们的经验重放缓冲区中。
 - en: We then sample a new training batch from the experience replay and train on that
     batch.
+  id: totrans-80
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后我们从经验重放中抽取一个新的训练批次，并对该批次进行训练。
 - en: 'The following graph shows the rolling mean of successful games. After about
     2,000 epochs of training, the neural network should be quite good at playing Catch:'
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 下图显示了成功游戏的滚动均值。经过大约 2,000 次训练周期后，神经网络应该能相当擅长玩 Catch 游戏：
 - en: '![Training to play Catch](img/B10354_07_03.jpg)'
+  id: totrans-82
   prefs: []
   type: TYPE_IMG
+  zh: '![训练玩 Catch 游戏](img/B10354_07_03.jpg)'
 - en: The progress of a Q-learning neural network playing Catch
+  id: totrans-83
   prefs: []
   type: TYPE_NORMAL
+  zh: Q-learning 神经网络玩 Catch 游戏的进展
 - en: Looking at the preceding graph, it's safe to say that you have now successfully
     created your first reinforcement learning system, as after 5000 epochs the average
     of victories per games is between 90% and 100%. In the next section, we will explore
     the theoretical foundations of reinforcement learning and discover how the same
     system that learns to play catch can learn to route orders in the futures market.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 看看前面的图表，可以放心地说，你现在已经成功创建了你的第一个强化学习系统，因为经过 5000 次训练周期后，每场游戏的平均胜率在 90% 和 100%
+    之间。在下一节中，我们将探索强化学习的理论基础，了解同一个学习玩 Catch 的系统是如何学习在期货市场中进行订单路由的。
 - en: Markov processes and the bellman equation – A more formal introduction to RL
+  id: totrans-85
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 马尔可夫过程与贝尔曼方程 – 强化学习的更正式介绍
 - en: Following the long history of modern deep learning being a continuation of quantitative
     finance with more GPUs, the theoretical foundation of reinforcement learning lies
     in Markov models.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据现代深度学习作为量化金融的延续，并且配合更多的 GPU，强化学习的理论基础在于马尔可夫模型。
 - en: Note
+  id: totrans-87
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: This section requires a bit of mathematical background knowledge.
     If you are struggling, there is a beautiful visual introduction by Victor Powell
     here: [http://setosa.io/ev/markov-chains/](http://setosa.io/ev/markov-chains/).'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：本节需要一定的数学背景知识。如果你感到困难，Victor Powell 在这里提供了一个非常好的视觉介绍：[http://setosa.io/ev/markov-chains/](http://setosa.io/ev/markov-chains/)。'
 - en: 'A more formal, but still simple, introduction is available on the website Analytics
     Vidhya: [https://www.analyticsvidhya.com/blog/2014/07/markov-chain-simplified/](https://www.analyticsvidhya.com/blog/2014/07/markov-chain-simplified/).'
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个更正式但仍然简单的介绍可以在网站 Analytics Vidhya 上找到：[https://www.analyticsvidhya.com/blog/2014/07/markov-chain-simplified/](https://www.analyticsvidhya.com/blog/2014/07/markov-chain-simplified/)。
 - en: 'A Markov model describes a stochastic process with different states in which
     the probability of ending up in a specific state is purely dependent on the state
     one is currently in. In the following diagram, you can see a simple Markov model
     describing recommendations given for a stock:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 马尔可夫模型描述了一个随机过程，其中不同的状态，进入特定状态的概率完全依赖于当前所在的状态。在下面的图示中，你可以看到一个简单的马尔可夫模型，描述了针对一只股票的推荐：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_04.jpg)'
+  id: totrans-91
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_04.jpg)'
 - en: The Markov model
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 马尔可夫模型
 - en: As you can see, there are three states in this model, **BUY**, **HOLD,** and
     **SELL**. For every two states, there is a transition probability. For example,
     the probability that a state gets a **BUY** recommendation if it had a **HOLD**
@@ -494,23 +686,31 @@
     bellman equation – A more formal introduction to RL](img/B10354_07_022.jpg), which
     is equal to 0.5\. There is a 50% chance that a stock that is currently in **HOLD**
     will move to **BUY** in the next round.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，这个模型中有三个状态，**买入**、**持有**和**卖出**。每两个状态之间都有一个转移概率。例如，某一状态如果在前一轮有**持有**推荐，那么它得到**买入**推荐的概率是由![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_022.jpg)表示的，等于0.5。也就是说，当前处于**持有**状态的股票，在下一轮有50%的概率转到**买入**状态。
 - en: States are associated with rewards. If you own stock, and that stock has a **BUY**
     recommendation, the stock will go up, and you will earn a reward of **1**. If
     the stock has a sell recommendation, you will gain a negative reward, or punishment,
     of **-1**.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 状态与奖励相关。如果你持有股票，并且该股票有**买入**推荐，该股票会上涨，你将获得**1**的奖励。如果股票有卖出推荐，你将获得负奖励或惩罚，**-1**。
 - en: Note
+  id: totrans-95
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: In some textbooks, the rewards are associated with state transitions
     and not states themselves. It turns out to be mathematically equivalent, and for
     the ease of notation, we are associating the rewards with states here.'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：在一些教材中，奖励与状态转移相关，而不是与状态本身相关。事实上，这在数学上是等价的，为了简化符号，我们在这里将奖励与状态相关联。'
 - en: 'In a Markov model, an agent can follow a policy, usually denoted as ![Markov
     processes and the bellman equation – A more formal introduction to RL](img/B10354_07_023.jpg).
     A policy describes the probability of taking action *a* when in state *s*. Say
@@ -518,13 +718,17 @@
     In that case, you might choose to sell the stock in 50% of cases, hold the stock
     in 30% of cases, and buy more in 20% of cases. In other words, your policy for
     the state **SELL** can be described as follows:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
+  zh: 在马尔可夫模型中，代理可以遵循一个策略，通常表示为![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_023.jpg)。一个策略描述了在状态*s*时采取动作*a*的概率。假设你是一个交易者：你持有股票，并且该股票收到**卖出**推荐。在这种情况下，你可能在50%的情况下选择卖出股票，在30%的情况下选择持有股票，在20%的情况下选择买入更多股票。换句话说，你在**卖出**状态下的策略可以描述如下：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_024.jpg)![Markov
     processes and the bellman equation – A more formal introduction to RL](img/B10354_07_025.jpg)![Markov
     processes and the bellman equation – A more formal introduction to RL](img/B10354_07_026.jpg)'
+  id: totrans-98
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_024.jpg)![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_025.jpg)![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_026.jpg)'
 - en: 'Some traders have a better policy and can make more money from a state than
     others. Therefore, the value of state *s* depends on the policy, ![Markov processes
     and the bellman equation – A more formal introduction to RL](img/B10354_07_027.jpg).
@@ -533,36 +737,53 @@
     is followed. It is the expected return from state *s* when policy ![Markov processes
     and the bellman equation – A more formal introduction to RL](img/B10354_07_029.jpg)
     is followed:'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 一些交易者有更好的策略，能够从某个状态中赚取比其他人更多的钱。因此，状态*s*的价值取决于策略，![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_027.jpg)。价值函数*V*描述了在遵循策略![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_028.jpg)时，状态*s*的价值。它是遵循策略![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_029.jpg)时，从状态*s*获得的期望回报：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_030.jpg)'
+  id: totrans-100
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_030.jpg)'
 - en: 'The expected return is the reward gained immediately plus the discounted future
     rewards:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 期望回报是即时获得的奖励加上折扣后的未来奖励：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_031.jpg)'
+  id: totrans-102
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_031.jpg)'
 - en: 'The other value function frequently used in RL is the function *Q(s,a),* which
     we have already seen in the previous section. *Q* describes the expected return
     of taking action *a* in state *s* if policy ![Markov processes and the bellman
     equation – A more formal introduction to RL](img/B10354_07_032.jpg) is followed:'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习中常用的另一个值函数是*Q(s,a)*，我们在前一节中已经见过。*Q*描述了在状态*s*下，采取动作*a*并遵循策略![马尔可夫过程与贝尔曼方程
+    - 强化学习的更正式介绍](img/B10354_07_032.jpg)时的期望回报：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_033.jpg)'
+  id: totrans-104
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_033.jpg)'
 - en: Note
+  id: totrans-105
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: We use the expected value since our environment and our actions are
     stochastic. We cannot say for certain that we will land in a specific state; we
     can only give a probability.'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：我们使用期望值，因为我们的环境和行为是随机的。我们无法确定一定会到达某个特定状态；我们只能给出概率。'
 - en: '*Q* and *V* describe the same thing. If we find ourselves in a certain state,
     what should we do? *V* gives recommendations regarding which state we should seek,
     and *Q* gives advice on which action we should take. Of course, *V* implicitly
@@ -570,8 +791,10 @@
     is landing in some state. In fact, both *Q* and *V* are derived from the so-called
     Bellman equation, which brings us back to the Markov model from the beginning
     of this section.'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: '*Q*和*V*描述的是相同的内容。如果我们处于某个状态，我们应该怎么做？*V*给出我们应该寻求的状态的建议，*Q*则给出我们应该采取的行动的建议。当然，*V*隐含着我们必须采取某些行动，而*Q*则假设我们的行动结果是进入某个状态。事实上，*Q*和*V*都源自所谓的贝尔曼方程，这将我们引回到本节开始时的马尔可夫模型。'
 - en: 'If you assume that the environment you operate in can be described as a Markov
     model, you would really want to know two things. First, you would want to find
     out the *state transition probabilities*. If you are in state *s*, what is the
@@ -579,42 +802,64 @@
     to RL](img/B10354_07_034.jpg) ends in state ![Markov processes and the bellman
     equation – A more formal introduction to RL](img/B10354_07_035.jpg) if you take
     action *a*? Mathematically, it is as follows:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你假设你所操作的环境可以用马尔可夫模型来描述，那么你会真正想要了解两件事。首先，你会想要找出*状态转移概率*。如果你处于状态*s*，在采取动作*a*之后，*s*状态转移到状态![马尔可夫过程与贝尔曼方程
+    - 强化学习的更正式介绍](img/B10354_07_034.jpg)的概率是多少？从数学角度来看，公式如下：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_036.jpg)'
+  id: totrans-109
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_036.jpg)'
 - en: 'Equally, you would be interested in the expected reward ![Markov processes
     and the bellman equation – A more formal introduction to RL](img/B10354_07_037.jpg)
     of being in state *s*, taking action *a* and ending up in state ![Markov processes
     and the bellman equation – A more formal introduction to RL](img/B10354_07_038.jpg):'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样地，你也会对在状态*s*下，采取动作*a*并最终到达状态![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_037.jpg)的期望奖励感兴趣：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_039.jpg)'
+  id: totrans-111
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_039.jpg)'
 - en: 'With this in mind, we can now derive the two Bellman equations for *Q* and
     *V*. First, we rewrite the equation describing *V* to contain the actual formula
     for ![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_040.jpg):'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 牢记这一点，我们现在可以推导出*Q*和*V*的两个贝尔曼方程。首先，我们重写描述*V*的方程，包含实际的公式，见下图：![马尔可夫过程与贝尔曼方程 -
+    强化学习的更正式介绍](img/B10354_07_040.jpg)
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_041.jpg)'
+  id: totrans-113
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_041.jpg)'
 - en: 'We can pull the first reward out of the sum:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以将第一个奖励从总和中提取出来：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_042.jpg)'
+  id: totrans-115
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程 - 强化学习的更正式介绍](img/B10354_07_042.jpg)'
 - en: 'The first part of our expectation is the expected reward we directly receive
     from being in state *s* and the following policy, ![Markov processes and the bellman
     equation – A more formal introduction to RL](img/B10354_07_043.jpg):'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们期望的第一部分是我们从处于状态*s*并遵循后续策略直接获得的期望回报，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_043.jpg)：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_044.jpg)'
+  id: totrans-117
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_044.jpg)'
 - en: The preceding equation shows a nested sum. First, we sum over all actions, *a,*
     weighted by their probability of occurrence under policy ![Markov processes and
     the bellman equation – A more formal introduction to RL](img/B10354_07_045.jpg).
@@ -625,14 +870,20 @@
     action *a*, weighted by the probability of this transition occurring following
     the transition probability ![Markov processes and the bellman equation – A more
     formal introduction to RL](img/B10354_07_048.jpg).
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述方程展示了一个嵌套求和。首先，我们对所有行动*a*进行求和，按它们在策略![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_045.jpg)下发生的概率加权。对于每个行动，我们再对从状态*s*到下一个状态的回报分布进行求和，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_046.jpg)，该回报由行动*a*后从状态*s*到下一个状态的转移产生，按该转移发生的概率加权，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_048.jpg)。
 - en: 'The second part of our expectation can be rewritten as follows:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们期望的第二部分可以重新写成如下形式：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_049.jpg)'
+  id: totrans-120
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_049.jpg)'
 - en: The expected discounted value of the future rewards after state *s* is the discounted
     expected future value of all states, ![Markov processes and the bellman equation
     – A more formal introduction to RL](img/B10354_07_050.jpg), weighted by their
@@ -640,39 +891,55 @@
     formal introduction to RL](img/B10354_07_051.jpg), and the probability of action
     *a* being taken following policy ![Markov processes and the bellman equation –
     A more formal introduction to RL](img/B10354_07_052.jpg).
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 状态*s*之后的未来回报的期望折扣值是所有状态的期望未来值的折扣，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_050.jpg)，按它们的发生概率加权，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_051.jpg)，以及在后续策略下采取行动*a*的概率，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_052.jpg)。
 - en: 'This formula is quite a mouthful, but it gives us a glimpse into the recursive
     nature of the value function. If we now replace the expectation in our value function,
     it becomes clearer:'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个公式确实有些复杂，但它为我们揭示了值函数的递归特性。如果我们现在将值函数中的期望替换，公式变得更加清晰：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_053.jpg)'
+  id: totrans-123
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_053.jpg)'
 - en: 'The inner expectation represents the value function for the next step, ![Markov
     processes and the bellman equation – A more formal introduction to RL](img/B10354_07_054.jpg)!
     That means we can replace the expectation with the value function, ![Markov processes
     and the bellman equation – A more formal introduction to RL](img/B10354_07_055.jpg):'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 内部的期望表示下一步的值函数，![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_054.jpg)！这意味着我们可以用值函数![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_055.jpg)替换期望。
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_056.jpg)'
+  id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_056.jpg)'
 - en: 'Following the same logic, we can derive the *Q* function as follows:'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 按照相同的逻辑，我们可以推导出*Q*函数，如下所示：
 - en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_057.jpg)'
+  id: totrans-127
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫过程与贝尔曼方程——强化学习的更正式介绍](img/B10354_07_057.jpg)'
 - en: Congratulations, you have just derived the Bellman equation! For now, pause
     and take a second to ponder and make sure you really understand the mechanics
     behind these equations. The core idea is that the value of a state can be expressed
     as the value of other states. For a long time, the go-to approach to optimizing
     the Bellman equation was to build a model of the underlying Markov model and its
     state transition and reward probabilities.
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 恭喜，你刚刚推导出了贝尔曼方程！现在，暂停一下，思考并确保你真正理解这些方程背后的原理。核心思想是一个状态的价值可以表示为其他状态的价值。长期以来，优化贝尔曼方程的首选方法是构建一个基本的马尔可夫模型，并模拟其状态转换和奖励概率。
 - en: 'However, the recursive structure calls for a technique called dynamic programming.
     The idea behind dynamic programming is to solve easier sub-problems. You''ve already
     seen this in action in the Catch example. There, we used a neural network to estimate
@@ -684,274 +951,386 @@
     of states that were further away from the end of the game. There are more possible
     applications of this dynamic programming and model-free approach to reinforcement
     learning.'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，递归结构需要一种叫做动态规划的技术。动态规划的思想是解决更容易的子问题。你已经在Catch示例中看到了这一点。在那个例子中，我们使用神经网络来估计![马尔可夫过程和贝尔曼方程——强化学习的更正式介绍](img/B10354_07_058.jpg)，除了游戏结束的状态。对于这些游戏，找到与状态相关的奖励是很容易的：那就是游戏结束时获得的最终奖励。正是这些状态，神经网络首次开发了准确的*Q*函数估计值。从这些状态开始，它就可以向后推导，学习距离游戏结束较远的状态的价值。动态规划和无模型强化学习方法的应用还有更多可能。
 - en: Before we jump into the different kinds of systems that can be built using this
     theoretical foundation, we will pay a brief visit to the applications of the Bellman
     equation in economics. Readers who are familiar with the work discussed here will
     find reference points that they can use to develop a deeper understanding of Bellman
     equations. Readers unfamiliar with these works will find inspiration for further
     reading and applications for techniques discussed throughout this chapter.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们深入探讨如何利用这一理论基础构建不同类型的系统之前，我们将简要回顾贝尔曼方程在经济学中的应用。对这些工作已经熟悉的读者将会找到参考点，帮助他们更深入理解贝尔曼方程。对这些工作不熟悉的读者则可以从中获得进一步阅读的灵感，并找到本章所讨论技术的应用场景。
 - en: The Bellman equation in economics
+  id: totrans-131
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 贝尔曼方程在经济学中的应用
 - en: While the first application of the Bellman equation to economics occurred in
     1954, Robert C. Merton's 1973 article, *An Intertemporal Capital Asset Pricing
     Model* ([http://www.people.hbs.edu/rmerton/Intertemporal%20Capital%20Asset%20Pricing%20Model.pdf](http://www.people.hbs.edu/rmerton/Intertemporal%20Capital%20Asset%20Pricing%20Model.pdf))*,*
     is perhaps the most well-known application. Using the Bellman equation, Merton
     developed a capital asset pricing model that, unlike the classic CAPM model, works
     in continuous time and can account for changes in an investment opportunity.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然贝尔曼方程首次应用于经济学是在1954年，但罗伯特·C·梅尔顿（Robert C. Merton）1973年的文章，*《跨期资本资产定价模型》*（[http://www.people.hbs.edu/rmerton/Intertemporal%20Capital%20Asset%20Pricing%20Model.pdf](http://www.people.hbs.edu/rmerton/Intertemporal%20Capital%20Asset%20Pricing%20Model.pdf)），*也许是最著名的应用。*梅尔顿使用贝尔曼方程，发展了一个资本资产定价模型，不同于经典的CAPM模型，该模型在连续时间内运作，并能解释投资机会的变化。
 - en: The recursiveness of the Bellman equation inspired the subfield of recursive
     economics. Nancy Stokey, Robert Lucas, and Edward Prescott wrote an influential
     1989 book titled *Recursive Methods in Economic Dynamics* ([http://www.hup.harvard.edu/catalog.php?isbn=9780674750968](http://www.hup.harvard.edu/catalog.php?isbn=9780674750968))
     in which they apply the recursive approach to solve problems in economic theory.
     This book inspired others to use recursive economics to address a wide range of
     economic problems, from the principal-agent problem to optimal economic growth.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 贝尔曼方程的递归性启发了递归经济学的子领域。南希·斯托基（Nancy Stokey）、罗伯特·卢卡斯（Robert Lucas）和爱德华·普雷斯科特（Edward
+    Prescott）于1989年写了本具有影响力的书籍《*经济动态中的递归方法*》（[http://www.hup.harvard.edu/catalog.php?isbn=9780674750968](http://www.hup.harvard.edu/catalog.php?isbn=9780674750968)），他们在书中应用递归方法解决经济理论中的问题。这本书激励了其他人利用递归经济学来解决各种经济问题，从委托代理问题到最优经济增长。
 - en: Avinash Dixit and Robert Pindyck developed and applied the approach successfully
     to capital budgeting in their 1994 book, *Investment Under Uncertainty* ([https://press.princeton.edu/titles/5474.html](https://press.princeton.edu/titles/5474.html)).
     Patrick Anderson applied it to the valuation of private businesses in his 2009
     article, *The Value of Private Businesses in the United States* ([https://www.andersoneconomicgroup.com/the-value-of-private-businesses-in-the-united-states/](https://www.andersoneconomicgroup.com/the-value-of-private-businesses-in-the-united-states/)).
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: Avinash Dixit和Robert Pindyck在1994年出版的《*不确定性下的投资*》一书中，成功地将这一方法应用于资本预算([https://press.princeton.edu/titles/5474.html](https://press.princeton.edu/titles/5474.html))。Patrick
+    Anderson在2009年的文章《*美国私人企业的价值*》中将其应用于私人企业估值([https://www.andersoneconomicgroup.com/the-value-of-private-businesses-in-the-united-states/](https://www.andersoneconomicgroup.com/the-value-of-private-businesses-in-the-united-states/))。
 - en: While recursive economics still has many problems, including the tremendous
     compute power required for it, it is a promising subfield of the science.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然递归经济学仍然面临许多问题，包括所需的巨大的计算能力，但它是该科学领域一个充满前景的子领域。
 - en: Advantage actor-critic models
+  id: totrans-136
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 优势演员-评论家模型
 - en: Q-learning, as we saw in the previous sections, is quite useful but it does
     have its drawbacks. For example, as we have to estimate a Q value for each action,
     there has to be a discrete, limited set of actions. So, what if the action space
     is continuous or extremely large? Say you are using an RL algorithm to build a
     portfolio of stocks.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 如我们在前面的章节中所看到的，Q学习非常有用，但也有其缺点。例如，由于我们必须为每个动作估计一个Q值，因此必须有一个离散的、有限的动作集。那么，如果动作空间是连续的或极其庞大的呢？假设你正在使用一个RL算法来构建一个股票投资组合。
 - en: 'In this case, even if your universe of stocks consisted only of two stocks,
     say, AMZN and AAPL, there would be a huge amount of ways to balance them: 10%
     AMZN and 90% AAPL, 11% AMZM and 89% AAPL, and so on. If your universe gets bigger,
     the amount of ways you can combine stocks explodes.'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，即使你的股票池仅包含两只股票，比如AMZN和AAPL，仍然有大量方式来平衡它们：10%的AMZN和90%的AAPL，11%的AMZN和89%的AAPL，依此类推。如果你的股票池更大，你可以组合股票的方式将成倍增加。
 - en: A workaround to having to select from such an action space is to learn the policy,
     ![Advantage actor-critic models](img/B10354_07_059.jpg), directly. Once you have
     learned a policy, you can just give it a state, and it will give back a distribution
     of actions. This means that your actions will also be stochastic. A stochastic
     policy has advantages, especially in a game theoretic setting.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 避免从如此大的动作空间中选择的一个解决办法是直接学习策略，![优势演员-评论家模型](img/B10354_07_059.jpg)。一旦你学会了一个策略，你只需要给它一个状态，它就会返回一个动作分布。这意味着你的动作也将是随机的。随机策略有其优势，特别是在博弈论的背景下。
 - en: Imagine you are playing rock, paper, scissors and you are following a deterministic
     policy. If your policy is to pick rock, you will always pick rock, and as soon
     as your opponent figures out that you are always picking rock, you will always
     lose. The Nash equilibrium, the solution of a non-cooperative game, for rock,
     paper, scissors is to pick actions at random. Only a stochastic policy can do
     that.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 想象一下你正在玩剪刀石头布，并且你遵循一个确定性策略。如果你的策略是出石头，你将总是出石头，一旦你的对手发现你总是出石头，你将永远输掉比赛。剪刀石头布的纳什均衡，作为一个非合作博弈的解法，是随机选择动作。只有随机策略才能做到这一点。
 - en: To learn a policy, we have to be able to compute a gradient with respect to
     policy. Contrary to most people's expectations, policies are differentiable. In
     this section, we will build up a policy gradient step by step and use it to create
     an **advantage actor-critic** (**A2C**) model for continuous control.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 要学习一个策略，我们必须能够计算关于策略的梯度。与大多数人的预期相反，策略是可微的。在本节中，我们将一步步构建一个策略梯度，并利用它创建一个**优势演员-评论家**（**A2C**）模型，用于连续控制。
 - en: 'The first part in the process of differentiating policies is to look at the
     advantage we can have by picking a particular action, *a,* rather than just following
     the policy, ![Advantage actor-critic models](img/B10354_07_060.jpg):'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 区分策略的过程中的第一步是看看通过选择一个特定动作*a*，而不是仅仅遵循策略，![优势演员-评论家模型](img/B10354_07_060.jpg)，我们能获得的优势。
 - en: '![Advantage actor-critic models](img/B10354_07_061.jpg)'
+  id: totrans-143
   prefs: []
   type: TYPE_IMG
+  zh: '![优势演员-评论家模型](img/B10354_07_061.jpg)'
 - en: 'The advantage of action *a* in state *s* is the value of executing *a* in *s*
     minus the value of *s* under the policy, ![Advantage actor-critic models](img/B10354_07_062.jpg).
     We measure how good our policy, ![Advantage actor-critic models](img/B10354_07_063.jpg),
     is with ![Advantage actor-critic models](img/B10354_07_064.jpg), a function expressing
     the expected value of the starting state, ![Advantage actor-critic models](img/B10354_07_065.jpg):'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 动作*a*在状态*s*中的优势是执行*a*在*s*中的价值减去策略下状态*s*的价值，![优势演员-评论家模型](img/B10354_07_062.jpg)。我们通过![优势演员-评论家模型](img/B10354_07_063.jpg)来衡量我们的策略，![优势演员-评论家模型](img/B10354_07_064.jpg)，它是表示起始状态期望值的函数，![优势演员-评论家模型](img/B10354_07_065.jpg)：
 - en: '![Advantage actor-critic models](img/B10354_07_066.jpg)'
+  id: totrans-145
   prefs: []
   type: TYPE_IMG
+  zh: '![优势演员-评论家模型](img/B10354_07_066.jpg)'
 - en: 'Now, to compute the gradient of the policy, we have to do two steps, which
     are shown inside the expectation in the policy gradient formula:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，要计算策略的梯度，我们必须进行两个步骤，这两个步骤在策略梯度公式中的期望部分显示：
 - en: '![Advantage actor-critic models](img/B10354_07_067.jpg)'
+  id: totrans-147
   prefs: []
   type: TYPE_IMG
+  zh: '![优势演员-评论家模型](img/B10354_07_067.jpg)'
 - en: First, we have to calculate the advantage of a given action, *a,* with *A(s,a)*.
     Then we have to calculate the derivative of the weights of the neural network,
     ![Advantage actor-critic models](img/B10354_07_068.jpg), with respect to increasing
     the probability, ![Advantage actor-critic models](img/B10354_07_069.jpg), that
     *a* is picked under policy ![Advantage actor-critic models](img/B10354_07_070.jpg).
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们必须计算给定动作*a*的优势*A(s,a)*。然后，我们必须计算神经网络权重的导数，![优势演员-评论家模型](img/B10354_07_068.jpg)，以增加动作*a*在策略![优势演员-评论家模型](img/B10354_07_070.jpg)下被选择的概率，![优势演员-评论家模型](img/B10354_07_069.jpg)。
 - en: For actions with a positive advantage, *A(s,a)*, we follow the gradient that
     would make *a* more likely. For actions with a negative advantage, we go in the
     exact opposite direction. The expectation says that we are doing this for all
     states and all actions. In practice, we manually multiply the advantage of actions
     with their increased likelihood gradients.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于具有正优势的动作*A(s,a)*，我们遵循使*a*更可能的梯度。对于具有负优势的动作，我们则朝着完全相反的方向前进。期望表示我们正在为所有状态和所有动作执行此操作。实际上，我们手动将动作的优势与它们增加的可能性梯度相乘。
 - en: 'One thing left for us to look at is how we compute the advantage. The value
     of taking an action is the reward earned directly as a result of taking the action,
     as well as the value of the state we find ourselves in after taking that action:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们接下来要看的是如何计算优势。采取一个动作的价值是由于执行该动作而直接获得的奖励，以及执行该动作后我们所处状态的价值：
 - en: '![Advantage actor-critic models](img/B10354_07_071.jpg)'
+  id: totrans-151
   prefs: []
   type: TYPE_IMG
+  zh: '![优势演员-评论家模型](img/B10354_07_071.jpg)'
 - en: 'So, we can substitute *Q(s,a)* in the advantage calculation:'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们可以在优势计算中代入*Q(s,a)*：
 - en: '![Advantage actor-critic models](img/B10354_07_072.jpg)'
+  id: totrans-153
   prefs: []
   type: TYPE_IMG
+  zh: '![优势演员-评论家模型](img/B10354_07_072.jpg)'
 - en: 'As calculating *V* turns out to be useful for calculating the policy gradient,
     researchers have come up with the A2C architecture. A single neural network with
     two heads that learns both *V* and ![Advantage actor-critic models](img/B10354_07_073.jpg).
     As it turns out, sharing weights for learning the two functions is useful because
     it accelerates the training if both heads have to extract features from the environment:'
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于计算*V*对于计算策略梯度很有用，研究人员提出了A2C架构。该架构是一个具有两个输出头的单一神经网络，学习*V*和![优势演员-评论家模型](img/B10354_07_073.jpg)。事实证明，共享学习这两个函数的权重是有益的，因为如果两个输出头都需要从环境中提取特征，共享权重可以加速训练：
 - en: '![Advantage actor-critic models](img/B10354_07_05.jpg)'
+  id: totrans-155
   prefs: []
   type: TYPE_IMG
+  zh: '![优势演员-评论家模型](img/B10354_07_05.jpg)'
 - en: A2C scheme
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: A2C方案
 - en: If you are training an agent that operates on high-dimensional image data, for
     instance, the value function and the policy head then both need to learn how to
     interpret the image. Sharing weights would help master the common task. If you
     are training on lower dimensional data, it might make more sense to not share
     weights.
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 例如，如果你在训练一个处理高维图像数据的智能体，那么值函数和策略头都需要学习如何解读图像。共享权重将有助于掌握这一共同任务。如果你正在处理低维数据，可能更合理的是不共享权重。
 - en: If the action space is continuous, ![Advantage actor-critic models](img/B10354_07_074.jpg)
     is represented by two outputs, those being the mean, ![Advantage actor-critic
     models](img/B10354_07_075.jpg), and standard deviation, ![Advantage actor-critic
     models](img/B10354_07_076.jpg). This allows us to sample from a learned distribution
     just as we did for the autoencoder.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果动作空间是连续的，![优势演员-评论家模型](img/B10354_07_074.jpg)由两个输出表示，即均值，![优势演员-评论家模型](img/B10354_07_075.jpg)，以及标准差，![优势演员-评论家模型](img/B10354_07_076.jpg)。这允许我们像在自动编码器中一样从学习到的分布中进行采样。
 - en: A common variant of the A2C approach is the **asynchronous advantage actor-critic**
     or **A3C**. A3C works exactly like A2C, except that at training time, multiple
     agents are simulated in parallel. This means that more independent data can be
     gathered. Independent data is important as too-correlated examples can make a
     model overfit to specific situations and forget other situations.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: A2C 方法的一个常见变体是**异步优势演员-评论家**（**A3C**）。A3C 的工作原理与 A2C 完全相同，只是在训练时，多个智能体会并行模拟。这意味着可以收集更多独立的数据。独立数据非常重要，因为过于相关的示例会使模型过拟合特定情境，而忽略其他情境。
 - en: Since both A3C and A2C work by the same principles, and the implementation of
     parallel gameplay introduces some complexity that obfuscates the actual algorithm,
     we will just stick with A2C in the following examples.
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于 A3C 和 A2C 都遵循相同的原理，而并行游戏的实现引入了一些复杂性，可能会使实际算法变得模糊，因此我们将在接下来的示例中仅使用 A2C。
 - en: Learning to balance
+  id: totrans-161
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 学习平衡
 - en: 'In this section, we will train an A2C model to swing up and balance a pendulum:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一部分，我们将训练一个 A2C 模型来摆动并平衡一个摆锤：
 - en: '![Learning to balance](img/B10354_07_06.jpg)'
+  id: totrans-163
   prefs: []
   type: TYPE_IMG
+  zh: '![学习平衡](img/B10354_07_06.jpg)'
 - en: Pendulum gym
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 摆锤环境
 - en: The pendulum is controlled by a rotational force that can be applied in either
     direction. In the preceding diagram, you can see the arrow that shows the force
     being applied. Control is continuous; the agent can apply more or less force.
     At the same time, force can be applied in both directions as a positive and negative
     force.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 摆锤是通过可以在任意方向施加的旋转力来控制的。在前面的图中，你可以看到施加力的箭头。控制是连续的；智能体可以施加更多或更少的力。同时，力可以在两个方向上施加，作为正向力或负向力。
 - en: This relatively simple control task is a useful example of a continuous control
     that can be easily extended to a stock trading task, which we will look at later.
     In addition, the task can be visualized so that we can get an intuitive grasp
     of how the algorithm learns, including any pitfalls.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个相对简单的控制任务是一个有用的连续控制示例，可以很容易地扩展到股票交易任务，稍后我们将讨论这一点。此外，这个任务可以通过可视化的方式帮助我们直观地理解算法是如何学习的，包括其中的任何陷阱。
 - en: Note
+  id: totrans-167
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: When implementing a new algorithm, try it out on a task you can visualize.
     Failures are often subtle and easier to spot visually than through data.'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：在实现新算法时，尽量选择一个可以可视化的任务进行测试。失败往往是微妙的，通过数据很难发现，但视觉上更容易察觉。'
 - en: 'The pendulum environment is part of the OpenAI Gym, a suite of games made to
     train reinforcement learning algorithms. You can install it via the command line
     as follows:'
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 摆锤环境是 OpenAI Gym 的一部分，它是一个用于训练强化学习算法的游戏套件。你可以通过以下命令行进行安装：
 - en: '[PRE5]'
+  id: totrans-170
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Before we start, we have to make some imports:'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们开始之前，我们需要做一些导入：
 - en: '[PRE6]'
+  id: totrans-172
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'There are quite a few new imports, so let''s walk through them one by one:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 有很多新的导入，我们将一一讲解：
 - en: OpenAI's `gym` is a toolkit for developing reinforcement learning algorithms.
     It provides a number of game environments, from classic control tasks, such as
     a pendulum, to Atari games and robotics simulations.
+  id: totrans-174
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: OpenAI 的 `gym` 是一个用于开发强化学习算法的工具包。它提供了许多游戏环境，从经典的控制任务（如摆锤）到 Atari 游戏和机器人仿真。
 - en: '`gym` is interfaced by `numpy` arrays. States, actions, and environments are
     all presented in a `numpy`-compatible format.'
+  id: totrans-175
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`gym` 通过 `numpy` 数组进行接口。状态、动作和环境都以 `numpy` 兼容的格式呈现。'
 - en: Our neural network will be relatively small and based around the functional
     API. Since we once again learn a distribution, we need to make use of SciPy's
     `norm` function, which helps us take the norm of a vector.
+  id: totrans-176
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们的神经网络会相对较小，并基于函数式 API。由于我们再次学习一个分布，因此我们需要使用 SciPy 的 `norm` 函数，它帮助我们对向量进行归一化处理。
 - en: The `deque` Python data structure is a highly efficient data structure that
     conveniently manages a maximum length for us. No more manually removing experiences!
     We can randomly sample from `deque` using Python's `random` module.
+  id: totrans-177
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`deque` Python 数据结构是一种高效的数据结构，可以方便地管理最大长度。再也不用手动移除经验了！我们可以使用 Python 的 `random`
+    模块从 `deque` 中随机采样。'
 - en: 'Now it is time to build the agent. The following methods all form the `A2CAgent`
     class:'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在是时候构建代理了。以下方法都构成了 `A2CAgent` 类：
 - en: '[PRE7]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Let''s walk through the code step by step:'
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们一步步分析代码：
 - en: First, we need to define some game-related variables. The state space size and
     the action space size are given by the game. Pendulum states consist of three
     variables dependent on the angle of the pendulum. A state consists of the sine
     of theta, the cosine of theta, and the angular velocity. The value of a state
     is just a single scalar.
+  id: totrans-181
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，我们需要定义一些与游戏相关的变量。状态空间的大小和动作空间的大小由游戏决定。摆的状态由三个与摆角相关的变量组成。一个状态由 θ 的正弦值、θ 的余弦值和角速度组成。状态的值只是一个单一的标量。
 - en: Next, we set up our experience replay buffer, which can save at maximum 2,000
     states. Larger RL experiments have much larger replay buffers (often around 5
     million experiences), but for this task 2,000 will do.
+  id: totrans-182
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 接下来，我们设置了经验回放缓冲区，它最多可以保存 2,000 个状态。更大规模的强化学习实验通常会有更大的回放缓冲区（通常约为 500 万个经验），但对于这个任务来说，2,000
+    个就足够了。
 - en: As we are training a neural network, we need to set some hyperparameters. Even
     if the actor and critic share weights, it turns out that the actor learning rate
     should usually be lower than the critic learning rate. This is because the policy
@@ -962,32 +1341,47 @@
     In reinforcement learning, we multiply with the discount rate. Therefore, a higher
     discount factor, ![Learning to balance](img/B10354_07_078.jpg), means that future
     values are less discounted.
+  id: totrans-183
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 由于我们正在训练一个神经网络，我们需要设置一些超参数。即使 actor 和 critic 共享权重，事实证明，actor 的学习率通常应低于 critic
+    的学习率。这是因为我们训练 actor 的策略梯度通常更加波动。我们还需要设置折扣率，![Learning to balance](img/B10354_07_077.jpg)。请记住，强化学习中的折扣率与金融中的应用方式不同。在金融中，折扣是通过将未来值除以
+    1 加上折扣因子来实现的。而在强化学习中，我们是用折扣率进行乘法运算。因此，较高的折扣因子 ![Learning to balance](img/B10354_07_078.jpg)
+    意味着未来的值受到的折扣较少。
 - en: To actually build the model, we define a separate method, which we will discuss
     next.
+  id: totrans-184
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了实际构建模型，我们定义了一个单独的方法，接下来我们将讨论这个方法。
 - en: 'The optimizers for actor and critic are custom optimizers. To define these,
     we also create a separate function. The optimizers themselves are functions that
     can be called at training time:'
+  id: totrans-185
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: actor 和 critic 的优化器是自定义优化器。为了定义这些优化器，我们还创建了一个单独的函数。优化器本身是可以在训练时调用的函数：
 - en: '[PRE8]'
+  id: totrans-186
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'The preceding function sets up the Keras model. It is quite complicated, so
     let''s go through it:'
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述函数设置了 Keras 模型。它相当复杂，所以让我们逐步分析：
 - en: As we are using the functional API, we have to define an input layer that we
     can use to feed the state to the actor and critic.
+  id: totrans-188
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 由于我们使用的是函数式 API，我们必须定义一个输入层，用来将状态传递给 actor 和 critic。
 - en: The actor has a hidden first layer as an input to the actor value function.
     It has 30 hidden units and a `relu` activation function. It is initialized by
     an `he_uniform` initializer. This initializer is only slightly different from
@@ -998,134 +1392,188 @@
     to balance](img/B10354_07_081.jpg), with *o* being the output dimensionality.
     The difference between the two is rather small, but as it turns out, the `he_uniform`
     initializer works better for learning the value function and policy.
+  id: totrans-189
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: actor 具有一个隐藏的第一层，作为输入到 actor 值函数。它有 30 个隐藏单元，并使用 `relu` 激活函数。它是通过 `he_uniform`
+    初始化器初始化的。这个初始化器与默认的 `glorot_uniform` 初始化器仅有些微的不同。`he_uniform` 初始化器从一个均匀分布中抽取，范围为
+    ![Learning to balance](img/B10354_07_079.jpg)，其中 ![Learning to balance](img/B10354_07_080.jpg)
+    是输入维度。默认的 glorot_uniform 从一个均匀分布中抽取，范围为 ![Learning to balance](img/B10354_07_081.jpg)，其中
+    *o* 是输出维度。两者之间的差异相当小，但事实证明，`he_uniform` 初始化器在学习值函数和策略时效果更好。
 - en: The action space of the pendulum ranges from -2 to 2\. We use a regular `tanh`
     activation, which ranges from -1 to 1 first and corrects the scaling later.
+  id: totrans-190
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 摆的动作空间范围是从 -2 到 2。我们首先使用常规的`tanh`激活函数，它的输出范围是从 -1 到 1，然后再进行缩放修正。
 - en: To correct the scaling of the action space, we now multiply the outputs of the
     `tanh` function by two. Using the `Lambda` layer, we can define such a function
     manually in the computational graph.
+  id: totrans-191
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了修正动作空间的缩放，我们现在将`tanh`函数的输出乘以二。使用`Lambda`层，我们可以在计算图中手动定义这样的函数。
 - en: The standard deviation should not be negative. The `softplus` activation works
     in principle just like `relu`, but with a soft edge:![Learning to balance](img/B10354_07_07.jpg)
+  id: totrans-192
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 标准差不应该是负数。`softplus`激活函数的原理与`relu`相同，但具有平滑的边界：![学习平衡](img/B10354_07_07.jpg)
 - en: ReLU versus softplus
+  id: totrans-193
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: ReLU与softplus
 - en: To make sure the standard deviation is not zero, we add a tiny constant to it.
     Again we use the `Lambda` layer for this task. This also ensures that the gradients
     get calculated correctly, as the model is aware of the constant added.
+  id: totrans-194
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了确保标准差不为零，我们向其添加一个微小的常数。我们再次使用`Lambda`层来完成这个任务。这还确保了梯度能正确计算，因为模型知道已添加常数。
 - en: The critic also has a hidden layer to calculate its value function.
+  id: totrans-195
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评论者还具有一个隐藏层来计算其价值函数。
 - en: 'The value of a state is just a single scalar that can have any value. The value
     head thus only has one output and a linear, that is: the default, activation function.'
+  id: totrans-196
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 状态的价值只是一个单一的标量，可以具有任何值。因此，价值头只有一个输出，并且是线性的，也就是默认的激活函数。
 - en: We define the actor to map from a state to a policy as expressed by the mean,
     ![Learning to balance](img/B10354_07_082.jpg), and standard deviation, ![Learning
     to balance](img/B10354_07_083.jpg).
+  id: totrans-197
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们定义演员将状态映射到由均值表示的策略，![学习平衡](img/B10354_07_082.jpg)，以及标准差，![学习平衡](img/B10354_07_083.jpg)。
 - en: We define the critic to map from a state to a value of that state.
+  id: totrans-198
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们定义评论者将状态映射到该状态的价值。
 - en: While it is not strictly required for A2C, if we want to use our agents for
     an asynchronous, A3C approach, then we need to make the predict function threading
     safe. Keras loads the model on a GPU the first time you call `predict()`. If that
     happens from multiple threads, things can break. `_make_predict_function``()`
     makes sure the model is already loaded on a GPU or CPU and is ready to predict,
     even from multiple threads.
+  id: totrans-199
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 虽然A2C并不严格要求这样做，但如果我们想将代理用于异步的A3C方法，那么我们需要确保预测函数是线程安全的。Keras在第一次调用`predict()`时将模型加载到GPU上。如果从多个线程调用，可能会导致问题。`_make_predict_function()`确保模型已经加载到GPU或CPU，并且准备好进行预测，即使来自多个线程。
 - en: For debugging purposes, we print the summaries of our models.
+  id: totrans-200
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了调试，我们打印出模型的摘要。
 - en: Finally, we return the models.
+  id: totrans-201
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最后，我们返回模型。
 - en: Now we have to create the optimizer for the actor. The actor uses a custom optimizer
     that optimizes it along the policy gradient. Before we define the optimizer; however,
     we need to look at the last piece of the policy gradient. Remember how the policy
     gradient was dependent on the gradient of the weights, ![Learning to balance](img/B10354_07_084.jpg),
     that would make action *a* more likely? Keras can calculate this derivative for
     us, but we need to provide Keras with the value of policy ![Learning to balance](img/B10354_07_085.jpg).
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们需要为演员创建优化器。演员使用自定义优化器，通过策略梯度来优化它。但是在定义优化器之前，我们需要查看策略梯度的最后一部分。记得策略梯度是如何依赖于权重的梯度，![学习平衡](img/B10354_07_084.jpg)，从而使动作*a*更有可能吗？Keras可以为我们计算这个导数，但我们需要提供Keras政策的值！[学习平衡](img/B10354_07_085.jpg)。
 - en: 'To this end, we need to define a probability density function. ![Learning to
     balance](img/B10354_07_086.jpg) is a normal distribution with mean ![Learning
     to balance](img/B10354_07_087.jpg) and standard deviation ![Learning to balance](img/B10354_07_088.jpg),
     so the probability density function, *f*, is as follows:'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，我们需要定义一个概率密度函数。![学习平衡](img/B10354_07_086.jpg)是一个均值为![学习平衡](img/B10354_07_087.jpg)，标准差为![学习平衡](img/B10354_07_088.jpg)的正态分布，因此概率密度函数*f*如下所示：
 - en: '![Learning to balance](img/B10354_07_089.jpg)'
+  id: totrans-204
   prefs: []
   type: TYPE_IMG
+  zh: '![学习平衡](img/B10354_07_089.jpg)'
 - en: In this term, ![Learning to balance](img/B10354_07_090.jpg) stands for the constant,
     3.14…, not for the policy. Later, we only need to take the logarithm of this probability
     density function. Why the logarithm? Because taking the logarithm results in a
     smoother gradient. Maximizing the log of a probability means maximizing the probability,
     so we can just use the "log trick," as it is called, to improve learning.
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个项中，![学习平衡](img/B10354_07_090.jpg)表示常数3.14…，而不是政策。稍后，我们只需要取这个概率密度函数的对数。为什么要取对数？因为取对数会导致梯度更加平滑。最大化概率的对数意味着最大化概率，因此我们可以使用所谓的“对数技巧”来改善学习。
 - en: The value of policy ![Learning to balance](img/B10354_07_091.jpg) is the advantage
     of each action *a,* times the log probability of this action occurring as expressed
     by the probability density function, *f*.
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 策略的值![学习平衡](img/B10354_07_091.jpg)是每个动作*a*的优势，乘以该动作发生的对数概率，该概率由概率密度函数*f*表示。
 - en: 'The following function optimizes our actor model. Let''s go through the optimization
     procedure:'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下函数优化了我们的演员模型。让我们通过优化过程来了解：
 - en: '[PRE9]'
+  id: totrans-208
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: First, we need to set up some placeholders for the action taken and the advantage
     of that action. We will fill in these placeholders when we call the optimizer.
+  id: totrans-209
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，我们需要为采取的动作和该动作的优势设置一些占位符。当我们调用优化器时，我们将填充这些占位符。
 - en: We get the outputs of the actor model. These are tensors that we can plug into
     our optimizer. Optimization of these tensors will be backpropagated and optimizes
     the whole model.
+  id: totrans-210
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们获取演员模型的输出。这些是张量，我们可以将其插入到优化器中。这些张量的优化将通过反向传播，并优化整个模型。
 - en: Now we set up the probability density function. This step can look a bit intimidating,
     but if you look closely, it is the same probability density function we defined
     previously.
+  id: totrans-211
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在我们设置概率密度函数。这个步骤可能看起来有些令人畏惧，但如果你仔细看，它其实就是我们之前定义的相同概率密度函数。
 - en: Now we apply the log trick. To ensure that we don't accidentally take the logarithm
     of zero, we add a tiny constant, `epsilon`.
+  id: totrans-212
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在我们应用对数技巧。为了确保我们不会不小心取零的对数，我们添加了一个微小的常数`epsilon`。
 - en: The value of our policy is now the probability of action *a* times the probability
     of this action occurring.
+  id: totrans-213
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们策略的值现在是动作*a*的概率与该动作发生的概率的乘积。
 - en: To reward the model for a probabilistic policy, we add an entropy term. The entropy
     is calculated with the following term:![Learning to balance](img/B10354_07_092.jpg)Here,
     again, ![Learning to balance](img/B10354_07_093.jpg) is a constant 3.14… and ![Learning
@@ -1133,696 +1581,987 @@
     that this term expresses the entropy of a normal distribution is outside of the
     scope of this chapter, you can see that the entropy goes up if the standard deviation
     goes up.
+  id: totrans-214
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了奖励模型的概率策略，我们添加了一个熵项。熵通过以下公式计算：![学习平衡](img/B10354_07_092.jpg)这里，依然是常数3.14…，而![学习平衡](img/B10354_07_093.jpg)是标准差。虽然证明这一项表示正态分布的熵超出了本章的范围，但你可以看到，当标准差增大时，熵也会增加。
 - en: We add the entropy term to the value of the policy. By using `K.sum()`, we sum
     the value over the batch.
+  id: totrans-215
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们将熵项加到策略值中。通过使用`K.sum()`，我们对整个批次的值进行求和。
 - en: We want to maximize the value of the policy, but by default, Keras performs
     gradient descent that minimizes losses. An easy trick is to turn the value negative
     and then minimize the negative value.
+  id: totrans-216
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们想最大化策略的值，但默认情况下，Keras执行的是最小化损失的梯度下降。一个简单的技巧是将值转为负数，然后最小化负值。
 - en: To perform gradient descent, we use the `Adam` optimizer.
+  id: totrans-217
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了执行梯度下降，我们使用`Adam`优化器。
 - en: We can retrieve an update tensor from the optimizer. `get_updates()` takes three
     arguments, `parameters`, `constraints`, and `loss`. We provide the parameters
     of the model, that is, its weights. Since we don't have any constraints, we just
     pass an empty list as a constraint. For a loss, we pass the actor loss.
+  id: totrans-218
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们可以从优化器中获取更新张量。`get_updates()`接受三个参数：`parameters`（参数），`constraints`（约束），和`loss`（损失）。我们提供模型的参数，即它的权重。由于没有任何约束，我们只是传递一个空列表作为约束。对于损失，我们传递演员的损失。
 - en: Armed with the updated tensor, we can now create a function that takes as its
     input the actor model input, that is, the state, as well as the two placeholders,
     the action, and the advantages. It returns nothing but the empty list that applies
     the update tensor to the model involved. This function is callable, as we will
     see later.
+  id: totrans-219
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在更新张量的支持下，我们现在可以创建一个函数，它以演员模型输入，即状态，作为输入，还包括两个占位符，动作和优势。这个函数不返回任何内容，只返回一个空列表，应用更新张量到涉及的模型。这个函数是可调用的，正如我们稍后将看到的。
 - en: We return the function. Since we call `actor_optimizer()` in the `init` function
     of our class, the optimizer function we just created becomes `self.optimize_actor`.
+  id: totrans-220
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们返回这个函数。由于我们在类的`init`函数中调用`actor_optimizer()`，所以我们刚刚创建的优化器函数变成了`self.optimize_actor`。
 - en: 'For the critic, we also need to create a custom optimizer. The loss for the
     critic is the mean squared error between the predicted value and the reward plus
     the predicted value of the next state:'
+  id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于评论者，我们也需要创建一个自定义优化器。评论者的损失是预测值与奖励加上下一个状态的预测值之间的均方误差：
 - en: '[PRE10]'
+  id: totrans-222
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The preceding function optimizes our critic model:'
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述函数优化了我们的评论者模型：
 - en: Again we set up a placeholder for the variable we need. `discounted_reward`
     contains the discounted future value of state ![Learning to balance](img/B10354_07_095.jpg)
     as well as the reward immediately earned.
+  id: totrans-224
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们再次设置一个占位符来存储我们需要的变量。`discounted_reward`包含了状态的折扣未来值 ![Learning to balance](img/B10354_07_095.jpg)以及立即获得的奖励。
 - en: The critic loss is the mean squared error between the critic's output and the discounted
     reward. We first obtain the output tensor before calculating the mean squared
     error between the output and the discounted reward.
+  id: totrans-225
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 评论损失是评论员输出和折扣奖励之间的均方误差。我们首先获取输出张量，然后计算输出与折扣奖励之间的均方误差。
 - en: Again we use an `Adam` optimizer from which we obtain an update tensor, just as
     we did previously.
+  id: totrans-226
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 再次使用`Adam`优化器，从中获取更新张量，就像我们之前所做的那样。
 - en: Again, and finally, as we did previously, we'll roll the update into a single
     function. This function will become `self.optimize_critic`.
+  id: totrans-227
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 再次，最终，正如我们之前所做的，我们将更新卷入一个单一的函数中。这个函数将成为`self.optimize_critic`。
 - en: 'For our agent to take actions, we need to define a method that produces actions
     from a state:'
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了让我们的代理采取行动，我们需要定义一个从状态生成行动的方法：
 - en: '[PRE11]'
+  id: totrans-229
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'With this function, our actor can now act. Let''s go through it:'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 有了这个功能，我们的演员现在可以开始表演了。让我们逐步讲解：
 - en: First, we reshape the state to make sure it has the shape the model expects.
+  id: totrans-231
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，我们调整状态形状，确保它符合模型的预期形状。
 - en: We predict the means and variance, ![Learning to balance](img/B10354_07_096.jpg),
     for this action from the model.
+  id: totrans-232
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们从模型中预测这个动作的均值和方差，![Learning to balance](img/B10354_07_096.jpg)。
 - en: Then, as we did for the autoencoder, we first sample a random normal distribution
     with a mean of zero and a standard deviation of 1.
+  id: totrans-233
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后，正如我们为自编码器所做的那样，我们首先从标准正态分布中采样，均值为零，标准差为1。
 - en: We add the mean and multiply by the standard deviation. Now we have our action,
     sampled from the policy.
+  id: totrans-234
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们将均值相加并乘以标准差。现在我们得到了我们的动作，这是从策略中采样得到的。
 - en: To make sure we are within the bounds of the action space, we clip the action
     at -2, 2, so it won't be outside of those boundaries.
+  id: totrans-235
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了确保我们的动作在动作空间的范围内，我们将动作限制在-2到2之间，这样它就不会超出这个范围。
 - en: 'At last, we need to train the model. The `train_model` function will train
     the model after receiving one new experience:'
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们需要训练模型。`train_model`函数将在接收到一个新经验后训练模型：
 - en: '[PRE12]'
+  id: totrans-237
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'And this is how we optimize both actor and critic:'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就是我们如何优化演员和评论员：
 - en: First, the new experience is added to the experience replay.
+  id: totrans-239
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，将新的经验添加到经验回放中。
 - en: Then, we immediately sample an experience from the experience replay. This way,
     we break the correlation between samples the model trains on.
+  id: totrans-240
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后，我们立即从经验回放中采样一个经验。通过这种方式，我们打破了模型训练样本之间的相关性。
 - en: We set up placeholders for the advantages and targets. We will fill them at *step
     5*.
+  id: totrans-241
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们为优势和目标设置占位符。我们将在*第5步*填充它们。
 - en: We predict the values for state *s* and ![Learning to balance](img/B10354_07_097.jpg).
+  id: totrans-242
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们预测状态 *s* 的值和 ![Learning to balance](img/B10354_07_097.jpg)。
 - en: If the game ended after the current state, *s*, the advantage is the reward
     we earned minus the value we assigned to the state, and the target for the value
     function is just the reward we earned. If the game did not end after this state,
     the advantage is the reward earned plus the discounted value of the next state
     minus the value of this state. The target, in that case, is the reward earned
     plus the discounted value of the next state.
+  id: totrans-243
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果游戏在当前状态 *s* 后结束，那么优势就是我们获得的奖励减去我们为状态分配的值，价值函数的目标就是我们获得的奖励。如果游戏在此状态后没有结束，那么优势就是获得的奖励加上下一个状态的折扣值减去当前状态的值。在这种情况下，目标是获得的奖励加上下一个状态的折扣值。
 - en: Knowing the advantage, the action taken, and the value target, we can optimize
     both the actor and critic with the optimizers we created earlier.
+  id: totrans-244
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 知道了优势、采取的行动和价值目标后，我们可以使用之前创建的优化器来优化演员和评论员。
 - en: 'And that is it; our `A2CAgent` class is done. Now it is time to use it. We
     define a `run_experiment` function. This function plays the game for a number
     of episodes. It is useful to first train a new agent without rendering, because
     training takes around 600 to 700 games until the agent does well. With your trained
     agent, you can then watch the gameplay:'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 就这样；我们的`A2CAgent`类完成了。现在是时候使用它了。我们定义了一个`run_experiment`函数。这个函数在若干个回合中进行游戏。首先训练一个没有渲染的新人代理是很有用的，因为训练需要大约600到700场游戏，直到代理表现得很好。使用你训练好的代理，你就可以观看游戏过程：
 - en: '[PRE13]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'Our experiment boils down to these functions:'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的实验归结为这些函数：
 - en: First, we set up a new `gym` environment. This environment contains the pendulum
     game. We can pass actions to it and observe states and rewards.
+  id: totrans-248
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 首先，我们设置一个新的 `gym` 环境。该环境包含了摆锤游戏。我们可以向其中传递动作，并观察状态和奖励。
 - en: We obtain the action and state space from the game.
+  id: totrans-249
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们从游戏中获取动作和状态空间。
 - en: If no agent was passed to the function, we would create a new one.
+  id: totrans-250
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果没有代理被传递给函数，我们会创建一个新的代理。
 - en: We set up an empty array to keep track of the scores over time.
+  id: totrans-251
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们设置一个空数组，用来跟踪随时间变化的得分。
 - en: Now we play the game for a number of rounds specified by `epochs`.
+  id: totrans-252
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在我们按 `epochs` 指定的轮数进行游戏。
 - en: At the beginning of a game, we set the "game over indicator" to `false`, `score` 
     to `0`, and reset the game. By resetting the game, we obtain the initial starting
     state.
+  id: totrans-253
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在游戏开始时，我们将“游戏结束指示器”设置为 `false`，`score` 设置为 `0`，并重置游戏。通过重置游戏，我们获得初始的起始状态。
 - en: Now we play the game until it is over.
+  id: totrans-254
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在我们继续进行游戏，直到游戏结束。
 - en: If you passed `render = True` to the function, the game would be rendered on
     screen. Note that this won't work on a remote notebook such as in Kaggle or Jupyter.
+  id: totrans-255
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果你将 `render = True` 传递给函数，游戏将在屏幕上渲染。请注意，这在 Kaggle 或 Jupyter 等远程笔记本上无法正常工作。
 - en: We get an action from the agent and act in the environment.
+  id: totrans-256
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们从代理获取一个动作，并在环境中执行。
 - en: When acting in the environment, we observe a new state, a reward, and whether
     the game is over. `gym` also passes an info dictionary, which we can ignore.
+  id: totrans-257
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在环境中执行时，我们观察到新的状态、奖励，以及游戏是否结束。`gym` 还会传递一个 info 字典，我们可以忽略它。
 - en: The rewards from the game are all negative, with a higher reward closer to zero
     being better. The rewards can be quite large, though, so we reduce them. Too extreme
     rewards can lead to too large gradients while training. That would hinder training.
+  id: totrans-258
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 游戏中的奖励都是负值，奖励越接近零越好。虽然奖励可能非常大，但我们会对其进行缩减。过于极端的奖励会导致训练时梯度过大，从而阻碍训练过程。
 - en: Before training with the model, we reshape the state, just to be sure.
+  id: totrans-259
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在使用模型进行训练之前，我们先调整状态的形状，以确保正确。
 - en: Now we train the agent on a new experience. As you have seen, the agent will
     store the experience in its replay buffer and draw a random old experience to
     train from.
+  id: totrans-260
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在我们在新的经验上训练代理。正如你所看到的，代理会将经验存储在其回放缓冲区中，并从中随机抽取旧经验进行训练。
 - en: We increase the overall reward to track the rewards earned during one game.
+  id: totrans-261
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们增加总体奖励，以跟踪游戏过程中获得的奖励。
 - en: We set the new state to be the current state to prepare for the next frame of the
     game.
+  id: totrans-262
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们将新的状态设置为当前状态，为游戏的下一帧做好准备。
 - en: If the game is over, we track and print out the game score.
+  id: totrans-263
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果游戏结束，我们会跟踪并打印出游戏得分。
 - en: The agent usually does pretty well after 700 epochs. We declare the game solved
     if the average reward over the last 20 games was better than -20\. If that is
     the case, we will exit the function and return the trained agent together with
     its scores.
+  id: totrans-264
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 代理在经过 700 次迭代后通常表现得相当不错。如果最后 20 局游戏的平均奖励超过 -20，我们就认为游戏已解决。如果是这种情况，我们将退出函数并返回训练好的代理及其得分。
 - en: Learning to trade
+  id: totrans-265
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 学习交易
 - en: Reinforcement learning algorithms are largely developed in games and simulations
     where a failing algorithm won't cause any damage. However, once developed, an
     algorithm can be adapted to other, more serious tasks. To demonstrate this ability,
     we are now going to create an A2C agent that learns how to balance a portfolio
     of stocks within a large universe of stocks.
+  id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习算法大多是在游戏和仿真中开发的，在这些环境中，算法失败不会造成任何损害。然而，一旦开发完成，算法可以适应其他更严肃的任务。为了展示这种能力，我们现在将创建一个
+    A2C 代理，学习如何在一个庞大的股票 universe 中平衡股票组合。
 - en: Note
+  id: totrans-267
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: Please do not trade based on this algorithm. It is only a simplified
     and slightly naive implementation to demonstrate the concept and shouldn''t be
     used in the real world.'
+  id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：请不要基于此算法进行交易。这只是一个简化且略显天真的实现，用来展示概念，不能用于实际应用中。'
 - en: To train a new reinforcement learning algorithm, we first need to create a training
     environment. In this environment, the agent trades in real-life stock data. The
     environment can be interfaced just like an OpenAI Gym environment. Following the Gym
     conventions for interfacing reduces the complexity of development. Given a 100-day
     look back of the percentile returns of stocks in the universe, the agent has to
     return an allocation in the form of a 100-dimensional vector.
+  id: totrans-269
   prefs: []
   type: TYPE_NORMAL
+  zh: 要训练一个新的强化学习算法，我们首先需要创建一个训练环境。在这个环境中，代理使用真实的股票数据进行交易。这个环境可以像 OpenAI Gym 环境一样进行交互。遵循
+    Gym 的交互规范可以减少开发的复杂性。在给定 100 天的股票百分位回报数据后，代理需要以 100 维向量的形式返回一个分配结果。
 - en: The allocation vector describes the share of assets the agent wants to allocate
     on one stock. A negative allocation means the agent is short trading the stock.
     For simplicity's sake, transaction costs and slippage are not added to the environment.
     It would not be too difficult to add them, however.
+  id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 配置向量描述了代理希望在单一股票上分配的资产比例。负的配置表示代理正在进行股票空头交易。为了简化，环境中没有加入交易成本和滑点。然而，加入这些并不难。
 - en: Tip
+  id: totrans-271
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 提示
 - en: '**Tip**: The full implementation of the environment and agent can be found
     at [https://www.kaggle.com/jannesklaas/a2c-stock-trading](https://www.kaggle.com/jannesklaas/a2c-stock-trading).'
+  id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: '**提示**：环境和代理的完整实现可以在[https://www.kaggle.com/jannesklaas/a2c-stock-trading](https://www.kaggle.com/jannesklaas/a2c-stock-trading)找到。'
 - en: 'The environment looks like this:'
+  id: totrans-273
   prefs: []
   type: TYPE_NORMAL
+  zh: 环境大致如下：
 - en: '[PRE14]'
+  id: totrans-274
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'Our trade environment is somewhat similar to the pendulum environment. Let''s
     see how we set it up:'
+  id: totrans-275
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的交易环境有点类似于摆锤环境。让我们看看是如何设置的：
 - en: We load data for our universe.
+  id: totrans-276
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们加载我们宇宙的数据。
 - en: Since we are stepping through the data where each day is a step, we need to keep
     track of our position in time.
+  id: totrans-277
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 由于我们在数据中逐步前进，每一天代表一个步骤，因此我们需要跟踪在时间中的位置。
 - en: We need to know when the game ends, so we need to know how much data we have.
+  id: totrans-278
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们需要知道游戏何时结束，因此我们需要知道我们有多少数据。
 - en: To keep track of returns over time, we set up an empty array.
+  id: totrans-279
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了跟踪回报的变化，我们设置了一个空数组。
 - en: The initial state is the data for the first episode, until the last element,
     which is the return of the next day for all 100 stocks in the universe.
+  id: totrans-280
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 初始状态是第一集的数据，直到最后一个元素，即宇宙中100只股票的第二天回报。
 - en: At each step, the agent needs to provide an allocation to the environment. The
     reward the agent receives is the sharpe ratio, the ratio between the mean and
     standard deviation of returns, over the last 20 days. You could modify the reward
     function to, for example, include transaction costs or slippage. If you do want
     to do this, then refer to the section on reward shaping later in this chapter.
+  id: totrans-281
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在每一步，代理需要向环境提供一个配置。代理收到的奖励是夏普比率，即过去20天回报的均值与标准差之比。你可以修改奖励函数，例如加入交易成本或滑点。如果你确实想这么做，可以参考本章后面关于奖励塑形的部分。
 - en: The return on the next day is the last element of the episode data.
+  id: totrans-282
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 第二天的回报是本集数据的最后一个元素。
 - en: To calculate the Sharpe ratio, we need to keep track of past returns.
+  id: totrans-283
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 为了计算夏普比率，我们需要跟踪过去的回报。
 - en: If we do not have 20 returns yet, the mean and standard deviation of returns
     will be zero and one respectively.
+  id: totrans-284
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果我们还没有20个回报，回报的均值和标准差将分别为零和一。
 - en: If we do have enough data, we calculate the mean and standard deviation of the
     last 20 elements in our return tracker. We add a tiny constant to the standard
     deviation to avoid division by zero.
+  id: totrans-285
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果我们有足够的数据，我们会计算回报跟踪器中最后20个元素的均值和标准差。我们会给标准差添加一个微小的常数，以避免除以零的错误。
 - en: We can now calculate the Sharpe ratio, which will provide the reward for the agent.
+  id: totrans-286
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在我们可以计算夏普比率，它将为代理提供奖励。
 - en: If the game is over, the environment will return no next state, the reward,
     and an indicator that the game is over, as well as an empty information dictionary
     in order to stick to the OpenAI Gym convention.
+  id: totrans-287
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果游戏结束，环境将返回没有下一个状态、奖励，以及游戏结束的指示符，并返回一个空的信息字典，以遵循OpenAI Gym的惯例。
 - en: If the game is not over, the environment will return the next state, a reward,
     and an indicator that the game is not over, along with an empty information dictionary.
+  id: totrans-288
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如果游戏没有结束，环境将返回下一个状态、奖励，并指示游戏尚未结束，同时返回一个空的信息字典。
 - en: This function loads the daily returns of a universe of 100 random stocks.
+  id: totrans-289
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 这个函数加载100只随机股票的每日回报。
 - en: The selector moves in random order over the files containing stock prices. Some
     of them are corrupted so that loading them will result in an error. The loader
     keeps trying until it has 100 pandas DataFrames containing stock prices assembled.
     Only closing prices starting in 2005 will be considered.
+  id: totrans-290
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 选择器以随机顺序遍历包含股票价格的文件。其中一些文件已损坏，加载它们会导致错误。加载器会不断尝试，直到收集到包含股票价格的100个pandas DataFrame。只有2005年开始的收盘价会被考虑。
 - en: In the next step, all DataFrames are concatenated. The percentile change in
     stock price is calculated. All missing values are filled with zero, for no change.
     Finally, we extract the values from the data as a NumPy array.
+  id: totrans-291
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 在下一步中，所有DataFrame将被连接。计算股票价格的百分位变化。所有缺失值将用零填充，表示没有变化。最后，我们将从数据中提取出NumPy数组形式的值。
 - en: The last thing to do is transform the data into a time series. The first 100 steps
     are the basis for the agent's decision. The 101st element is the next day's return,
     on which the agent will be evaluated.
+  id: totrans-292
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最后一步是将数据转换为时间序列。前100步是代理决策的基础，第101个元素是第二天的回报，代理将根据此进行评估。
 - en: 'We only have to make minor edits in the `A2CAgent` agent class. Namely, we
     only have to modify the model so that it can take in the time series of returns.
     To this end, we add two `LSTM` layers, which actor and critic share:'
+  id: totrans-293
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们只需要在`A2CAgent`代理类中进行小幅修改。具体来说，我们只需要修改模型，使其能够接受回报的时间序列。为此，我们添加了两个`LSTM`层，演员和评论家共享这两个层：
 - en: '[PRE15]'
+  id: totrans-294
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Again, we have built a Keras model in a function. It is only slightly different
     from the model before. Let''s explore it:'
+  id: totrans-295
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次，我们在一个函数中构建了一个Keras模型。它与之前的模型略有不同。让我们来看看：
 - en: The state now has a time dimension.
+  id: totrans-296
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 现在状态包含了时间维度。
 - en: The two `LSTM` layers are shared across actor and critic.
+  id: totrans-297
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 这两个`LSTM`层在演员和评论家之间共享。
 - en: Since the action space is larger; we also have to increase the size of the actor's
     hidden layer.
+  id: totrans-298
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 由于动作空间更大，我们还需要增加演员隐藏层的大小。
 - en: Outputs should lie between -1 and 1, and 100% short and 100% long, so that we
     can save ourselves the step of multiplying the mean by two.
+  id: totrans-299
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 输出应介于-1和1之间，且100%为空头和100%为多头，这样我们就能省去将均值乘以2的步骤。
 - en: And that is it! This algorithm can now learn to balance a portfolio just as
     it could learn to balance before.
+  id: totrans-300
   prefs: []
   type: TYPE_NORMAL
+  zh: 就是这样！这个算法现在可以像以前一样学习平衡投资组合。
 - en: Evolutionary strategies and genetic algorithms
+  id: totrans-301
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 进化策略和遗传算法
 - en: Recently, a decades-old optimization algorithm for reinforcement learning algorithms
     has come back into fashion. **Evolutionary strategies** (**ES**) are much simpler
     than Q-learning or A2C.
+  id: totrans-302
   prefs: []
   type: TYPE_NORMAL
+  zh: 最近，一种用于强化学习算法的十多年历史的优化算法重新流行了起来。**进化策略**（**ES**）比Q学习或A2C简单得多。
 - en: Instead of training one model through backpropagation, in ES we create a population
     of models by adding random noise to the weights of the original model. We then
     let each model run in the environment and evaluate its performance. The new model
     is the performance-weighted average of all the models.
+  id: totrans-303
   prefs: []
   type: TYPE_NORMAL
+  zh: 在进化策略（ES）中，我们不是通过反向传播训练一个模型，而是通过将随机噪声加到原始模型的权重上来创建一个模型种群。然后让每个模型在环境中运行并评估其表现。新的模型是所有模型表现加权平均后的结果。
 - en: 'In the following diagram, you can see a visualization of how evolution strategies
     work:'
+  id: totrans-304
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下面的图示中，您可以看到进化策略如何工作的可视化：
 - en: '![Evolutionary strategies and genetic algorithms](img/B10354_07_08.jpg)'
+  id: totrans-305
   prefs: []
   type: TYPE_IMG
+  zh: '![进化策略和遗传算法](img/B10354_07_08.jpg)'
 - en: Evolutionary strategy
+  id: totrans-306
   prefs: []
   type: TYPE_NORMAL
+  zh: 进化策略
 - en: 'To get a better grip on how this works, consider the following example. We
     want to find a vector that minimizes the mean squared error to a solution vector.
     The learner is not given the solution, but only the total error as a reward signal:'
+  id: totrans-307
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地理解其工作原理，考虑以下例子。我们希望找到一个向量，使其最小化与解向量之间的均方误差。学习者没有被给出解，只能通过总误差作为奖励信号：
 - en: '[PRE16]'
+  id: totrans-308
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'A key advantage of evolutionary strategies is that they have fewer hyperparameters.
     In this case, we need just three:'
+  id: totrans-309
   prefs: []
   type: TYPE_NORMAL
+  zh: 进化策略的一个主要优点是它们拥有更少的超参数。在这种情况下，我们只需要三个：
 - en: '[PRE17]'
+  id: totrans-310
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: '**Population size**: We will create 50 versions of the model at each iteration'
+  id: totrans-311
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**种群大小**：我们将在每次迭代中创建50个模型版本'
 - en: '**Noise standard deviation**: The noise we add will have mean of zero and a standard
     deviation of 0.1'
+  id: totrans-312
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**噪声标准差**：我们添加的噪声将具有均值为零，标准差为0.1'
 - en: '**Learning rate**: Weights don''t just simply get set to the new average but
     are slowly moved in the direction to avoid overshooting'
+  id: totrans-313
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**学习率**：权重不会直接设置为新平均值，而是缓慢向避免过冲的方向移动。'
 - en: 'The optimization algorithm will look like the following code:'
+  id: totrans-314
   prefs: []
   type: TYPE_NORMAL
+  zh: 优化算法的代码将如下所示：
 - en: '[PRE18]'
+  id: totrans-315
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'Genetic optimization is relatively short in code, so let''s go through it:'
+  id: totrans-316
   prefs: []
   type: TYPE_NORMAL
+  zh: 遗传优化的代码相对简短，我们来详细了解一下：
 - en: We start off with a random solution.
+  id: totrans-317
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们从一个随机解开始。
 - en: Just like with the other RL algorithm, we train for a number of epochs, here 300.
+  id: totrans-318
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 就像其他强化学习算法一样，我们会训练若干个epoch，这里是300个。
 - en: We create a noise matrix of 50 noise vectors with a mean of zero and a standard
     deviation of `sigma`.
+  id: totrans-319
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们创建了一个包含50个噪声向量的噪声矩阵，均值为零，标准差为`sigma`。
 - en: We now create and immediately evaluate our population by adding noise to the
     original weights and running the resulting vector through the evaluation function.
+  id: totrans-320
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们现在通过将噪声添加到原始权重并将结果向量传递到评估函数中，来创建并立即评估我们的种群。
 - en: We standardize the rewards by subtracting the mean and dividing by the standard
     deviation. The result can be interpreted as an advantage, in this case, that a
     particular member of the population has over the rest.
+  id: totrans-321
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们通过减去均值并除以标准差来标准化奖励。结果可以解释为优势，在这种情况下，指的是某个个体相较于其他个体的优势。
 - en: Finally, we add the weighted average noise vector to the weight solution. We use
     a learning rate to slow down the process and avoid overshooting.
+  id: totrans-322
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最后，我们将加权平均噪声向量添加到权重解中。我们使用学习率来减缓过程，避免超调。
 - en: Similar to neural networks themselves, evolutionary strategies are loosely inspired
     by nature. In nature, species optimize themselves for survival using natural selection.
     Researchers have come up with many algorithms to imitate this process. The preceding
     neural evolution strategy algorithm works not only for single vectors but for
     large neural networks as well. Evolutionary strategies are still a field of active research,
     and at the time of writing, no best practice has been settled on.
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于神经网络本身，进化策略的灵感来自大自然。在自然界中，物种通过自然选择优化自身以求生存。研究人员提出了许多算法来模仿这一过程。前述的神经进化策略算法不仅适用于单一向量，也适用于大型神经网络。进化策略仍然是一个活跃的研究领域，在写作时，尚未确定最佳实践。
 - en: Reinforcement learning and evolutionary strategies are the go-to techniques
     if no supervised learning is possible, but a reward signal is available. There
     are many applications in the financial industry where this is the case from simple
     "multi-armed bandit" problems, such as the DHL order routing system, to complex
     trading systems.
+  id: totrans-324
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习和进化策略是当无法进行监督学习，但存在奖励信号时的首选技术。金融行业中有许多应用场景符合这一条件，从简单的“多臂老虎机”问题（如DHL订单路由系统），到复杂的交易系统。
 - en: Practical tips for RL engineering
+  id: totrans-325
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 强化学习工程的实用技巧
 - en: In this section, we will be introducing some practical tips for building RL
     systems. We will also highlight some current research frontiers that are highly
     relevant to financial practitioners.
+  id: totrans-326
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们将介绍一些构建强化学习（RL）系统的实用技巧。我们还将突出一些与金融从业者高度相关的当前研究前沿。
 - en: Designing good reward functions
+  id: totrans-327
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 设计良好的奖励函数
 - en: Reinforcement learning is the field of designing algorithms that maximize a
     reward function. However, creating good reward functions is surprisingly hard.
     As anyone who has ever managed people will know, both people and machines game
     the system.
+  id: totrans-328
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习是设计最大化奖励函数的算法领域。然而，创建良好的奖励函数出乎意料地困难。任何曾经管理过人的人都知道，人和机器都会“游戏化”系统。
 - en: The literature on RL is full of examples of researchers finding bugs in Atari
     games that had been hidden for years but were found and exploited by an RL agent.
     For example, in the game "Fishing Derby," OpenAI has reported a reinforcement
     learning agent achieving a higher score than is ever possible according to the
     game makers, and this is without catching a single fish!
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习文献中充满了研究人员发现并利用了多年未曾被察觉的Atari游戏漏洞的例子。例如，在“Fishing Derby”游戏中，OpenAI报告称一个强化学习代理在没有抓到任何鱼的情况下，获得了超过游戏开发者认为可能的最高分！
 - en: While it is fun for games, such behavior can be dangerous when it occurs in
     financial markets. An agent trained on maximizing returns from trading, for example,
     could resort to illegal trading activities such as spoofing trades, without its
     owners knowing about it. There are three methods to create better reward functions,
     which we will look at in the next three subsections.
+  id: totrans-330
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管这种行为在游戏中很有趣，但在金融市场中发生时却可能非常危险。例如，一个通过最大化交易回报进行训练的代理，可能会进行非法交易活动（如虚假交易），而其所有者对此一无所知。有三种方法可以创建更好的奖励函数，我们将在接下来的三个小节中详细探讨。
 - en: Careful, manual reward shaping
+  id: totrans-331
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 小心，手动奖励塑形
 - en: By manually creating rewards, practitioners can help the system to learn. This
     works especially well if the natural rewards of the environment are sparse. If,
     say, a reward is usually only given if a trade is successful, and this is a rare
     event, it helps to manually add a function that gives a reward if the trade was
     nearly successful.
+  id: totrans-332
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过手动创建奖励，实践者可以帮助系统学习。如果环境的自然奖励较为稀缺，这种方法尤其有效。如果某个奖励通常仅在交易成功时才给予，而这种情况比较罕见，那么手动添加一个函数，在交易接近成功时也能给予奖励，将大有帮助。
 - en: Equally, if an agent is engaging in illegal trading, a hard-coded "robot policy"
     can be set up that gives a huge negative reward to the agent if it breaks the
     law. Reward shaping works if the rewards and the environment are relatively simple.
     In complex environments, it can defeat the purpose of using machine learning in
     the first place. Creating a complex reward function in a very complex environment
     can be just as big a task as writing a rule-based system acting in the environment.
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样地，如果一个代理正在进行非法交易，可以设置一个硬编码的“机器人策略”，如果它违反法律，就会给代理一个巨大的负奖励。奖励塑造在奖励和环境相对简单的情况下有效。在复杂的环境中，它可能会违背使用机器学习的初衷。在一个非常复杂的环境中创建一个复杂的奖励函数，可能和编写一个基于规则的系统在该环境中运作一样困难。
 - en: Yet, especially in finance, and more so in trading, hand-crafted reward shaping
     is useful. Risk-averse trading is an example of creating a clever objective function.
     Instead of maximizing the expected reward, risk-averse reinforcement learning
     maximizes an evaluation function,
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，尤其在金融领域，特别是在交易中，手工设计奖励塑造是非常有用的。风险规避型交易就是创建巧妙目标函数的一个例子。风险规避强化学习不是最大化期望奖励，而是最大化评估函数，
 - en: '![Careful, manual reward shaping](img/B10354_07_098.jpg)'
+  id: totrans-335
   prefs: []
   type: TYPE_IMG
+  zh: '![小心，手动奖励塑造](img/B10354_07_098.jpg)'
 - en: ', which is an extension of the utility-based shortfall to a multistage setting:'
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: ，这是一个将基于效用的短缺扩展到多阶段设置的函数：
 - en: '![Careful, manual reward shaping](img/B10354_07_099.jpg)'
+  id: totrans-337
   prefs: []
   type: TYPE_IMG
+  zh: '![小心，手动奖励塑造](img/B10354_07_099.jpg)'
 - en: 'Here ![Careful, manual reward shaping](img/B10354_07_100.jpg) is a concave,
     continuous, and strictly increasing function that can be freely chosen according
     to how much risk the trader is willing to take. The RL algorithm now maximizes
     as follows:'
+  id: totrans-338
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的 ![小心，手动奖励塑造](img/B10354_07_100.jpg) 是一个凹形、连续且严格递增的函数，可以根据交易者愿意承担的风险自由选择。强化学习算法现在按如下方式最大化：
 - en: '![Careful, manual reward shaping](img/B10354_07_101.jpg)'
+  id: totrans-339
   prefs: []
   type: TYPE_IMG
+  zh: '![小心，手动奖励塑造](img/B10354_07_101.jpg)'
 - en: Inverse reinforcement learning
+  id: totrans-340
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 逆向强化学习
 - en: 'In **inverse reinforcement learning** (**IRL**), a model is trained to predict
     the reward function of a human expert. A human expert is performing a task, and
     the model observes states and actions. It then tries to find a value function
     that explains the human expert''s behavior. More specifically, by observing the
     expert, a policy trace of states and actions is created. One example is the maximum
     likelihood inverse reinforcement learning, or IRL, algorithm which works as follows:'
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 在**逆向强化学习**（**IRL**）中，模型被训练来预测人类专家的奖励函数。人类专家执行任务，模型观察状态和动作。然后，它尝试找到一个价值函数来解释人类专家的行为。更具体地说，通过观察专家，会创建一个状态和动作的策略轨迹。一个例子是最大似然逆向强化学习（IRL）算法，其工作原理如下：
 - en: Guess a reward function, *R*
+  id: totrans-342
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 猜测一个奖励函数 *R*
 - en: Compute the policy, ![Inverse reinforcement learning](img/B10354_07_102.jpg),
     that follows from *R*, by training an RL agent
+  id: totrans-343
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 通过训练一个强化学习代理，计算从 *R* 导出的策略 ![逆向强化学习](img/B10354_07_102.jpg)
 - en: Compute the probability that the actions observed, *D,* were a result of ![Inverse
     reinforcement learning](img/B10354_07_103.jpg), ![Inverse reinforcement learning](img/B10354_07_104.jpg)
+  id: totrans-344
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算观察到的动作 *D* 是由 ![逆向强化学习](img/B10354_07_103.jpg) 和 ![逆向强化学习](img/B10354_07_104.jpg)
+    产生的概率
 - en: Compute the gradient with respect to *R* and update it
+  id: totrans-345
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算相对于 *R* 的梯度并更新它
 - en: Repeat this process until ![Inverse reinforcement learning](img/B10354_07_105.jpg)
     is very high
+  id: totrans-346
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 重复此过程，直到 ![逆向强化学习](img/B10354_07_105.jpg) 非常高
 - en: Learning from human preferences
+  id: totrans-347
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 从人类偏好中学习
 - en: Similar to IRL, which produces a reward function from human examples, there
     are also algorithms that learn from human preferences. A reward predictor produces
     a reward function under which policy is trained.
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于IRL，通过人类示例生成奖励函数的算法，还有一些算法可以从人类偏好中学习。奖励预测器生成一个奖励函数，在该函数下训练策略。
 - en: 'The goal of the reward predictor is to produce a reward function that results
     in a policy that has a large human preference. Human preference is measured by
     showing the human the results of two policies and letting the human indicate which one
     is more preferable:'
+  id: totrans-349
   prefs: []
   type: TYPE_NORMAL
+  zh: 奖励预测器的目标是生成一个奖励函数，使得由此产生的策略能最大化人类偏好。人类偏好通过向人类展示两种策略的结果，并让人类指出哪种更可取来衡量：
 - en: '![Learning from human preferences](img/B10354_07_09.jpg)'
+  id: totrans-350
   prefs: []
   type: TYPE_IMG
+  zh: '![从人类偏好中学习](img/B10354_07_09.jpg)'
 - en: Learning from preferences
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 从偏好中学习
 - en: Robust RL
+  id: totrans-352
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 稳健的强化学习（Robust RL）
 - en: 'Much like for GANs, RL can be fragile and can be hard to train for good results.
     RL algorithms are quite sensitive to hyperparameter choices. But there are a few
     ways to make RL more robust:'
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 与 GAN 类似，强化学习也可能是脆弱的，并且很难训练出良好的结果。强化学习算法对超参数选择非常敏感。但是有几种方法可以让强化学习更加稳健：
 - en: '**Using a larger experience replay buffer**: The goal of using experience replay
     buffers is to collect uncorrelated experiences. This can be achieved by just creating
     a larger buffer or a whole buffer database that can store millions of examples,
     possibly from different agents.'
+  id: totrans-354
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**使用更大的经验回放缓冲区**：使用经验回放缓冲区的目的是收集不相关的经验。这可以通过创建一个更大的缓冲区或一个可以存储数百万个样本的整个缓冲区数据库来实现，可能这些样本来自不同的智能体。'
 - en: '**Target networks**: RL is unstable in part because the neural network relies
     on its own output for training. By using a frozen target network for generating
     training data, we can mitigate problems. The frozen target network should only
     be updated slowly by, for example, moving the weights of the target network only
     a few percent every few epochs in the direction of the trained network.'
+  id: totrans-355
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**目标网络**：强化学习的不稳定性部分来源于神经网络依赖自身的输出进行训练。通过使用冻结的目标网络来生成训练数据，我们可以缓解这一问题。冻结的目标网络应该仅通过例如每几轮迭代将目标网络的权重更新几个百分点，朝着训练网络的方向慢慢更新。'
 - en: '**Noisy inputs**: Adding noise to the state representation helps the model
     generalize to other situations and avoids overfitting. It has proven especially
     useful if the agent is trained in a simulation but needs to generalize to the
     real, more complex world.'
+  id: totrans-356
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**噪声输入**：向状态表示中添加噪声有助于模型在其他情境下泛化并避免过拟合。如果智能体是在模拟中训练的，但需要推广到更复杂的现实世界，这种方法尤其有效。'
 - en: '**Adversarial examples**: In a GAN-like setup, an adversarial network can be
     trained to fool the model by changing the state representations. The model can,
     in turn, learn to ignore the adversarial attacks. This makes learning more robust.'
+  id: totrans-357
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**对抗样本**：在类似 GAN 的设置中，可以训练一个对抗网络，通过改变状态表示来欺骗模型。模型可以反过来学习忽略这些对抗攻击，这使得学习更加稳健。'
 - en: '**Separating policy learning from feature extraction**: The most well-known
     results in reinforcement learning have learned a game from raw inputs. However,
     this requires the neural network to interpret, for example, an image by learning
@@ -1830,47 +2569,65 @@
     first training an autoencoder that compresses state representations, then training
     a dynamics model that can predict the next compressed state, and then training
     a relatively small policy network from the two inputs.'
+  id: totrans-358
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**将策略学习与特征提取分开**：强化学习中最著名的结果是从原始输入中学习游戏。然而，这要求神经网络解释，例如，通过学习图像如何导致奖励，来理解一张图像。通过例如首先训练一个压缩状态表示的自编码器，再训练一个能够预测下一个压缩状态的动态模型，最后从这两个输入中训练一个相对较小的策略网络，来分开这些步骤会更容易。'
 - en: Similar to the GAN tips, there is little theoretical reason for why these tricks
     work, but they will make your RL work better in practice.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似于 GAN 技巧，虽然没有太多理论依据解释这些技巧为何有效，但它们在实践中能让你的强化学习表现得更好。
 - en: Frontiers of RL
+  id: totrans-360
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 强化学习的前沿
 - en: You have now seen the theory behind and application of the most useful RL techniques.
     Yet, RL is a moving field. This book cannot cover all of the current trends that
     might be interesting to practitioners, but it can highlight some that are particularly
     useful for practitioners in the financial industry.
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
+  zh: 你现在已经了解了最有用的强化学习技术的理论基础和应用。然而，强化学习是一个不断发展的领域。本书无法涵盖所有目前可能对实践者感兴趣的趋势，但可以重点介绍一些对金融行业实践者特别有用的趋势。
 - en: Multi-agent RL
+  id: totrans-362
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 多智能体强化学习
 - en: Markets, by definition, include many agents. Lowe and others, 2017, *Multi-Agent
     Actor-Critic for Mixed Cooperative-Competitive Environments* (see [https://arxiv.org/abs/1706.02275](https://arxiv.org/abs/1706.02275)),
     shows that reinforcement learning can be used to train agents that cooperate,
     compete, and communicate depending on the situation.
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
+  zh: 市场本身就包含许多智能体。Lowe 等人（2017年），*多智能体演员-评论家算法在混合合作-竞争环境中的应用*（见 [https://arxiv.org/abs/1706.02275](https://arxiv.org/abs/1706.02275)），展示了强化学习如何用于训练那些根据情况进行合作、竞争和沟通的智能体。
 - en: '![Multi-agent RL](img/B10354_07_10.jpg)'
+  id: totrans-364
   prefs: []
   type: TYPE_IMG
+  zh: '![多智能体强化学习](img/B10354_07_10.jpg)'
 - en: Multiple agents (in red) working together to chase the green dots. From the
     OpenAI blog.
+  id: totrans-365
   prefs: []
   type: TYPE_NORMAL
+  zh: 多个智能体（红色）共同合作追逐绿色点。来自 OpenAI 博客。
 - en: In an experiment, Lowe and others let agents communicate by including a communication
     vector into the action space. The communication vector that one agent outputted
     was then made available to other agents. They showed that the agents learned to
     communicate to solve a task. Similar research showed that agents adopted collaborative
     or competitive strategies based on the environment.
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: 在一项实验中，Lowe 等人让代理通过将一个通信向量纳入动作空间来进行通信。一个代理输出的通信向量随后可以供其他代理使用。他们展示了代理们学会了通过通信来解决任务。类似的研究表明，代理会根据环境采用合作或竞争策略。
 - en: 'In a task where the agent had to collect reward tokens, agents collaborated
     as long as plenty of tokens were available and showed competitive behavior as
     tokens got sparse. Zheng and others, 2017, *MAgent: A Many-Agent Reinforcement
@@ -1878,152 +2635,217 @@
     scaled the environment to include hundreds of agents. They showed that agents
     developed more complex strategies such as an encirclement attack on other agents
     through a combination of RL algorithms and clever reward shaping.'
+  id: totrans-367
   prefs: []
   type: TYPE_NORMAL
+  zh: '在一个任务中，代理需要收集奖励代币，代理们在代币充足时进行合作，而在代币稀缺时表现出竞争行为。Zheng 等人（2017年），*MAgent: A Many-Agent
+    Reinforcement Learning Platform for Artificial Collective Intelligence*（参见 [https://arxiv.org/abs/1712.00600](https://arxiv.org/abs/1712.00600)），将环境扩展到包括数百个代理。他们展示了代理如何通过结合强化学习算法和巧妙的奖励塑造，发展出更复杂的策略，例如对其他代理的包围攻击。'
 - en: Foerster and others, 2017, *Learning with Opponent-Learning Awareness* (see
     [https://arxiv.org/abs/1709.04326](https://arxiv.org/abs/1709.04326)), developed
     a new kind of RL algorithm that allows the agent to learn how another agent will
     behave and develop actions to influence the other agent.
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
+  zh: Foerster 等人（2017年），*Learning with Opponent-Learning Awareness*（参见 [https://arxiv.org/abs/1709.04326](https://arxiv.org/abs/1709.04326)），开发了一种新的强化学习算法，使代理能够学习另一个代理的行为，并发展出影响该代理的行动。
 - en: Learning how to learn
+  id: totrans-369
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 学习如何学习
 - en: A shortcoming of deep learning is that skilled humans have to develop neural
     networks. Because of that, one longstanding dream of researchers and companies
     who are currently having to pay Ph.D. students is to automate the process of designing
     neural networks.
+  id: totrans-370
   prefs: []
   type: TYPE_NORMAL
+  zh: 深度学习的一个缺点是需要熟练的人类来开发神经网络。因此，目前不得不支付博士生工资的研究人员和公司一直以来的梦想是自动化设计神经网络的过程。
 - en: 'One example of this so-called AutoML is the **neural evolution of augmenting
     topologies**, known as the NEAT algorithm. NEAT uses an evolutionary strategy
     to design a neural network that is then trained by standard backpropagation:'
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: 这种所谓的 AutoML 的一个例子是 **神经进化拓扑增强**，即 NEAT 算法。NEAT 使用进化策略来设计神经网络，然后通过标准的反向传播进行训练：
 - en: '![Learning how to learn](img/B10354_07_11.jpg)'
+  id: totrans-372
   prefs: []
   type: TYPE_IMG
+  zh: '![学习如何学习](img/B10354_07_11.jpg)'
 - en: A network developed by the NEAT algorithm
+  id: totrans-373
   prefs: []
   type: TYPE_NORMAL
+  zh: NEAT 算法开发的网络
 - en: As you can see in the preceding diagram, the networks developed by NEAT are
     often smaller than traditional, layer-based neural networks. They are hard to
     come up with. This is the strength of AutoML; it can find effective strategies
     that humans would not have discovered.
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前图所示，NEAT 开发的网络通常比传统的基于层的神经网络小。它们难以设计出来。这就是 AutoML 的优势；它可以找到人类未曾发现的有效策略。
 - en: 'An alternative to using evolutionary algorithms for network design is to use
     reinforcement learning, which yields similar results. There are a couple "off-the-shelf"
     AutoML solutions:'
+  id: totrans-375
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用进化算法进行网络设计的替代方案是使用强化学习，这也能得到类似的结果。有几个现成的 AutoML 解决方案：
 - en: '**tpot** ([https://github.com/EpistasisLab/tpot](https://github.com/EpistasisLab/tpot)):
     This is a data science assistant that optimizes machine learning pipelines using
     genetic algorithms. It is built on top of scikit-learn, so it does not create
     deep learning models but models useful for structured data, such as random forests.'
+  id: totrans-376
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**tpot** ([https://github.com/EpistasisLab/tpot](https://github.com/EpistasisLab/tpot)):
+    这是一个数据科学助手，使用遗传算法优化机器学习管道。它建立在 scikit-learn 之上，因此并不创建深度学习模型，而是创建适用于结构化数据的模型，如随机森林。'
 - en: '**auto-sklear****n** ([https://github.com/automl/auto-sklearn](https://github.com/automl/auto-sklearn)):
     This is also based on scikit-learn but focuses more on creating models rather
     than feature extraction.'
+  id: totrans-377
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**auto-sklearn** ([https://github.com/automl/auto-sklearn](https://github.com/automl/auto-sklearn)):
+    这也是基于 scikit-learn，但更侧重于创建模型，而不是特征提取。'
 - en: '**AutoW****EKA** ([https://github.com/automl/autoweka](https://github.com/automl/autoweka)):
     This is similar to `auto-sklearn`, except that it is built on the WEKA package,
     which runs on Java.'
+  id: totrans-378
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**AutoW****EKA** ([https://github.com/automl/autoweka](https://github.com/automl/autoweka)):
+    这个工具类似于`auto-sklearn`，但它是基于WEKA软件包构建的，WEKA运行在Java上。'
 - en: '**H2O A****utoML** ([http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html)):
     This is an AutoML tool that is part of the H2O software package, which provides
     model selection and ensembling.'
+  id: totrans-379
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**H2O A****utoML** ([http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html)):
+    这是H2O软件包中的一个AutoML工具，提供模型选择和集成方法。'
 - en: '**Google Cloud AutoML** ([https://cloud.google.com/automl/](https://cloud.google.com/automl/)):
     This is currently focused on pipelines for computer vision.'
+  id: totrans-380
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Google Cloud AutoML** ([https://cloud.google.com/automl/](https://cloud.google.com/automl/)):
+    目前该工具专注于计算机视觉领域的管道。'
 - en: 'For the subfield of hyperparameter search, there are a few packages available
     as well:'
+  id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于超参数搜索这个子领域，也有一些可用的软件包：
 - en: '**Hyperopt** ([https://github.com/hyperopt/hyperopt](https://github.com/hyperopt/hyperopt)):
     This package allows for distributed, asynchronous hyperparameter search in Python.'
+  id: totrans-382
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Hyperopt** ([https://github.com/hyperopt/hyperopt](https://github.com/hyperopt/hyperopt)):
+    这个软件包允许在Python中进行分布式的异步超参数搜索。'
 - en: '**Spearmint** ([https://github.com/HIPS/Spearmint](https://github.com/HIPS/Spearmint)):
     This package is similar to Hyperopt, optimizing hyperparameters but using a more
     advanced Bayesian optimization process.'
+  id: totrans-383
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Spearmint** ([https://github.com/HIPS/Spearmint](https://github.com/HIPS/Spearmint)):
+    这个软件包与Hyperopt类似，优化超参数，但采用了更先进的贝叶斯优化过程。'
 - en: AutoML is still an active field of research, but it holds great promise. Many
     firms struggle to use machine learning due to a lack of skilled employees. If
     machine learning could optimize itself, more firms could start using machine learning.
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
+  zh: AutoML仍然是一个活跃的研究领域，但它充满了潜力。许多公司因缺乏熟练的员工而难以使用机器学习。如果机器学习能够自我优化，更多公司将能够开始使用机器学习。
 - en: Understanding the brain through RL
+  id: totrans-385
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 通过强化学习理解大脑
 - en: The other emerging field in finance and economics is behavioral economics. More
     recently, reinforcement learning has been used to understand how the human brain
     works. Wang and others, in 2018, published a paper titled, *Prefrontal cortex
     as a meta-reinforcement learning system* (see [http://dx.doi.org/10.1038/s41593-018-0147-8](http://dx.doi.org/10.1038/s41593-018-0147-8)),
     which provided new insights into the frontal cortex and the function of dopamine.
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个在金融和经济学中崭露头角的领域是行为经济学。最近，强化学习被用于理解人类大脑如何运作。Wang等人在2018年发布了一篇题为 *前额叶皮层作为元强化学习系统*
+    的论文（参见 [http://dx.doi.org/10.1038/s41593-018-0147-8](http://dx.doi.org/10.1038/s41593-018-0147-8)），为前额叶皮层和多巴胺的功能提供了新的见解。
 - en: Similarly, Banino and others in 2018 published a report titled, *Vector-based
     navigation using grid-like representations in artificial agents* (see [https://doi.org/10.1038/s41586-018-0102-6](https://doi.org/10.1038/s41586-018-0102-6)),
     where they replicated so-called "grid cells" that allow mammals to navigate using
     reinforcement learning.
+  id: totrans-387
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，Banino等人在2018年发布了一篇题为 *使用网格状表示法的人工智能体的基于向量的导航* 的报告（参见 [https://doi.org/10.1038/s41586-018-0102-6](https://doi.org/10.1038/s41586-018-0102-6)），他们复制了所谓的“网格细胞”，这些细胞使哺乳动物能够使用强化学习进行导航。
 - en: The method is similar because both papers train RL algorithms on tasks related
     to the area of research, for example, navigation. They then examine the learned
     weights of the model for emergent properties. Such insight can be used to create
     more capable RL agents but also to further the field of neuroscience.
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个方法之所以相似，是因为这两篇论文都在与研究领域相关的任务上训练强化学习算法，例如导航。然后，他们检查模型学习到的权重以寻找突现属性。这些见解可以用于创造更强大的强化学习代理，同时也推动神经科学领域的发展。
 - en: As the world of economics gets to grips with the idea that humans are not rational,
     but irrational in predictable ways, understanding the brain becomes more important
     when understanding economics. The results of neuroeconomics are particularly relevant
     to finance as they deal with how humans act under uncertainty and deal with risk,
     such as why humans are loss averse. Using RL is a promising avenue to yield further
     insight into human behavior.
+  id: totrans-389
   prefs: []
   type: TYPE_NORMAL
+  zh: 随着经济学界逐渐意识到人类并非理性，而是在可预测的方式下表现出非理性，理解大脑变得在理解经济学时尤为重要。神经经济学的结果对于金融尤为相关，因为它们涉及人类在不确定性下如何行动以及如何处理风险，例如人类为何具有损失厌恶。使用强化学习是进一步了解人类行为的有希望的途径。
 - en: Exercises
+  id: totrans-390
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 练习
 - en: As we've now completed the task, let's try our hand at two appropriate exercises
     based on the content that we've covered.
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
+  zh: 既然我们已经完成了这个任务，接下来让我们尝试基于我们所学内容的两个合适练习。
 - en: '**A simple** **RL task**: Go to [https://github.com/openai/gym](https://github.com/openai/gym).
     Once there, install the Gym environment and train an agent to solve the "Cartpole"
     problem.'
+  id: totrans-392
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**简单的** **强化学习任务**：访问[https://github.com/openai/gym](https://github.com/openai/gym)。到达该页面后，安装Gym环境并训练一个智能体来解决“Cartpole”问题。'
 - en: '**A multi-agent** **RL task**: Go to [https://github.com/crazymuse/snakegame-numpy](https://github.com/crazymuse/snakegame-numpy).
     This is a Gym environment that lets you play multiple agents in a "Snake" game.
     Experiment with different strategies. Can you create an agent that fools the other
     agent? What is the emergent behavior of the snakes?'
+  id: totrans-393
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '**多智能体** **强化学习任务**：访问[https://github.com/crazymuse/snakegame-numpy](https://github.com/crazymuse/snakegame-numpy)。这是一个Gym环境，让你在“蛇”游戏中操控多个智能体。尝试不同的策略。你能创建一个能欺骗其他智能体的代理吗？这些蛇的涌现行为是什么？'
 - en: Summary
+  id: totrans-394
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, you learned about the main algorithms in RL, Q-learning, policy
     gradients, and evolutionary strategies. You saw how these algorithms could be
     applied to trading and learned about some of the pitfalls of applying RL. You
@@ -2031,10 +2853,14 @@
     today. At this point in the book, you are now equipped with a number of advanced
     machine learning algorithms, which are hopefully useful to you when developing
     machine learning models.
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一章中，你了解了强化学习中的主要算法，Q学习、策略梯度和进化策略。你看到了这些算法如何应用于交易，并了解了一些应用强化学习时的陷阱。你还了解了当前研究的方向，以及如何从这些研究中受益。在本书的这一部分，你现在已经掌握了一些先进的机器学习算法，希望这些对你开发机器学习模型时有所帮助。
 - en: In the next chapter, we will discuss the practicalities of developing, debugging,
     and deploying machine learning systems. We will break out of the data-science
     sandbox and get our models into the real world.
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将讨论开发、调试和部署机器学习系统的实际操作。我们将突破数据科学的沙盒，带领我们的模型进入现实世界。
