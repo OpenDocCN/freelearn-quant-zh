@@ -1,0 +1,497 @@
+- en: Chapter 6. Derivatives Pricing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Derivatives are financial instruments which derive their value from (or are
+    dependent on) the value of another product, called the **underlying**. The three
+    basic types of derivatives are forward and futures contracts, swaps, and options.
+    In this chapter we will focus on this latter class and show how basic option pricing
+    models and some related problems can be handled in R. We will start with overviewing
+    how to use the continuous Black-Scholes model and the binomial Cox-Ross-Rubinstein
+    model in R, and then we will proceed with discussing the connection between these
+    models. Furthermore, with the help of calculating and plotting of the Greeks,
+    we will show how to analyze the most important types of market risks that options
+    involve. Finally, we will discuss what implied volatility means and will illustrate
+    this phenomenon by plotting the volatility smile with the help of real market
+    data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The most important characteristics of options compared to futures or swaps
+    is that you cannot be sure whether the transaction (buying or selling the underlying)
+    will take place or not. This feature makes option pricing more complex and requires
+    all models to make assumptions regarding the future price movements of the underlying
+    product. The two models we are covering here differ in these assumptions: the
+    Black-Scholes model works with a continuous process while the Cox-Ross-Rubinstein
+    model works with a discrete stochastic process. However, the remaining assumptions
+    are very similar and we will see that the results are close (moreover, principally
+    identical) too.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Black-Scholes model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The assumptions of the Black-Scholes model (*Black and Sholes, 1973*, see also
+    *Merton, 1973*) are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The price of the underlying asset (*S*) follows geometric Brownian motion:![The
+    Black-Scholes model](img/0933OS_06_01.jpg)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Here *µ* (drift) and *σ* (volatility) are constant parameters and *W* is a standard
+    Wiener process.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The market is arbitrage-free.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The underlying is a stock paying no dividends.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Buying and (short) selling the underlying asset is possible in any (even fractional)
+    amount.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: There are no transaction costs.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The short-term interest rate (*r*) is known and constant over time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The main result of the model is that under these assumptions, the price of
+    a European call option (*c*) has a closed form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Black-Scholes model](img/0933OS_06_02.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: '![The Black-Scholes model](img/0933OS_06_03.jpg),'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![The Black-Scholes model](img/0933OS_06_04.jpg),'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Here *X* is the strike price, *T-t* is the time to maturity of the option,
+    and *N* denotes the cumulative distribution function of the standard normal distribution.
+    The equation giving the price of the option is usually referred to as the Black-Scholes
+    formula. It is easy to see from put-call parity that the price of a European put
+    option (*p*) with the same parameters is given by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Black-Scholes model](img/0933OS_06_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now consider a call and put option on a Google stock in June 2013 with a maturity
+    of September 2013 (that is, with 3 months of time to maturity). Let us assume
+    that the current price of the underlying stock is USD 900, the strike price is
+    USD 950, the volatility of Google is 22%, and the risk-free rate is 2%. We will
+    calculate the value of the call option with the `GBSOption` function from the
+    **fOptions** package. Beyond the parameters already discussed, we also have to
+    set the cost of carry (b); in the original Black-Scholes model, (with underlying
+    paying no dividends) it equals the risk-free rate.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This prolonged output returns the passed parameters with the result just below
+    the `Option Price` label. Setting the `TypeFlag` to `p` would compute the price
+    of the put option and now we are only interested in the results (found in the
+    `price` slot—see the `str` of the object for more details) without the textual
+    output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Like in the previous chapter, we also have the choice to compute the preceding
+    values with a more user-friendly calculator provided by the **GUIDE** package.
+    Running the `blackscholes()` function would trigger a modal window with a form
+    where we can enter the same parameters. Please note that the function uses the
+    dividend yield instead of cost of carry, which is zero in this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Cox-Ross-Rubinstein model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The **Cox-Ross-Rubinstein** (CRR) model (*Cox, Ross and Rubinstein, 1979*)
+    assumes that the price of the underlying asset follows a discrete binomial process.
+    The price might go up or down in each period and hence changes according to a
+    binomial tree illustrated in the following plot, where *u* and *d* are fixed multipliers
+    measuring the price changes when it goes up and down. The important feature of
+    the CRR model is that *u=1/d* and the tree is recombining; that is, the price
+    after two periods will be the same if it first goes up and then goes down or vice
+    versa, as shown in the following figure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'To build a binomial tree, first we have to decide how many steps we are modeling
+    (*n*); that is, how many steps the time to maturity of the option will be divided
+    into. Alternatively, we can determine the length of one time step ![The Cox-Ross-Rubinstein
+    model](img/0933OS_06_a.jpg) *t,* (measured in years) on the tree:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'If we know the volatility (*σ*) of the underlying, the parameters *u* and *d*
+    are determined according to the following formulas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'And consequently:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'When pricing an option in a binomial model, we need to determine the tree of
+    the underlying until the maturity of the option. Then, having all the possible
+    prices at maturity, we can calculate the corresponding possible option values,
+    simply given by the following formulas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_10.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_11.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: 'To determine the option price with the binomial model, in each node we have
+    to calculate the expected value of the next two possible option values and then
+    discount it. The problem is that it is not trivial what expected return to use
+    for discounting. The trick is that we are calculating the expected value with
+    a hypothetic probability, which enables us to discount with the risk-free rate.
+    This probability is called risk-neutral probability (*p[n]*) and can be determined
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The interpretation of the risk-neutral probability is quite plausible: if the
+    one-period probability that the underlying price goes up was *p[n]*, then the
+    expected return of the underlying would be the risk-free rate. Consequently, an
+    expected value calculated with *p[n]* can be discounted by *r* and the price of
+    the option in any node of the tree is determined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In the preceding formula, *g* is the price of an option in general (it may be
+    call or put as well) in a given node, *g[u]* and *g[d]* are the values of this
+    derivative in the two possible nodes one period later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For demonstrating the CRR model in R, we will use the same parameters as in
+    the case of the Black-Scholes formula. Hence, *S*=`900`, *X*=`950`, *σ*=`22`%,
+    *r*=`2`%, *b*=`2`%, *T-t*=`0.25`. We also have to set *n*, the number of time
+    steps on the binomial tree. For illustrative purposes, we will work with a 3-period
+    model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is worth observing that the option prices obtained from the binomial model
+    are close to (but not exactly the same as) the Black-Scholes prices calculated
+    earlier. Apart from the final result, that is, the current price of the option,
+    we might be interested in the whole option tree as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here we first computed a matrix by `BinomialTreeOption` with the given parameters
+    and saved the result in `CRRTree` that was passed to the plot function with specified
+    labels for both the x and y axis with the limits of the x axis set from `0` to
+    `4`, as shown in the following figure. The y-axis (number of up steps) shows how
+    many times the underlying price has gone up in total. Down steps are defined as
+    negative up steps.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/0933OS_06_14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The European put option can be shown similarly by changing the `TypeFlag` to
+    `pe` in the previous code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Cox-Ross-Rubinstein model](img/Image1.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Connection between the two models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'After applying the two basic option pricing models, we give some theoretical
+    background to them. We do not aim to give a detailed mathematical derivation,
+    but we intend to emphasize (and then illustrate in R) the similarities of the
+    two approaches. The financial idea behind the continuous and the binomial option
+    pricing is the same: if we manage to hedge the option perfectly by holding the
+    appropriate quantity of the underlying asset, it means we created a risk-free
+    portfolio. Since the market is supposed to be arbitrage-free, the yield of a risk-free
+    portfolio must equal the risk-free rate. One important observation is that the
+    correct hedging ratio is holding ![Connection between the two models](img/0933OS_06_16.jpg)
+    underlying asset per option. Hence, the ratio is the partial derivative (or its
+    discrete correspondent in the binomial model) of the option value with respect
+    to the underlying price. This partial derivative is called the delta of the option.
+    Another interesting connection between the two models is that the delta-hedging
+    strategy and the related arbitrage-free argument yields the same pricing principle:
+    the value of the derivative is the risk-neutral expected value of its future possible
+    values, discounted by the risk-free rate. This principle is easily tractable on
+    the binomial tree where we calculated the discounted expected values node by node;
+    however, the continuous model has the same logic as well, even if the expected
+    value is mathematically more complicated to compute. This is the reason why we
+    gave only the final result of this argument, which was the Black-Scholes formula.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now we know that the two models have the same pricing principles and ideas (delta-hedging
+    and risk-neutral valuation), but we also observed that their numerical results
+    are not equal. The reason is that the stochastic processes assumed to describe
+    the price movements of the underlying asset are not identical. Nevertheless, they
+    are very similar; if we determine the value of *u* and *d* from the volatility
+    parameter as we did it in *The Cox-Ross-Rubinstein model* section, the binomial
+    process approximates the geometric Brownian motion. Consequently, the option price
+    of the binomial model converges to that of the Black-Scholes model if we increase
+    the number of time steps (or equivalently, decrease the length of the steps).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To illustrate this relationship, we will compute the option price in the binomial
+    model with increasing numbers of time steps. In the following figure, we compare
+    the results with the Black-Scholes price of the option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Connection between the two models](img/0933OS_06_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The plot was generated by a loop running `N` from `1` to `200` to compute `CRRBinomialTreeOption`
+    with fixed parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now the `prices` variable holds `200` computed values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let us also compute the option with the generalized Black-Scholes option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And show the prices in a joint plot with the GBS option rendered in red:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Greeks
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Understanding the risk-types that an option might involve is crucial for all
+    market participants. The idea behind Greeks is to measure the different types
+    of risks; they represent the sensitivity of the option to different factors. The
+    Greeks of a plain vanilla option are: `delta` (![Greeks](img/0933OS_06_a.jpg),
+    sensitivity to the underlying price), `gamma` (![Greeks](img/0933OS_06_b.jpg),
+    sensitivity of delta to the underlying price, delta of delta), `theta` (![Greeks](img/0933OS_06_c.jpg),
+    sensitivity to time), `rho` (![Greeks](img/0933OS_06_d.jpg), sensitivity to the
+    risk-free rate), and `vega` (*V*, sensitivity to the volatility). In terms of
+    mathematics, all Greeks are partial derivatives of the derivative price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Greeks](img/0933OS_06_18.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: '![Greeks](img/0933OS_06_19.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: '![Greeks](img/0933OS_06_20.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: '![Greeks](img/0933OS_06_21.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: '![Greeks](img/0933OS_06_22.jpg)'
+  prefs:
+  - PREF_UL
+  type: TYPE_IMG
+- en: 'The Greeks can be computed easily for each option with the `GBSGreeks` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is often useful to analyze how a given Greek changes if some market parameters
+    change. Such analysis might help us to understand risks better. For example, delta
+    of a call option as a function of the underlying price is an increasing curve
+    taking an S shape, ranging from 0 to 1\. These characteristics are always valid,
+    but if time passes and we are approaching the maturity of the option, the curve
+    becomes steeper and steeper (see the next figure). The interpretation is as follows:
+    if it is very probable that the call option will be exercised, then it is very
+    similar to a long forward contract; hence, delta is close to 1\. If the chance
+    of exercising is very low, holding the call option is similar to holding nothing
+    and delta is 0\. As time passes, the interval of those underlying prices where
+    the exercising is really uncertain (that is, neither very probable, nor very improbable)
+    gets narrower; as a result, the curve of the delta becomes steeper. To illustrate
+    this behavior, we will plot the delta of a call as a function of the underlying
+    price, with three different maturities.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To compute the deltas, we run two loops: one with three different time values
+    and `S` running from `500` to `1500`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resulting `deltas` holds 1001 rows (for the `S` values) and three columns
+    (for the specified times) that we show in a joint plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following figure shows the delta of the call options with three different
+    values of time to maturity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Greeks](img/0933OS_06_23.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Determining or plotting the Greeks of complex option strategies is very similar.
+    For example, calculating the delta of a straddle position (a portfolio of a call
+    and a put option with the same parameters) means simply calculating deltas separately
+    for the call and the put and then adding them. We will plot `delta` of a straddle
+    as a function of the underlying price. We may observe that the shape is very similar
+    to the delta of the previous call, but now the S-curve is ranging from -1 to 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So we call a nested loop running `S` from `500` to `1500` for both the call
+    and put options keeping the other parameters fixed, and save the resulting deltas
+    in a matrix. With the next command, the sum of these rows (put and call options)
+    is rendered:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resulting plot illustrates the delta of a straddle position as a function
+    of the underlying''s price as shown in the following figure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Greeks](img/0933OS_06_24.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Implied volatility
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The Black-Scholes model is often criticized because of some shortcomings. One
+    important problem is that the model assumes constant volatility for the underlying
+    asset, which does not hold in reality. Furthermore, since it is not observable
+    directly, the `volatility` is the most complicated parameter of the model to calibrate.
+    Due to this difficulty, the Black-Scholes formula is often used in an indirect
+    way for estimating the `volatility` parameter; we observe the market price of
+    an option, then in view of all the other parameters we can search for *σ* that
+    results a Black-Scholes price equal to the observed market price. This *σ* parameter
+    is called the implied volatility of the option. As Riccardo Rebonato famously
+    stated, implied volatility is "the wrong number to put in the wrong formula to
+    get the right price" (*Rebonato, 1999, p.78*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will illustrate the calculation of implied volatility with the help of some
+    Google options. The options are call options with the maturity of September 21,
+    2013 and strike prices ranging from USD 700 to USD 1150 (76 different options).
+    We collected the ask prices of these options on June 25, 2013 from [finance.google.com](http://finance.google.com)
+    and put them in a CSV file. For the calculations, we need to know that the price
+    of Google on the given day was USD 866.2\. Since the time to maturity is 88 days,
+    we will use 88/360 years for the `Time` parameter. The risk-free rate and the
+    cost of carry are assumed to remain 2% further on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, load the Google options from a CSV file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And then run a loop for each line of the dataset to compute the volatility
+    with the given parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `volatilities` variable is a vector holding the computed values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'That can be shown against the strike price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Hence, the following figure shows the implied volatilities for different strike
+    prices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Implied volatility](img/0933OS_06_25.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It is worth noticing that the implied volatilities calculated for Google options
+    vary according to the strike prices. This is contrary with the Black-Scholes model,
+    which assumes constant volatility. The observed implied volatility pattern (lower
+    volatilities for medium strike prices) is not unique and appears in financial
+    markets quite frequently. Because of the specific form of the curve, the phenomenon
+    is called the volatility smile.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we have used R to price plain vanilla options with the Black-Scholes
+    and Cox-Ross-Rubinstein models. Furthermore, we examined the basic Greeks and
+    the implied volatility of these options. For more details on the financial background
+    of these topics, see (*Hull, 2011*). Besides getting to know some tools from the
+    fOptions package, we have also created a few loops and custom functions programmatically
+    for simulation purposes. The next chapter will concentrate on how to manage credit
+    risks by various models such as choosing an optimal credit portfolio with Monte-Carlo
+    simulation and credit scoring methods.
+  prefs: []
+  type: TYPE_NORMAL

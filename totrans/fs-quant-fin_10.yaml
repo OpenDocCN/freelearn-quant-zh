@@ -1,0 +1,671 @@
+- en: Chapter 10. Putting the Pieces Together
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter covers the final step of building an automated trading system.
+    We will look at how to refactor the system and change it to reflect new requirements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter you will learn about:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Executing a trading strategy
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Presenting information in the GUI
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Possible additions to the trading system
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Understanding the requirements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We've covered some of the requirements in [Chapter 8](ch08.html "Chapter 8. Setting
+    Up the Trading System Project"), *Setting Up the Trading System Project*, but
+    let's review them again and see how the system will be defined. The main thing
+    about the automated trading system is that it needs to be able to process market
+    data and make decisions based on the data. The decisions will then be converted
+    to FIX 4.2 messages and sent to a FIX simulator, a real broker, or the stock exchange.
+    In this rather simple setup, the market data will be the daily data from Yahoo!
+    Finance that will be downloaded and parsed daily.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The automated trading system should be able to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Store log entries in a Microsoft SQL Server database
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Store trading history in a Microsoft SQL Server database
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Download quotes from Yahoo! Finance
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Manage orders with an **Order Management System** (**OMS**)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Send orders using FIX 4.2
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Connect the trading system to a FIX simulator via FIX 4.2
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Execute a trading strategy written in F#
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Control itself using a basic GUI with start/stop buttons
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Display the current position(s)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Display the current **profit and loss** (**P&L**)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Display the latest quote(s)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use the MVC pattern and the `INotifyPropertyChanged` interface
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following is a diagram illustrating the data flow in the trading system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Understanding the requirements](img/4623OS_10_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Data flow in a trading system
+  prefs: []
+  type: TYPE_NORMAL
+- en: Revisiting the structure of the system
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We''ll revisit the project structure and make sure all the dependencies are
+    added. The following are the parts of an automated trading system:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feed handlers and market data adapters
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Trading strategies
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Order execution and order management
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Persistence layer (DBs)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: GUI for monitoring the system
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'We need two new dependencies. They are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`System.Windows.Forms`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Drawing`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We need the `System.Windows.Forms` dependency to create our GUI. It provides
+    support for Windows itself and the controls that are used. The `System.Drawing`
+    dependency is also needed to provide the basic graphics functionality. The following
+    is a list of the references needed in the project. You can verify your own project
+    against the list to make sure you have all the dependencies needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The trading system is split into two projects: `TradingSystem` and `TradingSystem.Tests`.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the list of dependencies required for `TradingSystem`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`FSharp.Core`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`FSharp.Data.TypeProviders`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`mscorlib`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`NQuantLib`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Core`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Data`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Data.Linq`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Drawing`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Numerics`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Windows.Forms`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following is the list of dependencies required for `TradingSystem.Tests`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`Fsharp.Core`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`FsUnit.NUnit`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`TradingSystem.Core`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`FSharp.Data.TypeProviders`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`mscorlib`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`nunit.framework`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Core`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`System.Numerics`'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Understanding the Model-View-Controller pattern
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we'll look at the concept of the MVC design pattern. The MVC
+    pattern is a concept that was introduced at Xerox PARC and has been around since
+    the early days of Smalltalk. It is a high-level design pattern often used in GUI
+    programming. We'll use it later in more detail, but a gentle introduction here
+    will make the concept familiar to you when needed later.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main idea behind MVC is to separate the model from the view. The view is
+    simply the GUI, which interacts with the user of the program. The GUI will take
+    care of the buttons clicked on and the data displayed on the screen. The model
+    is the data to be used in the program. It can be, for example, financial data.
+    It's often desirable to separate the code for the model (data) and the view (GUI).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The MVC pattern described in the preceding figure is a modified version of the
+    traditional MVC pattern. The main difference is that there is no direct communication
+    between the view and the model in this variant. This is a more refined way of
+    using the MVC pattern, where the view doesn't have to know anything about the
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The model is typically the data and the state of the application. In this case,
+    the model will consist of orders, the market data, and the state of the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The view
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The view is the `TradingSystemForm` class and will be the only GUI form used
+    apart from dialog boxes, which are standard Windows Forms components. The view
+    is the GUI.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The controller
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The controller is responsible for connecting the view to the model. The controller
+    is initialized with an instance of the model, and the view is added to the controller
+    during the execution of the program (`Program.fs`). The following diagram is a
+    schematic representation of the relationship between the parts in the MVC pattern:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The controller](img/4623OS_10_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The MVC pattern, where the controller knows both the model and the view
+  prefs: []
+  type: TYPE_NORMAL
+- en: In our case, the controller will be responsible for updating the view when an
+    action is taken. This means the model will notify the controller, and the controller
+    will update the view. Strictly speaking, this is a slightly modified version of
+    the classic MVC pattern where the model knows about the view and notifies the
+    view instead of the controller.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main problem with this classic approach is that of tight coupling. Using
+    the controller as the mediator, a compound pattern is formed. This is the same
+    strategy used in popular libraries such as *Cocoa* by Apple.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Executing the trading strategy using a framework
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The trading strategy is executed through `onMarketData` when the downloading
+    of data is completed/successful (it sends a message to the agent). If any error
+    occurs, notify the agent. Everything is logged to a SQL backend (SQL Server).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The trading strategy will have six callable functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`onInit`: This function is called when a strategy is initialized'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`onStart`: This function is called when the strategy starts'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`onStop`: This function is called when the strategy stops'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`onMarketData`: This function is called whenever new market data arrives'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`onTradeExecution`: This function is called whenever a trade is executed'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '`onError`: This function is called with every error that occurs'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The trading strategy will be implemented as a type of its own where callbacks
+    are member functions that are called from the **strategy executor**. The strategy
+    executor consists of an agent receiving messages from the system. The start and
+    stop commands are sent from the two event handlers connected to the buttons in
+    the GUI.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s look at the main structure of the framework used to execute the trading
+    strategy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We need control messages to be used to communicate with the agent; these are
+    modeled as criminated unions. The messages are used to change the state and communicate
+    the change between the parts in the system. This is needed because the agent is
+    running in another thread, and the passing of the messages is the way we communicate
+    with them. An example of this is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `TradingAgent` module will receive the control messages and take the appropriate
+    action. The following is the code to implement the functionality to call the corresponding
+    method in the trading strategy using pattern matching:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following are parts of the GUI code that are used to control the trading
+    system. Most of the code uses .NET classes mainly from Windows Forms libraries.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are many good resources available at MSDN about Windows Forms at [http://msdn.microsoft.com/en-us/library/ms229601(v=vs.110).aspx](http://msdn.microsoft.com/en-us/library/ms229601(v=vs.110).aspx).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The trading strategy will be initiated and passed to the agent. During the
+    initiation, the parameters and other constant values will be passed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When the **Start** button is pressed, this event handler is called and two
+    messages are sent to the agent:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following is the code used in `Program.fs` to start the application and
+    view the GUI:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: Building the GUI
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The GUI we used in the previous section is not sufficient for our trading application,
+    but it illustrated the basics of how to put a GUI together using F#. Next, we''ll
+    add the controls needed and prepare it to present the information from the model.
+    The following is a mock representation showing where the controls will be placed
+    and the overall idea about the GUI:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Building the GUI](img/4623OS_10_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A mock representation of the trading system's GUI
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s look at the required code. Most of the code is straightforward, following
+    the same rules used in the GUI in the last section. The `DataGridView` control
+    has some properties set for the width to be adjusted automatically. The same is
+    true for labels, where the property `AutoSize` is set to true. The final GUI will
+    look like the one in the screenshot displayed after the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Building the GUI](img/4623OS_10_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The final GUI build from the code according to the mock
+  prefs: []
+  type: TYPE_NORMAL
+- en: Presenting information in the GUI
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we'll look at ways of presenting information in a GUI which
+    is updated on a regular basis. We'll use the MVC pattern to update the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In .NET, in general, the interface `INotifyPropertyChanged` is used when the
+    notification of an update is needed in the model. In this example, we'll use a
+    `DataGridView` control and a `DataSource` that consists of a list with items of
+    a custom type implementing the `INotifyPropertyChanged` interface.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The updates to the model are handled by the controller and then the GUI is
+    updated from the `DataSource` itself. Let''s start by looking at the list of orders
+    and how to present that list of orders in the `DataGridView` control. Add the
+    following code to the `GUI.fs` file:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Also, add the following function call just under `initControls`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Presenting information in the GUI](img/4623OS_10_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The GUI with `DataGridView` populated with an order item
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you may notice, the content in some cells is not displayed as we would like.
+    We need to add a custom cell formatter for them where we specify in which way
+    the value is presented in the GUI.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Add the following line of code at the end in the `initOrderList` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then, we need to implement the `eventOrdersGrid_CellFromatting` function as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now when we run the program, the `DataGridView` control for the order items
+    will format the cells correctly as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Presenting information in the GUI](img/4623OS_10_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The GUI with `DataGridView` using a custom cell formatter
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To make the GUI complete, we need to add functionalities to update text fields
+    and to handle button clicks. We need callback functions that will be called from
+    the controller to update the text fields in the GUI:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, we''ll need event handlers for buttons. Each button will have its own
+    event handler as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Adding support for downloading the data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The market data will be pulled from Yahoo! Finance on a daily basis; we''ll
+    use closing prices and from them calculate the data needed. The data will be downloaded
+    once the **Download data** button in the GUI is clicked on. The following is the
+    code to illustrate how downloading can be handled by a background thread:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The trading system will follow these steps from the downloading process until
+    the data is parsed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Download the data from Yahoo! Finance.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Parse the data and perform the calculations.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Store the data in the model.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Looking at possible additions to the system
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we'll look at possible additions to the trading system we have
+    developed. The ideas here can work as inspiration for an interested reader. Trading
+    systems involve topics from many areas in finance and computer science. The trading
+    system developed here is rather elementary and is mainly for illustrative purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Improving the data feed
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The data feed used here isn''t an actual feed; it''s more of a data service.
+    A data feed is as the name suggests: a feed of data. The data feed will provide
+    a continuous stream of the market data to the application and follows a publisher-subscriber
+    pattern. It''s not easy to find a data feed provider that delivers data for free.
+    The following is a list of some alternatives worth looking into:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Bloomberg''s Open Market Data Initiative**: [http://www.openbloomberg.com/](http://www.openbloomberg.com/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Interactive Brokers**: [https://www.interactivebrokers.com/en/main.php](https://www.interactivebrokers.com/en/main.php)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**eSignal Feed API**: [http://www.esignal.com/](http://www.esignal.com/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support for backtesting
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Backtesting is useful in many cases, the least being to verify the correctness
+    of the trading logic. Backtesting can also provide some valuable insights into
+    the historical performance of a trading strategy. When developing a backtesting
+    engine, you need a feed adapter to use historical data and a broker adapter to
+    keep track of executed orders and the profit and loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This data is used to calculate statistics such as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Total number of trades
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The ratio between winners and losers
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The average size of a trade
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Total return on an account
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Volatility and sharp ratio; sharp ratio is the volatility-adjusted return
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Extending the GUI
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The GUI provided for this trading system is quite limited. The GUI can easily
+    be extended to support more features and provide charts of the market data using
+    FSharpChart among others. One alternative is to develop the GUI using C# or another
+    language that has a visual designer built into Visual Studio. This makes things
+    much easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main reason that the GUI is developed in F# in this book is to illustrate
+    the flexibility of F#. When there is a visual designer for F#, there is no reason
+    not to use F# for most parts of the program. Writing the GUI code by hand is cumbersome
+    regardless of the language that is used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Converting to the client-server architecture
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The current architecture is better modelled as part of a client-server solution.
+    In a client-server solution, the data feed, strategy execution, and order management
+    will reside on the server, whereas the user interface will either be a native
+    application or a browser implementation. There are two ways to go here. The first
+    is to communicate with the server using a message queue such as Microsoft Message
+    Queuing. The other is to use a browser-based GUI, communicating with the server
+    using WebSockets and RESTful techniques.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Some useful technologies to look deeper into are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Microsoft Message Queuing** (**MSMQ**)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: ZeroMQ
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: WebSocket
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: RESTful
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we have put the pieces together we learned throughout this
+    book, and this has resulted in a trading system for volatility arbitrage. Many
+    aspects of F# programming and the .NET framework together with external libraries
+    have been illustrated and covered up to now.
+  prefs: []
+  type: TYPE_NORMAL

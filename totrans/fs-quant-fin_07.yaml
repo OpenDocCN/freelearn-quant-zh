@@ -1,0 +1,831 @@
+- en: Chapter 7. Getting Started with Order Types and Market Data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter you will learn how to model order types and market data and
+    various types of feeds in F#.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter you will learn:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modeling Order Types
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modeling Market data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Implementing simple pretrade risk analysis
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Using function composition and currying
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Introducing orders
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Typically, orders are instructions from the buyer's side to the seller's side
+    regarding how to buy and sell financial instruments. These orders are standardized
+    to some extent. In most situations, the orders and order types are determined
+    by the broker used and the exchange.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order types
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Order types are the types of orders that are found in trading systems and on
+    exchanges in general. Often you look at market orders, limit orders, and conditional
+    orders. In the conditional orders category, we have stop-orders and other orders
+    with special conditions for execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Other types exist as well, but they are considered to be synthetic orders because
+    they are combinations of the types previously described. Order types can be one
+    of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market order
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Limit order
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Conditional and stop-orders
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Market orders
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Market orders are orders to be executed at the current market price on an exchange.
+    These orders will accept the current bid/ask (top of book) price for the particular
+    instrument. Furthermore, market orders are the simplest of the order types presented
+    here. Due to the uncertainty in the price for which the order will be executed,
+    market orders are not used where a more sophisticated risk profile is maintained.
+    This means that their uses are quite limited in reality.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limit orders
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Limit orders are the most commonly used order type. They are, as the name suggests,
+    limited to a fixed price. This means that the order has a limit price for which
+    they will be executed. For buy orders, this means that there is a limit, and they
+    are bounded above the limit price. All prices below this limit will be accepted
+    for buy orders. For sell orders, the opposite holds; there is a lower limit and
+    the prices are bounded below. All prices above this limit will be accepted for
+    sell orders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conditional and stop-orders
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Conditional orders, especially stop-orders, are orders that will be activated
+    on the exchange on certain conditions. Stop-orders are activated when a certain
+    price is touched by the order book (top of book). When this condition is met,
+    the order will be converted into a market order. Certain stop-orders that will
+    be converted into limit orders also exist.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Order properties
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Order properties refer to the properties of an order describing what to do and
+    under which conditions. The following table presents the most basic properties
+    with descriptions and examples for each one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Property | Description | Examples |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Order side | Whether the order is a buy or sell order with short sell orders
+    included | Buy, Sell |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Order type | Type of the order | Market, Limit, and Stop |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Order status | The status for the order in the execution flow | Created,
+    New, Filled, Canceled, and so on |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tif | Time in force; how long an order will remain active | GoodForDay, FillOrKill
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Quantity | Number of units to buy or sell of the specific instrument | 10,
+    25, and 200 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Price | The limit price for the order | 26.50, 55.10 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Instrument | The instrument to be used in the order | MSFT, GOOG, AAPL |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stop price | The stop price used in the order | 26.50, 55.10 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Timestamp | The date and time when the order was created | 2013-09-14 11:30:44
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Next, we''ll continue the work we started out in [Chapter 2](ch02.html "Chapter 2. Learning
+    More About F#"), *Learning More About F#,* and extend the order class and describe
+    some properties as discriminated unions. First off, we will revisit the order
+    side:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this context, the order side will have three alternatives; buy, sell, and
+    sell short. Then we have the order type, which will either be buy, sell, stop,
+    or stop limit. The stop limit is a stop order that will be converted into a limit
+    order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Discriminated unions are elegant ways of describing data with different values.
+    The values can be many, without losing the readability. Next, we have the order
+    status:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are many values for the order status; they are from the FIX 4.2 specification
+    and will be familiar to most of you who are familiar to FIX. They are here for
+    illustrative purposes and will be used in the trading system. **Time in force**
+    (**Tif**) has the most common alternatives used in trading:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We''ll introduce a new type here to be used along with the functionality introduced
+    in this section. First, we will look at the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Note the use of the `Result` in the preceding snippet; this is used so that
+    we identify the outcome of the validation function(s), which we'll introduce later
+    on. For now, you can think of them as a way of representing alternative return
+    types.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following order class is an extension on the work we did in [Chapter 2](ch02.html
+    "Chapter 2. Learning More About F#"), *Learning More About F#*. It''s implemented
+    using some mutability, which is allowed in F# because it''s not a pure functional
+    language in that sense. Mutability provides more flexibility and compromises for
+    more pragmatic solutions. Here, we use private member fields and some new fields:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The preceding method will toggle the side of the order, which is useful if we,for
+    example, want to change the side of the order without creating a new one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The preceding class can be used in the same way as other classes in F#:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The fields will be as follows, where the private fields are hidden and the
+    property getter functions are the names of the fields:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Suppose you want to validate an order for correctness and avoid simple mistakes.
+    For example, if the order is a limit order, we can check whether the order has
+    a price above zero. Furthermore, if the order is a stop order, the stop price
+    has to be greater than zero, and so on. Let''s write a function to execute this
+    order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The function will take an order object wrapped in the order monad. This will
+    become clear when we look at how to use it in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can create some orders of various types and see if our validation function
+    works.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Now, we will test our validation function for the preceding orders just created:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Let''s suppose we also want a validator to check whether the instrument is
+    set for an order. We can then run these tests one by one. First, we need a function
+    to do the validation:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'Running this in F# Interactive will result in the following:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Now we want to combine the two validators into one validator. This can be done
+    in F# using function composition. Function composition, with the `>>` operator,
+    lets you take two or more functions and combine them into one new function. You
+    can look at function composition as a way of chaining functions together. This
+    is useful when smaller building blocks are used and reused and supports modularity.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: 'This function can now be used in the same way as the one we used previously:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: This is a rather powerful way of combining functionality and can be useful in
+    many situations. We'll come back to function composition later on when we look
+    at pretrade risks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Understanding order execution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Let's look at order execution and order flow for a moment. Order execution is
+    where the orders are executed, typically at an exchange. For algorithmic trading,
+    the buy side (trader) will often have their own order management system or order
+    execution engine at the exchange, close to the exchange's trading servers. The
+    orders at the exchange are typically limit orders; there are other types too.
+    All other order types are considered to be synthetic orders or non-native orders.
+    If you use a broker, you will never see this. But for high frequency trading,
+    limit orders are considered to be the only native type. Market orders are simply
+    limit orders with the current market price (from the top of book).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The following illustration shows a simple order flow between an order execution
+    engine and the exchange. The order execution engine resides on the buy side and
+    keeps track of the orders that are currently in and their status.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Understanding order execution](img/4623OS_07_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Order execution flow and status updates for an order
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The order status of an order is represented by the discriminated union we have
+    seen before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: The property will be updated for the order management system when an execution
+    report is received for that particular order. First the order has the order status
+    `Created` and then if it is accepted, it will have the order status `New`. Then,
+    it will have any of the order statuses from the preceding `OrderStatus` object;
+    for example `Filled`, `Expired`, `Rejected`, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introducing market data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Market data is the data representing the current bid/ask for a financial instrument
+    at an exchange. The market data can either be the top of book, best bid/ask for
+    the particular instrument, or an aggregated book with several levels of depth.
+    Normally, we just look at the best bid/ask prices, top of book called quotes.
+    Market data can also be sent as OHLC bars or candles. Such bars are only useful
+    for visualizing price information in charts or for trading at a longer horizon.
+    It is a simple way of filtering the price information. The midpoint is defined
+    as the average between the bid and ask.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s see how to use this type:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can calculate the midpoint as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can extend the `Quote` type to have a built-in function to calculate the
+    spread for that quote:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sometimes, in real systems, the bid and ask are not sent in the same object
+    because updates to them will not occur simultaneously. Then, it''s preferable
+    to separate them:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Implementing simple pretrade risk analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we'll briefly cover pretrade risks for a simple trading system.
+    Pretrade risks are everything that are considered to be risks and analyzed before
+    the order is sent to the exchange. Typically, this is done in the trading engine
+    or order execution engine or order management system. Here we'll consider basic
+    pretrade risk measurements, such as order size and maximum distance for limit
+    prices (that is values that tend to be high/low from the current market price).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following are the examples of pretrade risk rules:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Limit the order price distance from the current market price
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The maximum order value
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Total exposure
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Number of orders sent per time unit
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Validating orders
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let's dive into some code and look at how pretrade risk can be implemented using
+    functional programming and function composition. We'll look at two simple pretrade
+    risk rules. The first one is for the total order value and the other one is for
+    checking if the limit price is set on the favorable side of the current market
+    price. This can be useful for manual trading, for example.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next rule we will use is `currying`, which is a concept we talked about
+    in [Chapter 2](ch02.html "Chapter 2. Learning More About F#"), *Learning More
+    About F#*. Currying is a way of calling a function where parts of the functions
+    arguments are saved to be specified later. The following is the second rule for
+    our pretrade risk analysis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will now use function composition, as before, and create new rules from
+    existing ones:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This pattern can quickly become quite impractical. However, there is an elegant
+    technique to be used where we first specify the functions in a list and then use
+    `List.reduce` and the composite operator to create a new composition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Introducing FIX and QuickFIX/N
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section we'll learn about the FIX 4.2 standard and the QuickFIX/N library
+    for .NET. FIX is the standard protocol of communicating with brokers and exchanges
+    and stands for **Financial Information eXchange**. It has been around since the
+    early 90s and uses an ASCII-based representation of messages. Other alternatives
+    exist, such as proprietary APIs and protocols.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using FIX 4.2
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section we'll refactor the existing trading system in order to use FIX
+    4.2 messages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Download FIXimulator from the following URL:[http://fiximulator.org/](http://fiximulator.org/)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Download QuckFIX/n from the following URL: [http://www.quickfixn.org/download](http://www.quickfixn.org/download).'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Extract the files from the archives into folders.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Start FIXimulator by running `fiximulator.bat`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When you have started FIXimulator, it will look like the following figure. At
+    the bottom of the application, there is a status bar with indicators. The leftmost
+    indicator is for the client connection status. The first step is to make a successful
+    connection to the simulator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Configuring QuickFIX to use the simulator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To be able to connect to the FIXimulator, you need a proper configuration file,
+    `config.cfg`, in the classpath of the project as well as the correct path in the
+    `SessionSettings` constructor in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The contents of `config.cfg` are:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: You have to change the value of the `SocketConnectHost` field to suit your setup,
+    and this will be your local IP address if you run the simulator on the same machine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is also a configuration file for the simulator, namely `FIXimulator.cfg`,
+    where the value of `TargetCompID` has to be changed to `TRADINGSYSTEM`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Configuring QuickFIX to use the simulator](img/4623OS_07_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: No client is connected
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the client side, in our program, we'll use the QuickFIX library and implement
+    the methods needed in order to connect to the simulator. Add the following code
+    to a new file `FIX.fs`. We'll use this in the final project, so it's recommended
+    to work from the TradingSystem project while doing this project, which will start
+    in the next chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To use QuickFIX, a number of interfaces have to be implemented. The `ClientInitiator
+    function` is where the messages will be handled:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `ConsoleLog` function is another interface needed to support logging.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, we have `FIXEngine` itself. This is the interface provided to the other
+    parts of the system. It provides methods to start, stop, and send orders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we can try the preceding code using F# Interactive, and we will be connected
+    to the simulator. The client connection status in the **FIXimulator** window will
+    now be green if everything worked out successfully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Configuring QuickFIX to use the simulator](img/4623OS_07_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The client connection status is green when the client is connected
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s make things more interesting and try out some code to send an order
+    to the simulator. As previously mentioned, orders have various properties. The
+    fields in our `Order` object are supposed to mimic the FIX 4.2 fields as closely
+    as possible. We''ll first try out the QuickFIX representation or orders, and send
+    a limit order to the simulator to see if everything works as expected. To do this,
+    we''ll add a method to `FIXEngine`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This method will just be used for testing purposes and it is useful to have
+    a working reference when we later add support to translate our internal Order
+    object into the representation used by QuickFIX. You have to restart the F# Interactive
+    session to see the changes in `FIXEngine` that we did earlier. Run the following
+    code, and you''ll hopefully have sent your first order to the simulator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Configuring QuickFIX to use the simulator](img/4623OS_07_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The client connection status is green when the client is connected
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let's stay in **FIXimulator** for a moment and see what useful functionality
+    we got.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can select the **Orders** tab in the simulator and you will have a new
+    view, as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Configuring QuickFIX to use the simulator](img/4623OS_07_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Investigating the order properties from incoming orders
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `SenderCompID` field corresponds to the actual sender of the order, which
+    is the `TradingSystem`. We can also see the other properties of the order. Inside
+    the simulator, you have several alternatives for each order, for example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Acknowledged
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Canceled
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rejected
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Executed
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We need some support for keeping track of the orders in our system and to change
+    their state depending on the messages received from the counterpart (simulator);
+    this is done by using the `ClientInitiator` function. Here we have the method
+    called `FromApp`, which is a method to handle incoming messages; for example,
+    modify the state of the orders in the system. The message to listen to, in the
+    case of order execution management, is `ExecutionReport`. It is exactly what the
+    name suggests, a report of execution. First we'll implement the code to just print
+    out the status from the last order execution in the simulator. Then we'll use
+    the simulator to test it out.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the preceding code, we try to cast `msg` to an `ExecutionReport` instance
+    and if that succeeds, we pattern match on the order status. Let's try this together
+    with the simulator.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Send a test order to the simulator using `fixEngine.sendTestLimitOrder()`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In **FIXimulator**, under **Orders**, select the received order.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Press the **Acknowledge** button.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'F# Interactive will output the execution report, which will look something
+    like:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: This means we have received an execution report, and the order status is now
+    `New`.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Select the same order in the simulator and click on **Cancel**.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: We'll repeat the procedure, but this time we'll acknowledge and then execute
+    the order in two steps, resulting in a `New`, `Partial fill`, and `Filled` execution
+    report.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Send a test order again.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Acknowledge the order.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Execute the order with LastShares=50 and LastPx=25.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Execute again with LastShares=50 and LastPx=24.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Watch the output in F# Interactive.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Note the order in which the execution reports arrive. First, we execute half
+    the order resulting in a partial fill. Then, we execute the remaining 50, which
+    will fill the order.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the simulator, we can see the value in the `AvgPx` column is 24.5\. This
+    corresponds to the average price for the whole order. Next, we'll implement a
+    lightweight order manager to keep track of all this for us.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s look at the modified code for the `FromApp` callback function where
+    we just altered the status of the order matching the order ID:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `orders` list is a `BindingList`, which is just a declaration we use for
+    experimentation outside of the MVC model where it will be located in the final
+    system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `sendOrder` method is also modified slightly so that it can handle our
+    Order objects and convert them to the QuickFIX representation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can now use the code elaborated so far to test out the simple order manager
+    using the simulator. When the three orders are sent to the simulator, the output
+    will look like the following screenshot. Select the first one and click on **Acknowledge**.
+    We can now compare the contents of the orders list to see if the execution report
+    is handled and if the order manager has done its job.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here is the first `Order` in the `orders` list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This will be changed to the following if everything works out:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Configuring QuickFIX to use the simulator](img/4623OS_07_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Testing out the first version of our order manager
+  prefs: []
+  type: TYPE_NORMAL
+- en: The remaining part is to include support for partial fills, where we have open
+    and executed quantities and the average price. This is the final part of the order
+    manager to be elaborated. We'll also enhance the outputs from the `ClientInitiator`
+    function to include these fields from the execution reports.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following are the modifications done to the code to handle the order management
+    part:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To handle the status of `Filled`, we set the average price, the open quantity,
+    and the executed quantity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To handle the status of `PartiallyFilled`, we set the average price, the open
+    quantity, and the executed quantity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The remaining status updates are straightforward updates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can test this out using the simulator, and a test run with partial fills,
+    as before, results in the following content in the `orders` list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Configuring QuickFIX to use the simulator](img/4623OS_07_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The final iteration and testing of the order manager
+  prefs: []
+  type: TYPE_NORMAL
+- en: The values will be presented in a data grid in the GUI for the trading system,
+    which we'll start preparing in the next chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter we introduced several concepts regarding orders and market data.
+    We also looked at how to model orders and market data in F# using some of the
+    information available from the FIX 4.2 standard to guide us. It's good to have
+    an overview of these facts while working with quantitative finance, especially
+    when dealing with algorithmic trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The results from this chapter will be used when we start to set up the trading
+    system, which we'll start doing in the next chapter. We'll also look at how to
+    implement test cases for the validation code provided in this chapter.
+  prefs: []
+  type: TYPE_NORMAL

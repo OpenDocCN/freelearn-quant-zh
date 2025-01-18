@@ -1,0 +1,534 @@
+- en: Chapter 7. Credit Risk Management
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter introduces some useful tools for credit risk management. Credit
+    risk is the distribution of the financial losses due to unexpected changes in
+    the credit quality of a counterparty in a financial agreement (*Giesecke 2004*).
+    Several tools and industrial solutions were developed for managing credit risk.
+    In accordance with the literature, one may consider credit risk as the **default
+    risk**, **downgrade risk**, or **counterparty risk**. In most cases, the default
+    risk is related directly to the risk of non-performance of a claim or credit.
+    In contrast, downgrade risk arises when the price of a bond declines due to its
+    worsening credit rating without any realized credit event. Counterparty risk means
+    the risk when the counterparty of a contract does not meet the contractual obligations.
+    However, the contractual or regulatory definition of a credit event can usually
+    be wider than just a missed payment. The modeling end estimation of the possibility
+    of default is an essential need in all of the three cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Managing credit risk is conducted in various ways at financial institutions.
+    In general, the tasks in credit risk management are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Credit portfolio selection (for example, the decision of a commercial bank about
+    lending or credit scoring)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Measuring and predicting the probability of default or downgrade (using, for
+    example, a credit rating migration matrix with CreditMetrics)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Modeling the distribution of the financial loss due to default or downgrade
+    (for a single entity: structural and reduced form pricing and risk models or,
+    for a portfolio: dependency structure modeling)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mitigating or eliminating credit risk (with a hedge, diversification, prevention,
+    or insurance; we do not investigate it in this book)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In this chapter, we will show examples using R for some of the preceding listed
+    problems. At first, we introduce the basic concepts of credit loss modeling, namely,
+    the structural and reduced form approaches, and their applications in R. After
+    that, we provide a practical way correlated random variables with copulas, which
+    is a useful technique of structured credit derivative pricing. We also illustrate
+    how R manages credit migration matrices and, finally, we give detailed insight
+    into credit scoring with analysis tools, such as logit and probit regressions
+    and **receiver operating characteristic** (**ROC**) analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Credit default models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The goal of the first part of the chapter is to show the methods of using R
+    for pricing and performing Monte Carlo simulations with standard credit risk models.
+    The following sections give an essential picture of loss distributions and the
+    generating and pricing of a single debt instrument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Structural models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We start with the well-known option-based model of Merton (*Merton 1974*) as
+    the introductory model of structural approach. Merton evaluates risky debt as
+    a contingent claim of the firm value. Let us suppose that the `V` firm value follows
+    geometric Brownian motion:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_A.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In the preceding formula, `μ` is the drift parameter, `σ>0` is the volatility
+    parameter, `dW` is the differential of the Wiener process, and the initial asset
+    value is `V[0]>0`. The model assumes a flat yield curve, with `r` as the constant
+    interest rate, and lets us define the default state as that where the value of
+    the assets V falls below the liabilities (`K`) upon the of maturity of debt (T).
+    We express the V[T] firm value at maturity as the integral of:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_B.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Where we express `dlnV[t]` using Ito''s lemma to derive the differential of
+    the logarithm of firm value as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_C.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Along with generating Gaussian distributed random variables for capturing ![Structural
+    models](img/0933OS_07_D.jpg), we calculate the V[T] firm value at maturity with
+    this discrete approach in the following way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_E.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Where `∆t` denotes the one-period length of the elapsed time. We simulate the
+    firm value with R in accordance with this logic. First, set the parameters of
+    the simulation, namely, the initial asset value, the drift, and the volatility
+    parameters in the following way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, declare the length of `∆t` and the end of the time periods (`Time`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s also compute the number of time periods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And finally, decide on the number of generated trajectories:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To make pseudo-random generated variables you would be able to replicate later,
+    set a random seed every time before calling the generator functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And, to produce the increments of the logarithm of the `V` process (`ΔlnV`),
+    generate `n*M` numbers from a normal distribution using the specified mean and
+    standard deviation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And store these numbers in a `matrix` with `M` rows and `n` columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In order to get the variation of the firm value in time (`V`), summarize the
+    logarithm of the increments and, as computed above, take the exponential of this
+    sum and multiply it with the initial firm value. The equivalent code for `n` number
+    of trajectories is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The used `cumsum` function is common with the `apply` command. Plot the first
+    five trajectories with `matplot` as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We selected the first five (`1:5`) columns of `V` to be plotted with solid
+    (`lty=1`) and stair steps (`type=''s''`) lines resulting in the following graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933_07_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Note that the price of the risky debt is the expected value of the discounted
+    payoff of the risky debt at maturity as per the risk neutral or martingale P measure,
+    where drift is the `r` risk-free interest rate as the following formula expresses:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_F.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'If we set the `r` risk-free interest rate and face value of the debt (`K`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can demonstrate the Monte Carlo pricing as the parallel min (`pmin`) of
+    the debt face value and the previously computed `V` from which we take the `M^(th)`
+    column''s mean as shown in the previous formula, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For the standard parameters and the fixed pseudo-random generated variables
+    `D`, risky debt with a face value of 80 dollars counts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From the Black-Scholes pricing formula of the European call options, the value
+    of risky debt value at `t=0` can be expressed as the `V` firm value less the equity
+    value (`E`), which is a European call option on `V`. Noting the pricing formula
+    with `c^(BS)`, we get:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_G.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'One can calculate debt value with the `GBSOption` function of the `fOptions`
+    package. After installing and calling the following library, one can use the following
+    appropriate function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Set the `TypeFlag` parameter to `"c"` (call) and the other parameters to the
+    previously defined value. Select parameter `b` to the `r` risk-free interest rate
+    to get the Black-Scholes European call and write the `@price` slot at the end
+    of the command to return the value of `price` from the generated object of class
+    `fOption`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We receive the following result, which is very close to our previous estimation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, there is a small difference between analytically and numerically computed
+    prices; with the increasing number of trajectories and decreasing `Δt`, the price
+    based upon Monte Carlo simulation converges to the theoretical price. Let us calculate
+    the term structure of credit spreads (denoted by `s(T)`) on risky debt at `t=0`
+    as follows, where credit spreads depend on the maturity of debt (`T`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933OS_07_H.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For different maturities (from 0.1 to 10 years by 0.1 year), plot these spreads
+    in a hump-shaped curve. Define the time grids as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And recalculate the debt value for each point on the grid to calculate the
+    credit spreads:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is useful to plot this curve:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following figure shows the team structure of credit spreads in the Merton
+    Model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Structural models](img/0933_07_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: There are several extensions of Merton's model, for example, Moody's KMV application
+    or the Black and Cox first hitting the time approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Intensity models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The second common and popular approach for modeling credit defaults is the intensity-based
+    (reduced form) modeling. In this framework, we assume that the default occurs
+    without showing any earlier sign for predictability. The dynamics of the default
+    intensity depend on the predicted probability of default. We also show an example
+    later in the chapter, where intensity is constant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The central idea behind the intensity models is that the number of independent
+    defaults in a given time interval comes from the Poisson distribution. Let `τ[1]`,
+    `τ[2]`, ..., `τ[i]`, ..., `τ[n]` be random default times. Thus, let `N[t]` denote
+    the number of defaults up to time `t` as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Intensity models](img/0933OS_07_I.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Where the indicator function formulates the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Intensity models](img/0933OS_07_J.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The probability that the number of jumps equals to `k` on the `[s,t]` interval
+    is derived from the Poisson distribution where `λ[u]` is the instantaneous intensity
+    of default at time `u`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Intensity models](img/0933OS_07_K.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The probability of default occurring before time `t` is the expected value
+    of the following generalization exponential cumulative distribution function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Intensity models](img/0933OS_07_L.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'However, though elementary models use a constant `λ` hazard rate, industrial
+    models apply more complex structures. For example, in the double-stochastic Poisson
+    model (or Cox-model), the hazard rate follows the Cox-Ingersoll-Ross process described
+    in the following equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Intensity models](img/0933OS_07_M.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'A simulation of the **Cox-Ingersoll-Ross** (**CIR**) process is supplied by
+    the `sde` package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Redefine the time dimensions, maturity, length, and number of time periods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After that, create the CIR process by declaring the `X0` initial value, the
+    `θ[1]`, `θ[2]` drift parameters (`θ[1] / θ[2]` is the long run value, `θ[2]` is
+    the speed of adjustment), and the `θ[3]` volatility parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is easy to produce Poisson processes in R. Let us generate `n*(M+1)` Poisson
+    distributed random variables (`n` is the number of trajectories), with a `lambda`
+    parameter vector (this simulated vector of `θ` proves that the process is a double-stochastic
+    or Cox process):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Store these numbers in a `matrix` with `M+1` rows and `n` columns, such as
+    the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Add the increments of `N[t]` (`dN`) to get the whole Cox process (`N`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Plot it as we did earlier in the chapter. The resulting graph should look something
+    like the following diagram.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Intensity models](img/0933_07_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Correlated defaults – the portfolio approach
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we show you how to deal with correlated random variables with
+    copulas for the simulation of loss distributions of credit portfolios. The **copula**
+    function is a joint cumulative distribution function of uniform distributed random
+    variables. The **copula** function contains all the information on the dependence
+    structure of the components. Any of the continuously distributed random variables
+    can be transformed into uniformly distributed variables, which allows for the
+    possibility of general modeling; for example, it can be combined with the structural
+    approach. Using the `copula` package, we demonstrate how to simulate two uniformly
+    distributed random variables with Gaussian and t-copulas, and how to fit in a
+    Gaussian copula parameter from the generated data. (One can apply this method
+    for historical datasets also.) This package also serves useful functions in a
+    wide range of topics about copulas, such as plotting or fitting copula classes
+    involving Archimedean copulas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At first, declare a Gaussian copula class with an `0.7` correlation after loading
+    the `copula` package as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After that, generate `500` realizations of two uniformly distributed random
+    variables with the Gaussian copula dependency structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For the comparison, define a `tcopula` class with an `0.7` correlation and
+    `4` degrees of freedom:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, generate `500` realizations of pairs of random variables with t-copula
+    dependence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: Plot the results into two graphs next to each other. The `par` command ensures
+    the two figures will be placed next to each other, ordered in a row and two columns
+    (`mfcol`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Correlated defaults – the portfolio approach](img/0933_07_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Fit the Gaussian copula correlation parameter for `u1` data with the maximum
+    likelihood (`ml`) method where the function uses the copula family type of the
+    `norm.cop` object we defined before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When we print the following results, we receive that the estimated correlation
+    is around 0.69:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: We remark that the package supports some other methods for estimating correlation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Migration matrices
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Credit rating transition is the migration of a corporate or governmental bond
+    from one rating to another. The well-known industrial application is the CreditMetrics
+    approach. It provides a risk modeling tool for bond portfolios to estimate the
+    **Conditional Value-at-Risk** (**CVaR**) and credit spreads of a portfolio due
+    to downgrade and upgrading. In this section, we show how to calculate credit spreads
+    from a transition matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have to define the **loss given default** (**lgd**), the ratings (in this
+    example: `A`, `B`, and `D`) and the one year transition matrix to compute credit
+    spreads:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The command `cm.cs` calculates the credit spreads from the migration matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: According to this example, a debt instrument with the rating `"A"` has around
+    1% credit spread and debt rated `"B"` has around 7.8% credit spread, calculated
+    from the `M` migration matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Getting started with credit scoring in R
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: R provides powerful statistical tools for credit scoring. We emphasize here
+    some of the most common techniques, namely probability default estimation with
+    logit and probit regressions and ROC curve analysis. During both behavioral and
+    application credit scoring, one can estimate or score the probability of default
+    in the usual way that the theory of cross-sectional econometrics suggests.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logit and probit regressions are generalized linear regression models with binary,
+    dependent variables, where the two outcomes can be, for example, either defaulted
+    or not. Logit regression uses logistic function; the probit model applies a cumulative
+    distribution function of the standard normal distribution for estimating the probability
+    of default. Coefficients of independent variables are typically estimated by the
+    maximum likelihood method in both cases. Logit and probit regression models can
+    be called with the `glm` command, which is the generalized linear model function
+    in R for estimating coefficients. Typical R tools for regression analysis suit
+    further examinations well. For example, the `anova` function is also useful in
+    providing a classical analysis of variance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Credit scoring modelers often employ receiver operating characteristic curves
+    to illustrate the performance of their estimated model. The ROC curve shows the
+    ratio of the sensitivity (sensitivity: accepted non-defaulted, to all non-defaulted)
+    to one minus the specificity (specificity: denied defaulted, to all defaulted).
+    The `pROC` package contains the `roc` function for producing the ROC curve. The
+    well-documented package can be installed in the usual way and the ROC curve can
+    be plotted with the `plot` command.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we briefly introduced some of the most common methods related
+    to credit risk modeling. However, there are several industrial approaches for
+    handling default risk. The bases of the advanced methods are usually some of the
+    structural and intensity-based approaches. Copula models are still popular for
+    modeling the risk of credit portfolios, especially in the pricing of structured
+    credit derivatives. There are comprehensive and strong R packages for modeling
+    copulas. The first step to model downgrade risk is knowledge about the principles
+    of managing migration matrices and the CreditMetrics approach. Finally, we briefly
+    outlined the possibilities of credit scoring in R.
+  prefs: []
+  type: TYPE_NORMAL

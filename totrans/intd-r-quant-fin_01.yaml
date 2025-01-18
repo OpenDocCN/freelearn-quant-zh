@@ -1,0 +1,714 @@
+- en: Chapter 1. Time Series Analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Time series analysis is concerned with the analysis of data collected over time.
+    Adjacent observations are typically dependent. Time series analysis hence deals
+    with techniques for the analysis of this dependence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The objective of this chapter is to introduce some common modeling techniques
+    by means of specific applications. We will see how to use R to solve these real-world
+    examples. We begin with some thoughts about how to store and process time series
+    data in R. Afterwards, we deal with linear time series analysis and how it can
+    be used to model and forecast house prices. In the subsequent section, we use
+    the notion of cointegration to improve on the basic minimal variance hedge ratio
+    by taking long-run trends into consideration. The chapter concludes with a section
+    on how to use volatility models for risk management purposes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Working with time series data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The native R classes suitable for storing time series data include `vector`,
+    `matrix`, `data.frame`, and `ts` objects. But the types of data that can be stored
+    in these objects are narrow; furthermore, the methods provided by these representations
+    are limited in scope. Luckily, there exist specialized objects that deal with
+    more general representation of time series data: `zoo`, `xts`, or `timeSeries`
+    objects, available from packages of the same name.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is not necessary to create time series objects for every time series analysis
+    problem, but more sophisticated analyses require time series objects. You could
+    calculate the mean or variance of time series data represented as a vector in
+    R, but if you want to perform a seasonal decomposition using `decompose`, you
+    need to have the data stored in a time series object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following examples, we assume you are working with `zoo` objects because
+    we think it is one of the most widely used packages. Before we can use `zoo` objects,
+    we need to install and load the `zoo` package (if you have already installed it,
+    you only need to load it) using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: In order to familiarize ourselves with the available methods, we create a `zoo`
+    object called `aapl` from the daily closing prices of Apple's stock, which are
+    stored in the CSV file `aapl.csv`. Each line on the sheet contains a date and
+    a closing price separated by a comma. The first line contains the column headings
+    (**Date** and **Close**). The date is formatted according to the recommended primary
+    standard notation of ISO 8601 (YYYY-MM-DD). The closing price is adjusted for
+    stock splits, dividends, and related changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Downloading the example code**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can download the example code files for all Packt books you have purchased
+    from your account at [http://www.packtpub.com](http://www.packtpub.com). If you
+    purchased this book elsewhere, you can visit [http://www.packtpub.com/support](http://www.packtpub.com/support)
+    and register to have the files e-mailed directly to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We load the data from our current working directory using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: To get a first impression of the data, we plot the stock price chart and specify
+    a title for the overall plot (using the `main` argument) and labels for the x
+    and y axis (using `xlab` and `ylab` respectively).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can extract the first or last part of the time series using the following
+    commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Apple''s all-time high and the day on which it occurred can be found using
+    the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: When dealing with time series, one is normally more interested in returns instead
+    of prices. This is because returns are usually stationary. So we will calculate
+    simple returns or continuously compounded returns (in percentage terms).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Summary statistics about simple returns can also be obtained. We use the `coredata`
+    method here to indicate that we are only interested in the stock prices and not
+    the index (dates).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The biggest single-day loss is -51.86%. The date on which that loss occurred
+    can be obtained using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: A quick search on the Internet reveals that the large movement occurred due
+    to the issuance of a profit warning. To get a better understanding of the relative
+    frequency of daily returns, we can plot the histogram. The number of cells used
+    to group the return data can be specified using the `break` argument.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can restrict our analysis to a subset (a `window`) of the time series. The
+    highest stock price of Apple in 2013 can be found using the following command
+    lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The quantiles of the return distribution are of interest from a risk-management
+    perspective. We can, for example, easily determine the 1 day 99% Value-at-Risk
+    using a naive historical approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Hence, the probability that the return is below 7% on any given day is only
+    1%. But if this day occurs (and it will occur approximately 2.5 times per year),
+    7% is the minimum amount you will lose.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Linear time series modeling and forecasting
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: An important class of linear time series models is the family of **Autoregressive
+    Integrated Moving Average** (**ARIMA**) models, proposed by *Box* *and* *Jenkins
+    (1976)*. It assumes that the current value can depend only on the past values
+    of the time series itself or on past values of some error term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'According to Box and Jenkins, building an ARIMA model consists of three stages:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model identification.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Model estimation.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Model diagnostic checking.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The model identification step involves determining the order (number of past
+    values and number of past error terms to incorporate) of a tentative model using
+    either graphical methods or information criteria. After determining the order
+    of the model, the parameters of the model need to be estimated, generally using
+    either the least squares or maximum likelihood methods. The fitted model must
+    then be carefully examined to check for possible model inadequacies. This is done
+    by making sure the model residuals behave as white noise; that is, there is no
+    linear dependence left in the residuals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modeling and forecasting UK house prices
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In addition to the `zoo` package, we will employ some methods from the `forecast`
+    package. If you haven''t installed it already, you need to use the following command
+    to do so:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Afterwards, we need to load the class using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'First, we store the monthly house price data (source: Nationwide Building Society)
+    in a `zoo` time series object.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `FUN` argument applies the given function (`as.yearmon`, which represents
+    the monthly data points) to the date column. To make sure we really stored monthly
+    data (12 subperiods per period), by specifying `as.yearmon`, we query for the
+    frequency of the data series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result means that we have twelve subperiods (called months) in a period
+    (called year). We again use simple returns for our analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Model identification and estimation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We use the `auto.arima` function provided by the `forecast` package to identify
+    the optimal model and estimate the coefficients in one step. The function takes
+    several arguments besides the return series (`hp_ret`). By specifying `stationary
+    = TRUE`,we restrict the search to stationary models. In a similar vein, `seasonal
+    = FALSE` restricts the search to non-seasonal models. Furthermore, we select the
+    Akaike information criteria as the measure of relative quality to be used in model
+    selection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: To determine the fitted coefficient values, we query the model output.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An AR(2) process seems to fit the data best, according to Akaike''s Information
+    Criteria. For visual confirmation, we can plot the partial autocorrelation function
+    using the command `pacf`. It shows non-zero partial autocorrelations until lag
+    two, hence an AR process of order two seems to be appropriate. The two AR coefficients,
+    the intercept (which is actually the mean if the model contains an AR term), and
+    the respective standard errors are given. In the following example, they are all
+    significant at the 5% level since the respective confidence intervals do not contain
+    zero:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: If the model contains coefficients that are insignificant, we can estimate the
+    model anew using the `arima` function with the `fixed` argument, which takes as
+    input a vector of elements `0` and `NA`. `NA` indicates that the respective coefficient
+    shall be estimated and `0` indicates that the respective coefficient should be
+    set to zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Model diagnostic checking
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A quick way to validate the model is to plot time-series diagnostics using
+    the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of the preceding command is shown in the following figure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Model diagnostic checking](img/0933OS_01_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Our model looks good since the standardized residuals don't show volatility
+    clusters, no significant autocorrelations between the residuals according to the
+    ACF plot, and the Ljung-Box test for autocorrelation shows high p-values, so the
+    null hypothesis of independent residuals cannot be rejected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To assess how well the model represents the data in the sample, we can plot
+    the raw monthly returns (the thin black solid line) versus the fitted values (the
+    thick red dotted line).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is shown in the following figure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Model diagnostic checking](img/0933OS_01_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Furthermore, we can calculate common measures of accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: This command returns the mean error, root mean squared error, mean absolute
+    error, mean percentage error, mean absolute percentage error, and mean absolute
+    scaled error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Forecasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'To predict the monthly returns for the next three months (April to June 2013),
+    use the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So we expect a slight increase in the average home prices over the next three
+    months, but with a high standard error of around 1%. To plot the forecast with
+    standard errors, we can use the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cointegration
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The idea behind cointegration, a concept introduced by *Granger (1981)* and
+    formalized by *Engle and Granger (1987)*, is to find a linear combination between
+    non-stationary time series that result in a stationary time series. It is hence
+    possible to detect stable long-run relationships between non-stationary time series
+    (for example, prices).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cross hedging jet fuel
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Airlines are natural buyers of jet fuel. Since the price of jet fuel can be
+    very volatile, most airlines hedge at least part of their exposure to jet fuel
+    price changes. In the absence of liquid jet fuel OTC instruments, airlines use
+    related exchange traded futures contracts (for example, heating oil) for hedging
+    purposes. In the following section, we derive the optimal hedge ratio using first
+    the classical approach of taking into account only the short-term fluctuations
+    between the two prices; afterwards, we improve on the classical hedge ratio by
+    taking into account the long-run stable relationship between the prices as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first load the necessary libraries. The `urca` library has some useful methods
+    for unit root tests and for estimating cointegration relationships.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: We import the monthly price data for jet fuel and heating oil (in USD per gallon).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: Taking into account only the short-term behavior (monthly price changes) of
+    the two commodities, one can derive the minimum variance hedge by fitting a linear
+    model that explains changes in jet fuel prices by changes in heating oil prices.
+    The beta coefficient of that regression is the optimal hedge ratio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: The function `lm` (for linear model) estimates the coefficients for a best fit
+    of changes in jet fuel prices versus changes in heating oil prices. The `+0` term
+    means that we set the intercept to zero; that is, no cash holdings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: We obtain a hedge ratio of 0.89059 and a residual standard error of 0.0846\.
+    The cross hedge is not perfect; the resulting hedged portfolio is still risky.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We now try to improve on this hedge ratio by using an existing long-run relationship
+    between the levels of jet fuel and heating oil futures prices. You can already
+    guess the existence of such a relationship by plotting the two price series (heating
+    oil prices will be in red) using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: We use Engle and Granger's two-step estimation technique. Firstly, both time
+    series are tested for a unit root (non-stationarity) using the augmented Dickey-Fuller
+    test.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: The null hypothesis of non-stationarity (jet fuel time series contains a unit
+    root) cannot be rejected at the 1% significance level since the test statistic
+    of -1.1335 is not more negative than the critical value of -3.46\. The same holds
+    true for heating oil prices (the test statistic is -1.041).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can now proceed to estimate the static equilibrium model and test the residuals
+    for a stationary time series using an augmented Dickey-Fuller test. Please note
+    that different critical values [for example, from *Engle and Yoo (1987)*] must
+    now be used since the series under investigation is an estimated one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The test statistic obtained is -8.912 and the critical value for a sample size
+    of 200 at the 1% level is -4.00; hence we reject the null hypothesis of non-stationarity.
+    We have thus discovered two cointegrated variables and can proceed with the second
+    step; that is, the specification of an **Error-Correction Model** (**ECM**). The
+    ECM represents a dynamic model of how (and how fast) the system moves back to
+    the static equilibrium estimated earlier and is stored in the `mod_static` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By taking into account the existence of a long-run relationship between jet
+    fuel and heating oil prices (cointegration), the hedge ratio is now slightly higher
+    (0.90020) and the residual standard error significantly lower (0.06875). The coefficient
+    of the error term is negative (-0.65540): large deviations between the two prices
+    are going to be corrected and prices move closer to their long-run stable relationship.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modeling volatility
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: As we saw earlier, ARIMA models are used to model the conditional expectation
+    of a process, given its past. For such a process, the conditional variance is
+    constant. Real-world financial time series exhibit, among other characteristics,
+    volatility clustering; that is, periods of relative calm are interrupted by bursts
+    of volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section we look at GARCH time series models that can take this stylized
+    fact of real-world (financial) time series into account and apply these models
+    to VaR forecasting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Volatility forecasting for risk management
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Financial institutions measure the risk of their activities using a Value-at-Risk
+    (VaR), usually calculated at the 99% confidence level over a 10 business day horizon.
+    This is the loss that is expected to be exceeded only 1% of the time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We load the `zoo` library and import monthly return data for Intel Corporation
+    from January 1973 to December 2008.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Testing for ARCH effects
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A plot of the returns indicates that ARCH effects might exist in the monthly
+    return data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of the preceding commands is as shown in the following figure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Testing for ARCH effects](img/0933OS_01_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can use statistical hypothesis tests to verify our inkling. Two commonly
+    used tests are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Ljung-Box test for autocorrelation in squared returns (as a proxy for volatility)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The **Lagrange Multiplier** (**LM**) test by *Engle (1982)*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'First, we perform the Ljung-Box test on the first 12 lags of the squared returns
+    using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can reject the null hypothesis of no autocorrelations in the squared returns
+    at the 1% significance level. Alternatively, we could employ the LM test from
+    the `FinTS` package, which gives the same result.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Both tests confirm that ARCH effects exist in the monthly Intel returns; hence,
+    an ARCH or GARCH model should be employed in modeling the return time series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GARCH model specification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The most commonly used GARCH model, and one that is usually appropriate for
+    financial time series as well, is a GARCH(1,1) model. We use the functions provided
+    by the `rugarch` library for model specification, parameter estimation, backtesting,
+    and forecasting. If you haven''t installed the package, use the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Afterwards, we can load the library using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, we need to specify the model using the function `ugarchspec`. For a GARCH(1,1)
+    model, we need to set the `garchOrder` to `c(1,1)` and the model for the mean
+    (`mean.model`) should be a white noise process and hence equal to `armaOrder =`
+    `c(0,0)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: GARCH model estimation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The actual fitting of the coefficients by the method of maximum likelihood is
+    done by the function `ugarchfit` using the model specification and the return
+    data as inputs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: For additional arguments, see the Help on `ugarchfit`. The output of the fitted
+    model (use the command `intc_garch11_fit`) reveals useful information, such as
+    the values of the optimal parameters, the value of the log-likelihood function,
+    and the information criteria.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backtesting the risk model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A useful test for checking the model performance is to do a historical backtest.
+    In a risk model backtest, we compare the estimated VaR with the actual return
+    over the period. If the return is more negative than the VaR, we have a VaR exceedance.
+    In our case, a VaR exceedance should only occur in 1% of the cases (since we specified
+    a 99% confidence level).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The function `ugarchroll` performs a historical backtest on the specified GARCH
+    model (here the model is `intc_garch11_spec`). We specify the backtest as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The return data to be used is stored in the `zoo` object `intc`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The start period of the backtest (`n.start`) shall be 120 months after the beginning
+    of the series (that is, January 1983)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The model should be reestimated every month (`refit.every = 1`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We use a `moving` window for the estimation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We use a `hybrid` solver
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We'd like to calculate the VaR (`calculate.VaR = TRUE`) at the 99% VaR tail
+    level (`VaR.alpha = 0.01`)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We would like to keep the estimated coefficients (`keep.coef = TRUE)`
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The following command shows all the preceding points for a backtest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can examine the backtesting report using the `report` function. By specifying
+    the `type` argument as `VaR`, the function executes the unconditional and conditional
+    coverage tests for exceedances. `VaR.alpha` is the tail probability and `conf.level`
+    is the conﬁdence level on which the conditional coverage hypothesis test will
+    be based.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Kupiec's unconditional coverage compares the number of expected versus actual
+    exceedances given the tail probability of VaR, while the Christoffersen test is
+    a joint test of the unconditional coverage and the independence of the exceedances.
+    In our case, despite the actual five exceedances versus an expectation of three,
+    we can't reject the null hypothesis that the exceedances are correct and independent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A plot of the backtesting performance can also be generated easily. First, create
+    a `zoo` object using the extracted forecasted VaR from the `ugarchroll` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: We overwrite the `index` property of the `zoo` object with `rownames` (year
+    and month) from this object as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: We do the same for the actual returns that are also stored in the `ugarchroll`
+    object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, we are able to plot the VaR versus the actual returns of Intel using the
+    following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following figure shows the output of the preceding command lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Backtesting the risk model](img/0933OS_01_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Forecasting
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Now that we can be reasonably sure that our risk model works properly, we can
+    produce VaR forecasts as well. The function `ugarchforecast` takes as arguments
+    the fitted GARCH model (`intc_garch11_fit`) and the number of periods for which
+    a forecast should be produced (`n.ahead = 12`; that is, twelve months).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resulting forecast can be expected by querying the forecast object as shown
+    in the following command lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: The one-period ahead forecast for the volatility (sigma) is 0.1168\. Since we
+    assume a normal distribution, the 99% VaR can be calculated using the 99% quantile
+    (type in `qnorm(0.99)`) of the standard normal distribution. The one-month 99%
+    VaR estimate for the next period is hence `qnorm(0.99)*0.1168 = 0.2717`. Hence,
+    with 99% probability the monthly return is above -27%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we have applied R to selected problems in time series analysis.
+    We covered the different ways of representing time series data, used an ARMA model
+    to forecast house prices, improved our basic minimum variance hedge ratio using
+    a cointegration relationship, and employed a GARCH model for risk management purposes.
+    In the next chapter, you'll learn how you can use R for constructing an optimal
+    portfolio.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,2040 @@
+- en: Chapter 7. Reinforcement Learning for Financial Markets
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Humans don't learn from millions of labeled examples. Instead, we often learn
+    from positive or negative experiences that we associate with our actions. Children
+    that touch a hot stove once will never touch it again. Learning from experiences
+    and the associated rewards or punishments is the core idea behind **reinforcement
+    learning** (**RL**). RL allows us to learn sophisticated decision-making rules
+    while having no data at all. Through this approach, several high-profile breakthroughs
+    occurred in AI, such as AlphaGo, which beat the world Go champion in 2016.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In finance, reinforcement learning, also known as RL, is making inroads as well.
+    In its 2017 report, *Machine learning in investment management* ([https://www.ahl.com/machine-learning](https://www.ahl.com/machine-learning)),
+    Man AHL outlined a reinforcement system for order routing in the FX and futures
+    market. Order routing is a classic problem in quantitative finance. When placing
+    an order, funds can usually choose from different brokers and place their orders
+    at different times. The goal is to fill the order as cheaply as possible. This
+    also means minimizing the market impact, as large orders can lift prices of stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Traditional algorithms with colorful names such as *Sniper* or *Guerilla* rely
+    on statistics from historical data and smart engineering. The RL-based routing
+    system learned an optimal routing policy by itself. The advantage is that this
+    system can adapt to changing markets and because of that it outperforms traditional
+    methods in data-rich markets such as the FX market.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, RL can do more. Researchers at OpenAI have used RL to predict when
+    agents will collaborate or fight. Meanwhile at DeepMind, researchers there have
+    used RL to yield new insights into the workings of the frontal cortex in the brain
+    and the role of the dopamine hormone.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter will start with an intuitive introduction to RL using a simple
+    "catch the fruit" game. We will then dive into the underlying theory before covering
+    more advanced RL applications. The examples in this chapter rely on visualizations
+    that are not easily rendered in Kaggle kernels. In order to simplify them, the
+    example algorithms are also not optimized for GPU usage. It is, therefore, best
+    to run these examples on your local machine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithms in this chapter run relatively quickly, so you won't have to
+    wait too long for them to run. The chapter code was written on a Mid-2012 MacBook
+    Pro, and no example took longer than 20 minutes to run on that machine. Of course,
+    you can also run the code on Kaggle, however the visualizations will not work
+    there.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Catch – a quick guide to reinforcement learning
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Catch is a straightforward arcade game that you might have played as a child.
+    Fruits fall from the top of the screen, and the player has to catch them with
+    a basket. For every fruit caught, the player scores a point. For every fruit lost,
+    the player loses a point.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The goal here is to let the computer play Catch by itself. We will be using
+    a simplified version in this example in order to make the task easier:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Catch – a quick guide to reinforcement learning](img/B10354_07_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The "Catch" game that we will be creating
+  prefs: []
+  type: TYPE_NORMAL
+- en: While playing Catch, the player decides between three possible actions. They
+    can move the basket to the left, to the right, or make it stay put.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The basis for this decision is the current state of the game; in other words,
+    the positions of the falling fruit and of the basket. Our goal is to create a
+    model that, given the content of the game screen, chooses the action that leads
+    to the highest score possible. This task can be seen as a simple classification
+    problem. We could ask expert human players to play the game multiple times and
+    record their actions. Then, we could train a model to choose the "correct" action
+    that mirrors the expert players.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is not how humans learn, however. Humans can learn a game such as Catch
+    by themselves, without guidance. This is very useful, because imagine if you had
+    to hire a bunch of experts to perform a task thousands of times every time you
+    wanted to learn something as simple as Catch: it would be expensive and slow.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In reinforcement learning, the model trains from experience, rather than labeled
+    data. Instead of providing the model with the correct actions, we provide it with
+    rewards and punishments. The model receives information about the current state
+    of the environment, for example, the computer game screen. It then outputs an
+    action, such as a joystick movement. The environment reacts to this action and
+    provides the next state, along with any rewards:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Catch – a quick guide to reinforcement learning](img/B10354_07_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: RL scheme
+  prefs: []
+  type: TYPE_NORMAL
+- en: The model then learns to find actions that lead to maximum rewards. There are
+    many ways this can work in practice. Right now, we are going to look at **Q-learning**.
+    Q-learning made a splash when it was used to train a computer to play Atari video
+    games. Today, it is still a relevant concept. Most modern RL algorithms are based
+    on some adaptation of Q-learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An excellent way to understand Q-learning is to compare playing Catch with playing
+    chess. In both games, you are given a state, *s*. With chess, this is the position
+    of the figures on the board. In Catch, this is the location of the fruit and the
+    basket. The player then has to take an action, *a*. In chess, this is moving a
+    figure. In Catch, this is moving the basket left or right or remaining in the
+    current position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a result, there will be some reward, *r,* and a new state, ![Catch – a quick
+    guide to reinforcement learning](img/B10354_07_001.jpg). The problem with both Catch
+    and chess is that the rewards do not appear immediately after the action.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Catch, you only earn rewards when the fruits hit the basket or fall on the
+    floor, and in chess, you only earn a reward when you win or lose the game. This
+    means that rewards are sparsely distributed. Most of the time, *r* will be zero.
+    When there is a reward, it is not always a result of the action taken immediately
+    before. Some action taken long before might have caused the victory. Figuring
+    out which action is responsible for the reward is often referred to as the credit
+    assignment problem. Because rewards are delayed, good chess players do not choose
+    their plays only by the immediate reward. Instead, they choose the expected future
+    reward.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For example, they do not only think about whether they can eliminate an opponent''s
+    figure in the next move, they also consider how taking a specific action now will
+    help them in the long run. In Q-learning, we choose our action based on the highest
+    expected future reward. We use a **Q-function** to calculate this. This is a mathematical
+    function that takes two arguments: the current state of the game, and a given
+    action. We can write this as *Q(state, action)*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While in state *s*, we estimate the future reward for each possible action,
+    *a*. We assume that after we have taken action *a* and moved to the next state,
+    ![Catch – a quick guide to reinforcement learning](img/B10354_07_002.jpg), everything
+    works out perfectly. The expected future reward, *q(s,a)*, for a given state and
+    action is calculated as the immediate reward, plus the expected future reward
+    thereafter, ![Catch – a quick guide to reinforcement learning](img/B10354_07_003.jpg).
+    We assume the next action, ![Catch – a quick guide to reinforcement learning](img/B10354_07_004.jpg),
+    is optimal. Because there is uncertainty about the future, we discount ![Catch
+    – a quick guide to reinforcement learning](img/B10354_07_005.jpg) by the factor
+    gamma, ![Catch – a quick guide to reinforcement learning](img/B10354_07_006.jpg).
+    We, therefore, arrive at an expected reward of this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Catch – a quick guide to reinforcement learning](img/B10354_07_007.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: We discount future rewards in RL for the same reason we discount
+    future returns in finance. They are uncertain. Our choice here reflects how much
+    we value future returns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Good chess players are very good at estimating future rewards in their head.
+    In other words, their Q-function, *Q(s,a),* is very precise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most chess practice revolves around developing a better Q-function. Players
+    peruse many old games to learn how specific moves played out in the past, and
+    how likely a given action is to lead to victory. However, this raises the question,
+    how can a machine estimate a good Q-function? This is where neural networks come
+    into play.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Q-learning turns RL into supervised learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'When playing a game, we generate lots of "experiences." These experiences consist
+    of the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The initial state, *s*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The action taken, *a*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The reward earned, *r*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The state that followed, ![Q-learning turns RL into supervised learning](img/B10354_07_008.jpg)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'These experiences are our training data. We can frame the problem of estimating
+    *Q(s,a)* as a regression problem. To solve this, we can use a neural network.
+    Given an input vector consisting of *s* and *a*, the neural network is supposed
+    to predict the value of *Q(s,a)* equal to the target: ![Q-learning turns RL into
+    supervised learning](img/B10354_07_009.jpg). If we are good at predicting *Q(s,a)*
+    for different states *s* and actions *a*, we will have a good approximation of
+    the Q-function.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: We estimate ![Q-learning turns RL into supervised learning](img/B10354_07_010.jpg)
+    through the same neural network as *Q(s,a)*. This leads to some instability as
+    our targets now change as the networks learn, just as with **generative adversarial
+    networks (GANs)**.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Given a batch of experiences, ![Q-learning turns RL into supervised learning](img/B10354_07_011.jpg),
+    the training process then looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each possible action, ![Q-learning turns RL into supervised learning](img/B10354_07_012.jpg),
+    (left, right, stay), predict the expected future reward, ![Q-learning turns RL
+    into supervised learning](img/B10354_07_013.jpg), using the neural network.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Choose the highest value of the three predictions as the max, ![Q-learning turns
+    RL into supervised learning](img/B10354_07_014.jpg).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate ![Q-learning turns RL into supervised learning](img/B10354_07_015.jpg).
+    This is the target value for the neural network.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Train the neural network using a loss function. This is a function that calculates
+    how near or far the predicted value is from the target value. Here, we will use
+    ![Q-learning turns RL into supervised learning](img/B10354_07_016.jpg) as the
+    loss function. Effectively, we want to minimize the squared error between prediction
+    and target. The factor of 0.5 is just there to make the gradient nicer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: During gameplay, all the experiences are stored in a replay memory. This acts
+    like a simple buffer in which we store ![Q-learning turns RL into supervised learning](img/B10354_07_017.jpg)
+    pairs. The `ExperienceReplay` class also handles preparing the data for training.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Check out the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s pause for a second and break down the code that we''ve just created:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Firstly, we implement the experience replay buffer as a Python class. A replay
+    buffer object is responsible for storing experiences and generating training data.
+    Therefore, it has to implement some of the most critical pieces of the Q-learning
+    algorithm.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'To initialize a replay object, we need to let it know how large its buffer
+    should be and what the discount rate, ![Q-learning turns RL into supervised learning](img/B10354_07_018.jpg),
+    is. The replay memory itself is a list of lists following this scheme:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: Within this, `experience` is a tuple holding the experience information and `game_over`
+    is a binary Boolean value indicating whether the game was over after this step.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When we want to remember a new experience, we add it to our list of experiences.
+    Since we cannot store infinite experiences, we delete the oldest experience if
+    our buffer exceeds its maximum length.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: With the `get_batch` function, we can obtain a single batch of training data.
+    To calculate ![Q-learning turns RL into supervised learning](img/B10354_07_019.jpg),
+    we need a neural network as well, so we need to pass a Keras model to use the
+    function.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Before we start generating a batch, we need to know how many experiences we
+    have stored in our replay buffer, how many possible actions there are, and how
+    many dimensions a game state has.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Then we need to set up placeholder arrays for the inputs and targets we want
+    to train the neural network on.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We loop over the experience replay in a random order until we have either sampled
+    all stored experiences or filled the batch.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We load the experience data as well as the `game_over` indicator from the replay
+    buffer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We add state *s* to the input matrix. Later, the model will train to map from
+    this state to the expected reward.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We then fill the expected reward for all actions with the expected reward calculated
+    by the current model. This ensures that our model only trains on the action that
+    was actually taken since the loss for all other actions is zero.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Next, we calculate ![Q-learning turns RL into supervised learning](img/B10354_07_020.jpg).
+    We simply assume that for the next state, ![Q-learning turns RL into supervised
+    learning](img/B10354_07_021.jpg), or `state_tp1` in code, the neural network will
+    estimate the expected reward perfectly. As the network trains, this assumption
+    slowly becomes true.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Finally, if the game ended after state *S*, the expected reward from the action,
+    *a,* should be the received reward, *r*. If it did not end, then the expected
+    reward should be the received reward as well as the discounted expected future
+    reward.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Defining the Q-learning model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Now it is time to define the model that will learn a Q-function for Catch.
+    It turns out that a relatively simple model can already learn the function well.
+    We need to define the number of possible actions as well as the grid size. There
+    are three possible actions, which are *move left*, *stay in position*, and *move
+    right*. Additionally, the game is being played on a 10x10-pixel grid:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As this is a regression problem, the final layer has no activation function,
+    and the loss is a mean squared error loss. We optimize the network using stochastic
+    gradient descent without momentum or any other bells and whistles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training to play Catch
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The final ingredient to Q-learning is exploration. Everyday life shows that
+    sometimes you have to do something weird and/or random to find out whether there
+    is something better than your daily trot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The same goes for Q-learning. By always choosing the best option, you might
+    miss out on some unexplored paths. To avoid this, the learner will sometimes choose
+    a random option, and not necessarily the best one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now we can define the training method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Before we go further, again let''s break down the code so we can see what we''re
+    doing:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We want to keep track of the progress of our Q-learner, so we count the wins of
+    the model over time.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We now play for a number of games, specified by the `epoch` argument. At the
+    beginning of a game, we first reset the game, set the `game_over` indicator to
+    `False`, and observe the initial state of the game.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We will then be playing frame by frame until the game is over.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: At the start of a frame cycle, we save the previously observed input as `input_tm1`,
+    the input at time *t* minus one.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now comes the exploration part. We draw a random number between zero and one.
+    If the number is smaller than `epsilon`, we pick a random action. This technique
+    is also called "epsilon greedy," as we pick a random action with a probability
+    of epsilon and greedily choose the action promising the highest rewards otherwise.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If we choose a non-random action, we let the neural network predict the expected
+    rewards for all actions. We then pick the action with the highest expected reward.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We now act with our chosen or random action and observe a new state, a reward,
+    and information about whether the game is over. The game gives a reward of one
+    if we win, so we eventually have to increase our win counter.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We store the new experience in our experience replay buffer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We then sample a new training batch from the experience replay and train on that
+    batch.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The following graph shows the rolling mean of successful games. After about
+    2,000 epochs of training, the neural network should be quite good at playing Catch:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Training to play Catch](img/B10354_07_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The progress of a Q-learning neural network playing Catch
+  prefs: []
+  type: TYPE_NORMAL
+- en: Looking at the preceding graph, it's safe to say that you have now successfully
+    created your first reinforcement learning system, as after 5000 epochs the average
+    of victories per games is between 90% and 100%. In the next section, we will explore
+    the theoretical foundations of reinforcement learning and discover how the same
+    system that learns to play catch can learn to route orders in the futures market.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Markov processes and the bellman equation – A more formal introduction to RL
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Following the long history of modern deep learning being a continuation of quantitative
+    finance with more GPUs, the theoretical foundation of reinforcement learning lies
+    in Markov models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: This section requires a bit of mathematical background knowledge.
+    If you are struggling, there is a beautiful visual introduction by Victor Powell
+    here: [http://setosa.io/ev/markov-chains/](http://setosa.io/ev/markov-chains/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A more formal, but still simple, introduction is available on the website Analytics
+    Vidhya: [https://www.analyticsvidhya.com/blog/2014/07/markov-chain-simplified/](https://www.analyticsvidhya.com/blog/2014/07/markov-chain-simplified/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A Markov model describes a stochastic process with different states in which
+    the probability of ending up in a specific state is purely dependent on the state
+    one is currently in. In the following diagram, you can see a simple Markov model
+    describing recommendations given for a stock:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The Markov model
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, there are three states in this model, **BUY**, **HOLD,** and
+    **SELL**. For every two states, there is a transition probability. For example,
+    the probability that a state gets a **BUY** recommendation if it had a **HOLD**
+    recommendation in the previous round is described by ![Markov processes and the
+    bellman equation – A more formal introduction to RL](img/B10354_07_022.jpg), which
+    is equal to 0.5\. There is a 50% chance that a stock that is currently in **HOLD**
+    will move to **BUY** in the next round.
+  prefs: []
+  type: TYPE_NORMAL
+- en: States are associated with rewards. If you own stock, and that stock has a **BUY**
+    recommendation, the stock will go up, and you will earn a reward of **1**. If
+    the stock has a sell recommendation, you will gain a negative reward, or punishment,
+    of **-1**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: In some textbooks, the rewards are associated with state transitions
+    and not states themselves. It turns out to be mathematically equivalent, and for
+    the ease of notation, we are associating the rewards with states here.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In a Markov model, an agent can follow a policy, usually denoted as ![Markov
+    processes and the bellman equation – A more formal introduction to RL](img/B10354_07_023.jpg).
+    A policy describes the probability of taking action *a* when in state *s*. Say
+    you are a trader: you own stock and that stock gets a **SELL** recommendation.
+    In that case, you might choose to sell the stock in 50% of cases, hold the stock
+    in 30% of cases, and buy more in 20% of cases. In other words, your policy for
+    the state **SELL** can be described as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_024.jpg)![Markov
+    processes and the bellman equation – A more formal introduction to RL](img/B10354_07_025.jpg)![Markov
+    processes and the bellman equation – A more formal introduction to RL](img/B10354_07_026.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Some traders have a better policy and can make more money from a state than
+    others. Therefore, the value of state *s* depends on the policy, ![Markov processes
+    and the bellman equation – A more formal introduction to RL](img/B10354_07_027.jpg).
+    The value function, *V,* describes the value of state *s* when policy ![Markov
+    processes and the bellman equation – A more formal introduction to RL](img/B10354_07_028.jpg)
+    is followed. It is the expected return from state *s* when policy ![Markov processes
+    and the bellman equation – A more formal introduction to RL](img/B10354_07_029.jpg)
+    is followed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_030.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The expected return is the reward gained immediately plus the discounted future
+    rewards:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_031.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The other value function frequently used in RL is the function *Q(s,a),* which
+    we have already seen in the previous section. *Q* describes the expected return
+    of taking action *a* in state *s* if policy ![Markov processes and the bellman
+    equation – A more formal introduction to RL](img/B10354_07_032.jpg) is followed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_033.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: We use the expected value since our environment and our actions are
+    stochastic. We cannot say for certain that we will land in a specific state; we
+    can only give a probability.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Q* and *V* describe the same thing. If we find ourselves in a certain state,
+    what should we do? *V* gives recommendations regarding which state we should seek,
+    and *Q* gives advice on which action we should take. Of course, *V* implicitly
+    assumes we have to take some action and *Q* assumes that the result of our actions
+    is landing in some state. In fact, both *Q* and *V* are derived from the so-called
+    Bellman equation, which brings us back to the Markov model from the beginning
+    of this section.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you assume that the environment you operate in can be described as a Markov
+    model, you would really want to know two things. First, you would want to find
+    out the *state transition probabilities*. If you are in state *s*, what is the
+    chance ![Markov processes and the bellman equation – A more formal introduction
+    to RL](img/B10354_07_034.jpg) ends in state ![Markov processes and the bellman
+    equation – A more formal introduction to RL](img/B10354_07_035.jpg) if you take
+    action *a*? Mathematically, it is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_036.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Equally, you would be interested in the expected reward ![Markov processes
+    and the bellman equation – A more formal introduction to RL](img/B10354_07_037.jpg)
+    of being in state *s*, taking action *a* and ending up in state ![Markov processes
+    and the bellman equation – A more formal introduction to RL](img/B10354_07_038.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_039.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'With this in mind, we can now derive the two Bellman equations for *Q* and
+    *V*. First, we rewrite the equation describing *V* to contain the actual formula
+    for ![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_040.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_041.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can pull the first reward out of the sum:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_042.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The first part of our expectation is the expected reward we directly receive
+    from being in state *s* and the following policy, ![Markov processes and the bellman
+    equation – A more formal introduction to RL](img/B10354_07_043.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_044.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The preceding equation shows a nested sum. First, we sum over all actions, *a,*
+    weighted by their probability of occurrence under policy ![Markov processes and
+    the bellman equation – A more formal introduction to RL](img/B10354_07_045.jpg).
+    For each action, we then sum over the distribution of rewards ![Markov processes
+    and the bellman equation – A more formal introduction to RL](img/B10354_07_046.jpg)
+    from the transition from state *s* to the next state, ![Markov processes and the
+    bellman equation – A more formal introduction to RL](img/B10354_07_047.jpg), after
+    action *a*, weighted by the probability of this transition occurring following
+    the transition probability ![Markov processes and the bellman equation – A more
+    formal introduction to RL](img/B10354_07_048.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The second part of our expectation can be rewritten as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_049.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The expected discounted value of the future rewards after state *s* is the discounted
+    expected future value of all states, ![Markov processes and the bellman equation
+    – A more formal introduction to RL](img/B10354_07_050.jpg), weighted by their
+    probability of occurrence, ![Markov processes and the bellman equation – A more
+    formal introduction to RL](img/B10354_07_051.jpg), and the probability of action
+    *a* being taken following policy ![Markov processes and the bellman equation –
+    A more formal introduction to RL](img/B10354_07_052.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This formula is quite a mouthful, but it gives us a glimpse into the recursive
+    nature of the value function. If we now replace the expectation in our value function,
+    it becomes clearer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_053.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The inner expectation represents the value function for the next step, ![Markov
+    processes and the bellman equation – A more formal introduction to RL](img/B10354_07_054.jpg)!
+    That means we can replace the expectation with the value function, ![Markov processes
+    and the bellman equation – A more formal introduction to RL](img/B10354_07_055.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_056.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Following the same logic, we can derive the *Q* function as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_057.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Congratulations, you have just derived the Bellman equation! For now, pause
+    and take a second to ponder and make sure you really understand the mechanics
+    behind these equations. The core idea is that the value of a state can be expressed
+    as the value of other states. For a long time, the go-to approach to optimizing
+    the Bellman equation was to build a model of the underlying Markov model and its
+    state transition and reward probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, the recursive structure calls for a technique called dynamic programming.
+    The idea behind dynamic programming is to solve easier sub-problems. You''ve already
+    seen this in action in the Catch example. There, we used a neural network to estimate
+    ![Markov processes and the bellman equation – A more formal introduction to RL](img/B10354_07_058.jpg),
+    except for states that ended the game. For these games, finding the reward associated
+    with the state is easy: it is the final reward received at the end of the game.
+    It was these states for which the neural network first developed an accurate estimate
+    of the function *Q*. From there, it could then go backward and learn the values
+    of states that were further away from the end of the game. There are more possible
+    applications of this dynamic programming and model-free approach to reinforcement
+    learning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we jump into the different kinds of systems that can be built using this
+    theoretical foundation, we will pay a brief visit to the applications of the Bellman
+    equation in economics. Readers who are familiar with the work discussed here will
+    find reference points that they can use to develop a deeper understanding of Bellman
+    equations. Readers unfamiliar with these works will find inspiration for further
+    reading and applications for techniques discussed throughout this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Bellman equation in economics
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: While the first application of the Bellman equation to economics occurred in
+    1954, Robert C. Merton's 1973 article, *An Intertemporal Capital Asset Pricing
+    Model* ([http://www.people.hbs.edu/rmerton/Intertemporal%20Capital%20Asset%20Pricing%20Model.pdf](http://www.people.hbs.edu/rmerton/Intertemporal%20Capital%20Asset%20Pricing%20Model.pdf))*,*
+    is perhaps the most well-known application. Using the Bellman equation, Merton
+    developed a capital asset pricing model that, unlike the classic CAPM model, works
+    in continuous time and can account for changes in an investment opportunity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recursiveness of the Bellman equation inspired the subfield of recursive
+    economics. Nancy Stokey, Robert Lucas, and Edward Prescott wrote an influential
+    1989 book titled *Recursive Methods in Economic Dynamics* ([http://www.hup.harvard.edu/catalog.php?isbn=9780674750968](http://www.hup.harvard.edu/catalog.php?isbn=9780674750968))
+    in which they apply the recursive approach to solve problems in economic theory.
+    This book inspired others to use recursive economics to address a wide range of
+    economic problems, from the principal-agent problem to optimal economic growth.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Avinash Dixit and Robert Pindyck developed and applied the approach successfully
+    to capital budgeting in their 1994 book, *Investment Under Uncertainty* ([https://press.princeton.edu/titles/5474.html](https://press.princeton.edu/titles/5474.html)).
+    Patrick Anderson applied it to the valuation of private businesses in his 2009
+    article, *The Value of Private Businesses in the United States* ([https://www.andersoneconomicgroup.com/the-value-of-private-businesses-in-the-united-states/](https://www.andersoneconomicgroup.com/the-value-of-private-businesses-in-the-united-states/)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: While recursive economics still has many problems, including the tremendous
+    compute power required for it, it is a promising subfield of the science.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Advantage actor-critic models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Q-learning, as we saw in the previous sections, is quite useful but it does
+    have its drawbacks. For example, as we have to estimate a Q value for each action,
+    there has to be a discrete, limited set of actions. So, what if the action space
+    is continuous or extremely large? Say you are using an RL algorithm to build a
+    portfolio of stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this case, even if your universe of stocks consisted only of two stocks,
+    say, AMZN and AAPL, there would be a huge amount of ways to balance them: 10%
+    AMZN and 90% AAPL, 11% AMZM and 89% AAPL, and so on. If your universe gets bigger,
+    the amount of ways you can combine stocks explodes.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A workaround to having to select from such an action space is to learn the policy,
+    ![Advantage actor-critic models](img/B10354_07_059.jpg), directly. Once you have
+    learned a policy, you can just give it a state, and it will give back a distribution
+    of actions. This means that your actions will also be stochastic. A stochastic
+    policy has advantages, especially in a game theoretic setting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Imagine you are playing rock, paper, scissors and you are following a deterministic
+    policy. If your policy is to pick rock, you will always pick rock, and as soon
+    as your opponent figures out that you are always picking rock, you will always
+    lose. The Nash equilibrium, the solution of a non-cooperative game, for rock,
+    paper, scissors is to pick actions at random. Only a stochastic policy can do
+    that.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To learn a policy, we have to be able to compute a gradient with respect to
+    policy. Contrary to most people's expectations, policies are differentiable. In
+    this section, we will build up a policy gradient step by step and use it to create
+    an **advantage actor-critic** (**A2C**) model for continuous control.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first part in the process of differentiating policies is to look at the
+    advantage we can have by picking a particular action, *a,* rather than just following
+    the policy, ![Advantage actor-critic models](img/B10354_07_060.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Advantage actor-critic models](img/B10354_07_061.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The advantage of action *a* in state *s* is the value of executing *a* in *s*
+    minus the value of *s* under the policy, ![Advantage actor-critic models](img/B10354_07_062.jpg).
+    We measure how good our policy, ![Advantage actor-critic models](img/B10354_07_063.jpg),
+    is with ![Advantage actor-critic models](img/B10354_07_064.jpg), a function expressing
+    the expected value of the starting state, ![Advantage actor-critic models](img/B10354_07_065.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Advantage actor-critic models](img/B10354_07_066.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Now, to compute the gradient of the policy, we have to do two steps, which
+    are shown inside the expectation in the policy gradient formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Advantage actor-critic models](img/B10354_07_067.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: First, we have to calculate the advantage of a given action, *a,* with *A(s,a)*.
+    Then we have to calculate the derivative of the weights of the neural network,
+    ![Advantage actor-critic models](img/B10354_07_068.jpg), with respect to increasing
+    the probability, ![Advantage actor-critic models](img/B10354_07_069.jpg), that
+    *a* is picked under policy ![Advantage actor-critic models](img/B10354_07_070.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: For actions with a positive advantage, *A(s,a)*, we follow the gradient that
+    would make *a* more likely. For actions with a negative advantage, we go in the
+    exact opposite direction. The expectation says that we are doing this for all
+    states and all actions. In practice, we manually multiply the advantage of actions
+    with their increased likelihood gradients.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One thing left for us to look at is how we compute the advantage. The value
+    of taking an action is the reward earned directly as a result of taking the action,
+    as well as the value of the state we find ourselves in after taking that action:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Advantage actor-critic models](img/B10354_07_071.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'So, we can substitute *Q(s,a)* in the advantage calculation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Advantage actor-critic models](img/B10354_07_072.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'As calculating *V* turns out to be useful for calculating the policy gradient,
+    researchers have come up with the A2C architecture. A single neural network with
+    two heads that learns both *V* and ![Advantage actor-critic models](img/B10354_07_073.jpg).
+    As it turns out, sharing weights for learning the two functions is useful because
+    it accelerates the training if both heads have to extract features from the environment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Advantage actor-critic models](img/B10354_07_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A2C scheme
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you are training an agent that operates on high-dimensional image data, for
+    instance, the value function and the policy head then both need to learn how to
+    interpret the image. Sharing weights would help master the common task. If you
+    are training on lower dimensional data, it might make more sense to not share
+    weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the action space is continuous, ![Advantage actor-critic models](img/B10354_07_074.jpg)
+    is represented by two outputs, those being the mean, ![Advantage actor-critic
+    models](img/B10354_07_075.jpg), and standard deviation, ![Advantage actor-critic
+    models](img/B10354_07_076.jpg). This allows us to sample from a learned distribution
+    just as we did for the autoencoder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A common variant of the A2C approach is the **asynchronous advantage actor-critic**
+    or **A3C**. A3C works exactly like A2C, except that at training time, multiple
+    agents are simulated in parallel. This means that more independent data can be
+    gathered. Independent data is important as too-correlated examples can make a
+    model overfit to specific situations and forget other situations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since both A3C and A2C work by the same principles, and the implementation of
+    parallel gameplay introduces some complexity that obfuscates the actual algorithm,
+    we will just stick with A2C in the following examples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning to balance
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this section, we will train an A2C model to swing up and balance a pendulum:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning to balance](img/B10354_07_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Pendulum gym
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pendulum is controlled by a rotational force that can be applied in either
+    direction. In the preceding diagram, you can see the arrow that shows the force
+    being applied. Control is continuous; the agent can apply more or less force.
+    At the same time, force can be applied in both directions as a positive and negative
+    force.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This relatively simple control task is a useful example of a continuous control
+    that can be easily extended to a stock trading task, which we will look at later.
+    In addition, the task can be visualized so that we can get an intuitive grasp
+    of how the algorithm learns, including any pitfalls.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: When implementing a new algorithm, try it out on a task you can visualize.
+    Failures are often subtle and easier to spot visually than through data.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The pendulum environment is part of the OpenAI Gym, a suite of games made to
+    train reinforcement learning algorithms. You can install it via the command line
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Before we start, we have to make some imports:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are quite a few new imports, so let''s walk through them one by one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: OpenAI's `gym` is a toolkit for developing reinforcement learning algorithms.
+    It provides a number of game environments, from classic control tasks, such as
+    a pendulum, to Atari games and robotics simulations.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '`gym` is interfaced by `numpy` arrays. States, actions, and environments are
+    all presented in a `numpy`-compatible format.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Our neural network will be relatively small and based around the functional
+    API. Since we once again learn a distribution, we need to make use of SciPy's
+    `norm` function, which helps us take the norm of a vector.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The `deque` Python data structure is a highly efficient data structure that
+    conveniently manages a maximum length for us. No more manually removing experiences!
+    We can randomly sample from `deque` using Python's `random` module.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Now it is time to build the agent. The following methods all form the `A2CAgent`
+    class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s walk through the code step by step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we need to define some game-related variables. The state space size and
+    the action space size are given by the game. Pendulum states consist of three
+    variables dependent on the angle of the pendulum. A state consists of the sine
+    of theta, the cosine of theta, and the angular velocity. The value of a state
+    is just a single scalar.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Next, we set up our experience replay buffer, which can save at maximum 2,000
+    states. Larger RL experiments have much larger replay buffers (often around 5
+    million experiences), but for this task 2,000 will do.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: As we are training a neural network, we need to set some hyperparameters. Even
+    if the actor and critic share weights, it turns out that the actor learning rate
+    should usually be lower than the critic learning rate. This is because the policy
+    gradient we train the actor on is more volatile. We also need to set the discount
+    rate, ![Learning to balance](img/B10354_07_077.jpg). Remember that the discount
+    rate in reinforcement learning is applied differently than it is usually in finance.
+    In finance, we discount by dividing future values by one plus the discount factor.
+    In reinforcement learning, we multiply with the discount rate. Therefore, a higher
+    discount factor, ![Learning to balance](img/B10354_07_078.jpg), means that future
+    values are less discounted.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To actually build the model, we define a separate method, which we will discuss
+    next.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The optimizers for actor and critic are custom optimizers. To define these,
+    we also create a separate function. The optimizers themselves are functions that
+    can be called at training time:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding function sets up the Keras model. It is quite complicated, so
+    let''s go through it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we are using the functional API, we have to define an input layer that we
+    can use to feed the state to the actor and critic.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The actor has a hidden first layer as an input to the actor value function.
+    It has 30 hidden units and a `relu` activation function. It is initialized by
+    an `he_uniform` initializer. This initializer is only slightly different from
+    the default `glorot_uniform` initializer. The `he_uniform` initializer draws from
+    a uniform distribution with the limits ![Learning to balance](img/B10354_07_079.jpg),
+    where ![Learning to balance](img/B10354_07_080.jpg) is the input dimension. The
+    default glorot uniform samples from a uniform distribution with the limits![Learning
+    to balance](img/B10354_07_081.jpg), with *o* being the output dimensionality.
+    The difference between the two is rather small, but as it turns out, the `he_uniform`
+    initializer works better for learning the value function and policy.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The action space of the pendulum ranges from -2 to 2\. We use a regular `tanh`
+    activation, which ranges from -1 to 1 first and corrects the scaling later.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To correct the scaling of the action space, we now multiply the outputs of the
+    `tanh` function by two. Using the `Lambda` layer, we can define such a function
+    manually in the computational graph.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The standard deviation should not be negative. The `softplus` activation works
+    in principle just like `relu`, but with a soft edge:![Learning to balance](img/B10354_07_07.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: ReLU versus softplus
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: To make sure the standard deviation is not zero, we add a tiny constant to it.
+    Again we use the `Lambda` layer for this task. This also ensures that the gradients
+    get calculated correctly, as the model is aware of the constant added.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The critic also has a hidden layer to calculate its value function.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The value of a state is just a single scalar that can have any value. The value
+    head thus only has one output and a linear, that is: the default, activation function.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We define the actor to map from a state to a policy as expressed by the mean,
+    ![Learning to balance](img/B10354_07_082.jpg), and standard deviation, ![Learning
+    to balance](img/B10354_07_083.jpg).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We define the critic to map from a state to a value of that state.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: While it is not strictly required for A2C, if we want to use our agents for
+    an asynchronous, A3C approach, then we need to make the predict function threading
+    safe. Keras loads the model on a GPU the first time you call `predict()`. If that
+    happens from multiple threads, things can break. `_make_predict_function``()`
+    makes sure the model is already loaded on a GPU or CPU and is ready to predict,
+    even from multiple threads.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For debugging purposes, we print the summaries of our models.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Finally, we return the models.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now we have to create the optimizer for the actor. The actor uses a custom optimizer
+    that optimizes it along the policy gradient. Before we define the optimizer; however,
+    we need to look at the last piece of the policy gradient. Remember how the policy
+    gradient was dependent on the gradient of the weights, ![Learning to balance](img/B10354_07_084.jpg),
+    that would make action *a* more likely? Keras can calculate this derivative for
+    us, but we need to provide Keras with the value of policy ![Learning to balance](img/B10354_07_085.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To this end, we need to define a probability density function. ![Learning to
+    balance](img/B10354_07_086.jpg) is a normal distribution with mean ![Learning
+    to balance](img/B10354_07_087.jpg) and standard deviation ![Learning to balance](img/B10354_07_088.jpg),
+    so the probability density function, *f*, is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning to balance](img/B10354_07_089.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In this term, ![Learning to balance](img/B10354_07_090.jpg) stands for the constant,
+    3.14…, not for the policy. Later, we only need to take the logarithm of this probability
+    density function. Why the logarithm? Because taking the logarithm results in a
+    smoother gradient. Maximizing the log of a probability means maximizing the probability,
+    so we can just use the "log trick," as it is called, to improve learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The value of policy ![Learning to balance](img/B10354_07_091.jpg) is the advantage
+    of each action *a,* times the log probability of this action occurring as expressed
+    by the probability density function, *f*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following function optimizes our actor model. Let''s go through the optimization
+    procedure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, we need to set up some placeholders for the action taken and the advantage
+    of that action. We will fill in these placeholders when we call the optimizer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We get the outputs of the actor model. These are tensors that we can plug into
+    our optimizer. Optimization of these tensors will be backpropagated and optimizes
+    the whole model.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now we set up the probability density function. This step can look a bit intimidating,
+    but if you look closely, it is the same probability density function we defined
+    previously.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now we apply the log trick. To ensure that we don't accidentally take the logarithm
+    of zero, we add a tiny constant, `epsilon`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The value of our policy is now the probability of action *a* times the probability
+    of this action occurring.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To reward the model for a probabilistic policy, we add an entropy term. The entropy
+    is calculated with the following term:![Learning to balance](img/B10354_07_092.jpg)Here,
+    again, ![Learning to balance](img/B10354_07_093.jpg) is a constant 3.14… and ![Learning
+    to balance](img/B10354_07_094.jpg) is the standard deviation. While the proof
+    that this term expresses the entropy of a normal distribution is outside of the
+    scope of this chapter, you can see that the entropy goes up if the standard deviation
+    goes up.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We add the entropy term to the value of the policy. By using `K.sum()`, we sum
+    the value over the batch.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We want to maximize the value of the policy, but by default, Keras performs
+    gradient descent that minimizes losses. An easy trick is to turn the value negative
+    and then minimize the negative value.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To perform gradient descent, we use the `Adam` optimizer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We can retrieve an update tensor from the optimizer. `get_updates()` takes three
+    arguments, `parameters`, `constraints`, and `loss`. We provide the parameters
+    of the model, that is, its weights. Since we don't have any constraints, we just
+    pass an empty list as a constraint. For a loss, we pass the actor loss.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Armed with the updated tensor, we can now create a function that takes as its
+    input the actor model input, that is, the state, as well as the two placeholders,
+    the action, and the advantages. It returns nothing but the empty list that applies
+    the update tensor to the model involved. This function is callable, as we will
+    see later.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We return the function. Since we call `actor_optimizer()` in the `init` function
+    of our class, the optimizer function we just created becomes `self.optimize_actor`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'For the critic, we also need to create a custom optimizer. The loss for the
+    critic is the mean squared error between the predicted value and the reward plus
+    the predicted value of the next state:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding function optimizes our critic model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Again we set up a placeholder for the variable we need. `discounted_reward`
+    contains the discounted future value of state ![Learning to balance](img/B10354_07_095.jpg)
+    as well as the reward immediately earned.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The critic loss is the mean squared error between the critic's output and the discounted
+    reward. We first obtain the output tensor before calculating the mean squared
+    error between the output and the discounted reward.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Again we use an `Adam` optimizer from which we obtain an update tensor, just as
+    we did previously.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Again, and finally, as we did previously, we'll roll the update into a single
+    function. This function will become `self.optimize_critic`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'For our agent to take actions, we need to define a method that produces actions
+    from a state:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With this function, our actor can now act. Let''s go through it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we reshape the state to make sure it has the shape the model expects.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We predict the means and variance, ![Learning to balance](img/B10354_07_096.jpg),
+    for this action from the model.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Then, as we did for the autoencoder, we first sample a random normal distribution
+    with a mean of zero and a standard deviation of 1.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We add the mean and multiply by the standard deviation. Now we have our action,
+    sampled from the policy.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To make sure we are within the bounds of the action space, we clip the action
+    at -2, 2, so it won't be outside of those boundaries.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'At last, we need to train the model. The `train_model` function will train
+    the model after receiving one new experience:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And this is how we optimize both actor and critic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, the new experience is added to the experience replay.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Then, we immediately sample an experience from the experience replay. This way,
+    we break the correlation between samples the model trains on.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We set up placeholders for the advantages and targets. We will fill them at *step
+    5*.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We predict the values for state *s* and ![Learning to balance](img/B10354_07_097.jpg).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the game ended after the current state, *s*, the advantage is the reward
+    we earned minus the value we assigned to the state, and the target for the value
+    function is just the reward we earned. If the game did not end after this state,
+    the advantage is the reward earned plus the discounted value of the next state
+    minus the value of this state. The target, in that case, is the reward earned
+    plus the discounted value of the next state.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Knowing the advantage, the action taken, and the value target, we can optimize
+    both the actor and critic with the optimizers we created earlier.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'And that is it; our `A2CAgent` class is done. Now it is time to use it. We
+    define a `run_experiment` function. This function plays the game for a number
+    of episodes. It is useful to first train a new agent without rendering, because
+    training takes around 600 to 700 games until the agent does well. With your trained
+    agent, you can then watch the gameplay:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our experiment boils down to these functions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, we set up a new `gym` environment. This environment contains the pendulum
+    game. We can pass actions to it and observe states and rewards.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We obtain the action and state space from the game.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If no agent was passed to the function, we would create a new one.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We set up an empty array to keep track of the scores over time.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now we play the game for a number of rounds specified by `epochs`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: At the beginning of a game, we set the "game over indicator" to `false`, `score` 
+    to `0`, and reset the game. By resetting the game, we obtain the initial starting
+    state.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now we play the game until it is over.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If you passed `render = True` to the function, the game would be rendered on
+    screen. Note that this won't work on a remote notebook such as in Kaggle or Jupyter.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We get an action from the agent and act in the environment.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When acting in the environment, we observe a new state, a reward, and whether
+    the game is over. `gym` also passes an info dictionary, which we can ignore.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The rewards from the game are all negative, with a higher reward closer to zero
+    being better. The rewards can be quite large, though, so we reduce them. Too extreme
+    rewards can lead to too large gradients while training. That would hinder training.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Before training with the model, we reshape the state, just to be sure.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Now we train the agent on a new experience. As you have seen, the agent will
+    store the experience in its replay buffer and draw a random old experience to
+    train from.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We increase the overall reward to track the rewards earned during one game.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We set the new state to be the current state to prepare for the next frame of the
+    game.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the game is over, we track and print out the game score.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The agent usually does pretty well after 700 epochs. We declare the game solved
+    if the average reward over the last 20 games was better than -20\. If that is
+    the case, we will exit the function and return the trained agent together with
+    its scores.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Learning to trade
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Reinforcement learning algorithms are largely developed in games and simulations
+    where a failing algorithm won't cause any damage. However, once developed, an
+    algorithm can be adapted to other, more serious tasks. To demonstrate this ability,
+    we are now going to create an A2C agent that learns how to balance a portfolio
+    of stocks within a large universe of stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: Please do not trade based on this algorithm. It is only a simplified
+    and slightly naive implementation to demonstrate the concept and shouldn''t be
+    used in the real world.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To train a new reinforcement learning algorithm, we first need to create a training
+    environment. In this environment, the agent trades in real-life stock data. The
+    environment can be interfaced just like an OpenAI Gym environment. Following the Gym
+    conventions for interfacing reduces the complexity of development. Given a 100-day
+    look back of the percentile returns of stocks in the universe, the agent has to
+    return an allocation in the form of a 100-dimensional vector.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The allocation vector describes the share of assets the agent wants to allocate
+    on one stock. A negative allocation means the agent is short trading the stock.
+    For simplicity's sake, transaction costs and slippage are not added to the environment.
+    It would not be too difficult to add them, however.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Tip**: The full implementation of the environment and agent can be found
+    at [https://www.kaggle.com/jannesklaas/a2c-stock-trading](https://www.kaggle.com/jannesklaas/a2c-stock-trading).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The environment looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our trade environment is somewhat similar to the pendulum environment. Let''s
+    see how we set it up:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We load data for our universe.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Since we are stepping through the data where each day is a step, we need to keep
+    track of our position in time.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We need to know when the game ends, so we need to know how much data we have.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To keep track of returns over time, we set up an empty array.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The initial state is the data for the first episode, until the last element,
+    which is the return of the next day for all 100 stocks in the universe.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: At each step, the agent needs to provide an allocation to the environment. The
+    reward the agent receives is the sharpe ratio, the ratio between the mean and
+    standard deviation of returns, over the last 20 days. You could modify the reward
+    function to, for example, include transaction costs or slippage. If you do want
+    to do this, then refer to the section on reward shaping later in this chapter.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The return on the next day is the last element of the episode data.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To calculate the Sharpe ratio, we need to keep track of past returns.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If we do not have 20 returns yet, the mean and standard deviation of returns
+    will be zero and one respectively.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If we do have enough data, we calculate the mean and standard deviation of the
+    last 20 elements in our return tracker. We add a tiny constant to the standard
+    deviation to avoid division by zero.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We can now calculate the Sharpe ratio, which will provide the reward for the agent.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the game is over, the environment will return no next state, the reward,
+    and an indicator that the game is over, as well as an empty information dictionary
+    in order to stick to the OpenAI Gym convention.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the game is not over, the environment will return the next state, a reward,
+    and an indicator that the game is not over, along with an empty information dictionary.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This function loads the daily returns of a universe of 100 random stocks.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The selector moves in random order over the files containing stock prices. Some
+    of them are corrupted so that loading them will result in an error. The loader
+    keeps trying until it has 100 pandas DataFrames containing stock prices assembled.
+    Only closing prices starting in 2005 will be considered.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In the next step, all DataFrames are concatenated. The percentile change in
+    stock price is calculated. All missing values are filled with zero, for no change.
+    Finally, we extract the values from the data as a NumPy array.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The last thing to do is transform the data into a time series. The first 100 steps
+    are the basis for the agent's decision. The 101st element is the next day's return,
+    on which the agent will be evaluated.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'We only have to make minor edits in the `A2CAgent` agent class. Namely, we
+    only have to modify the model so that it can take in the time series of returns.
+    To this end, we add two `LSTM` layers, which actor and critic share:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Again, we have built a Keras model in a function. It is only slightly different
+    from the model before. Let''s explore it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The state now has a time dimension.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The two `LSTM` layers are shared across actor and critic.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Since the action space is larger; we also have to increase the size of the actor's
+    hidden layer.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Outputs should lie between -1 and 1, and 100% short and 100% long, so that we
+    can save ourselves the step of multiplying the mean by two.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: And that is it! This algorithm can now learn to balance a portfolio just as
+    it could learn to balance before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Evolutionary strategies and genetic algorithms
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Recently, a decades-old optimization algorithm for reinforcement learning algorithms
+    has come back into fashion. **Evolutionary strategies** (**ES**) are much simpler
+    than Q-learning or A2C.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of training one model through backpropagation, in ES we create a population
+    of models by adding random noise to the weights of the original model. We then
+    let each model run in the environment and evaluate its performance. The new model
+    is the performance-weighted average of all the models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following diagram, you can see a visualization of how evolution strategies
+    work:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Evolutionary strategies and genetic algorithms](img/B10354_07_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Evolutionary strategy
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get a better grip on how this works, consider the following example. We
+    want to find a vector that minimizes the mean squared error to a solution vector.
+    The learner is not given the solution, but only the total error as a reward signal:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A key advantage of evolutionary strategies is that they have fewer hyperparameters.
+    In this case, we need just three:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: '**Population size**: We will create 50 versions of the model at each iteration'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Noise standard deviation**: The noise we add will have mean of zero and a standard
+    deviation of 0.1'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Learning rate**: Weights don''t just simply get set to the new average but
+    are slowly moved in the direction to avoid overshooting'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The optimization algorithm will look like the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Genetic optimization is relatively short in code, so let''s go through it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start off with a random solution.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Just like with the other RL algorithm, we train for a number of epochs, here 300.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We create a noise matrix of 50 noise vectors with a mean of zero and a standard
+    deviation of `sigma`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We now create and immediately evaluate our population by adding noise to the
+    original weights and running the resulting vector through the evaluation function.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We standardize the rewards by subtracting the mean and dividing by the standard
+    deviation. The result can be interpreted as an advantage, in this case, that a
+    particular member of the population has over the rest.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Finally, we add the weighted average noise vector to the weight solution. We use
+    a learning rate to slow down the process and avoid overshooting.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Similar to neural networks themselves, evolutionary strategies are loosely inspired
+    by nature. In nature, species optimize themselves for survival using natural selection.
+    Researchers have come up with many algorithms to imitate this process. The preceding
+    neural evolution strategy algorithm works not only for single vectors but for
+    large neural networks as well. Evolutionary strategies are still a field of active research,
+    and at the time of writing, no best practice has been settled on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reinforcement learning and evolutionary strategies are the go-to techniques
+    if no supervised learning is possible, but a reward signal is available. There
+    are many applications in the financial industry where this is the case from simple
+    "multi-armed bandit" problems, such as the DHL order routing system, to complex
+    trading systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Practical tips for RL engineering
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we will be introducing some practical tips for building RL
+    systems. We will also highlight some current research frontiers that are highly
+    relevant to financial practitioners.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Designing good reward functions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Reinforcement learning is the field of designing algorithms that maximize a
+    reward function. However, creating good reward functions is surprisingly hard.
+    As anyone who has ever managed people will know, both people and machines game
+    the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The literature on RL is full of examples of researchers finding bugs in Atari
+    games that had been hidden for years but were found and exploited by an RL agent.
+    For example, in the game "Fishing Derby," OpenAI has reported a reinforcement
+    learning agent achieving a higher score than is ever possible according to the
+    game makers, and this is without catching a single fish!
+  prefs: []
+  type: TYPE_NORMAL
+- en: While it is fun for games, such behavior can be dangerous when it occurs in
+    financial markets. An agent trained on maximizing returns from trading, for example,
+    could resort to illegal trading activities such as spoofing trades, without its
+    owners knowing about it. There are three methods to create better reward functions,
+    which we will look at in the next three subsections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Careful, manual reward shaping
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: By manually creating rewards, practitioners can help the system to learn. This
+    works especially well if the natural rewards of the environment are sparse. If,
+    say, a reward is usually only given if a trade is successful, and this is a rare
+    event, it helps to manually add a function that gives a reward if the trade was
+    nearly successful.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equally, if an agent is engaging in illegal trading, a hard-coded "robot policy"
+    can be set up that gives a huge negative reward to the agent if it breaks the
+    law. Reward shaping works if the rewards and the environment are relatively simple.
+    In complex environments, it can defeat the purpose of using machine learning in
+    the first place. Creating a complex reward function in a very complex environment
+    can be just as big a task as writing a rule-based system acting in the environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Yet, especially in finance, and more so in trading, hand-crafted reward shaping
+    is useful. Risk-averse trading is an example of creating a clever objective function.
+    Instead of maximizing the expected reward, risk-averse reinforcement learning
+    maximizes an evaluation function,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Careful, manual reward shaping](img/B10354_07_098.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: ', which is an extension of the utility-based shortfall to a multistage setting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Careful, manual reward shaping](img/B10354_07_099.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here ![Careful, manual reward shaping](img/B10354_07_100.jpg) is a concave,
+    continuous, and strictly increasing function that can be freely chosen according
+    to how much risk the trader is willing to take. The RL algorithm now maximizes
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Careful, manual reward shaping](img/B10354_07_101.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Inverse reinforcement learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In **inverse reinforcement learning** (**IRL**), a model is trained to predict
+    the reward function of a human expert. A human expert is performing a task, and
+    the model observes states and actions. It then tries to find a value function
+    that explains the human expert''s behavior. More specifically, by observing the
+    expert, a policy trace of states and actions is created. One example is the maximum
+    likelihood inverse reinforcement learning, or IRL, algorithm which works as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Guess a reward function, *R*
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the policy, ![Inverse reinforcement learning](img/B10354_07_102.jpg),
+    that follows from *R*, by training an RL agent
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the probability that the actions observed, *D,* were a result of ![Inverse
+    reinforcement learning](img/B10354_07_103.jpg), ![Inverse reinforcement learning](img/B10354_07_104.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the gradient with respect to *R* and update it
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Repeat this process until ![Inverse reinforcement learning](img/B10354_07_105.jpg)
+    is very high
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Learning from human preferences
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Similar to IRL, which produces a reward function from human examples, there
+    are also algorithms that learn from human preferences. A reward predictor produces
+    a reward function under which policy is trained.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The goal of the reward predictor is to produce a reward function that results
+    in a policy that has a large human preference. Human preference is measured by
+    showing the human the results of two policies and letting the human indicate which one
+    is more preferable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning from human preferences](img/B10354_07_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Learning from preferences
+  prefs: []
+  type: TYPE_NORMAL
+- en: Robust RL
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Much like for GANs, RL can be fragile and can be hard to train for good results.
+    RL algorithms are quite sensitive to hyperparameter choices. But there are a few
+    ways to make RL more robust:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Using a larger experience replay buffer**: The goal of using experience replay
+    buffers is to collect uncorrelated experiences. This can be achieved by just creating
+    a larger buffer or a whole buffer database that can store millions of examples,
+    possibly from different agents.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Target networks**: RL is unstable in part because the neural network relies
+    on its own output for training. By using a frozen target network for generating
+    training data, we can mitigate problems. The frozen target network should only
+    be updated slowly by, for example, moving the weights of the target network only
+    a few percent every few epochs in the direction of the trained network.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Noisy inputs**: Adding noise to the state representation helps the model
+    generalize to other situations and avoids overfitting. It has proven especially
+    useful if the agent is trained in a simulation but needs to generalize to the
+    real, more complex world.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Adversarial examples**: In a GAN-like setup, an adversarial network can be
+    trained to fool the model by changing the state representations. The model can,
+    in turn, learn to ignore the adversarial attacks. This makes learning more robust.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Separating policy learning from feature extraction**: The most well-known
+    results in reinforcement learning have learned a game from raw inputs. However,
+    this requires the neural network to interpret, for example, an image by learning
+    how that image leads to rewards. It is easier to separate the steps by, for example,
+    first training an autoencoder that compresses state representations, then training
+    a dynamics model that can predict the next compressed state, and then training
+    a relatively small policy network from the two inputs.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Similar to the GAN tips, there is little theoretical reason for why these tricks
+    work, but they will make your RL work better in practice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Frontiers of RL
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: You have now seen the theory behind and application of the most useful RL techniques.
+    Yet, RL is a moving field. This book cannot cover all of the current trends that
+    might be interesting to practitioners, but it can highlight some that are particularly
+    useful for practitioners in the financial industry.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi-agent RL
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Markets, by definition, include many agents. Lowe and others, 2017, *Multi-Agent
+    Actor-Critic for Mixed Cooperative-Competitive Environments* (see [https://arxiv.org/abs/1706.02275](https://arxiv.org/abs/1706.02275)),
+    shows that reinforcement learning can be used to train agents that cooperate,
+    compete, and communicate depending on the situation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Multi-agent RL](img/B10354_07_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Multiple agents (in red) working together to chase the green dots. From the
+    OpenAI blog.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In an experiment, Lowe and others let agents communicate by including a communication
+    vector into the action space. The communication vector that one agent outputted
+    was then made available to other agents. They showed that the agents learned to
+    communicate to solve a task. Similar research showed that agents adopted collaborative
+    or competitive strategies based on the environment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In a task where the agent had to collect reward tokens, agents collaborated
+    as long as plenty of tokens were available and showed competitive behavior as
+    tokens got sparse. Zheng and others, 2017, *MAgent: A Many-Agent Reinforcement
+    Learning Platform for Artificial Collective Intelligence* (see [https://arxiv.org/abs/1712.00600](https://arxiv.org/abs/1712.00600)),
+    scaled the environment to include hundreds of agents. They showed that agents
+    developed more complex strategies such as an encirclement attack on other agents
+    through a combination of RL algorithms and clever reward shaping.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Foerster and others, 2017, *Learning with Opponent-Learning Awareness* (see
+    [https://arxiv.org/abs/1709.04326](https://arxiv.org/abs/1709.04326)), developed
+    a new kind of RL algorithm that allows the agent to learn how another agent will
+    behave and develop actions to influence the other agent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning how to learn
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A shortcoming of deep learning is that skilled humans have to develop neural
+    networks. Because of that, one longstanding dream of researchers and companies
+    who are currently having to pay Ph.D. students is to automate the process of designing
+    neural networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One example of this so-called AutoML is the **neural evolution of augmenting
+    topologies**, known as the NEAT algorithm. NEAT uses an evolutionary strategy
+    to design a neural network that is then trained by standard backpropagation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning how to learn](img/B10354_07_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A network developed by the NEAT algorithm
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see in the preceding diagram, the networks developed by NEAT are
+    often smaller than traditional, layer-based neural networks. They are hard to
+    come up with. This is the strength of AutoML; it can find effective strategies
+    that humans would not have discovered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An alternative to using evolutionary algorithms for network design is to use
+    reinforcement learning, which yields similar results. There are a couple "off-the-shelf"
+    AutoML solutions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**tpot** ([https://github.com/EpistasisLab/tpot](https://github.com/EpistasisLab/tpot)):
+    This is a data science assistant that optimizes machine learning pipelines using
+    genetic algorithms. It is built on top of scikit-learn, so it does not create
+    deep learning models but models useful for structured data, such as random forests.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**auto-sklear****n** ([https://github.com/automl/auto-sklearn](https://github.com/automl/auto-sklearn)):
+    This is also based on scikit-learn but focuses more on creating models rather
+    than feature extraction.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**AutoW****EKA** ([https://github.com/automl/autoweka](https://github.com/automl/autoweka)):
+    This is similar to `auto-sklearn`, except that it is built on the WEKA package,
+    which runs on Java.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**H2O A****utoML** ([http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html](http://docs.h2o.ai/h2o/latest-stable/h2o-docs/automl.html)):
+    This is an AutoML tool that is part of the H2O software package, which provides
+    model selection and ensembling.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Google Cloud AutoML** ([https://cloud.google.com/automl/](https://cloud.google.com/automl/)):
+    This is currently focused on pipelines for computer vision.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For the subfield of hyperparameter search, there are a few packages available
+    as well:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Hyperopt** ([https://github.com/hyperopt/hyperopt](https://github.com/hyperopt/hyperopt)):
+    This package allows for distributed, asynchronous hyperparameter search in Python.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Spearmint** ([https://github.com/HIPS/Spearmint](https://github.com/HIPS/Spearmint)):
+    This package is similar to Hyperopt, optimizing hyperparameters but using a more
+    advanced Bayesian optimization process.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: AutoML is still an active field of research, but it holds great promise. Many
+    firms struggle to use machine learning due to a lack of skilled employees. If
+    machine learning could optimize itself, more firms could start using machine learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Understanding the brain through RL
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The other emerging field in finance and economics is behavioral economics. More
+    recently, reinforcement learning has been used to understand how the human brain
+    works. Wang and others, in 2018, published a paper titled, *Prefrontal cortex
+    as a meta-reinforcement learning system* (see [http://dx.doi.org/10.1038/s41593-018-0147-8](http://dx.doi.org/10.1038/s41593-018-0147-8)),
+    which provided new insights into the frontal cortex and the function of dopamine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, Banino and others in 2018 published a report titled, *Vector-based
+    navigation using grid-like representations in artificial agents* (see [https://doi.org/10.1038/s41586-018-0102-6](https://doi.org/10.1038/s41586-018-0102-6)),
+    where they replicated so-called "grid cells" that allow mammals to navigate using
+    reinforcement learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The method is similar because both papers train RL algorithms on tasks related
+    to the area of research, for example, navigation. They then examine the learned
+    weights of the model for emergent properties. Such insight can be used to create
+    more capable RL agents but also to further the field of neuroscience.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As the world of economics gets to grips with the idea that humans are not rational,
+    but irrational in predictable ways, understanding the brain becomes more important
+    when understanding economics. The results of neuroeconomics are particularly relevant
+    to finance as they deal with how humans act under uncertainty and deal with risk,
+    such as why humans are loss averse. Using RL is a promising avenue to yield further
+    insight into human behavior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exercises
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: As we've now completed the task, let's try our hand at two appropriate exercises
+    based on the content that we've covered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**A simple** **RL task**: Go to [https://github.com/openai/gym](https://github.com/openai/gym).
+    Once there, install the Gym environment and train an agent to solve the "Cartpole"
+    problem.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**A multi-agent** **RL task**: Go to [https://github.com/crazymuse/snakegame-numpy](https://github.com/crazymuse/snakegame-numpy).
+    This is a Gym environment that lets you play multiple agents in a "Snake" game.
+    Experiment with different strategies. Can you create an agent that fools the other
+    agent? What is the emergent behavior of the snakes?'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, you learned about the main algorithms in RL, Q-learning, policy
+    gradients, and evolutionary strategies. You saw how these algorithms could be
+    applied to trading and learned about some of the pitfalls of applying RL. You
+    also saw the direction of current research and how you can benefit from this research
+    today. At this point in the book, you are now equipped with a number of advanced
+    machine learning algorithms, which are hopefully useful to you when developing
+    machine learning models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will discuss the practicalities of developing, debugging,
+    and deploying machine learning systems. We will break out of the data-science
+    sandbox and get our models into the real world.
+  prefs: []
+  type: TYPE_NORMAL

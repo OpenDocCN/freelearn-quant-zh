@@ -1,0 +1,396 @@
+- en: Chapter 5. Estimating the Term Structure of Interest Rates
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the previous chapter we discussed how changes in the level of interest rates,
+    the term structure, affect the prices of fixed income securities. Now we focus
+    on the estimation of the term structure of interest rates, which is a fundamental
+    concept in finance. It is an important input in almost all financial decisions.
+    This chapter will introduce term structure estimation methods by cubic spline
+    regression, and it will demonstrate how one can estimate the term structure of
+    interest rates using the `termstrc` package and the `govbonds` dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The term structure of interest rates and related functions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A *t*-year zero-coupon bond with a face value of 1 USD is a security that pays
+    1 USD at maturity, that is, in *t* years time. Let ![The term structure of interest
+    rates and related functions](img/0933OS_05_03.jpg) denote its market value, which
+    is also called the *t*-year discount factor. The function ![The term structure
+    of interest rates and related functions](img/0933OS_05_04.jpg) is called the discount
+    function. Based on the no-arbitrage assumption, it is usually assumed that ![The
+    term structure of interest rates and related functions](img/0933OS_05_05.jpg),
+    ![The term structure of interest rates and related functions](img/0933OS_05_06.jpg)
+    is monotonically decreasing, and that ![The term structure of interest rates and
+    related functions](img/0933OS_05_07.jpg). It is also usually assumed that ![The
+    term structure of interest rates and related functions](img/0933OS_05_06.jpg)
+    is twice continuously differentiable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let ![The term structure of interest rates and related functions](img/0933OS_05_08.jpg)
+    denote the continuously compounded annual return of the *t*-year zero coupon bond;
+    it shall be defined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The term structure of interest rates and related functions](img/0933OS_05_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The function ![The term structure of interest rates and related functions](img/0933OS_05_10.jpg)
+    is called the (zero coupon) yield curve.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let ![The term structure of interest rates and related functions](img/0933OS_05_11.jpg)
+    denote the instantaneous forward rate curve or simply the forward rate curve,
+    where:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The term structure of interest rates and related functions](img/0933OS_05_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here ![The term structure of interest rates and related functions](img/0933OS_05_13.jpg)
+    is the interest rate agreed upon by two parties in a hypothetical forward loan
+    agreement, in which one of the parties commits to lend an amount to the other
+    party in *t* years time for a very short term and at an interest rate that is
+    fixed when the contract is signed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The discount function, the yield curve, and the forward rate curve mutually
+    determine each other and are a possible representation of the term structure of
+    interest rates. The term structure may relate to any and all of these functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The estimation problem
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We cannot observe the term structure directly, but we can observe the market
+    prices of instruments whose price depends on the term structure and thus estimate
+    the term structure. A good source of information regarding the term structure
+    is the government bond market, where usually a lot of liquid securities are traded
+    whose prices depend solely on the term structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Suppose there are *n* bonds traded whose gross (or dirty) prices are denoted
+    by ![The estimation problem](img/0933OS_05_14.jpg). There are *m* dates when at
+    least one bond''s owners receive a payment. These payments are due in ![The estimation
+    problem](img/0933OS_05_15.jpg) years time respectively where ![The estimation
+    problem](img/0933OS_05_16.jpg). The ![The estimation problem](img/0933OS_05_17.jpg)
+    matrix *C* contains the cash flows of the bonds. We model bond prices as the sum
+    of the present value of the bond''s cash flow and a normally distributed error
+    term:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The estimation problem](img/0933OS_05_18.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here *d* is the vector containing the discount factors ![The estimation problem](img/0933OS_05_19.jpg)
+    and ![The estimation problem](img/0933OS_05_20.jpg) is a vector containing the
+    error terms. The observed market price of a bond can differ from the present value
+    of the cash flow for two reasons: there might be a measurement error in the observed
+    market price and/or there might be slight market imperfections, such as transaction
+    costs, which allow for a small difference between the theoretical and the market
+    price, without the difference being an arbitrage opportunity. The variance of
+    the error terms might differ from bond to bond:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The estimation problem](img/0933OS_05_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![The estimation problem](img/0933OS_05_22.jpg) is an ![The estimation
+    problem](img/0933OS_05_23.jpg) positive semidefinite diagonal matrix. It is logical
+    to assume that the standard deviation of the error term in the price of a bond
+    is proportional to its bid-ask spread, that is, the difference between the bid
+    and asked price of the bond. Thus, ![The estimation problem](img/0933OS_05_24.jpg)
+    is often chosen as the squared bid-ask spread of bond *i*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Equation *(1)* looks like a typical linear regression, however, it usually cannot
+    be estimated directly as the number of observations (bond prices) is usually less
+    than the number of coefficients to be estimated. Because of this, we need to model
+    the term structure to reduce the number of parameters to be estimated, and to
+    ensure that the resulting term structure estimation is reasonable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Estimation of the term structure by linear regression
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Suppose that the discount function can be expressed as the linear combination
+    of the ![Estimation of the term structure by linear regression](img/0933OS_05_25.jpg)
+    functions that are twice continuously differentiable functions as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_26.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_27.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We can estimate the weights ![Estimation of the term structure by linear regression](img/0933OS_05_28.jpg)
+    by generalized least squares. We will discuss the choice of the functions ![Estimation
+    of the term structure by linear regression](img/0933OS_05_29.jpg) later. The estimated
+    discount function is the function of the estimated weights ![Estimation of the
+    term structure by linear regression](img/0933OS_05_30.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_31.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Let *D* denote an ![Estimation of the term structure by linear regression](img/0933OS_05_32.jpg)
+    matrix whose elements ![Estimation of the term structure by linear regression](img/0933OS_05_33.jpg)
+    are ![Estimation of the term structure by linear regression](img/0933OS_05_34.jpg),
+    and ![Estimation of the term structure by linear regression](img/0933OS_05_35.jpg)be
+    the vector that contains the weights ![Estimation of the term structure by linear
+    regression](img/0933OS_05_28.jpg). Thus ![Estimation of the term structure by
+    linear regression](img/0933OS_05_36.jpg) and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_37.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'which is a linear regression model under the constraint that ![Estimation of
+    the term structure by linear regression](img/0933OS_05_38.jpg), which can be expressed
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_39.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ![Estimation of the term structure by linear regression](img/0933OS_05_40.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The GLS estimation for the weights of equation (2) under the constraint of equation
+    (3) is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_41.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Estimation of the term structure by linear regression](img/0933OS_05_42.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Cubic spline regression
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We need to choose the functions ![Cubic spline regression](img/0933OS_05_29.jpg)
+    carefully if we want the estimation to yield a reasonably estimated discount function.
+    The typical discount function is nonlinear. It is a monotonically decreasing function
+    and converges to zero asymptotically at infinity. Thus, fitting a straight line
+    is not a good idea. One can try to fit a higher order polynomial to the discount
+    function. This is not a satisfactory solution either. If we fit low-order polynomials,
+    they are usually not flexible enough and don't fit well, especially at the short-term
+    maturities. If we fit high-order polynomials, they may fit well but tend to produce
+    wild swings at long-term maturities where relatively few bonds mature. These wild
+    swings usually result in unrealistic term structure estimates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Spline functions are functions that help solve this problem as their flexibility
+    can be increased locally where needed, without raising the polynomial order of
+    the estimated function. Estimating the term structure by fitting cubic splines
+    to the discount function was first proposed by *McCulloch* in 1971.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cubic splines are real functions whose domain is an interval of the real line.
+    The domain ![Cubic spline regression](img/0933OS_05_47.jpg) is divided into subintervals
+    by the so-called knot points ![Cubic spline regression](img/0933OS_05_43.jpg)
+    where ![Cubic spline regression](img/0933OS_05_48.jpg). The cubic spline function
+    is a cubic polynomial on every subinterval, and these cubic polynomials are joined
+    at the knot points so that the spline function is continuous and twice continuously
+    differentiable on ![Cubic spline regression](img/0933OS_05_44.jpg). Every cubic
+    spline function on ![Cubic spline regression](img/0933OS_05_44.jpg) and a given
+    set of knot points ![Cubic spline regression](img/0933OS_05_43.jpg) can be expressed
+    as the linear combination of ![Cubic spline regression](img/0933OS_05_45.jpg)
+    basis spline functions that are cubic splines over the same knot points. Thus,
+    if we want to fit a cubic spline to the discount function, we simply choose the
+    functions ![Cubic spline regression](img/0933OS_05_29.jpg) as a cubic spline basis,
+    which we will demonstrate in the German government bonds data from the `govbonds`
+    dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The dataset holds information about 52 German bonds, from which we will concentrate
+    on the issue and maturity dates, price, and provided cash flows. To create a similar
+    dataset ready for further analysis, please see the examples of `?govbonds`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, we preprocess the bond dataset with the `prepro_bond` function that
+    returns cash flows, maturities, yield-to-maturity, duration-based weight matrices
+    plus dirty price, and accrued interest vectors, among other values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An important decision is setting the number of knot points and placing them.
+    The first and last knot points are zero and T respectively, and the others are
+    usually chosen so that approximately the same number of bonds mature at every
+    subinterval. Setting the number of knot points is not so straightforward. It will
+    determine the number of parameters to be estimated and will influence the estimated
+    term structure crucially. One could start the estimation process by setting `K`
+    to `1`, then increasing it by one and repeating the estimation until there is
+    significant improvement in goodness of fit and the estimated term structure is
+    well behaved. Alternatively, one can follow the rule of thumb proposed by McCulloch
+    that the number of knot points be ![Cubic spline regression](img/0933OS_05_46.jpg)
+    approximately. We now demonstrate that in the following command with the help
+    of the maturity matrix decomposed from the `prepro` object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'And let us define the number of German bonds with `n` and its rounded square
+    root by `s` (number of knot points) that results in `7`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If `s` results in a number less than three, identifying the ideal knot points
+    is easy. We will use the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here we have identified the smallest (`min`) number in the first column and
+    the largest (`max`) number from the last (`ncol`) column from the maturity matrix
+    rounded to the largest integer just below the results (`floor`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If `s` is higher than three, the first and last knot points are defined just
+    as in the preceding command lines and the others between those points are computed
+    with some helper vectors with the length of `s-3`, as shown in the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `i` vector simply holds the sequence from `2` to `5` in this case, from
+    which we compute the indices of the column (`h`) from the maturity matrix that
+    will be used to search other knot points. Here `theta` is used as a weight.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here we find the highest number in each hth column of the maturity matrix and
+    add the `theta`-weighted difference of the `h+1` and `h` columns'' maximum results
+    in the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we concatenate (with the c function) the first (minimum) and the last (maximum)
+    value computed earlier to the preceding results copied from the preceding code
+    chunk to identify all knot points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Applied R functions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Although we have already used some functions from the `termstrc` package in
+    the previous example to demonstrate how one can determine the ideal number of
+    knot points and also specify those, this process can be done in an easier manner
+    with some further R functions, as shown in the following command lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: First we used the `estim_cs` function that estimates the term structure of coupon
+    bonds based on cubic splines (*Ferstl-Haydn, 2010*) and returns the knot points
+    in a list with the `knotpoints` name. Please note that `estim_cs` works with a
+    list—just like most functions in the package—that's why `x$knotpoints` returned
+    a list from which we checked only the first element that was identical to the
+    values we computed manually in the preceding section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are a bunch of other useful values returned by the preceding function
+    that by default result in the following command lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The goodness of fit can be shown with the `summary` function, just like with
+    other R models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: The zero-coupon yield curve and its confidence interval can be shown easily
+    with the knot points by simply calling `plot` on the `x` object.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Applied R functions](img/0933OS_05_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The preceding figure shows the estimated zero-coupon yield curve and the yield-to-maturity
+    of the individual bonds in the database. The two bonds with the shortest maturities
+    are outliers as they are probably less liquid before expiration. We see that the
+    estimated yield curve is very close to the yield to maturity for 10 years. For
+    longer maturities, the estimated zero-coupon yields are typically higher than
+    the corresponding yield to maturity of coupon bonds. It may be the result of an
+    imperfect fit, or it may be explained by the fact that these bonds are not zero-coupon
+    bonds but coupon bonds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'And by setting `mfrow` with `par,` we can also `plot` two different graphs
+    on the same frame (we also set `multiple=TRUE` so that the plots would be rendered
+    without waiting for user input). For example, let us draw the discount and forward
+    curves from the `x` object using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Applied R functions](img/0933OS_05_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In the preceding figure, we see that the estimated discount function and the
+    forward rate curves are well behaved and do not show the presence of arbitrage
+    opportunities (the discount function is monotonically decreasing, and the forward
+    rate curve does not produce unrealistic values and swings).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The cubic spline estimation of the term structure usually leads to good estimates.
+    Sometimes, however, the estimated term structure is not appealing (the forward
+    rate curve swings widely). In this case, one can use nonlinear spline regression
+    or parsimonious yield curve models, but these are beyond the scope of this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Further resources such as the Nelson/Siegel, Diebold/Li, Svensson, and Adjusted
+    Svensson methods are also available with the help of the `estim_nss` function
+    or the `YieldCurve` package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we discussed term structure estimation methods by cubic spline
+    regression and also demonstrated how one can estimate the term structure of interest
+    rates in R. After a brief theoretical introduction to term structure and interest
+    rates, also discussing the most basic methods such as a linear regression model
+    and related problems, the chapter gave a detailed overview of an R implementation
+    of cubic spline regression model and also mentioned already published R functions
+    and packages for such tasks with more complex expectations.
+  prefs: []
+  type: TYPE_NORMAL

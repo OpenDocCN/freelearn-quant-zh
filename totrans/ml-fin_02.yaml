@@ -1,0 +1,1549 @@
+- en: Chapter 2. Applying Machine Learning to Structured Data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Structured data is a term used for any data that resides in a fixed field within
+    a record or file, two such examples being relational databases and spreadsheets.
+    Usually, structured data is presented in a table in which each column presents
+    a type of value, and each row represents a new entry. Its structured format means
+    that this type of data lends itself to classical statistical analysis, which is
+    also why most data science and analysis work is done on structured data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In day-to-day life, structured data is also the most common type of data available
+    to businesses, and most machine learning problems that need to be solved in finance
+    deal with structured data in one way or another. The fundamentals of any modern
+    company's day-to-day running is built around structured data, including, transactions,
+    order books, option prices, and suppliers, which are all examples of information
+    usually collected in spreadsheets or databases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter will walk you through a structured data problem involving credit
+    card fraud, where we will use feature engineering to identify the fraudulent transaction
+    from a dataset successfully. We'll also introduce the basics of an **end-to-end**
+    (**E2E**) approach so that we can solve common financial problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fraud is an unfortunate reality that all financial institutions have to deal
+    with. It's a constant race between companies trying to protect their systems and
+    fraudsters who are trying to defeat the protection in place. For a long time,
+    fraud detection has relied on simple heuristics. For example, a large transaction
+    made while you're in a country you usually don't live in will likely result in
+    that transaction being flagged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Yet, as fraudsters continue to understand and circumvent the rules, credit card
+    providers are deploying increasingly sophisticated machine learning systems to
+    counter this.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we'll look at how a real bank might tackle the problem of fraud.
+    It's a real-world exploration of how a team of data scientists starts with a heuristic
+    baseline, then develops an understanding of its features, and from that, builds
+    increasingly sophisticated machine learning models that can detect fraud. While
+    the data we will use is synthetic, the process of development and tools that we'll
+    use to tackle fraud are similar to the tools and processes that are used every
+    day by international retail banks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So where do you start? To put it in the words of one anonymous fraud detection
+    expert that I spoke to, *"I keep thinking about how I would steal from my employer,
+    and then I create some features that would catch my heist. To catch a fraudster,
+    think like a fraudster."* Yet, even the most ingenious feature engineers are not
+    able to pick up on all the subtle and sometimes counterintuitive signs of fraud,
+    which is why the industry is slowly shifting toward entirely E2E-trained systems.
+    These systems, in addition to machine learning, are both focuses of this chapter
+    where we will explore several commonly used approaches to flag fraud.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter will act as an important baseline to [Chapter 6](ch06.xhtml "Chapter 6. Using
+    Generative Models"), *Using Generative Models*, where we will again be revisiting
+    the credit card fraud problem for a full E2E model using auto-encoders.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The data
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The dataset we will work with is a synthetic dataset of transactions generated
+    by a payment simulator. The goal of this case study and the focus of this chapter
+    is to find fraudulent transactions within a dataset, a classic machine learning
+    problem many financial institutions deal with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: Before we go further, a digital copy of the code, as well as an interactive
+    notebook for this chapter are accessible online, via the following two links:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: An interactive notebook containing the code for this chapter can be found under
+    [https://www.kaggle.com/jannesklaas/structured-data-code](https://www.kaggle.com/jannesklaas/structured-data-code)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The code can also be found on GitHub, in this book''s repository: [https://github.com/PacktPublishing/Machine-Learning-for-Finance](https://github.com/PacktPublishing/Machine-Learning-for-Finance)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The dataset we''re using stems from the paper *PaySim: A financial mobile money
+    simulator for fraud detection*, by E. A. Lopez-Rojas, A. Elmir, and S. Axelsson.
+    The dataset can be found on Kaggle under this URL: [https://www.kaggle.com/ntnu-testimon/paysim1](https://www.kaggle.com/ntnu-testimon/paysim1).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Before we break it down on the next page, let's take a minute to look at the
+    dataset that we'll be using in this chapter. Remember, you can download the data
+    with the preceding link.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| step | type | amount | nameOrig | oldBalance Orig | newBalance Orig | nameDest
+    | oldBalance Dest | newBalance Dest | isFraud | isFlagged Fraud |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 9839.64 | C1231006815 | 170136.0 | 160296.36 | M1979787155
+    | 0.0 | 0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 1864.28 | C1666544295 | 21249.0 | 19384.72 | M2044282225 |
+    0.0 | 0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | TRANSFER | 181.0 | C1305486145 | 181.0 | 0.0 | C553264065 | 0.0 | 0.0
+    | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | CASH_OUT | 181.0 | C840083671 | 181.0 | 0.0 | C38997010 | 21182.0 | 0.0
+    | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 11668.14 | C2048537720 | 41554.0 | 29885.86 | M1230701703 |
+    0.0 | 0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 7817.71 | C90045638 | 53860.0 | 46042.29 | M573487274 | 0.0
+    | 0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 7107.77 | C154988899 | 183195.0 | 176087.23 | M408069119 |
+    0.0 | 0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 7861.64 | C1912850431 | 176087.23 | 168225.59 | M633326333
+    | 0.0 | 0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | PAYMENT | 4024.36 | C1265012928 | 2671.0 | 0.0 | M1176932104 | 0.0 |
+    0.0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | DEBIT | 5337.77 | C712410124 | 41720.0 | 36382.23 | C195600860 | 41898.0
+    | 40348.79 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'As seen in the first row, the dataset has 11 columns. Let''s explain what each
+    one represents before we move on:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**step**: Maps time, with each step corresponding to one hour.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**type**: The type of the transaction, which can be CASH_IN, CASH_OUT, DEBIT,
+    PAYMENT, or TRANSFER.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**amount**: The amount of the transaction.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**nameOrig**: The origin account that started the transaction. C relates to
+    customer accounts, while M is the account of merchants.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**oldbalanceOrig**: The old balance of the origin account.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**newbalanceOrig**: The new balance of the origin account after the transaction
+    amount has been added.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**nameDest**: The destination account.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**oldbalanceDest**: The old balance of the destination account. This information
+    is not available for merchant accounts whose names start with M.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**newbalanceDest**: The new balance of the destination account. This information
+    is not available for merchant accounts.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**isFraud**: Whether the transaction was fraudulent.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**isFlaggedFraud**: Whether the old system has flagged the transaction as fraud.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In the preceding table, we can see 10 rows of data. It's worth noting that there
+    are about 6.3 million transactions in our total dataset, so what we've seen is
+    a small fraction of the total amount. As the fraud we're looking at only occurs
+    in transactions marked as either TRANSFER or CASH_OUT, all other transactions
+    can be dropped, leaving us with around 2.8 million examples to work with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Heuristic, feature-based, and E2E models
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Before we dive into developing models to detect fraud, let's take a second to
+    pause and ponder over the different kinds of models we could build.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A heuristic-based model is a simple "rule of thumb" developed purely by humans.
+    Usually, the heuristic model stems from having an expert knowledge of the problem.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A feature-based model relies heavily on humans modifying the data to create
+    new and meaningful features, which are then fed into a (simple) machine learning
+    algorithm. This approach mixes expert knowledge with learning from data.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: An E2E model learns purely from raw data. No human expertise is used, and the
+    model learns everything directly from observations.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In our case, a heuristic-based model could be created to mark all transactions
+    with the TRANSFER transaction type and an amount over $200,000 as fraudulent.
+    Heuristic-based models have the advantage that they are both fast to develop and
+    easy to implement; however, this comes with a pay-off, their performance is often
+    poor, and fraudsters can easily play the system. Let's imagine that we went with
+    the preceding heuristic-based model, fraudsters transferring only $199,999, under
+    the fraudulent limit, would evade detection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An important heuristic in the field of trading is the momentum strategy. Momentum
+    strategies involve betting that a stock that's on the rise will continue to rise,
+    with people then buying that stock. While this strategy sounds too simple to be
+    any good, it is in fact, a reasonably successful strategy that many high-frequency
+    trading and quantitative outlets are using today.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To create features, experts craft indicators that can distinguish fraudulent
+    transactions from those that are genuine. This is often done using statistical
+    data analysis, and when compared to the heuristic-based model that we proposed
+    early on, it will take longer, but with the benefit of better results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Feature engineering-based models are a midway between data and humans shaping
+    rules, where human knowledge and creativity are exploited to craft good features,
+    and data and machine learning are used to create a model from those features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: E2E models learn purely from collected data without using expert knowledge.
+    As discussed before, this often yields much better results, but at the cost of
+    taking a lot of time to complete. This method also has some additional elements
+    worth considering. For instance, collecting the large amount of data that will
+    be needed is an expensive task, as humans have to label millions of records.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Though for many people in the industry right now, they take the view that shipping
+    a poor model is often better than not shipping anything at all. After all, having
+    some protection against fraud is better than simply having none.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using a heuristic approach that lets through half of all fraudulent transactions
+    is better than having no fraud detection at all. The graph shows us the performance
+    of the three models we introduced earlier on, against the time taken to implement
+    them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Heuristic, feature-based, and E2E models](img/B10354_02_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The methods used and the performance of the system during development
+  prefs: []
+  type: TYPE_NORMAL
+- en: The best method is to use a combination of all three. If we deploy a heuristic
+    model that meets the basic requirements of the task that it set out to achieve,
+    then it can be shipped. By employing this method, the heuristic then becomes the
+    baseline that any other approach has to beat. Once your heuristic model is deployed,
+    then all your efforts should then be directed toward building a feature-based
+    model, which as soon as it beats the initially deployed heuristic model, can then
+    be deployed while you continue to refine the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we've discussed before, feature-based models often deliver pretty decent
+    performance on structured data tasks; this gives companies the time to undertake
+    the lengthy and expensive task of building an E2E model, which can be shipped
+    once it beats the feature-based model. Now that we understand the type of models
+    we're going to build, let's look at the software we need to build them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The machine learning software stack
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter, we will be using a range of different libraries that are commonly
+    used in machine learning. Let''s take a minute to look at our stack, which consists
+    of the following software:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Keras**: A neural network library that can act as a simplified interface
+    to TensorFlow.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**NumPy**: Adds support for large, multidimensional arrays as well as an extensive
+    collection of mathematical functions.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Pandas**: A library for data manipulation and analysis. It''s similar to Microsoft''s
+    Excel but in Python, as it offers data structures to handle tables and the tools
+    to manipulate them.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Scikit-learn**: A machine learning library offering a wide range of algorithms
+    and utilities.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**TensorFlow**: A dataflow programming library that facilitates working with
+    neural networks.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Matplotlib**: A plotting library.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Jupyter**: A development environment. All of the code examples in this book
+    are available in Jupyter Notebooks.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The majority of this book is dedicated to working with the Keras library, while
+    this chapter makes extensive use of the other libraries mentioned. The goal here
+    is less about teaching you all the tips and tricks of all the different libraries,
+    but more about showing you how they are integrated into the process of creating
+    a predictive model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: All of the libraries needed for this chapter are installed on Kaggle
+    kernels by default. If you are running this code locally, please refer to the
+    setup instructions in [Chapter 1](ch01.xhtml "Chapter 1. Neural Networks and Gradient-Based
+    Optimization"), *Neural Networks and Gradient-Based Optimization*, and install
+    all of the libraries needed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The heuristic approach
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Earlier in this chapter, we introduced the three models that we will be using
+    to detect fraud, now it's time to explore each of them in more detail. We're going
+    to start with the heuristic approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let's start by defining a simple heuristic model and measuring how well it does
+    at measuring fraud rates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Making predictions using the heuristic model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We will be making our predictions using the heuristic approach over the entire
+    training data set in order to get an idea of how well this heuristic model does
+    at predicting fraudulent transactions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code will create a new column, `Fraud_Heuristic`, and in turn
+    assigns a value of `1` in rows where the type is `TRANSFER`, and the amount is
+    more than $200,000:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: With just two lines of code, it's easy to see how such a simple metric can be
+    easy to write, and quick to deploy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The F1 score
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: One important thing we must consider is the need for a common metric on which
+    we can evaluate all of our models on. In [Chapter 1](ch01.xhtml "Chapter 1. Neural
+    Networks and Gradient-Based Optimization"), *Neural Networks and Gradient-Based
+    Optimization*, we used accuracy as our emulation tool. However, as we've seen,
+    there are far fewer fraudulent transactions than there are genuine ones. Therefore
+    a model that classifies all the transactions as genuine can have a very high level
+    of accuracy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One such metric that is designed to deal with such a skewed distribution is
+    the F1 score, which considers true and false positives and negatives, as you can
+    see in this chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|   | Predicted Negative | Predicted Positive |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Actual Negative | **True Negative** (**TN**) | **False Positive** (**FP**)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Actual Positive | **False Negative** (**FN**) | **True Positive** (**TP**)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'We can first compute the precision of our model, which specifies the share
+    of predicted positives that were positives, using the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The F1 score](img/B10354_02_001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Recall measures the share of predicted positives over the actual number of
+    positives, as seen in this formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The F1 score](img/B10354_02_002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The F1 score is then calculated from the harmonic mean, an average, of the
+    two measures, which can be seen in the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The F1 score](img/B10354_02_003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'To compute this metric in Python, we can use the `metrics` module of scikit-learn,
+    or sklearn for short:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Given the predictions we''ve made, we can now easily compute the F1 score using
+    the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: You'll see that the preceding command outputs a number–starting 0.013131315…-What
+    this number means exactly is that our heuristic model is not doing too well, as
+    the best possible F1 score is 1, and the worst is 0\. In our case, this number
+    represents the harmonic mean of the share of correctly caught frauds over everything
+    labeled as fraud and the share of correctly caught frauds over all frauds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Evaluating with a confusion matrix
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A more qualitative and interpretable way of evaluating a model is with a confusion
+    matrix. As the name suggests, the matrix shows how our classifier confuses classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Firstly, let''s study the code appendix for the `plot_confusion_matrix` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Which, when we run, produces the following graphic:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Evaluating with a confusion matrix](img/B10354_02_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A confusion matrix for a heuristic model
+  prefs: []
+  type: TYPE_NORMAL
+- en: So, just how accurate was that model? As you can see in our confusion matrix,
+    from our dataset of 2,770,409 examples, 2,355,826 were correctly classified as
+    genuine, while 406,370 were falsely classified as fraud. In fact, only 2,740 examples
+    were correctly classified as fraud.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When our heuristic model classified a transaction as fraudulent, it was genuine
+    in 99.3% of those cases. Only 34.2% of the total frauds got caught. All this information
+    is incorporated into the F1 score we formulated. However, as we saw, it is easier
+    to read this from the generated confusion matrix graphic. The reason we used both
+    the heuristic model and the F1 score is that it is good practice to have a single
+    number that tells us which model is better, and also a more graphical insight
+    into how that model is better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To put it frankly, our heuristic model has performed quite poorly, detecting
+    only 34.2% of fraud, which is not good enough. So, using the other two methods
+    in the following sections, we're going to see whether we can do better.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The feature engineering approach
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The objective of feature engineering is to exploit the qualitative insight
+    of humans in order to create better machine learning models. A human engineer
+    usually uses three types of insight: *intuition*, *expert domain knowledge*, and
+    *statistical analysis*. Quite often, it''s possible to come up with features for
+    a problem just from intuition.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an example, in our fraud case, it seems intuitive that fraudsters will create
+    new accounts for their fraudulent schemes and won't be using the same bank account
+    that they pay for their groceries with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Domain experts are able to use their extensive knowledge of a problem in order
+    to come up with other such examples of intuition. They'll know more about how
+    fraudsters behave and can craft features that indicate such behavior. All of these
+    intuitions are then usually confirmed by statistical analysis, something that
+    can even be used to open the possibilities of discovering new features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Statistical analysis can sometimes turn up quirks that can be turned into predictive
+    features. However, with this method, engineers must beware of the **data trap**.
+    Predictive features found in the data might only exist in that data because any
+    dataset will spit out a predictive feature if it's wrangled with for long enough.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A data trap refers to engineers digging within the data for features forever,
+    and never questioning whether those features they are searching for are relevant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data scientists stuck in to the data trap keep euphorically finding features,
+    only to realize later that their model, with all those features, does not work
+    well. Finding strong predictive features in the training set is like a drug for
+    data science teams. Yes, there's an immediate reward, a quick win that feels like
+    a validation of one's skills. However, as with many drugs, the data trap can lead
+    to an after-effect in which teams find that weeks' or months' worth of work in
+    finding those features was actually, useless.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Take a minute to ask yourself, are you in that position? If you ever find yourself
+    applying analysis after analysis, transforming data in every possible way, chasing
+    correlation values, you might very well be stuck in a data trap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To avoid the data trap, it is important to establish a **qualitative rationale**
+    as to why this statistical predictive feature exists and should exist outside
+    of the dataset as well. By establishing this rationale, you will keep both yourself
+    and your team alert to avoiding crafting features that represent noise. The data
+    trap is the human form of overfitting and finding patterns in noise, which is
+    a problem for models as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Humans can use their qualitative reasoning skills to avoid fitting noise, which
+    is a big advantage humans have over machines. If you're a data scientist, you
+    should use this skill to create more generalizable models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The goal of this section was not to showcase all the features that feature engineering
+    could perform on this dataset, but just to highlight the three approaches and
+    how they can be turned into features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A feature from intuition – fraudsters don't sleep
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Without knowing much about fraud, we can intuitively describe fraudsters as
+    shady people that operate in the dark. In most cases, genuine transactions happen
+    during the day, as people sleep at night.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The time steps in our dataset represent one hour. Therefore, we can generate
+    the time of the day by simply taking the remainder of a division by 24, as seen
+    in this code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'From there, we can then count the number of fraudulent and genuine transactions
+    at different times. To calculate this, we must run the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then finally, we can plot the share of genuine and fraudulent transactions
+    over the course of the day into a chart. To do this, we must run the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![A feature from intuition – fraudsters don''t sleep](img/B10354_02_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The share of fraudulent and genuine transactions conducted throughout each hour
+    of the day
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we can see in the preceding chart, there are much fewer genuine transactions
+    at night, while fraudulent behavior continues over the day. To be sure that night
+    is a time when we can hope to catch fraud, we can also plot the number of fraudulent
+    transactions as a share of all transactions. To do this, we must run the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![A feature from intuition – fraudsters don''t sleep](img/B10354_02_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The share of transactions that are fraudulent per hour of the day
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once we run that code, we can see that at around 5 AM, over 60% of all transactions
+    seem to be fraudulent, which appears to make this a great time of the day to catch
+    fraud.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expert insight – transfer, then cash out
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The description of the dataset came with another description that explained
+    the expected behavior of fraudsters. First, they transfer money to a bank account
+    they control. Then, they cash out that money from an ATM.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can check whether there are fraudulent transfer destination accounts that
+    are the origin of the fraudulent cash outs by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'According to the output, there seems to be no fraudulent transfers that are
+    the origin of fraudulent cash outs. The behavior expected by the experts is not
+    visible in our data. This could mean two things: firstly, it could mean that the
+    fraudsters behave differently now, or secondly that our data does not capture
+    their behavior. Either way, we cannot use this insight for predictive modeling
+    here.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Statistical quirks – errors in balances
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A closer examination of the data shows that there are some transactions where
+    the old and new balances of the destination account is zero, although the transaction
+    amount is not zero. This is odd, or more so a quirk, and so we want to investigate
+    whether this type of oddity yields predictive power.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To begin with, we can calculate the share of fraudulent transactions with this
+    property by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: As you can see, the share of fraudulent transactions stands at 70%, so this
+    quirk seems to be a good feature at detecting fraud in transactions. However,
+    it is important to ask ourselves how this quirk got into our data in the first
+    place. One possibility could be that the transactions never come through.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This could happen for a number of reasons including that there might be another
+    fraud prevention system in place that blocks the transactions, or that the origin
+    account for the transaction has insufficient funds.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'While we have no way of verifying if there''s another fraud prevention system
+    in place, we can check to see if the origin accounts have insufficient funds.
+    To do this, we have to run the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: As we can see in the output, close to 90% of the odd transactions have insufficient
+    funds in their origin accounts. From this, we can now construct a rationale in
+    which fraudsters try to drain a bank account of all its funds more often than
+    regular people do.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We need this rationale to avoid the data trap. Once established, the rationale
+    must be constantly scrutinized. In our case, it has failed to explain 10% of the
+    odd transactions, and if this number rises, it could end up hurting the performance
+    of our model in production.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preparing the data for the Keras library
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In [Chapter 1](ch01.xhtml "Chapter 1. Neural Networks and Gradient-Based Optimization"),
+    *Neural Networks and Gradient-Based Optimization*, we saw that neural networks
+    would only take numbers as inputs. The issue for us in our dataset is that not
+    all of the information in our table is numbers, some of it is presented as characters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, in this section, we're going to work on preparing the data for Keras
+    so that we can meaningfully work with it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Before we start, let''s look at the three types of data, *Nominal*, *Ordinal*,
+    and *Numerical*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Nominal data**: This comes in discrete categories that cannot be ordered.
+    In our case, the type of transfer is a nominal variable. There are four discrete
+    types, but it does not make sense to put them in any order. For instance, TRANSFER
+    cannot be more than CASH_OUT, so instead, they are just separate categories.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Ordinal data**: This also comes in discrete categories, but unlike nominal
+    data, it can be ordered. For example, if coffee comes in large, medium, and small
+    sizes, those are distinct categories because they can be compared. The large size
+    contains more coffee than the small size.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Numerical data**: This can be ordered, but we can also perform mathematical
+    operations on it. An example in our data is the number of funds, as we can both
+    compare the amounts, and also subtract or add them up.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Both nominal and ordinal data are **categorical data**, as they describe discrete
+    categories. While numerical data works fine with neural networks, only out of
+    the box, categorical data needs special treatment.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One-hot encoding
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The most commonly used method to encode categorical data is called **one-hot
+    encoding**. In one-hot encoding, we create a new variable, a so-called **dummy
+    variable** for each category. We then set the dummy variable to 1 if the transaction
+    is a member of a certain category and to zero otherwise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'An example of how we could apply this to our data set can be seen as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So, this is what the categorical data would look like before one-hot encoding:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Transaction | Type |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | TRANSFER |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | CASH_OUT |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | TRANSFER |'
+  prefs: []
+  type: TYPE_TB
+- en: 'This is what the data would look like after one-hot encoding:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Transaction | Type_TRANSFER | Type_CASH_OUT |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | 0 | 1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | 1 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: The Pandas software library offers a function that allows us to create dummy
+    variables out of the box. Before doing so, however, it makes sense to add `Type_`
+    in front of all actual transaction types. The dummy variables will be named after
+    the category. By adding `Type_` to the beginning, we know that these dummy variables
+    indicate the type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following line of code does three things. Firstly, `df[''type''].astype(str)`
+    converts all the entries in the **Type** column to strings. Secondly, the `Type_`
+    prefix is added as a result of combining the strings. Thirdly, the new column
+    of combined strings then replaces the original **Type** column:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now get the dummy variables by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We should note that the `get_dummies()` function creates a new data frame.
+    Next we attach this data frame to the main data frame, which can be done by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `concat()` method, as seen in the preceding code, concatenates two data
+    frames. We concatenate along axis 1 to add the data frame as new columns. Now
+    that the dummy variables are in our main data frame, we can remove the original
+    column by running this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: And, voilà! We have turned our categorical variable into something a neural
+    network will be able to work with.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Entity embeddings
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In this section, we're going to walk through making use of both embeddings and
+    the Keras functional API, showing you the general workflow. Both of these topics
+    get introduced and explored fully in [Chapter 5](ch05.xhtml "Chapter 5. Parsing
+    Textual Data with Natural Language Processing"), *Parsing Textual Data with Natural
+    Language Processing*, where we will go beyond the general ideas presented here
+    and where we'll begin discussing topics like implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It's fine if you do not understand everything that is going on just now; this
+    is an advanced section after all. If you want to use both of these techniques,
+    you will be well prepared after reading this book, as we explain different elements
+    of both methods throughout the book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we will be creating embedding vectors for categorical data.
+    Before we start, we need to understand that embedding vectors are vectors representing
+    categorical values. We use embedding vectors as inputs for neural networks. We
+    train embeddings together with a neural network, so that we can, over time, obtain
+    more useful embeddings. Embeddings are an extremely useful tool to have at our
+    disposal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Why are embeddings so useful? Not only do embeddings reduce the number of dimensions
+    needed for encoding over one-hot encoding and thus decrease memory usage, but
+    they also reduce sparsity in input activations, which helps reduce overfitting,
+    and they can encode semantic meanings as vectors. The same advantages that made
+    embeddings useful for text, [Chapter 5](ch05.xhtml "Chapter 5. Parsing Textual
+    Data with Natural Language Processing"), *Parsing Textual Data with Natural Language
+    Processing*, also make them useful for categorical data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tokenizing categories
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Just as with text, we have to tokenize the inputs before feeding them into
+    the embeddings layer. To do this, we have to create a mapping dictionary that
+    maps categories to a token. We can achieve this by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This code loops over all the unique type categories while counting upward.
+    The first category gets token 0, the second 1, and so on. Our `map_dict` looks
+    like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can now apply this mapping to our data frame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: As a result, all types will now be replaced by their tokens.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have to deal with the non-categorical values in our data frame separately.
+    We can create a list of columns that are not the type and not the target like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creating input models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The model we are creating will have two inputs: one for the types with an embedding
+    layer, and one for all other, non-categorical variables. To combine them with
+    more ease at a later point, we''re going to keep track of their inputs and outputs
+    with two arrays:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The model that acts as an input for the type receives a one-dimensional input
+    and parses it through an embedding layer. The outputs of the embedding layer are
+    then reshaped into flat arrays, as we can see in this code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `type` embeddings have three layers here. This is an arbitrary choice, and
+    experimentation with different numbers of dimensions could improve the results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For all the other inputs, we create another input that has as many dimensions
+    as there are non-categorical variables and consists of a single dense layer with
+    no activation function. The dense layer is optional; the inputs could also be
+    directly passed into the head model. More layers could also be added, including
+    these:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that we have created the two input models, we can concatenate them. On
+    top of the two concatenated inputs, we will also build our head model. To begin
+    this process, we must first run the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then, by running the following code, we can build and compile the overall model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Training the model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this section we''re going to train a model with multiple inputs. To do this,
+    we need to provide a list of *X* values for each input. So, firstly we must split
+    up our data frame. We can do this by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then, we can train the model by providing a list of the two inputs and the
+    target, as we can see in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creating predictive models with Keras
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Our data now contains the following columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now that we've got the columns, our data is prepared, and we can use it to create
+    a model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Extracting the target
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To train the model, a neural network needs a target. In our case, `isFraud`
+    is the target, so we have to separate it from the rest of the data. We can do
+    this by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first step only returns the `isFraud` column and assigns it to `y_df`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second step returns all columns except `isFraud` and assigns them to `x_df`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We also need to convert our data from a pandas `DataFrame` to NumPy arrays.
+    The pandas `DataFrame` is built on top of NumPy arrays but comes with lots of
+    extra bells and whistles that make all the preprocessing we did earlier possible.
+    To train a neural network, however, we just need the underlying data, which we
+    can get by simply running the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creating a test set
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: When we train our model, we run the risk of **overfitting**. Overfitting means
+    that our model memorizes the *x* and *y* mapping in our training dataset but does
+    not find the function that describes the true relationship between *x* and *y*.
+    This is problematic because once we run our model **out of sample** – that is,
+    on data not in our training set, it might do very poorly. To prevent this, we're
+    going to create a so-called **test set**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A test set is a holdout dataset, which we only use to evaluate our model once
+    we think it is doing fairly well in order to see how well it performs on data
+    it has not seen yet. A test set is usually randomly sampled from the complete
+    data. Scikit-learn offers a convenient function to do this, as we can see in the
+    following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: The element, `train_test_split` will randomly assign rows to either the train
+    or test set. You can specify `test_size`, the share of data that goes into the
+    test set (which in our case is 33%), as well as a random state. Assigning `random_state`
+    makes sure that although the process is pseudo-random, it will always return the
+    same split, which makes our work more reproducible. Note that the actual choice
+    of number (for example, `42`) does not really matter. What matters is that the
+    same number is used in all experiments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Creating a validation set
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Now you might be tempted to just try out a lot of different models until you
+    get a really high performance on the test set. However, ask yourself this: how
+    would you know that you have not selected a model that by chance works well on
+    the test set but does not work in real life?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The answer is that every time you evaluate on the test set, you incur a bit
+    of "information leakage," that is, information from the test set leaks into your
+    model by influencing your choice of model. Gradually, the test set becomes less
+    valuable. The validation set is a sort of a "dirty test set" that you can use
+    to frequently test your models out of sample performance without worrying. Though
+    it's key to note that we don't want to use the test set too often, but it is still
+    used to measure out-of-sample performance frequently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To this end, we'll create a "validation set," also known as a development set.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can do this the same way we created the test set, by just splitting the
+    training data again, as we can see in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: Oversampling the training data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Remember that in our dataset, only a tiny fraction of transactions were fraudulent,
+    and that a model that is always classifying transactions as genuine would have
+    a very high level of accuracy. To make sure we train our model on true relationships,
+    we can **oversample** the training data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This means that we would add data that would be fraudulent to our dataset until
+    we have the same amount of fraudulent transactions as genuine transactions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: A useful library for this kind of task is `imblearn`, which includes
+    a SMOTE function. See, [http://contrib.scikitlearn.org/imbalanced-learn/](http://contrib.scikitlearn.org/imbalanced-learn/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Synthetic Minority Over-sampling Technique** (**SMOTE**) is a clever way
+    of oversampling. This method tries to create new samples while maintaining the
+    same decision boundaries for the classes. We can oversample with SMOTE by simply
+    running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: Building the model
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We''ve successfully addressed several key learning points, and so it''s now
+    finally time to build a neural network! As in [Chapter 1](ch01.xhtml "Chapter 1. Neural
+    Networks and Gradient-Based Optimization"), *Neural Networks and Gradient-Based
+    Optimization*, we need to import the required Keras modules using the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In practice, many structured data problems require very low learning rates.
+    To set the learning rate for the gradient descent optimizer, we also need to import
+    the optimizer. We can do this by running:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Creating a simple baseline
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Before we dive into more advanced models, it is wise to start with a simple
+    logistic regression baseline. This is to make sure that our model can actually
+    train successfully.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To create a simple baseline, we need to run the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see here a logistic regressor, which is the same as a one-layer neural
+    network:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we will compile the model. Instead of just passing `SGD` to specify the
+    optimizer for Stochastic Gradient Descent, we''ll create a custom instance of
+    SGD in which we set the learning rate to 0.00001\. In this example, tracking accuracy
+    is not needed since we evaluate our models using the F1 score. Still, it still
+    reveals some interesting behavior, as you can see in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Notice how we have passed the validation data into Keras by creating a tuple
+    in which we store data and labels. We will train this model for 5 epochs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Notice a few things here: first, we have trained on about 3.3 million samples,
+    which is more data than we initially had. The sudden increase comes from the oversampling
+    that we did earlier on in this chapter. Secondly, the training set''s accuracy
+    is significantly lower than the validation set''s accuracy. This is because the
+    training set is balanced, while the validation set is not.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We oversampled the data by adding more fraud cases to the training set than
+    there are in real life, which as we discussed, helped our model detect fraud better.
+    If we did not oversample, our model would be inclined to classify all transactions
+    as genuine since the vast majority of samples in the training set are genuine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By adding fraud cases, we are forcing the model to learn what distinguishes
+    a fraud case. Yet, we want to validate our model on realistic data. Therefore,
+    our validation set does not artificially contain many fraud cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A model classifying everything as genuine would have over 99% accuracy on the
+    validation set, but just 50% accuracy on the training set. Accuracy is a flawed
+    metric for such imbalanced datasets. It is a half-decent proxy and more interpretable
+    than just a loss, which is why we keep track of it in Keras.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To evaluate our model, we should use the F1 score that we discussed at the beginning
+    of this chapter. However, Keras is unable to directly track the F1 score in training
+    since the calculation of an F1 score is somewhat slow and would end up slowing
+    down the training of our model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: Remember that accuracy on an imbalanced dataset can be very high,
+    even if the model is performing poorly.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If the model exhibits a higher degree of accuracy on an imbalanced validation
+    set than compared to that seen with a balanced training set, then it says little
+    about the model performing well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Compare the training set's performance against the previous training set's performance,
+    and likewise the validation set's performance against the previous validation
+    set's performance. However, be careful when comparing the training set's performance
+    to that of the validation set's performance on highly imbalanced data. However,
+    if your data is equally balanced, then comparing the validation set and the training
+    set is a good way to gauge overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We are now in a position where we can make predictions on our test set in order
+    to evaluate the baseline. We start by using `model.predict` to make predictions
+    on the test set:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Before evaluating our baseline, we need to turn the probabilities given by
+    our model into absolute predictions. In our example, we''ll classify everything
+    that has a fraud probability above 50% as fraud. To do this, we need to run the
+    following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our F1 score is already significantly better than it was for the heuristic
+    model, which if you go back, you''ll see that it only achieved a rate of 0.013131315551742895:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By plotting the confusion matrix, we''re able to see that our feature-based
+    model has indeed improved on the heuristic model:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This code should produce the following confusion matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Creating a simple baseline](img/B10354_02_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A confusion matrix for a simple Keras model
+  prefs: []
+  type: TYPE_NORMAL
+- en: But what if we wanted to build more complex models that can express more subtle
+    relationships, than the one that we've just built? Let's now do that!
+  prefs: []
+  type: TYPE_NORMAL
+- en: Building more complex models
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'After we have created a simple baseline, we can go on to more complex models.
+    The following code is an example of a two-layer network:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After running that code, we''ll then again benchmark with the F1 score:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this case, the more complex model does better than the simple baseline created
+    earlier. It seems as though the function mapping transaction data to fraud is
+    complex and can be approximated better by a deeper network.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section we have built and evaluated both simple and complex neural network
+    models for fraud detection. We have been careful to use the validation set to
+    gauge the initial out-of-sample performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With all of that, we can build much more complex neural networks (and we will).
+    But first we will have a look at the workhorse of modern enterprise-ready machine
+    learning: tree-based methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A brief primer on tree-based methods
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: No chapter on structured data would be complete without mentioning tree-based
+    methods, such as random forests or XGBoost.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is worth knowing about them because, in the realm of predictive modeling
+    for structured data, tree-based methods are very successful. However, they do
+    not perform as well on more advanced tasks, such as image recognition or sequence-to-sequence
+    modeling. This is the reason why the rest of the book does not deal with tree-based
+    methods.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: For a deeper dive into XGBoost, check out the tutorials on the XGBoost
+    documentation page: [http://xgboost.readthedocs.io](http://xgboost.readthedocs.io).
+    There is a nice explanation of how tree-based methods and gradient boosting work
+    in theory and practice under the **Tutorials** section of the website.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A simple decision tree
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The basic idea behind tree-based methods is the decision tree. A decision tree
+    splits up data to create the maximum difference in outcomes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let's assume for a second that our `isNight` feature is the greatest predictor
+    of fraud. A decision tree would split our dataset according to whether the transactions
+    happened at night or not. It would look at all the night-time transactions, looking
+    for the next best predictor of fraud, and it would do the same for all day-time
+    transactions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Scikit-learn has a handy decision tree module. We can create one for our data
+    by simply running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resulting tree will look like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A simple decision tree](img/B10354_02_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A decision tree for fraud detection
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simple decision trees, like the one we've produced, can give a lot of insight
+    into data. For example, in our decision tree, the most important feature seems
+    to be the old balance of the origin account, given that it is the first node in
+    the tree.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A random forest
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A more advanced version of a simple decision tree is a random forest, which
+    is a collection of decision trees. A forest is trained by taking subsets of the
+    training data and training decision trees on those subsets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Often, those subsets do not include every feature of the training data. By doing
+    it this way, the different decision trees can fit different aspects of the data
+    and capture more information on aggregate. After a number of trees have been created,
+    their predictions are averaged to create the final prediction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The idea is that the errors presented by the trees are not correlated, and
+    so by using multiple trees you cancel out the error. You can create and train
+    a random forest classifier like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: You'll notice that with the code we've just generated, random forests have far
+    fewer knobs to tune than neural networks. In this case, we just specify the number
+    of estimators, that is, the number of trees we would like our forest to have.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `n_jobs` argument tells the random forest how many trees we would like
+    to train in parallel. Note that `-1` stands for "as many as there are CPU cores":'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The random forest does an order of magnitude better than the neural network
+    as its F1 score is close to 1, which is the maximum score. Its confusion plot,
+    seen as follows, shows that the random forest significantly reduced the number
+    of false positives:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A random forest](img/B10354_02_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A confusion matrix for the random forest
+  prefs: []
+  type: TYPE_NORMAL
+- en: A shallow learning approach, such as a random forest, often does better than
+    deep learning on relatively simple problems. The reason for this is that simple
+    relationships with low-dimensional data can be hard to learn for a deep learning
+    model, which has to fit multiple parameters exactly in order to match the simple
+    function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we will see in later chapters of this book, as soon as relationships do get
+    more complex, deep learning gets to shine.
+  prefs: []
+  type: TYPE_NORMAL
+- en: XGBoost
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: '**XGBoost** stands for **eXtreme Gradient Boosting**. The idea behind gradient
+    boosting is to train a decision tree, and then to train a second decision tree
+    on the errors that the first decision tree made.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Through this method, multiple layers of decision trees can be added, which slowly
+    reduces the total number of model errors. XGBoost is a popular library that implements
+    gradient boosting very efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: XGBoost is installed on Kaggle kernels by default. If you are running
+    these examples locally, see the XGBoost manual for installation instructions and
+    more information: [http://xgboost.readthedocs.io/](http://xgboost.readthedocs.io/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Gradient boosting classifiers can be created and trained just like random forests
+    from `sklearn`, as can be seen in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: The gradient booster performs at almost the same level as a random forest on
+    this task. A common approach that is used is to take both a random forest and
+    a gradient booster and to average the predictions in order to get an even better
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The bulk of machine learning jobs in business today are done on relatively simple structured
+    data. The methods we have learned today, random forests and gradient boosting,
+    are therefore the standard tools that most practitioners use in the real world.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In most enterprise machine learning applications, value creation does not come
+    from carefully tweaking a model or coming up with cool architectures, but from
+    massaging data and creating good features. However, as tasks get more complex
+    and more semantic understanding of unstructured data is needed, these tools begin to
+    fail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: E2E modeling
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Our current approach relies on engineered features. As we discussed at the start
+    of this chapter, an alternative method is E2E modeling. In E2E modeling, both
+    raw and unstructured data about a transaction is used. This could include the
+    description text of a transfer, video feeds from cameras monitoring a cash machine,
+    or other sources of data. E2E is often more successful than feature engineering,
+    provided that you have enough data available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To get valid results, and to successfully train the data with an E2E model it
+    can take millions of examples. Yet, often this is the only way to gain an acceptable
+    result, especially when it is hard to codify the rules for something. Humans can
+    recognize things in images well, but it is hard to come up with exact rules that
+    distinguish things, which is where E2E shines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the dataset used for this chapter, we do not have access to more data, but
+    the rest of the chapters of this book demonstrate various E2E models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exercises
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: If you visit [https://kaggle.com](https://kaggle.com), search for a competition
+    that has structured data. One example is the Titanic competition. Here you can
+    create a new kernel, do some feature engineering, and try to build a predictive
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How much can you improve it by investing time in feature engineering versus
+    model tweaking? Is there an E2E approach to the problem?
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we have taken a structured data problem from raw data to strong
+    and reliable predictive models. We have learned about heuristic, feature engineering,
+    and E2E modeling. We have also seen the value of clear evaluation metrics and
+    baselines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will look into a field where deep learning truly shines,
+    computer vision. Here, we will discover the computer vision pipeline, from working
+    with simple models to very deep networks augmented with powerful preprocessing
+    software. The ability to "see" empowers computers to enter completely new domains.
+  prefs: []
+  type: TYPE_NORMAL

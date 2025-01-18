@@ -1,0 +1,1077 @@
+- en: Chapter 10. Bayesian Inference and Probabilistic Programming
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Mathematics is a big space of which humans so far have only charted a small
+    amount. We know of countless areas in mathematics that we would like to visit,
+    but that are not tractable computationally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A prime reason Newtonian physics, as well as much of quantitative finance, is built
+    around elegant but oversimplified models is that these models are easy to compute.
+    For centuries, mathematicians have mapped small paths in the mathematical universe
+    that they could travel down with a pen and paper. However, this all changed with
+    the advent of modern high-performance computing. It unlocked the ability for us
+    to explore wider spaces of mathematics and thus gain more accurate models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the final chapter of this book, you''ll learn about the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The empirical derivation of the Bayes formula
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How and why the Markov Chain Monte Carlo works
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use PyMC3 for Bayesian inference and probabilistic programming
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How various methods get applied in stochastic volatility models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This book has largely covered deep learning and its applications in the finance
+    industry. As we've witnessed, deep learning has been made practical through modern
+    computing power, but it is not the only technique benefiting from this large increase
+    in power.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Both Bayesian inference and probabilistic programming are two up and coming
+    techniques whose recent progress is powered by the increase in computing power.
+    While the advances in the field have received significantly less press coverage
+    than deep learning, they might be even more useful to the financial practitioner.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bayesian models are interpretable and can express uncertainty naturally. They
+    are less "black box," instead making the modeler's assumptions more explicit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An intuitive guide to Bayesian inference
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Before starting, we need to import `numpy` and `matplotlib`, which we can do
+    by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This example is similar to the one given in the 2015 book, *Bayesian Methods
+    for Hackers: Probabilistic Programming and Bayesian Inference*, written by Cameron
+    Davidson-Pilon. However, in our case, this is adapted to a financial context and rewritten
+    so that the mathematical concepts intuitively arise from the code.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: You can view the example at the following link: [http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/](http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let's imagine that you have a security that can either pay $1 or, alternatively,
+    nothing. The payoff depends on a two-step process. With a 50% probability, the
+    payoff is random, with a 50% chance of getting $1 and a 50% chance of making nothing.
+    The 50% chance of getting the dollar is the **true payoff probability** (**TPP**),
+    *x*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This payoff scheme is visualized in the following diagram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![An intuitive guide to Bayesian inference](img/B10354_10_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Payoff scheme
+  prefs: []
+  type: TYPE_NORMAL
+- en: You are interested in finding out what the true payoff ratio is, as it will
+    inform your trading strategy. In our case, your boss allows you to buy 100 units
+    of securities. You do, and 54 of the 100 securities pay you a dollar.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But what is the actual TPP? In this case, there is an analytical solution to
+    calculate the most likely TPP, but we will be using a computational method that
+    also works for more complicated cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next section we will simulate the securities payoff process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Flat prior
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The variable *x* represents the TPP. We randomly sample 100 truth values, which
+    are 1 if you had gotten the dollar under the true payoff, and 0 if otherwise.
+    We also sample the two random choices at **Start** and **Random Payoff** in the
+    preceding scheme. It is computationally more efficient to sample the random outcomes
+    in one go for all trials, even though they are not all needed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we sum up the payoffs and divide them by the number of securities in
+    our simulation in order to obtain the share of payoffs in the simulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code snippet runs one simulation. It''s important, though, to
+    make sure that you understand how the computations follow from our securities
+    structure:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Next, we would like to try out a number of possible TPPs. So, in our case, we'll
+    sample a candidate TPP and run the simulation with the candidate probability.
+    If the simulation outputs the same payoff as we observed in real life, then our
+    candidate is a real possibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following sample method returns real possibilities, or `None` if the candidate
+    it tried out was not suitable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: As we have to sample a number of possible TPPs, it's only natural that we want
+    to speed this process up. To do this, we can use a library called `JobLib`, which
+    will help with parallel execution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: `JobLib` is preinstalled on Kaggle kernels. For more information,
+    you can visit [https://joblib.readthedocs.io/en/latest/](https://joblib.readthedocs.io/en/latest/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To do this, we need to import the `Parallel` class, which will help to run
+    loops in parallel, and the `delayed` method, which helps to execute functions
+    in order inside the parallel loop. We can import them by running the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The details are not relevant for this example, but the `Parallel(n_jobs=-1)`
+    method makes the job run with as many parallel executions as there are CPUs on
+    the machine. For example, `delayed(sample)() for i in range(100000)` runs the sample
+    method 100,000 times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We obtain a Python list, `t`, which we turn into a NumPy array. As you can
+    see in the following code snippet, about 98% of the array are `None` values. That
+    means that 98% of the values the sampler tried out for *x* did not yield results
+    matching our data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Therefore, we''ll now throw away all of the `None` values, leaving us with
+    the possible values for *x*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a result of running this code, we''ll get the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Flat prior](img/B10354_10_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Distribution of possible true payoff probabilities as found by our naïve sampler
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you can see, there is a *distribution* of possible TPPs. What this graph
+    shows us is that the most likely TPP is somewhere around 50% to 60%; though other
+    values are possible, they are somewhat less likely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What you've just seen is one of the big advantages of Bayesian methods. All
+    of the estimates come in distributions, for which we can then calculate confidence
+    intervals, or credibility intervals, as they are known in Bayesian terminology.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This allows us to be more precise about how sure we are about things and what
+    other values parameters in our model could have. Relating it back to our interest
+    in finance, with financial applications, where millions are staked on the outputs
+    of models, it becomes very advantageous to quantify such uncertainty.
+  prefs: []
+  type: TYPE_NORMAL
+- en: <50% prior
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: At this point, you are able to take your results to your boss, who is a domain
+    expert on the securities that you are trading. He looks at your analysis and shakes
+    his head saying, *"The TPP cannot be more than 0.5."* He explains, *"From the
+    underlying business, it's physically impossible to do more than that."*
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So, how can you incorporate this fact into your simulation analysis? Well,
+    the straightforward solution is to only try out candidate TPPs from 0 to 0.5\.
+    All you have to do is to limit the space you sample the candidate value of *x*,
+    which can be achieved by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you can run the simulations exactly as before:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Which, just like before, will give us the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![<50% prior](img/B10354_10_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Distribution of possible TPPs from 0 to 0.5
+  prefs: []
+  type: TYPE_NORMAL
+- en: Prior and posterior
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Clearly, your choice of values to try influenced the outcome of your simulation
+    analysis; it also reflected your beliefs about the possible values of *x*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first time around, you believed that all TPPs between 0 and 100% were equally
+    likely before seeing any data. This is called a flat prior, as the distribution
+    of values is the same for all values and is therefore flat. The second time, you
+    believed that the TPPs had to be below 50%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The distribution expressing your beliefs about *x* before seeing the data is
+    called the prior distribution, *P*(*TPP*), or just prior. The distribution of
+    the possible values of *x* that we obtained from simulation, that is, after seeing
+    data *D*, is called the posterior distribution, ![Prior and posterior](img/B10354_10_002.jpg),
+    or just posterior.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following plots show samples from prior and posterior for the first and
+    second rounds. The first plot shows the results with a `flat` posterior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This produces the following chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Prior and posterior](img/B10354_10_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The results of our sampler with a flat prior
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The next plot shows the output of our sampler with a <50% prior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'While it''s still the same sampler, you can see that the outcome is quite different:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Prior and posterior](img/B10354_10_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The results of our sampler with a <50% prior
+  prefs: []
+  type: TYPE_NORMAL
+- en: Have you noticed anything curious? The posterior values of the second round
+    are roughly equal to the posterior values of the first round, but here they are
+    cut off at 0.5\. This is because the second round prior is 0 for values above
+    0.5 and 1 for everywhere else.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we only keep simulation results that match the data, the number of kept simulation
+    results shown in the histogram reflects the probability of running a simulation
+    that yields the observed data *D* for a given TPP, *C*, ![Prior and posterior](img/B10354_10_003.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The posterior probabilities, ![Prior and posterior](img/B10354_10_004.jpg),
+    that we obtain from our simulations are equal to the probability that we observe
+    the data when trying out a given TPP, ![Prior and posterior](img/B10354_10_005.jpg),
+    times the probability, *P*(*TPP*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Mathematically, this is represented as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Prior and posterior](img/B10354_10_007.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: When the data is naturally obtained, such as through a face-to-face meeting,
+    then we might need to account for biases in our data collection method. Most of
+    the time, we do not have to worry about this and can simply leave it out, but
+    sometimes the measurement can amplify certain outcomes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To mitigate this, we''ll divide by the data distribution, ![Prior and posterior](img/B10354_10_008.jpg),
+    as a final addon to our posterior formula and arrive at the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Prior and posterior](img/B10354_10_009.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As you can see, it's the Bayes formula! When running our simulation, we are
+    sampling from the posterior. So, why can't we just use the Bayes formula to calculate
+    the posterior? The simple answer is because evaluating
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Prior and posterior](img/B10354_10_010.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: requires integrating over *TPP*, which is intractable. Our simulation method
+    is, as an alternative, a simple and convenient workaround.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: The first round prior (all TPPs are equally likely) is called a "flat prior"
+    because we make no assumptions about the distributions of values. In this case,
+    the Bayesian posterior is equal to the maximum likelihood estimate.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Markov Chain Monte Carlo
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: In the previous section, we approximated the posterior distribution by randomly
+    sampling from our prior and then trying out the sampled value. This kind of random
+    trying works fine if our model only has one parameter, for example, the TPP. Yet,
+    as our model grows in complexity and we add many more parameters, the random search
+    method will become even slower.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Eventually, there will be too many possible parameter combinations that have
+    no chance of generating our data. Therefore, we need to guide our search and sample
+    parameters with higher posterior probabilities more often.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The approach of a guided, but still random, sampling is called the "Markov Chain
+    Monte Carlo algorithm". The "Monte Carlo" component means that randomness and simulation
+    are involved, whereas the "Markov Chain" means that we move over the parameter
+    space under certain probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the specific algorithm covered here, we will move to a different parameter
+    value with a probability that is the ratio of the posterior probability of the
+    parameter value. Here, we'll think of going to the posterior probability of the
+    parameter value. As probabilities cannot be larger than one, we cap the ratio
+    at one, but that is just a mathematical finite that does not matter much for the
+    algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following diagram shows the basic workings of the Markov Chain Monte Carlo
+    algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov Chain Monte Carlo](img/B10354_10_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The Markov Chain Monte Carlo algorithm
+  prefs: []
+  type: TYPE_NORMAL
+- en: What the image shows is that we are on a "random walk" in which we more or less
+    randomly go over different parameter values. However, we don't move *entirely*
+    randomly, but instead prefer parameter values that have high posterior probabilities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To execute this algorithm, we need to do four things:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Propose a new parameter value, ![Markov Chain Monte Carlo](img/B10354_10_011.jpg),
+    from our current parameter value, *x*.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Estimate the posterior probability of ![Markov Chain Monte Carlo](img/B10354_10_012.jpg),
+    ![Markov Chain Monte Carlo](img/B10354_10_013.jpg). We can use the Bayes rule
+    for this.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Calculate the probability, ![Markov Chain Monte Carlo](img/B10354_10_014.jpg),
+    of moving to that new parameter value, ![Markov Chain Monte Carlo](img/B10354_10_015.jpg)
+    (remember that probabilities have to be smaller than one):![Markov Chain Monte
+    Carlo](img/B10354_10_016.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Move to the new parameter value with probability ![Markov Chain Monte Carlo](img/B10354_10_017.jpg).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The next step is to build up these components step by step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: First, we need to propose a new *X[c]*. This has to be dependent on the previous
+    value of *x* since we do not want a blind random search, but a more refined random
+    walk. In this case, we will sample *x[cand]* from a normal distribution with mean
+    *x* and a standard deviation of 0.1.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It''s also possible to sample from other distributions or with other standard
+    deviations, as long as *x[cand]* is related to *x*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the first section, by sampling from the prior and then running the simulation,
+    we sampled directly from the posterior. As we are now sampling through our proposed
+    method, we are no longer sampling from the posterior directly. Therefore, to calculate
+    the posterior probability, we'll use the Bayes rule.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Remember that we usually don't need to divide by *P*(*D*) as we don't assume
+    biased measurements. The Bayes rule simplifies to ![Markov Chain Monte Carlo](img/B10354_10_022.jpg),
+    where ![Markov Chain Monte Carlo](img/B10354_10_023.jpg) is the posterior, *P*(*TPP*)
+    is the prior, and ![Markov Chain Monte Carlo](img/B10354_10_025.jpg) is the likelihood.
+    So, to estimate the likelihood for a parameter value, *x*, we run a number of
+    simulations with that parameter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The likelihood is the share of simulations that match our data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For starters, we will use a flat prior again; each TPP is equally likely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The posterior probability of a parameter value, *x*, is the likelihood times
+    the prior:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we are ready to put it all together into the Metropolis-Hastings MCMC algorithm!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, we need to set some initial value for *x*. To make the algorithm find
+    likely values quickly, it is sensible to initialize it at the maximum likelihood
+    value or some estimate that we deem likely. We also need to compute the posterior
+    probability of this initial value, which we can do by running the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Likewise, we need to keep track of all of the values sampled in a trace. Purely
+    for exhibition purposes, we will also keep track of the posterior probabilities.
+    To do this, we''re going to run the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we get to the main loop. However, before we do, it''s important to remember
+    that the algorithm consists of four steps:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Propose a new candidate *x[cand]*
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the posterior probability of![Markov Chain Monte Carlo](img/B10354_10_027.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the acceptance probability:![Markov Chain Monte Carlo](img/B10354_10_028.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Set *x* to *X[C]* and with a probability, ![Markov Chain Monte Carlo](img/B10354_10_030.jpg):'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs:
+  - PREF_IND
+  type: TYPE_PRE
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After running this algorithm for a number of epochs, we end up with a distribution
+    of possible cheater shares with payoffs. As we''ve done before, we can simply
+    run the following code to visualize this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once we''ve run the previous code, we''ll receive this graph as the output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov Chain Monte Carlo](img/B10354_10_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The outcome of the Metropolis Hastings sampler
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By viewing the trace over time, it shows how the algorithm moves randomly but centers
+    around highly likely values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will then get an output, in the form of a chart, which shows us the trace
+    of the **Metropolis Hasings** (**MH**) sampler:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov Chain Monte Carlo](img/B10354_10_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Trace of the Metropolis Hastings sampler
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For a better understanding, we can plot the posterior probabilities over the
+    tried out values:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'After successful executing the code, we''ll then get the following chart as
+    an output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Markov Chain Monte Carlo](img/B10354_10_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The proposed value versus posterior probability
+  prefs: []
+  type: TYPE_NORMAL
+- en: Metropolis-Hastings MCMC
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: To demonstrate the power and flexibility of PyMC3, we are going to use it for a classic
+    econometrics task, but we will put a Bayesian spin on it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Note**: This example is a straight adaptation of an example from the PyMC3
+    documentation: [https://docs.pymc.io/notebooks/stochastic_volatility.html](https://docs.pymc.io/notebooks/stochastic_volatility.html).
+    This, in turn, is an adaptation of an example from Hoffman''s 2011 paper, *No-U-Turn
+    Sampler*, available at: [https://arxiv.org/abs/1111.4246](https://arxiv.org/abs/1111.4246).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Stock prices and other financial asset prices fluctuate, and the variance of
+    daily returns is called volatility. Volatility is a commonly used risk measure,
+    so it's quite important to measure it accurately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The easy solution here would be to compute a backward-looking variance of return.
+    However, there is a benefit to expressing uncertainty about the actual volatility.
+    Similar to the payoff example we looked at earlier on, there is a distribution
+    of "actual" values from which the realized values are drawn. This is also called
+    "stochastic volatility" because there is a distribution of possible volatility
+    values from which the observed volatility is a realized sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this case we are interested in building a model of stochastic volatility
+    of the S&P 500, the American stock market index. To do this, we must first load
+    the data. You can either download them from Yahoo finance directly or find it
+    on Kaggle, at [https://www.kaggle.com/crescenzo/sp500](https://www.kaggle.com/crescenzo/sp500).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To load the data, run the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the example we''re looking at, we are interested in the closing prices,
+    so we need to extract the closing prices from the dataset. The dataset shows new
+    data first, so we need to invert it, which we achieve with the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When plotting the closing prices, which we do in the following code, we see,
+    through the outputted graphic, a familiar plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a result, we''ll then get the following chart as an output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Metropolis-Hastings MCMC](img/B10354_10_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The S&P 500 from inception to late 2018
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The dataset contains the S&P since its inception, which for us is a bit too
+    much, so in our case, we''re going to cut it off at 1990\. We can specify this
+    date by running the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As we are interested in the returns, we need to compute the price differences.
+    We can use `np.diff` to get daily price differences. We are going to package the
+    whole thing into a pandas series for easier plotting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This will give us the following chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Metropolis-Hastings MCMC](img/B10354_10_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The returns of the S&P 500 from 1990 to late 2018
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now the fun with PyMC3 begins. PyMC3 includes some special distributions for
+    dealing with time series, such as a random walk. This is exactly the right thing
+    to use when we want to model stock prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Firstly, we need to import PyMC3 and its tool for time series, the random walk
+    class:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then lastly, we need to set up the model. We can achieve this by running the
+    following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s now look at the commands we just executed in order to set up the model.
+    As you can see, it consists of four key elements:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The volatility, `s`, is modeled as a random walk with an underlying step size,
+    `step_size`. Our prior for the step size is an exponential distribution with ![Metropolis-Hastings
+    MCMC](img/B10354_10_031.jpg) (once again, understanding the details of every distribution
+    used is not necessary for the demonstration).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We then model the stochastic volatility itself. Note how we plug in the step
+    size, which is itself a random variable. The random walk should have the same
+    length as the observed return values.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: We model the actual stock returns to be drawn from a `StudentT` distribution
+    with `nu` degrees of freedom. Our prior for `nu` is an exponential distribution
+    as well.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Finally, we get to model the actual returns. We model them to be drawn from
+    a `StudentT` distribution with a scaling factor![Metropolis-Hastings MCMC](img/B10354_10_032.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: (or `lam` in code) produced by our stochastic volatile model. To condition the
+    model on observed data, we pass on the observed return values.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: The standard sampler for PyMC3 is not Metropolis Hastings, but the **No-U-Turn
+    Sampler** (**NUTS**). PyMC3 will default to NUTS if we specify no sampler and
+    just call `sample`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To make the sampling run smoothly here, we need to specify a relatively high
+    amount of `tune` samples. Those are samples that the sampler will draw from in
+    order to find a good starting point, and that will not be part of the posterior,
+    similar to the burned samples before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We also need to tell NUTS to be lenient when accepting values by setting a
+    high `target_accept` value. We can achieve this by running the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: PyMC3 has a nice utility that we can use to visualize the outcomes of sampling.
+    We are interested in the standard deviation of the volatility random walk, ![Metropolis-Hastings
+    MCMC](img/B10354_10_033.jpg), as well as the degrees of freedom of the `StudentT`
+    distribution from which the actual returns are drawn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we ran two chains in parallel, you can see that we obtained two different
+    output distributions. If we had run the sampler for longer, those two outcomes
+    would converge. We can obtain a better estimate by averaging them, which is what
+    PyMC3 does for predictions. For instance, let''s now try that with the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the result of that code being shown in the following charts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Metropolis-Hastings MCMC](img/B10354_10_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Results overview of the PyMC3 sampler. On the left, you can see the distributions
+    produced by the two sampler chains. On the right, you can see their traces.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the final step, we can show how stochastic volatility has behaved over time.
+    You can see how it nicely aligns with volatile periods such as the 2008 financial
+    crisis. You can also see that there are periods when the model is more or less
+    certain about volatility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As we can see, the output of that code will return the chart that we see below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Metropolis-Hastings MCMC](img/B10354_10_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Inferred stochastic volatility from 1990 to late 2018
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are a large number of applications that can be modeled well with such
+    relatively small Bayesian models. The main advantage is that the models are easy
+    to interpret and can express uncertainty well. Probabilistic programming aligns
+    well with the "storytelling" approach to data science, as the story is clearly
+    expressed in the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next section, we will move from shallow probabilistic programming to
+    deep probabilistic programming.
+  prefs: []
+  type: TYPE_NORMAL
+- en: From probabilistic programming to deep probabilistic programming
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The Bayesian models that we've developed so far are all quite shallow. So, let's
+    ask ourselves whether we can combine the predictive power of deep networks with
+    the advantages of Bayesian models. This is an active field of research and a fitting
+    way to close this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep networks have a number of parameters; this makes searching through the
+    parameter space a hard problem. In traditional supervised deep learning, we would
+    use backpropagation to solve this problem. Backpropagation can also be used for
+    Bayesian models. However, it's not the only, or even necessarily the best, way to
+    do Bayesian deep learning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'By and large, there are four ways to do Bayesian deep learning:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Use **Automatic Differentiation Variational Inference** (**AVI**). This means
+    approximating the posterior with a guide model and then optimizing model parameters
+    using gradient descent. PyMC3 can do this using the AVI optimizer. See the paper,
+    *Automatic Differentiation Variational Inference*, by Alp Kucukelbir and others,
+    2016 paper at [https://arxiv.org/abs/1603.00788](https://arxiv.org/abs/1603.00788).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Alternatively, you can use, Pyro which implements fast, GPU-optimized AVI,
+    which you can view here: [http://pyro.ai/](http://pyro.ai/).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'While it would be too much to give an extensive tutorial on this approach here,
+    the PyMC3 documentation has a good tutorial on this: [https://docs.pymc.io/ notebooks/bayesian_neural_network_advi.html](https://docs.pymc.io/%20notebooks/bayesian_neural_network_advi.html).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Assume posterior values are normally distributed, then use a standard neural
+    network library such as Keras and learn a mean and standard deviation for every
+    parameter. Remember how we sampled the *z* value from a parameterized normal distribution
+    when working on variational autoencoders? We can do this for every layer. This
+    trains faster and takes less computing power and memory than AVI but is less flexible
+    and has twice the parameters of a non-Bayesian neural network.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Use the dropout trick. When working with time series, we turned dropout on at
+    test time and ran inference multiple times to obtain confidence intervals. This
+    is a form of Bayesian learning that is very easy to achieve, with no more parameters
+    than a regular neural network. However, it's slower at inference time, and does
+    not come with all the flexibility of AVI, either.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pick and mix. To train a neural network, we need a gradient signal, which we
+    can obtain from AVI. We can train the socket of a neural network, sometimes called
+    the feature extractor, in a regular fashion and the head of the network in a Bayesian
+    manner. This way, we obtain uncertainty estimates while not having to pay the
+    whole cost of Bayesian methods.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, you got a brief overview of modern Bayesian machine learning
+    and its applications in finance. We've only touched upon this as it is a very
+    active field of research from which we can expect many breakthroughs in the near
+    future. It will be exciting to observe its development and bring its applications
+    into production.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Looking back at this chapter, we should feel confident in understanding the
+    following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The empirical derivation of Bayes formula
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How and why the Markov Chain Monte Carlo works
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use PyMC3 for Bayesian inference and probabilistic programming
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How these methods get applied in stochastic volatility models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Notice how everything you have learned here transfers to bigger models as well,
+    such as the deep neural networks that we've discussed throughout the entirety
+    of the book. The sampling process is still a bit slow for very large models, but
+    researchers are actively working on making it faster, and what you've learned
+    is a great foundation for the future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Farewell
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: And thus, we close the last chapter of our journey, and I say goodbye to you,
+    dear reader. Let's look back at the table of contents that we were met with at
+    the start of our journey.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Over the past 10 chapters, we''ve covered a whole lot, including the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gradient descent-based optimization
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Feature engineering
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tree-based methods
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Computer vision
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Time series models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Natural language processing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Generative models
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Debugging machine learning systems
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ethics in machine learning
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bayesian inference
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In each chapter, we created a large bag of practical tips and tricks that you
+    can use. This will allow you to build state-of-the-art systems that will change
+    the financial industry.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Yet, in many ways we have only scratched the surface. Each of the chapter topics
+    merit their own book, and even that would not adequately cover everything that
+    could be said about machine learning in finance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I leave you with this thought: Machine learning in finance is an exciting field
+    in which there is still much to uncover, so onward dear reader; there are models
+    to be trained, data to be analyzed, and inferences to be made!'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Further reading
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: You made it to the end of the book! What are you going to do now? Read more
+    books! Machine learning, and in particular, deep learning, is a fast-moving field,
+    so any reading list risks being outdated by the time you read it. However, the
+    following list aims to show you the most relevant books that have a safety net
+    of remaining relevant over the coming years.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General data analysis
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Wes McKinney, *Python for Data Analysis*, [http://wesmckinney.com/pages/book.html](http://wesmckinney.com/pages/book.html).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wes is the original creator of pandas, a popular Python data-handling tool that
+    we saw in [Chapter 2](ch02.xhtml "Chapter 2. Applying Machine Learning to Structured
+    Data"), *Applying Machine Learning to Structured Data*. pandas is a core component
+    of any data science workflow in Python and will remain so for the foreseeable
+    future. Investing in sound knowledge of the tools he presents is definitely worth
+    your time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Sound science in machine learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Marcos Lopez de Prado, *Advances in Financial Machine Learning*, [https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Marcos is an expert at applying machine learning in finance. His book is largely
+    focused on the danger of overfitting and how careful researchers have to be when
+    doing proper science. While focused more on high-frequency trading, Marcos writes
+    very clearly and makes potential issues and solutions very understandable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: General machine learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Trevor Hastie, Robert Tibshirani, and Jerome Friedman, *Elements of Statistical
+    Learning*, [https://web.stanford.edu/~hastie/ElemStatLearn/](https://web.stanford.edu/~hastie/ElemStatLearn/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The "bible" of statistical machine learning, containing good explanations of
+    all the important concepts of statistical learning. This book is best used as
+    a lookup book whenever you need some in-depth information on one concept.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Gareth James, Daniela Witten, Trevor Hastie, and Robert Tibshirani, *Introduction
+    to Statistical Learning*, [https://www-bcf.usc.edu/~gareth/ISL/](https://www-bcf.usc.edu/~gareth/ISL/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Introduction to Statistical Learning* is a bit like a companion to *Elements
+    of Statistical Learning*. Written by some of the same authors, it introduces the
+    most important concepts in statistical learning in a rigorous manner. It''s ideal
+    if you are new to statistical learning.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: General deep learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Ian Goodfellow, Yoshua Bengio, and Aaron Courville, *Deep Learning*, [https://www.deeplearningbook.org/](https://www.deeplearningbook.org/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: While this book is very praxis-oriented, *Deep Learning* is more focused on
+    the theory behind deep learning. It covers a broad range of topics and derives
+    practical applications from theoretical concepts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Reinforcement learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction*,
+    [http://incompleteideas.net/book/the-book-2nd.html](http://incompleteideas.net/book/the-book-2nd.html).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The standard work of reinforcement learning discusses all major algorithms in depth.
+    The focus is less on flashy results and more on the reasoning behind and derivation
+    of reinforcement learning algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bayesian machine learning
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Kevin P. Murphy, *Machine Learning: a Probabilistic Perspective*, [https://www.cs.ubc.ca/~murphyk/MLbook/](https://www.cs.ubc.ca/~murphyk/MLbook/).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This book covers machine learning techniques from a probabilistic and much more
+    Bayesian perspective. It's a very good guide if you want to think about machine
+    learning differently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cameron Davidson-Pilon, *Probabilistic Programming and Bayesian Methods for
+    Hackers*, [http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/](http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is probably the only probabilistic programming book that focuses on practical
+    applications. Not only is it free and open source, it also gets frequent updates
+    with new libraries and tools so that it always stays relevant.
+  prefs: []
+  type: TYPE_NORMAL

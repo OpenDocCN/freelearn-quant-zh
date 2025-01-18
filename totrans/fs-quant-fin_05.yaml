@@ -1,0 +1,661 @@
+- en: Chapter 5. Learning Option Pricing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, you will learn how to get started with option pricing using
+    the Black-Scholes formula and the Monte Carlo method. We'll compare the two methods
+    and see where they are most suitable in real-world applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter you will learn:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Black-Scholes option pricing formula
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use the Monte Carlo method to price options
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: European, American, and Exotic options
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: How to use real market data from Yahoo! Finance in option pricing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Plotting the greeks in F#
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The basics of Wiener processes and the Brownian motion
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The basics of stochastic differential equations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Introduction to options
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Options come in two variants, puts and calls. The call option gives the owner
+    of the option the right, but not the obligation, to buy the underlying asset at
+    the strike price. The `put` option gives the holder of the contract the right,
+    but not the obligation, to sell the underlying asset. The Black-Scholes formula
+    describes the European option, which can only be exercised on the maturity date,
+    in contrast to, for example, American options. The buyer of the option pays a
+    premium for this in order to cover the risk taken from the counterpart's side.
+    Options have become very popular and they are used in the major exchanges throughout
+    the world, covering most asset classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The theory behind options can become complex pretty quickly. In this chapter,
+    we'll look at the basics of options and how to explore them using the code written
+    in F#.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Looking into contract specifications
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Options come in a wide number of variations, some of which will be covered
+    briefly in this section. The contract specifications for options will also depend
+    on their type. Generally, there are some properties that are more or less general
+    to all of them. The general specifications are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Side
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Quantity
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Strike price
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Expiration date
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Settlement terms
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The contract specifications, or known variables, are used when we valuate options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: European options
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: European options are the basic form of options that other types of options extend.
+    American options and Exotic options are some examples. We'll stick to European
+    options in this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: American options
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: American options are options that may be exercised on any trading day on or
+    before expiry.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exotic options
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Exotic options are options belonging to the broad category of options, which
+    may include complex financial structures, and may be combinations of other instruments
+    as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning about Wiener processes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Wiener processes are closely related to stochastic differential equations and
+    volatility. A Wiener process, or the geometric Brownian motion, is defined as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning about Wiener processes](img/4623OS_05_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The preceding formula describes the change in the stock price or the underlying
+    asset with a drift, µ, and a volatility, σ, and the Wiener process, *Wt*. This
+    process is used to model the prices in Black-Scholes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We''ll simulate market data using a Brownian motion or a Wiener process implemented
+    in F# as a sequence. Sequences can be infinite and only the values used are evaluated,
+    which suits our needs. We''ll implement a generator function to generate the Wiener
+    process as a sequence as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, we use the random function in `normd.Sample()`. Let's explain the parameters
+    and the theory behind the Brownian motion before looking at the implementation.
+    The parameter `T` is the time used to create a discrete time increment `dt`. Notice
+    that `dt` will assume there are 500 `N`:`s`, 500 items in the sequence; this of
+    course is not always the case, but it will do fine here. Next, we use recursion
+    to create the sequence, where we add an increment to the previous value *(x+...)*,
+    where x corresponds to *xt-1*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can easily generate an arbitrary length of the sequence as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we create a sequence of length `50`. Let''s plot the sequence to get
+    a better understanding about the process as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning about Wiener processes](img/4623OS_05_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A Wiener process generated from the preceding sequence generator
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we''ll look at the following code to generate the graph shown in the
+    preceding screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Most of the code will be familiar to you at this stage, but the interesting
+    part is the last line, where we can simply feed a chosen number of elements from
+    the sequence into `Seq.iter`, which will plot the values elegantly and efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Learning the Black-Scholes formula
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The Black-Scholes formula was developed by *Fischer Black* and *Myron Scholes*
+    in the 1970s. The Black-Scholes formula is a stochastic partial differential equation
+    which estimates the price of an option. The main idea behind the formula is the
+    delta neutral portfolio. They created the theoretical delta neutral portfolio
+    to reduce the uncertainty involved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This was a necessary step to be able to come to the analytical formula, which
+    we''ll cover in this section. The following are the assumptions made under the
+    Black-Scholes formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: No arbitrage
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Possible to borrow money at a constant risk-free interest rate (throughout the
+    holding of the option)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Possible to buy, sell, and shortlist fractional amounts of underlying assets
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: No transaction costs
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Price of the underlying asset follows a Brownian motion, constant drift, and
+    volatility
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: No dividends paid from underlying security
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The simplest of the two variants is the one for `call` options. First, the
+    stock price is scaled using the cumulative distribution function with `d1` as
+    a parameter. Then, the stock price is reduced by the discounted strike price scaled
+    by the cumulative distribution function of `d2`. In other words, it''s the difference
+    between the stock price and the strike price using probability scaling of each
+    and discounting the strike price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning the Black-Scholes formula](img/4623OS_05_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The formula for the `put` option is a little more involved, but follows the
+    same principles, shown as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning the Black-Scholes formula](img/4623OS_05_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The Black-Scholes formula is often separated into parts, where `d1` and `d2`
+    are the probability factors describing the probability of the stock price being
+    related to the strike price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Learning the Black-Scholes formula](img/4623OS_05_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The parameters used in the preceding formula can be summarized as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**N**: The cumulative distribution function'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**T**: Time to maturity, expressed in years'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**S**: The stock price or other underlying assets'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**K**: The strike price'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**r**: The risk-free interest rate'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**σ**: The volatility of the underlying assets'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Implementing Black-Scholes in F#
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Now that we''ve looked at the basics behind the Black-Scholes formula and the
+    parameters involved, we can implement it ourselves. The cumulative distribution
+    function is implemented here to avoid dependencies and to illustrate that it''s
+    quite simple to implement it yourself too. The Black-Scholes formula is implemented
+    in F# by using the following code. It takes six arguments; the first is a call-put-flag
+    that determines if it''s a `call` or `put` option. The constants `a1` to `a5`
+    are the Taylor series coefficients used in the approximation for the numerical
+    implementation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s use the `black_scholes` function using some numbers for the `call` and
+    `put` options. Suppose we want to know the price of an option where the underlying
+    asset is a stock traded at $58.60 with an annual volatility of 30 percent. The
+    risk-free interest rate is, let''s say, one percent. We can use our formula that
+    we defined previously to get the theoretical price according to the Black-Scholes
+    formula of a `call` option with six months to maturity (0.5 years):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We will get the value for the `put` option just by changing the flag of the
+    function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Sometimes, it''s more convenient to express the time to maturity in number
+    of days instead of years. Let''s introduce a helper function for that purpose:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Note the number `365.25`, which includes the factor for leap years. This is
+    not necessary in our examples, but is used for correctness. We can now use this
+    function instead when we know the time in days:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s use the same preceding example, but now with `20` days to maturity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: Using Black-Scholes together with charts
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Sometimes, it''s useful to be able to plot the price of an option until expiration.
+    We can use our previously defined functions and vary the time left and plot the
+    values coming out. In this example, we''ll make a program that outputs the graph
+    shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using Black-Scholes together with charts](img/4623OS_05_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A chart showing prices for call and put options as a function of time
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code is used to generate the graph in the preceding screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The preceding code is just a modified version of the code shown in the previous
+    chapter with the options parts added. We have two series in this chart, one for
+    `call` options and one for `put` options. We also add a legend for each of the
+    series. The last part is the calculation of the prices and the actual plotting.
+    List comprehensions are used for compact code, and the Black-Scholes formula is
+    called everyday until expiration, where the days are counted down by one day at
+    each step.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It's up to you as the reader to modify the code to plot various aspects of the
+    option, such as the option price as a function of an increase in the underlying
+    stock price, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introducing the greeks
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The **greeks** are partial derivatives of the Black-Scholes formula with respect
+    to a particular parameter, such as time, rate, volatility, or stock price. The
+    greeks can be divided into two or more categories with respect to the order of
+    the derivatives. In this section, we'll look at the first-order and second-order
+    greeks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First-order greeks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this section, we''ll present the first-order greeks using the following
+    table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Symbol | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Delta | Δ | Rate of change of option value with respect to the change in
+    the price of the underlying asset. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vega | ν | Rate of change of option value with respect to the change in the
+    volatility of the underlying asset. It is referred to as the volatility sensitivity.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Theta | Θ | Rate of change of option value with respect to time. The sensitivity
+    with respect to time will decay as time elapses, and this phenomenon is referred
+    to as the time decay. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Rho | ρ | Rate of change of option value with respect to the interest rate.
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Second-order greeks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this section, we''ll present the second-order greeks using the following
+    table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Symbol | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gamma | Γ | Rate of change of delta with respect to a change in the price
+    of the underlying asset. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Veta | - | Rate of change in Vega with respect to time. |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Vera | - | Rate of change in Rho with respect to volatility. |'
+  prefs: []
+  type: TYPE_TB
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Some of the second-order greeks are omitted for clarity; we'll not cover these
+    in this book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementing the greeks in F#
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let''s implement the greeks: Delta, Gamma, Vega, Theta, and Rho. First, we
+    look at the formulas for each greek. In some of the cases, they vary for calls
+    and puts respectively as shown in the following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Implementing the greeks in F#](img/4623OS_05_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We need the derivative of the cumulative distribution function, which in fact
+    is the normal distribution with a mean of 0 and standard deviation of 1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: Delta
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Delta** is the rate of change of the option price with respect to the change
+    in the price of the underlying asset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Gamma
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Gamma** is the rate of change of delta with respect to the change in the
+    price of the underlying asset. This is the second derivative with respect to the
+    price of the underlying asset. It measures the acceleration of the price of the
+    option with respect to the underlying price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: Vega
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Vega** is the rate of change of the option value with respect to the change
+    in the volatility of the underlying asset. It is referred to as the sensitivity
+    of the volatility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Theta
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Theta** is the rate of change of the option value with respect to time. The
+    sensitivity with respect to time will decay as time elapses, and this phenomenon
+    is referred to as the time decay:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Rho
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Rho** is the rate of change of the option value with respect to the interest
+    rate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Investigating the sensitivity of the greeks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Now that we have all the greeks implemented, we'll investigate the sensitivity
+    of some of them and see how they vary when the underlying stock price changes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following screenshot is a surface plot with four of the greeks where the
+    time and the underlying price is changing. This figure is generated in MATLAB,
+    and will not be generated in F#. We''ll use a 2D version of the graph to study
+    the greeks as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Investigating the sensitivity of the greeks](img/4623OS_05_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The surface plot of Delta, Gamma, Theta, and Rho of a call option
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this section, we''ll start by plotting the value of Delta for a `call` option
+    where we vary the price of the underlying asset. This will result in the following
+    2D plot as shown in the following screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: .
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Investigating the sensitivity of the greeks](img/4623OS_05_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A plot of call option delta versus the price of the underlying asset
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The result in the plot shown in the preceding screenshot will be generated
+    by the code presented next. We''ll reuse most of the code from the example where
+    we looked at the option prices for calls and puts. A slightly modified version
+    is presented in the following code, where the price of the underlying asset varies
+    from $10.0 to $70.0:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can extend the code to plot all four greeks, as shown in the screenshot
+    with the 2D surface plots. The result will be a graph as shown in the following
+    screenshot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Investigating the sensitivity of the greeks](img/4623OS_05_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A graph showing greeks for a call option with respect to a price change (x axis)
+  prefs: []
+  type: TYPE_NORMAL
+- en: Code listing for visualizing the four greeks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The following is the code listing for the entire program used to create the
+    preceding graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We''ll create a series for each greek as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, we''ll calculate the values to plot for each greek:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: The Monte Carlo method
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The Monte Carlo method is used to sample numerical integration using random
+    numbers and to study the mean value of a large number of samples. The Monte Carlo
+    method is especially useful when there is no closed form solution available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this section, we''ll look at the simplest case, where we have path-dependent
+    European options. We are going to sample numerical integration using a random
+    drifting parameter. This will lead to various average values for the stochastic
+    process, which makes up the movement of the underlying asset. We''ll do this using
+    1,000 and 1,000,000 samples respectively and compare the results. Let''s dig into
+    the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Let''s test it with the same values used for the Black-Scholes formula for
+    a `put` option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is close to being spot on; we can increase the number of samples and see
+    if we get another value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code uses the following formula to accomplish the task of estimating
+    the price. In a short summary, the Monte Carlo method here can be thought of as
+    a random pick of the drifting parameter `σ*rnd*sqrt(t)`. The mean of all these
+    samples generated will then represent the estimated value of the option at maturity.
+    In reality, the Monte Carlo method is not used for European options, in contrast
+    to what''s illustrated in this section. The choice of European options was mainly
+    due to simplicity, to illustrate the concepts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Monte Carlo method](img/4623OS_05_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The formula to estimate the sample value of a price at maturity for an asset
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we looked at option pricing in F# using the famous Black-Scholes
+    formula together with the Monte Carlo method for European options. Once again,
+    F# has proven itself powerful, and in numerical implementations, this is especially
+    true. The code is almost identical to the mathematical functions, which makes
+    it easy to implement without any extra ceremony needed. The lessons learned in
+    this chapter will be used in the next chapter to dig deeper into options and volatility.
+  prefs: []
+  type: TYPE_NORMAL

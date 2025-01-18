@@ -1,0 +1,861 @@
+- en: '9'
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: NISQ Quantum Hardware Roadmap
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: When using our implemented circuits for the different options we have explored,
+    one key factor is the relevance of noise to obtain meaningful results. Along these
+    lines, we would like to take you through the work you might need to consider while
+    adapting to each specific hardware vendor, the specifics of those devices, and
+    the bets some of them have taken for their scaling roadmap so that you can choose
+    your companionship for this journey wisely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Previously, we have seen how simulators can be used with classical devices,
+    with those simulators being free of any kind of noise, as we explained in [*Chapter
+    8*](B19146_08.xhtml#_idTextAnchor157). We could also include the limitations and
+    noise models of different types of quantum devices so that emulation can occur.
+    So, even though classical resources will be used to perform our computations,
+    the system will introduce errors and specific characteristics related to the qubit
+    coupling of real devices so that the outcome will resemble the effect of running
+    on the actual hardware.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In any case, both simulators and emulators are limited by classical hardware
+    and its ability to imitate the dynamics of a quantum circuit. And even though
+    performant means are available today, as we saw in the previous chapter, this
+    limitation will lead us to the actual hardware at some point. In particular, when
+    focusing on realistic applications, we may need several qubits to encode the problems
+    at hand.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currently, companies such as IBM and D-Wave provide quantum hardware services
+    that are in the order of 433 qubits, as in the case of IBM’s superconducting chips,
+    and 5,000 qubits, as in the case of D-Wave’s annealing machines. It is complicated
+    to get close to emulating something in that order. Recently, researchers of the
+    AWS Quantum Computing Center learned they could perform a 44-qubit simulation
+    ([https://aws.amazon.com/blogs/hpc/simulating-44-qubit-quantum-circuits-using-aws-parallelcluster/](https://aws.amazon.com/blogs/hpc/simulating-44-qubit-quantum-circuits-using-aws-parallelcluster/))
+    while leveraging their distributed computing cloud resources. You can see the
+    problems we might face classically while simulating circuits at these scales.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, to leverage the potential of current quantum devices, we will need
+    to deal with noise and potential errors while executing a quantum circuit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each vendor has proposed a roadmap for their device evolution, which allows
+    for lower-level analog encoding, scaling by classically communicating quantum
+    devices, or even going from specific functionality to broader - scope digitized
+    devices, as in the case of D-Wave. But why? What is the basis for those decisions
+    and how does it affect our roadmap for quantum computing adoption?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To better understand those decisions and help us design a strategy accordingly,
+    this chapter will dig deeper into the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The difference between physical and logical qubits
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Fault-tolerance versus the NISQ era
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mitigation and scaling
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Annealing processes and other types of computations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: This topic is a highly technical one, so the main idea is to enable you to understand
+    and be aware of the challenges and limitations you could face when betting for
+    specific devices and providers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logical versus physical qubits
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Classical computing resources deal with faulty physical means or errors generated
+    by all kinds of sources. Error-correcting codes have been extensively studied
+    ([https://en.wikipedia.org/wiki/Error_correction_code](https://en.wikipedia.org/wiki/Error_correction_code))
+    concerning those needs. Richard Hamming (1950) was the first to propose error-correcting
+    codes in early 1950\. Classical error correction codes use the concept of redundancy
+    or information replication to spot inconsistencies in the outcome of a given channel
+    or computation result. This way, the error can be detected and even corrected
+    to recover the mitigated outcome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Taking this to the quantum regime faces two main challenges. The no-cloning
+    theorem (*Lindblad 1999*) states that there is no way we can copy a quantum state
+    if this state is unknown. Knowing this state would mean measuring it, and this
+    event will force the state to collapse and lose all its quantum information. These
+    two challenges require inventive solutions to deal with errors within the quantum
+    regime, given that classical protocol will not be possible given these conditions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we look at, for example, IBM’s 127-qubit superconducting device (`ibm_washington`),
+    we will notice that information is provided, other than the coupling map between
+    different qubits, as shown in *Figure 9**.1*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.1 – Error map of IBM’s Washington device equipped with 127 superconducting
+    qubits (Eagle r1)](img/B19146_09_001.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.1 – Error map of IBM’s Washington device equipped with 127 superconducting
+    qubits (Eagle r1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the left-hand side of *Figure 9**.1*, we can see the error rate of Pauli-X
+    gates. It indicates how many times the effect of this operation does not affect
+    the qubit it gets applied to. We can retrieve this information for each of the
+    qubits in the device at a given time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other relevant piece of information in the preceding figure is the CNOT
+    two-qubit operation, which is required for qubit-qubit interactions and generating
+    entanglement. We can see that single qubit operations are at a reasonable median
+    of a 10 −4 error rate. Still, for the two-qubit entangling gates (CNOT), even
+    though the median is low (10 −2), we can see it can raise to 100% probability
+    in some couplings (look at qubits 96, 109, and 114), which means almost all entangling
+    operations involving these three qubits will face failure by all means.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More importantly, we should consider how many of these instructions are involved
+    in previously designed circuits. If we take the portfolio optimization use case
+    we covered in [*Chapter 5*](B19146_05.xhtml#_idTextAnchor100) as an example, each
+    asset significantly increases the number of operations as we would need to cover
+    its relationship with every other asset. More instructions will be needed to implement
+    the circuit effectively. Circuit depth refers to the longest sequence of quantum
+    gates (operations) that must be performed in sequence, from input to output. More
+    formally, in a quantum circuit model, the depth of the circuit is the maximum
+    number of time steps required to execute the circuit, assuming that gates acting
+    on different qubits can be performed simultaneously. The deeper our circuits become,
+    the more of these gates will be involved in the circuit. This fact creates a cumulative
+    probability of noise being introduced into our system, due to which higher error
+    rates will be faced. This is why the community focuses on creating shallower circuits
+    to solve the same problems (*Bravyi et* *al. 2018*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are techniques to improve the effectiveness of our circuits that specifically
+    deal with these sources of error. Ideally, we would like to abstract our circuits
+    from the specific nature of the underlying hardware. From experience in the classical
+    domain, error-detecting schemes and correcting codes have been proposed.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let’s consider the basic example of a bit-flip error or the Pauli-X error we
+    mentioned previously. Consider the situation when a single qubit in the |ψ⟩ state
+    needs to be transmitted over a noisy channel, ϵ, which can also be pictured as
+    the time taken for our circuit to run. The noise in this mean takes the effect
+    of an X gate with probability p. Therefore, if we take that single qubit state
+    over that mean, the final state we would obtain has a probability of (1 − p) to
+    be read as the expected outcome state, |ψ⟩, and p for the flipped version, (X|ψ⟩).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Instead of using a single qubit to encode our state, we could replace the physical
+    qubits (the actual hardware-based qubits) with a higher-level abstraction or logical
+    version that utilizes three physical qubits instead.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The logical representation of our potential |ψ⟩ state can be described with
+    the following equations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|0 L⟩ ≡ |000⟩'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|1 L⟩ ≡ |111⟩'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can identify any bit flip by using an entangled state to describe our logical
+    qubit. If we measured, for example, the |010⟩ state at a given point in our channel,
+    we would be able to detect the inconsistency of the state. It could only be one
+    of those described previously, so something happened in the system. Given that
+    we know the current status, we could recover the original state by using the redundant
+    information in those extra physical qubits, known as the *syndrome qubits*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.2 – Implementation of a 3-qubit physical code for bit flip detection
+    and correction](img/B19146_09_002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.2 – Implementation of a 3-qubit physical code for bit flip detection
+    and correction
+  prefs: []
+  type: TYPE_NORMAL
+- en: This scheme performs that detection and correction over the initial |ψ⟩ state
+    as part of the qubit containing the information within the logical form. Error
+    operations, which are represented by the  bit block, can therefore be identified
+    and even corrected if they can be mapped to operations, as we will see later.
+    This was one of the first error-resilient codes proposed by Asher Peres (*Peres
+    1985,* *Peres 1996*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'These errors occur because qubits are not completely isolated from the environment.
+    A quantum circuit, like the one shown previously, is hardly completely isolated
+    from the environment, which is also a quantum mechanical system, so the interaction
+    between the two can cause some unexpected action leading to a different set of
+    operations affecting the initial state. This leads to four main actions that can
+    occur inside our error block that could affect our perfect initial state:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Nothing: |ψ⟩'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bit flip: X|ψ⟩'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Phase flip: Z|ψ⟩'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Both: Y|ψ⟩'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In 1995, Peter Shor (*Shor 1995*) suggested using 9 physical qubits so that
+    any arbitrary change would be detected and corrected, extending previous works
+    on single qubit bit flip and sign changes. *Figure 9**.3* shows the underlying
+    circuit for one of those logical qubits following Shor’s scheme. The *E* block
+    points to where the error might take place:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.3 – Implementation of 9-qubit physical code for bit flip detection
+    and correction (Shor)](img/B19146_09_003.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.3 – Implementation of 9-qubit physical code for bit flip detection
+    and correction (Shor)
+  prefs: []
+  type: TYPE_NORMAL
+- en: This field of study has been extended to the current status, where some really
+    interesting techniques have appeared. Surface codes (*Fowler 2012*), from the
+    original work on toric codes (*Bravyi and Kitaev 1998*), have recently emerged,
+    trying to create a more generic approach to these techniques on a 2D lattice setup.
+    Indubitably a research field will be enabling agnostic algorithmic setups once
+    it is fully developed and quantum hardware can deliver the required number of
+    physical qubits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Of course, this takes us to the limit on how many physical qubits we would require
+    to implement a logical qubit that relies upon all the interferences and error
+    sources a realistic system might face. Error-resilient quantum computation might
+    require quite a few physical resources. It is suggested that the order of physical
+    qubits is placed around 1,000 qubits per logical qubit, although this figure may
+    vary for specific implementations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once again quoting Peter Shor and his famous algorithm for prime factorization,
+    to effectively decode an RSA 2,048-bit integer in 8 hours (*Gidney & Ekerå 2021*),
+    we would need to provide a quantum machine in the order of 20 million physical
+    qubits due to the usage of logical qubits to overcome hardware-generated errors.
+    From this, it is evident that we are far from a realistic realization of said
+    approaches under the current noise regime and physical constraints.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The use of logical qubits for circuit implementation also poses a challenge
+    in terms of the scalability of resources. Blindly trying to apply them will force
+    hardware providers to scale up to the million-qubit regime, which seems a long-term
+    bet, even if it’s feasible for some of the currently available hardware (*Fellous-Asiani
+    2021*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some providers believe this is the approach to follow, which is why their product
+    roadmaps aim to deliver millions of qubits, despite the decrease in the fidelity
+    of operations it might create when working at larger scales. Google is one of
+    those providers that is aiming to build six-figure qubit devices, as evidenced
+    by their roadmap ([https://quantumai.google/learn/map](https://quantumai.google/learn/map)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Fault-tolerant approaches
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Extending the notion of quantum error detection and correction, fault-tolerant
+    quantum computation broadens the scope of some of the techniques known in classical
+    computation. A fully fault-tolerant system (*Paler and Devitt, 2015*) should look
+    for errors at the physical qubit level and system level so that our circuits can
+    run, even though they would need to switch hardware instances at a given point
+    in time. This general overview is a key factor when we want to leap from theory
+    to actual field usage for the techniques and examples shown in previous chapters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As we already discussed, some errors in the quantum regime can be detected and
+    corrected. Other errors may come from systematic defects, as is the case of readout
+    errors, which we will discuss later. But some errors will come from the fact that
+    these machines may fail at a service level. Most of the quantum devices that are
+    used are at a laboratory status, so they may have lower availability than we are
+    used to in other classical services.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will experience queuing times and non-operational periods during which these
+    quantum devices will not be that useful from an operational perspective
+  prefs: []
+  type: TYPE_NORMAL
+- en: ':'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.4 – Availability and queuing time on Azure and IBM cloud services](img/B19146_09_004.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.4 – Availability and queuing time on Azure and IBM cloud services
+  prefs: []
+  type: TYPE_NORMAL
+- en: Productive environments need to be aware of the problems the whole chain of
+    actions may entail, from data collection to results to preprocessing. Specific
+    problems may also exploit the need for bigger systems that are often scarcer and,
+    therefore, harder to get computing time available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In some cases, we might be able to fit our problems into different devices to
+    parallelize the workload. Still, those different devices will come with different
+    error mitigation and correction techniques, leading to small discrepancies. This
+    makes distributed quantum computation (*Häner et al. 2021*) a field needed but
+    still in its infancy.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One key requirement to get all the advantages would be a technology capable
+    of interconnecting those devices without losing the quantum advantage. This could
+    be achieved by using fiber optics and Bell states as communicating states, entering
+    the promising land of quantum communications and the quantum internet (*Kimble
+    2018*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: On a more practical note, providers such as IBM have proposed using the existing
+    communication networks and knowledge from classical distributed systems to not
+    achieve the theoretical gain a quantum networking system could provide but surpass
+    the barrier of single-chip computations that nowadays limit the capacity of our
+    exercises.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Circuit knitting
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Circuit knitting was proposed recently (*Piveteau and Sutter 2022*), given the
+    complexity of providing larger chips without introducing large amounts of errors.
+    Instead of aiming for larger, fully quantum chips, you could think of distributed
+    resource systems where these instances are classically connected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This type of architecture has been exploited in the field of distributed GPU
+    computing (*Gu et al. 2019*), distributed computing for big data (*Zaharia et
+    al. 2012*), and even edge computation (*Shi 2016*). However, it does not entail
+    a paradigm shift from classical to quantum as all these resources work, let’s
+    say, at the same physical level.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The main difference between those approaches and circuit knitting is the need
+    to split a quantum circuit that would classically communicate with other parts
+    of the circuit. Assuming there is a group of gates that could minimize the cut
+    between two groups of more densely connected operations, you could split the circuit
+    into two groups, replacing those quantum interactions connecting the two groups
+    by classical means, as shown in *Figure 9**.5*, where two CNOTs can be reshaped
+    into two splittable circuits (classically connected):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.5 – Two CNOT gates split into blocks of classically connected circuits](img/B19146_09_005.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.5 – Two CNOT gates split into blocks of classically connected circuits
+  prefs: []
+  type: TYPE_NORMAL
+- en: You need to reflect on how the quantum advantage is compromised when taking
+    the complexity of quantum states to classical bits and bytes and back again. You
+    must also reflect on the ability to split the initial design into blocks of densely
+    and weakly connected circuits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For sparsely connected examples, it could be that these schemes provide a significant
+    advantage. Still, some of the examples we have seen require all-to-all connectivity
+    between qubits, making it more complicated to split and not lose the actual computational
+    gain quantum hardware aims for.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Error mitigation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Some common sources of error can be more systematically tackled since measuring
+    the classical outcome of quantum hardware is not free of errors. Luckily, this
+    type of error can be tackled by observing the common errors that are made upon
+    readout and compensating for post-processing the outcome.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If we look into our IBM Quantum Experience service once more, we could request
+    the readout error for a given device. In *Figure 9**.6*, we can observe how any
+    operation that’s done on qubits 10 and 15, upon measurement, could be misinterpreted:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.6 – Readout error on IBM’s Toronto device (27 superconducting qubits
+    Falcon r4)](img/B19146_09_006.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.6 – Readout error on IBM’s Toronto device (27 superconducting qubits
+    Falcon r4)
+  prefs: []
+  type: TYPE_NORMAL
+- en: These statistics can be derived by the simple act of placing an operation whose
+    outcome is known (for example, X|ψ⟩) and recording the discrepancies upon measuring
+    it for a significant number of tryouts. If those statistics are known, you can
+    compensate for the measurements that are obtained for an experiment by knowing
+    this systematic error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let’s consider a simple scenario. Imagine we encode all possible combinations
+    on a two-qubit case separately. These states are prepared using an X gate on the
+    corresponding qubit, and we measure the following outcome for 10,000 shots in
+    each case:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can see that the output is almost always right, measuring close to 9,800
+    times out of the 10,000 circuit runs in the state we were aiming to prepare by
+    applying X gates. But it is not a perfect statistic as, more or less, 1-2% of
+    the time, we get an unexpected bitstring upon measurement (that is, measuring
+    11 when we prepared the |00⟩ state). What would you think if, for the device we
+    used in the previous experiment, we got the following output on 100 shots?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Half of the time, we obtained 11 bit strings and 00 for the other half in some
+    minor cases, where we measured 01 and 10\. We already know that the device has
+    a 1-2% error rate of flipping qubit states from our previous exercise. So, could
+    we assume a superposition between the |00⟩ and |11⟩ states? Maybe a Bell state?
+  prefs: []
+  type: TYPE_NORMAL
+- en: By understanding the systematic error a given device introduces compared to
+    the ideal representation of operations when preparing the state, we could characterize
+    its error and mitigate it by the inverse effect. By setting a matrix conversion
+    that would do this operation mapping prepared states with measured states, we
+    could error correct upon measurement of every experiment done on a device.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Qiskit already provides some of these functionalities within its experimental
+    package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: The preceding code will plot the circuits that have been created to calibrate
+    the readout error as shown in *Figure 9**.7*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.7 – Calibration circuits for a two-qubit device](img/B19146_09_007.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.7 – Calibration circuits for a two-qubit device
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this manner, by just invoking the calibration upon a noisy backend, we would
+    get the matrix that’s needed to mitigate the readout error.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As an example, if we took the case of a |00⟩ state on the `ibmq_lima` device,
+    which would be like the first circuit shown in the preceding plots, we would expect
+    only a 00 bitstring to be read. However, we would see that its plot would differ
+    from the expected outcome, plotting some unwanted or unexpected bitstrings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.8 – Estimation of the ​​|00⟩​​ state after 1,024 shots](img/B19146_09_008.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.8 – Estimation of the |00⟩ state after 1,024 shots
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, we can calibrate the systematic error on the device by using the previous
+    circuits shown in *Figure 9**.7*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'By doing this, we would obtain a matrix similar to the following that applies
+    to previous counts of measured bitstrings. By doing this, it would be able to
+    correct this device’s systematic error upon measurement. By plotting this matrix,
+    we would see that apart from obvious maps between prepared and measured states
+    shown in black, gray areas appear as well, representing the transition some states
+    make from the prepared state to the measured one. This is what is called a mitigation
+    matrix as it allows us to map the systematic transitions that occur between states.
+    It can reverse or at least compensate for the effects caused by errors occurring
+    within the device once applied after the measurement:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.9 – Mitigation matrix for the ​​|00⟩​​ state](img/B19146_09_009.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.9 – Mitigation matrix for the |00⟩ state
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This way, we could compare the plots showing the mitigated and unmitigated
+    results. This matrix is going to be able to extract a probability distribution
+    with negative probability values so that, once it’s applied to the outcome probabilities
+    of bitstring upon measurement, the compensation of it will plot the quasi-probabilities
+    of measurements. Here, quasi-probability refers to the relaxation over conventional
+    probability distributions as negative values may be reflected in the outcome:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.10 – Probability to obtain the state |00⟩ with and without error
+    mitigation](img/B19146_09_010.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.10 – Probability to obtain the state |00⟩ with and without error mitigation
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that this technique will not play well when scaling to bigger devices
+    (more qubits) as we would need to characterize all possible combinations for the
+    number of qubits available in the system to obtain such statistics. That is why
+    different methods for error mitigation on large-scale devices (devices with many
+    qubits) have been suggested that will perform much better at those scales. Let’s
+    look at some of those early-stage research areas digging deeper into error mitigation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Probabilistic error cancellation** (*Pashayan et al. 2015*) is one technique
+    that tries to characterize the outcome probability of ideal gate sets, so this
+    can be considered an error cancellation technique for a more general case. The
+    concept holds the same description as the error mitigation described above, where
+    an outcome probability wants to be set and corrected for a specific device, but
+    in this case Monte Carlo averaged probabilities are used.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Zero noise extrapolation** (*Giurgica-Tiron et al. 2020*) is more suited
+    to when the expectation value is used. The error is modeled by running the hardware
+    and increasing its noise factor (λ) so that a curve can be fitted. If hardware
+    noise is set to λ = 1, then the model can be used to estimate the expectation
+    value at λ = 0, since this is our error-mitigated expectation value.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Dynamical decoupling** (*Viola et al. 1999*) is a technique that takes place
+    almost at the lowest level of the hardware. Each gate we have talked about takes
+    a different physical meaning. In the case of IBM, for example, these are pulses
+    that, depending on the gate, could have a longer or shorter duration (depending
+    on the operation being performed). Given these disparities between the length
+    of the instructions, when certain qubits idle for a while, other qubits are acted
+    on. These idle qubits are prone to errors due to interactions with the environment.
+    By introducing sequences of operations that would not affect the outcome of the
+    problem, we can keep those qubits active, diminishing the idling error that’s
+    generated.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: If you do not want to go that far in terms of the electronics of the hardware
+    being used, the Mitiq framework has enabled a digital dynamical decoupling package
+    so that we can abstract from the complexities of those DD schemes ([https://mitiq.readthedocs.io/en/stable/guide/ddd-5-theory.html#common-examples-of-ddd-sequences](https://mitiq.readthedocs.io/en/stable/guide/ddd-5-theory.html#common-examples-of-ddd-sequences)
+    and ([https://mitiq.readthedocs.io/en/stable/guide/ddd-3-options.html](https://mitiq.readthedocs.io/en/stable/guide/ddd-3-options.html)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given the complexity and specific knowledge required to apply most of the previously
+    described techniques, many companies have included a hardware/software middle
+    layer in their roadmap that takes care of these techniques. Companies such as
+    IBM have included these techniques within their recently released Qiskit Runtime
+    or partnered with technology providers such as Riverlane, who aim to build the
+    perfect abstraction layer between algorithm developers and hardware providers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Some important changes will need to be made in the medium term regarding how
+    these errors are handled and how users abstract from them. However, at the time
+    of writing, some attention is needed from early adopters to select the set of
+    techniques that will allow them to squeeze the most out of hardware providers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Annealers and other devices
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We have mostly talked about digital quantum computers, which are computers that
+    use the abstraction of gates to operate on qubits. But quantum annealers such
+    as those used in *Chapters 5* to *7* (D-Wave’s quantum annealers) are also subject
+    to errors and problems when dealing with larger-scale problems, mainly when increasing
+    the number of assets involved in our operations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we take the example of portfolio optimization, D-Wave provides up to 5,000
+    qubit chips, which could potentially mean up to 5,000 asset portfolios having
+    to be optimized.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Annealers require problems to be encoded or mapped onto their hardware, which
+    involves representing the assets using the QUBO or Ising models and assigning
+    them to specific qubits on their chips. Then, relationships between those variables
+    are mapped to the couplings between qubits. Those links will carry the parameters
+    associated with a given pair, which is often represented by J ij in the canonical
+    form of an Ising type of problem, as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: H(σ) = − ∑ 〈ij〉   J ij σ i σ j − μ∑ j   h j σ j,
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, σ j will be the variable that’s mapped to a qubit in the device. This
+    linking cannot always be present as the device itself may lack some of those connections
+    in an all-to-all connected problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In fact, in 2019, Venturelli and Kondratyev were able to embed up to 60 asset
+    portfolios in a DW 2000Q system thanks to them leveraging minor-embedding compilation
+    techniques. This allowed them to place a 1D string in all assets so that they
+    could be placed on a Chimera chip. Due to the embedding technique’s overhead,
+    this was the maximum they could achieve, even for a 2,000-qubit system. This limitation
+    is visible if you look at the chip architecture in *Figure 9**.11*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.11 – D-Wave’s Chimera chip’s qubit architecture and coupling map
+    (32 qubits square)](img/B19146_09_011.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.11 – D-Wave’s Chimera chip’s qubit architecture and coupling map (32
+    qubits square)
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the preceding Chimera graph, we can see how each qubit is directly connected
+    to another 5 or 6 qubits in general. This means that if a qubit representing a
+    variable requires more connections than the ones it has, you would need to chain
+    more than one qubit instance as they would represent the same variable of the
+    problem – hence the name chain, which means two qubits behave as a single unit.
+    That way, by losing a single coupler, a qubit could almost double its connection
+    capacity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is what D-Wave refers to as a chain. This is established by setting a strong
+    coupling between those two units so that they will return the same value (remember,
+    they refer to the same qubit). In this case, those two physical qubits represent
+    (or should represent) the same logical unit or qubit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, this chain can be broken. Generally, the strength of those couplings
+    is higher than those referenced by the specific problem being embedded. However,
+    they could return different values upon readout, meaning the chain was broken,
+    and the obtained solution may not be valid according to our problem definition.
+    To dig deeper into this concept of chains, D-Wave’s documentation offers plenty
+    of information on it ([https://docs.ocean.dwavesys.com/en/stable/concepts/embedding.html](https://docs.ocean.dwavesys.com/en/stable/concepts/embedding.html)).
+    In the end, many of the limitations we find in the general cases for quantum devices
+    can also be found in specific machines, as in the case of quantum annealers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we explored the challenges that working on real hardware may
+    pose. Depending on the specific nature of the hardware, regardless of whether
+    it is purpose-specific, as in the case of quantum annealers, or one of the many
+    implementations of digital quantum computers, these concepts are still hard to
+    omit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Being aware that the mapping for a given problem is being done at a hardware
+    level, paying attention to which qubits are used, their associated error, and
+    how this will be reflected in the outcome, you can implement countermeasures so
+    that the results still offer enough resolution. That way, the advantage that’s
+    expected from quantum computation can still be significant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By understanding the different challenges and how they may affect a given problem
+    setup, you can choose the appropriate hardware that can better accommodate the
+    problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Annealers can be used for large problems but not as large as you might think
+    in terms of embedding restrictions and the type of problems this may solve. D-Wave
+    is still in the order of thousands of qubits compared to other providers, and
+    it is likely to provide close to 8,000 qubits by 2023/2024\. But still, this might
+    not be sufficient to encode some of the problems at the scale that the industry
+    requires.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Digital quantum hardware comes with different types of physical implementations
+    to choose from, from superconducting chips such as the ones offered by IBM to
+    Cold Atoms by QuEra or Topological Qubits, Microsoft’s bet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Undoubtedly, each technology will offer different coupling architectures or
+    error levels for operation fidelity or readout accuracy. Having a minimal understanding
+    of how this can be leveraged will be critical in the short term, so it might be
+    necessary for the adventurous to educate themselves on those hardware specifications.
+    Luckily, the active effort done by IBM on both Qiskit Runtime and circuit knitting
+    techniques may soon abstract you from needing to understand how to optimally embed
+    a problem into your device. However, it is still in its infancy, looking to provide
+    significant advances while trying to come close to the numbers available at D-Wave
+    ([https://www.ibm.com/quantum/roadmap](https://www.ibm.com/quantum/roadmap)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Google is also continuing at a steady pace, focusing on enlarging their devices
+    to the range of millions of qubits, surpassing competitors, and trying to achieve
+    the scale required for error-corrected qubits. So far, they have progressed at
+    a steady pace but to work with their existing devices, you need to make it onto
+    the list of privileged collaborators ([https://quantumai.google/hardware](https://quantumai.google/hardware)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lastly, ion-trap providers such as IonQ and Quantinuum are focusing on providing
+    the best hardware available. Their quality is a major milestone for them providing
+    consistent improvements in the number of operations they can put together while
+    providing meaningful results ([https://www.quantinuum.com/news/quantum-volume-reaches-5-digits-for-the-first-time-5-perspectives-on-what-it-means-for-quantum-computing](https://www.quantinuum.com/news/quantum-volume-reaches-5-digits-for-the-first-time-5-perspectives-on-what-it-means-for-quantum-computing)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: You should never forget that this is an actively researched field where scientific
+    breakthroughs are expected. It could very well happen that some limitations on
+    scalability-specific technologies may be solved in the next decade, so do not
+    hesitate to experiment with all those different options so that you’re prepared.
+    Thanks to cloud service providers, this is easier than ever. One important key
+    to partnering or betting on an appropriate provider is to balance the size of
+    your problems, connectivity, and accuracy to provide meaningful results. This
+    will most likely drive your decisions in the near future.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Further reading
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'It is worth highlighting that the techniques we discussed in this chapter require
+    less technical detail to grasp their advantage fully. Interestingly, the work
+    by Huang et al. 2022 cites the whole path from algorithm definition to lower-level
+    action on devices, with some detailed information on how previously discussed
+    error mitigation techniques can be used:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.12 – Landscape of quantum error mitigation techniques](img/B19146_09_012.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Figure 9.12 – Landscape of quantum error mitigation techniques
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can also benefit from the implementations available in the open source community
+    so that you can apply them without requiring deep technical knowledge to code
+    what can be found in the literature. It is pretty common nowadays that an implemented
+    version of the published results is made available to the public.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Qiskit, one of the most mature frameworks for quantum computing, has extensive
+    documentation and practical tutorials that will make understanding those concepts
+    much easier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hardware-related tutorials and lower-level experiments, such as the ones we
+    have tackled in this chapter, can be found in their experimental library documentation:
+    [https://qiskit.org/documentation/experiments/tutorials/index.html](https://qiskit.org/documentation/experiments/tutorials/index.html).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Another interesting resource is the Mitiq package, which is supported by the
+    non-profit organization Unitary Fund. This resource not only implements some of
+    the already discussed techniques in different hardware and cloud service providers
+    but also offers extensive documentation and a vibrant community that you can join
+    to discuss any topic related to efficient quantum computing: [https://mitiq.readthedocs.io/en/stable/index.html](https://mitiq.readthedocs.io/en/stable/index.html).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '*Bravyi, S. B., & Kitaev, A. Y. (1998). Quantum codes on a lattice with boundary.
+    arXiv* *preprint quant-ph/9811052.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Bravyi, S., Gosset, D., & König, R. (2018). Quantum advantage with shallow
+    circuits. Science,* *362(6412), 308-311.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Fellous-Asiani, M., Chai, J. H., Whitney, R. S., Auffèves, A., & Ng, H. K.
+    (2021). Limitations in quantum computing from resource constraints. PRX Quantum,*
+    *2(4), 040335.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Fowler, A. G., Mariantoni, M., Martinis, J. M., & Cleland, A. N. (2012). Surface
+    codes: Towards practical large-scale quantum computation. Physical Review A,*
+    *86(3), 032324.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Gidney, C., & Ekerå, M. (2021). How to factor 2,048-bit RSA integers in 8
+    hours using 20 million noisy qubits. Quantum,* *5, 433.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Giurgica-Tiron, T., Hindy, Y., LaRose, R., Mari, A., & Zeng, W. J. (2020,
+    October). Digital zero noise extrapolation for quantum error mitigation. In 2020
+    IEEE International Conference on Quantum Computing and Engineering (QCE) (pp.*
+    *306-316). IEEE.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Gu, J., Chowdhury, M., Shin, K. G., Zhu, Y., Jeon, M., Qian, J., ... & Guo,
+    C. (2019). Tiresias: A {GPU} cluster manager for distributed deep learning. In
+    16th USENIX Symposium on Networked Systems Design and Implementation (NSDI 19)
+    (**pp. 485-500).*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Hamming, R. W. (1950). Error detecting and error correcting codes. The Bell
+    system technical journal,* *29(2), 147-160.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Häner, T., Steiger, D. S., Hoefler, T., & Troyer, M. (2021, November). Distributed
+    quantum computing with qmpi. In Proceedings of the International Conference for
+    High Performance Computing, Networking, Storage and Analysis (**pp. 1-13).*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Huang, H. L., Xu, X. Y., Guo, C., Tian, G., Wei, S. J., Sun, X., ... & Long,
+    G. L. (2022). Near-Term Quantum Computing Techniques: Variational Quantum Algorithms,
+    Error Mitigation, Circuit Compilation, Benchmarking, and Classical Simulation.
+    arXiv* *preprint arXiv:2211.08737.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Kimble, H. J. (2008). The quantum internet. Nature,* *453(7198), 1023-1030.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Lindblad, G. (1999). A general no-cloning theorem. Letters in Mathematical
+    Physics,* *47(2), 189-196.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Paler, A., & Devitt, S. J. (2015). An introduction to fault-tolerant quantum
+    computing. arXiv* *preprint arXiv:1508.03695.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Pashayan, H., Wallman, J. J., & Bartlett, S. D. (2015). Estimating outcome
+    probabilities of quantum circuits using quasiprobabilities. Physical review letters,*
+    *115(7), 070501.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Peres, A. (1985). Reversible logic and quantum computers. Physical review
+    A,* *32(6), 3266.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Peres, A. (1996). Error correction and symmetrization in quantum computers.
+    arXiv* *preprint quant-ph/9611046.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Piveteau, C., & Sutter, D. (2022). Circuit knitting with classical communication.
+    arXiv* *preprint arXiv:2205.00016.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Shi, W., & Dustdar, S. (2016). The promise of edge computing. Computer,* *49(5),
+    78-81.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Shor, P. W. (1995). Scheme for reducing decoherence in quantum computer memory.
+    Physical review A,* *52(4), R2493.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Venturelli, D., & Kondratyev, A. (2019). Reverse quantum annealing approach
+    to portfolio optimization problems. Quantum Machine Intelligence,* *1(1), 17-30.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Viola, L., Knill, E., & Lloyd, S. (1999). Dynamical decoupling of open quantum
+    systems. Physical Review Letters,* *82(12), 2417.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Zaharia, M., Chowdhury, M., Das, T., Dave, A., Ma, J., Mccauley, M., ... &
+    Stoica, I. (2012). Fast and interactive analytics over Hadoop data with Spark.
+    Usenix Login,* *37(4), 45-51.*'
+  prefs: []
+  type: TYPE_NORMAL
