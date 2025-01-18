@@ -1,0 +1,1363 @@
+- en: Chapter 5. Algorithmic Trading
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Algorithmic trading is defined as the buying and selling of financial instruments
+    using predefined rules called algorithms. Traders use predictive modeling, time
+    series modeling, and machine learning to predict the price, return, or direction
+    of movement of the asset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Algorithms are developed by quantitative traders or quantitative researchers
+    and tested on historical data. Algorithms go through rigorous testing before they
+    are used for live trading. Technical indicator-based trading can also come under
+    algorithm trading if it is fully automated. However, sometimes quantitative traders
+    also use fundamental data such as market capitalization, cash flow, debt to equity
+    ratio, and so on to define rules for algorithms. People are free to use any technique
+    to define rules for algorithms. Very recently, investment or trading firms have
+    started to dive deep into machine learning methods to predict price, return, or
+    direction movement.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I will be covering machine learning-based trading in the next chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, I will be covering some trading strategies that are commonly
+    used in the industry, along with their implementation. Specifically, I will cover
+    the following topics:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Momentum or directional trading
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pairs trading
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Capital asset pricing model
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Multi factor model
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Portfolio construction
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'For this, I will require specific R packages such as `quantmod`, `tseries`,
+    `xts`, `zoo`, and `PerformanceAnalytics`, which you can install using the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once you have installed any package, you should load it into the workspace
+    to use its functionalities, and for that, you should include the following command
+    in your R code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: Momentum or directional trading
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Momentum trading is trading when the instrument is trending up or down or, in
+    other words, continuation in the trend as like historical winners are expected
+    to be winners and historical losers are expected to lose. You bet on the direction
+    of the instrument and you aim for buying at a low price and selling at a high
+    price. I will not cover the pros and cons and what the different types of momentum
+    trading strategies are. It is left to the trader to devise any idea. I will cover
+    how to implement momentum trading rules and backtest using historical data in
+    R. Stock return depends on various factors, and later in this chapter, I will
+    show you how to use the multifactor model which explains stock return.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let me start with simple technical indicators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Technical indicators are implemented in the `quantmod` package so I will be
+    using `quantmod` for this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We have to start by loading the `quantmod` package into the R workspace and
+    the first line explains how to do it. Next we extract the **Dow Jones Index**
+    (**DJI**) data from the Yahoo repository. The data consists of many columns, such
+    as `DJI.Open`, `DJI.High`, `DJI.Low`, `DJI.Close`, and so on. This can be seen
+    using the `head` (`dji`) command. The next line shows how to extract only close
+    prices and store in new `variabledji`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding line shows the `dji` class, which is `xts`, and `zoo` means `dji`
+    is in time index format, so I used the following command to extract `dji` data
+    between two specified dates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Delt()` converts the raw closing prices to return and by default it is one
+    period return:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can use `Delt()` to calculate any period return using the parameter `k`.
+    However, there is an option to calculate the normal return or logarithmic return
+    of a stock price as well. In the following command, I used `k=1:3`, which means
+    we are calculating the `dji` return for lag `1` to `3` incremented by `1`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see the output of the preceding command using `head()`. In the following
+    result, `Delt.1`, `Delt.2`, and `Delt.3` are returned for lag `1`, `2`, and `3`
+    respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: The preceding output has a few `NA`s, which are because of data starting. For
+    the first column, the first point does not have any reference value to calculate
+    the return. So the first point will be `NA` and then from the second point onward,
+    we get return values. In the second column, we have to calculate the return of
+    current data points from two data points before it, which is not possible for
+    the first two data points, leaving first two `NA`s, and on similar lines, three
+    `NA`s in the third column.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The function `Delt()` has a few more parameters and each parameter has its
+    type, which is specific to this function. Sometimes it is necessary to look into
+    the output, what kind of return it generates, and in which format it generates
+    output. If you would like to know more about the function, and its parameters
+    along with examples, you can do so using the following command, which will open
+    another window explaining all the details about this function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The Dow Jones Index closing price in *Figure 5.1* shows a clear trend. We have
+    to define a set of indicators, rules which are able to generate signals at appropriate
+    times, and have the potential to generate a positive return on investment. It
+    is very important to understand the generalization capacity of the model and for
+    that we should divide the dataset in two smaller datasets, one dataset consisting
+    of 70-80% of the data and the second dataset consisting of the remaining 20-30%
+    of the data. The first dataset is called the in-sample dataset and the second
+    is called the out-sample dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Momentum or directional trading](img/00076.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.1: Dow Jones Index closing price and return series'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To backtest our strategy idea and its generalization power, we have to divide
+    the dataset into two smaller datasets called in-sample and out-sample datasets.
+    Here I am going to define four dates. `in_sd` defines the date by which the in-sample
+    data starts, and `in_ed` the in-sample end date. Similarly, `out_sd` and `out_ed`
+    are defined for the out-sample start and end dates. The dates are defined in order
+    as our data is in time series format and we are interested in building a model
+    on historical data which would be used on real-time data, that is, a dataset which
+    has dates later than historical data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The variables `in_dji` and `in_ret_dji` contain the Dow Jones Index closing
+    price and return respectively within the in-sample dates defined previously, and
+    `out_dji` and `out_ret_dji` contain the Dow Jones Index closing price and return
+    data respectively for the out-sample dates defined previously:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The purpose of creating an in-sample and out-sample is logical and helps to
+    control human bias towards parameter estimation. We should use in-sample data
+    to backtest our strategy, estimate the optimal set of parameters, and evaluate
+    its performance. The optimal set of parameters has to be applied on out-sample
+    data to understand the generalization capacity of rules and parameters. If the
+    performance on out-sample data is pretty similar to in-sample data, we assume
+    the parameters and rule set have good generalization power and can be used for
+    live trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'I will use **moving average convergence divergence** (**MACD**) and **Bollinger**
+    band indicators to generate automated trading signals. MACD and Bollinger band
+    indicators are calculated using the following two lines of code. I used the same
+    parameter values in both of these functions; however, you can use the parameters
+    which you think are best for your dataset. The output variable `macd` contains
+    the MACD indicator and its signal value; however, the output variable bb contains
+    the lower band, average, upper band, and percentage Bollinger band:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first line creates the variable `signal` and initializes it with `NULL`.
+    In the second line, I generated a buy signal (`1`) when `dji` is above the upper
+    Bollinger band and the `macd` value is above its `macd-signal` value; a sell signal
+    (`-1`) when `dji` is down the lower Bollinger band and `macd` is less than its
+    `macd-signal` value; and out of market when the signal is `0`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I had generated for both long and short; however, you can implement a long
+    only or short only strategy as well. You can also modify this signal generation
+    mechanism and use any other exit criterion you want. We haven''t included any
+    transaction cost and slippage cost to calculate its performance as none of the
+    strategies are directly for trading. These strategies are used just to show the
+    implementation mechanism:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Trade return is calculated using the return of the Dow Jones Index and the previous
+    day signal. I will use the package `PerformanceAnalytics` to calculate various
+    matrices of strategy performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First you should load this package into the R workspace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Cumulative and annualized return of the strategy can be calculated using the
+    preceding two lines of code. `Chart.PerformanceSummary` plots cumulative and daily
+    return along with drawdown at a given point of time, as can be seen in *Figure
+    5.2*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Momentum or directional trading](img/00077.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.2: Cumulative return, daily return, and drawdown of strategy'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To understand more about the performance of trade returns, you have to use
+    the `summary()` command. `summary()` will give the minimum, first quartile, median,
+    mean, third quartile, and maximum of all trade return on a daily basis. The variable
+    `trade_return` has a few `NA`s as well and `summary()` shows the number of `NA`s
+    as well. In the following line of code, we first convert `trade_return` to a time
+    series object because it generates output in a specific format. The output shows
+    minimum, first quartile, median, third quartile, maximum, and `NA`. `NA` has the
+    value `20`, which means `trade_return` has `20``NA`s:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following are a few commands to calculate the performance of the strategy
+    on in-sample trade return.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first command is to calculate the maximum drawdown of trade return throughout
+    the trading period and we can see that `0.1173028` means the maximum drawdown
+    is 11.73%. The second and third commands are to calculate the daily and annualized
+    standard deviation for trade returns. Next is the `VaR` calculation for strategy
+    return and the last two commands are to calculate the Sharpe ratio of the strategy
+    on a daily and annualized basis respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Sharpe ratio on a daily basis is `0.01621421` and annualized is `0.2289401`.
+    The Sharpe ratio has two parameters: `Rf` and `FUN`. `Rf` is for risk-free rate
+    of interest and `FUN` is for the denominator. In the Sharpe ratio calculation,
+    I used `FUN=StdDev`; it could also be `VaR`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, if we find the performance is good for the in-sample data then we can
+    use this strategy on the out-sample data and calculate all the matrices for the
+    out-sample data and check for the consistency in strategy performance. The next
+    two lines are to calculate the moving average, and convergence divergence and
+    Bollinger band for out of sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next I use these out-sample indicators and generate signals like we generated
+    for the in-sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Trade return and all its relevant metrics for out-sample data are calculated
+    using the following lines of code. These are like the in-sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I implemented this strategy for one particular time series, that is, the **Dow
+    Jones Index** (**DJI**); however, you can test this same strategy on other stocks
+    as well and understand strategy behavior across the universe of stocks. If you
+    find the strategy performs better on most of the stocks, it shows consistency
+    in the idea and it might work well on real-time trading as well. It''s very important
+    to note here that even if one particular strategy works well on a few stocks,
+    we should not forget to check the variance of the portfolio. Let me show you an
+    example. I calculate the variance of the DJI time series return:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the preceding code, I used `na.rm=T` to remove `Nan` in the time series.
+    Now I import another symbol, which is `S&P 500`, into the workspace. The next
+    line of code imports `S&P 500` into the workspace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now I extract only the closing price of `S&P 500` and refine it between two
+    dates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next I calculate the return of `S&P 500`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I also calculate the variance of the `S&P 500` series return:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now I combine both time series returns and calculated variance of sum of two
+    returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We find the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: As we can see, `0.000218383` ≠`8.093402e-05` + `8.590805e-05`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What causes this difference is very important to understand. If we go back
+    to the basics of probability theory, we find the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, `ρ` is the correlation between `X` and `Y`; `σX` is the standard deviation
+    of X; and `σY` is standard deviation of `Y`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We calculate the standard deviation of `ret_dji`, `ret_snp` and correlation
+    between `ret_dji` and `ret_snp` using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: The correlation between `ret_dji` and `ret_snp` is `0.3090576`. Now we put these
+    values into the equation 5.2 and you will see both sides are equal. It means if
+    two stocks are positively correlated, they cause an increase in the variance of
+    the portfolio as compared to the sum of variance of two individual stocks. If
+    we are able to pick two stocks which are uncorrelated, that is, *correlation =
+    0*, then the variance of the portfolio would be the linear sum of two individual
+    securities; or if we manage to pick two stocks with negative correlation then
+    the variance of the portfolio would be less than the sum of two individual stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So we have to look at the correlation matrix of the stocks in the portfolio
+    to figure out which stocks would help to minimize risk. As we have only two stocks
+    in the portfolio, I created `port_ret` as a data frame which consists of NAs,
+    number of rows same as the number of data points, and two columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next two commands copy `ret_dji` into the first column and `ret_snp` into
+    the second column of the data frame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we can calculate the correlation matrix of stocks in the portfolio. The
+    following code calculates the correlation of stock 1 with stock 2:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding correlation matrix has `NA`s and these are because the `port_ret`
+    data frame has `NA` somewhere, so we have to remove `NA` from the data frame and
+    `is.na()` helps us to get rid of this `NA`. The following code filters `port_ret`
+    from `NA` and then calculates the correlation matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: As correlation between two stocks is order independent that is the reason that
+    diagonal elements are same. It is rarely possible to find a pair of stocks which
+    are uncorrelated or perfectly correlated. More negative correlation shows better
+    diversification. As the correlation increases, diversification becomes less relevant,
+    as the variance of the portfolio increases with the increase in the correlation.
+    That is the reason correlation is one of the most important criteria to select
+    stocks in a portfolio and to control the risk of the portfolio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pairs trading
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: You are familiar with the concept of diversification. For diversification, we
+    have to choose negative correlated stocks; however, in pairs trading, we can choose
+    stocks with positive correlation and enter opposite trades in both of the stocks.
+    Enter a buy position for the stock which is undervalued and short the stock which
+    is overvalued.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The variance of the X - Y portfolio is defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: Pairs trading is a market-neutral strategy, as the difference in two stocks
+    is uncorrelated or correlated close to zero with the overall market. I will show
+    you how to start pairs trading using the distance approach. I will use same two
+    time series, Dow Jones Index, and S&P 500 for pairs trading and explain how the
+    distance-based approach can be implemented in R.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distance-based pairs trading
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Different time series might have different scaling and so you first normalize
+    the series. I did it using an initial investment of 1 and then taking cumulative
+    return of this investment:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following commands calculate the cumulative return of the investment which
+    was started at 1\. This way, we can track the relative performance of series one
+    against the second series and the last command is to calculate the difference
+    between the two series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Distance-based pairs trading](img/00078.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.3: Normalized prices for Dow Jones Index and S&P 500'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The formula to calculate cumulative return is defined here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now I used the `plot()` command to plot normalized prices `norm_dji` and `type="l"`,
+    help to connect all points in the graph and generate a line graph. You will get
+    dots if you do not use this and `ylim=c(0.5,2)` is used to scale the vertical
+    axis. I also used `lines()` to plot another series on the same graph so that we
+    can at least look at both series in the same figure. `ylab` is for labeling along
+    the y axis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `legend` command helps to place the box at the top-right corner in the plot
+    which mentioned DJI and `S&P500` series are plotted. The parameter `lty` is used
+    for the type of line in the plot; `lty=1` means solid line. The next plot is used
+    to plot the difference between normalized prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: When you look at this plot, you will realize that the distance between both
+    series is converging and diverging before index 500 and after that, diverging
+    continuously. As this pair doesn't converge frequently, you should not consider
+    using it for pairs trading. You have to find another pair which diverge and converge
+    frequently on historical data, which implies some similarity in both series fundamentals
+    on historical data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: I chose **Exxon Mobil** (**XOM**) and **Chevron corporation** (**CVX**) for
+    this. *Figure 5.4* shows normalized price series and their difference along with
+    the signals generated for trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normalized prices are not going very far from each other for a long time, as
+    can be seen in *Figure 5.4*. This pair seems to be a good member for distance
+    based pairs trading.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We calculate `norm_xom` and `norm_cvx` like we calculated `norm_dji` and `norm_snp`
+    and plot these using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You have to look into the class of these two variables. Both of these are matrices,
+    as can be seen above, and this has to be an `xts`, `zoo` object. So the next thing
+    you have to do is to convert these matrix objects into an `xts`, `zoo` object:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`xts()` does this job and converts both of these into `xts` objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Mean, standard deviation of the normalized price difference is calculated as
+    follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Distance-based pairs trading](img/00079.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.4: Normalized price series, difference, and trading signals'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The upper (`ub`) and lower bounds (`lb`) of the difference series can be calculated
+    by adding and subtracting *n* times standard deviation from the mean:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finding optimal parameter values for *n* is not straightforward. We either have
+    to use the hit and trial method to come up with the optimal value of *n* or use
+    a grid-based parameter optimizer to find the optimal value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an example, here I used `n = 1` just for the sake of demonstration. A buy
+    signal (`1`) is generated when the difference value is lower than the lower band,
+    and a short signal (`-1`) is generated when the difference is above the upper
+    band; otherwise the signal is hold (`0`).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'When the difference value, that is, the spread, is above the upper band, we
+    speculate it will return to its mean value as, historically, it has been there
+    most of the time. Similarly, when the spread is below the lower band, even in
+    this case, we speculate it will return to its mean value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here I used the full time series of difference values to calculate mean and
+    standard deviation, as can be seen previously where I calculated `me` and `std`.
+    You can also calculate mean and standard deviation dynamically on a rolling window.
+    This dynamic mean and standard deviation will change signal generation, and entry
+    and exit will be even more frequent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Dynamic mean and standard deviations can be calculated using `rollapply()`.
+    You should define dataset, length, and function in `rollapply()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `plot()` function plots the signal as presented in *Figure 5.4*. A non-zero
+    signal value shows our participation in the market and zero means we are not participating
+    in the market:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Difference in normalized prices is also called spread. As we are generating
+    signals using spread, we will be trading spread instead of individual stock. So,
+    we have to clearly understand what is meant by spread trading. When I say buy,
+    it means I am buying spread, which implies long position on XOM and short position
+    on CVX or short on XOM and long on CVX when we have short signal. The following
+    two lines calculate the spread and trade return:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: The variable named `spread_return` is the return spread, `trade_return` is the
+    return of trade, and cost is the expenses to carry out trading activities; it
+    includes transaction cost, brokerage cost, and slippage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The purpose of this book is only to teach you R coding, not to generate profitable
+    trading ideas. So, I considered the cost as 0, but you have to incorporate the
+    appropriate cost while backtesting your ideas and putting money into a real account.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now we apply performance measure commands to extract a performance summary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'All key performance indicators can be calculated using the following commands.
+    All these commands have already been used in the Momentum trading section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 5.5* shows cumulative performance, daily return, and drawdown on a
+    day-to-day basis for this distance-based pairs trading strategy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Distance-based pairs trading](img/00080.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.5: Cumulative return of strategy, return, and drawdown on a daily
+    basis'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here I demonstrated an approach to implement the distance-based pairs trading
+    model practically. You should segregate the data into in-sample and out-sample
+    datasets. Optimization of parameters should be done using in-sample data and validate
+    those parameters for out-sample data. I have already shown you this approach in
+    the Momentum trading section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Correlation based pairs trading
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another, traditional way to trade in pairs is correlation. You have to pick
+    a pair which is highly correlated historically and the spread of the pair is least
+    correlated with market benchmark. A trading opportunity occurs whenever you see
+    correlation strength weakens. This is also on the premise of mean reversion and
+    traders bet on correlation reversion to its mean whenever they see significant
+    deviation in correlation from its mean at least by *n* times standard deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A market-neutral strategy can be implemented in two different ways:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Beta neutral
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dollar neutral
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Beta neutrality means the beta of the spread is close to zero; this can be reached
+    by choosing two stocks or instruments whose betas are almost same. However, dollar
+    neutral means you are only a little exposed to the market as investment in long
+    stock is offset by the amount you receive on short trade.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Practically, even if we are little exposed to the market doesn't mean that we
+    have no risk or little risk. Risk has to be managed properly to make a profitable
+    trade. Here I am going to show you how to implement the correlation based pairs
+    trading model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First of all, you have to create a data frame which consist of returns of XOM
+    and CVX as I am using XOM and CVX as my pair of stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first column is for XOM and the second is for CVX returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The type of this can be checked using `class()` and you see that the data is
+    of `data.frame` type. You have to convert it to an `xts` object and this can be
+    done using the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you can check the type of the data; it is of type `xts`, `zoo`. Next, I
+    created a function named correlation, with one single parameter `x`, which calculates
+    the correlation between the first and second columns of `x` and returns the correlation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I used `rollapply()` which does calculations on a rolling window basis as per
+    the function rolling window length defined in this function. Here I supplied four
+    parameters to this: the first parameter is the data which is used for calculation,
+    the second for window length, the third for the function to be used for calculation,
+    and the fourth to direct the function whether calculation should on done on each
+    column separately.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: I used data length as `252`, the function is correlation which has been defined
+    above, and `by.column=FALSE`, which means this function is not applied on columns
+    separately.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So this keeps on moving and using the last 10 data points to calculate correlation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: The strategy continuously monitors the performance of two historically correlated
+    securities. When the correlation between the two securities temporarily weakens,
+    that is, one stock moves up while the other moves down, the pairs trade would
+    be to short the outperforming stock and to long the underperforming one, betting
+    that the spread between the two would eventually converge.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The divergence within a pair can be caused by temporary supply/demand changes,
+    large buy/sell orders for one security, reaction for important news about one
+    of the companies, and so on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Figure 5.6* shows the correlation between XOM and CVX returns at rolling length
+    `252`. You can see that almost every time, correlation is over 0.6\. It shows
+    this pair''s high correlation persists almost every day:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Correlation based pairs trading](img/00081.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.6: Correlation between returns of XOM and CVX'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Normally, correlation greater than 0.8 is considered as strong correlation
+    and less than 0.5 as weak correlation. You also need to calculate the hedge ratio
+    of XOM and CVX, which can be calculated by dividing the XOM price and CVX price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then you have to calculate the mean and standard deviation of the hedge ratio
+    and upper and lower bounds. In the distance based model, I presented a technique
+    to use static mean and standard deviation; however, in this section, I am presenting
+    rolling-window-based mean and standard deviation for the calculation of bounds.
+    As the mean and standard deviation will be function of time so the upper and lower
+    bounds. I used `rollapply()` to calculate the rolling mean and standard deviation
+    of spread for every 14 data points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you look at preceding two commands, you will see the parameter n, which
+    is arbitrary and should be optimized. Once you have bounds, you should go for
+    signal generation and this can be done using the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It generates a short signal (`-1`) when the hedge ratio is over the upper band
+    and generates a buy signal (`1`) when the hedge ratio is down the lower band.
+    Then, calculate the signal at lag `1` and use it to generate an exit signal when
+    the hedge ratio crosses the rolling mean. Short signal implies short `1` unit
+    of XOM and long hedge ratio time CVX; however, buy signal implies long `1` unit
+    on XOM and short hedge ratio time CVX. You should use the following commands to
+    calculate spread return and trade return:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once you have done that, you should analyze the quality of these signals, so
+    you need to calculate all metrics of trade return, which can be calculated using
+    the commands mentioned in earlier sections, particularly the Momentum trading
+    and Distance based pairs trading sections. You also need to optimize parameters
+    using in-sample data and use those optimized parameters for out-sample data to
+    really get strategy performance on out-sample data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Co-integration based pairs trading
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Co-integration based pairs trading is the latest arsenal in pairs trading and
+    its use is picking up very fast these days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Co-integration considers the regression of one price series against another
+    price series. As these series are non-stationary, the regression results will
+    be spurious if these series are not co-integrated. Co-integration becomes crucial
+    when we have to regress non-stationary series. You first check the time series
+    you are using is non-stationary. You need to load the package `tseries` into your
+    workspace and the data used in this section is from January 1, 2014 to December
+    31, 2014:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Augmented `Dickey-Fuller` test:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see the `Dicky-Fuller` statistic is `-1.4326`, which is higher than
+    `-3.43`. This implies the series is non-stationary and you can also check the
+    first difference of the series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: As `diff` contain `NA`, you should consider only non-NAs and use `adf.test()`
+    to test it for unit roots. The `Dickey-Fuller` statistic using the first difference
+    of time series is `-11.97`, which is less than `-3.43`, which shows the first
+    difference is stationary and this suggests XOM is integrated of order `1`, that
+    is, `O(1)`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now I am going to fit the model for XOM and CVX using `lm()`. `lm()` corresponds
+    to the linear model and it regresses XOM against CVX original prices and `0` in
+    `lm()` means regression without intercept:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A summary of the model can be looked into using the `summary()` command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next thing is we have to extract residuals from the variable called `model`
+    and test it for unit roots, which you have to do using the following command.
+    You can see in the output that the `Dickey-Fuller` statistic is `-2.6088`, which
+    is greater than `-3.43`, which implies that there is unit root. In probability
+    theory, unit root has an important feature which needs to be verified. The presence
+    of unit root causes inference problems as time series with unit root inflate which
+    does not converge or keep on diverging. Non-stationary time series have unit root
+    and they do not converge. Finding of unit root implies XOM and CVX are not co-integrated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: Mobil (XOM) and hedge ratio times BP Plc (BP) along with its residuals. If you
+    look at the prices series, you can see the closeYou have to find another pair
+    which is co-integrated, so let us try to find another pair. Let me show you co-integration
+    between **Exxon Mobil** (**XOM**) and BP Plc (BP).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Extract XOM and BP Price closing prices using `GetSymbols()` and use them to
+    regress to establish the relationship:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, the `Dickey-Fuller` statistic is `-3.9007`, which is less than critical
+    value at 95% confidence value (`-3.43`) so this doesn''t have unit root and this
+    pair is stationary:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 5.7* shows the XOM and hedge ratio times for BP price series and its
+    spread. `plot()` and `lines()` are used to plot this figure. Now, as the residuals
+    are mean reverting, so the next target is to generate bounds and signal using
+    the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding two commands have the parameter n, which is arbitrary and should
+    be optimized:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 5.7* shows the series **Exxon Mobil** (**XOM**) and hedge ratio times
+    BP Plc (BP) along with its residuals. If you look at the prices series, you can
+    see the close relation between both series and these two series do not deviate
+    too much for so long. If these deviate at all, very soon they return close by:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Co-integration based pairs trading](img/00082.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.7: Series of XOM and hedge ratio times BP along with their spread
+    series'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As you have generated signals, you should calculate the performance of the strategy,
+    as can be done using the commands I mentioned in the Momentum trading or Distance
+    based pairs trading sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Capital asset pricing model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The **capital asset pricing model** (**CAPM**) model helps to gauge risk contributed
+    by security or portfolio to its benchmark and is measured by beta (![Capital asset
+    pricing model](img/00033.jpeg)). Using the CAPM model, we can estimate the expected
+    excess return of an individual security or portfolio which is proportional to
+    its beta:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Capital asset pricing model](img/00083.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*E(Ri)*: Expected return of security'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*E(Rm)*: Expected return of market'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Ri*: Rate of return of security'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Rf*: Risk Free rate of return'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Rm*: Benchmark or market return'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![Capital asset pricing model](img/00084.jpeg): Beta of the security'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: CVX is regressed against DJI using linear model as per equation 5.4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here I used zero as risk-free return in the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: You can see the intercept term in the above result is alpha (`-0.0002013`) and
+    coefficient for `ret_dji` is beta (`1.1034521`). However, you can also use the
+    `PerformanceAnalytics` package to calculate CAPM alpha and beta using `CAPM.alpha()`
+    and `CAPM.beta()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following command shows how to use this whose result are same as preceding
+    one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The beta value from `CAPM.beta()` is the same as the coefficient, and `CAPM.alpha()`
+    is the same as intercept in the above regression. You can also see a scatter plot
+    of the returns and its fitted lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 5.8* shows the fitted line has a positive slope, which implies positive
+    correlation between the returns. We can check this statement using the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Capital asset pricing model](img/00085.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.8: Scatter plot of DJI and CVS return and its fitted line'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multi factor model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The multi factor model can be used to decompose returns and calculate risk.
+    The factors are constructed using pricing, fundamental, and analyst estimates
+    data. I will use Systematic Investor Toolbox for this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The `gzcon()` function creates a connection and reads data in compressed format.
+    Once we create a connection, we also have to close the connection.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following commands explain this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following function is used to fetch Dow Jones components data from [http://money.cnn.com](http://money.cnn.com)
+    and `join()` is taken from Systematic Investor Toolbox:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next single line of code is a call to the preceding function, which extracts
+    the Dow Jones constituent list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following commands explain how to extract fundamental data for the last
+    80 months of all companies in the tickers list. These commands will take a few
+    minutes to extract data so it is recommended to save the data once you extract
+    it and later you should use the `load()` command to load it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next set of commands is the same as preceding code, but to extract price
+    data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The subsequent function creates various date variables in date format:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you have extracted price and fundamental data, you should use this data
+    to construct various fundamental factors such as EPS, number of shares outstanding,
+    market capitalization, market value to book value, and so on. This loop calculates
+    fundamental factors for every ticker one by one and creates a list:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, I filtered the preceding data for the period starting at `1995` and lasting
+    at `2011`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Prices for all tickers can be extracted and NAN can be replaced with previous
+    values using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you have to construct fundamental ratios using fundamental factors and
+    prices. I created three ratios; however, you can create any number of ratios that
+    you would like to consider. I created market capitalization, EPS to price ratio,
+    and book value to price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As scaling for all of these ratios might be different, before moving on, we
+    shouldn''t forget to standardize it. I calculated the Z score to standardize this
+    data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Calculate the average of all the normalized factors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As of now, we have daily data and created financial ratios on a daily basis.
+    You can convert it to any frequency you desire. I converted it to monthly frequency
+    and extracted data for the last day of the month:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is how you should calculate monthly return and its `lag`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Marker capitalization at the end of every month can be calculated using the
+    following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Extract all ratios for the last day of the month:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next you should calculate quantiles, which can be calculated using the following
+    commands. I created five quantiles, and the average next month return of each
+    quantile is calculated using the earning price factor. Quantiles are created month
+    by ranging stocks based on EP factor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The top and bottom are very extreme and should be used to create a spread (Q5
+    - Q1). The dynamics of this spread helps to design and develop an investing strategy,
+    that is, momentum or mean reverting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you should run cross-sectional regression to estimate alpha and portfolio
+    loadings and these can be calculated using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can also use these alpha and beta to estimate future portfolio return as
+    well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Portfolio construction
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Investors are interested in reducing risk and maximizing return of their investment
+    and creating a portfolio does this job provided we have constructed it by keeping
+    in mind the investor risk-return profile. I will guide you through creating an
+    efficient frontier that can help you to measure risk with respect to your return
+    expectation. For that, I will start extracting data for four securities. The first
+    line of code creates a new environment to store data; the next few lines are for
+    symbols list, data starting date, and extracting data using `getSymbols()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next for loop stores individual stock data in a list, and calculates the
+    day''s gain and a data frame consisting of closing prices of all stocks in portfolio:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The return, average return for each stocks, and covariance matrix can be calculated
+    using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I will be using the following weights to assign to portfolio:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now you have to browse link [http://faculty.washington.edu/ezivot/econ424/portfolio.r](http://faculty.washington.edu/ezivot/econ424/portfolio.r)
+    and save this R code in the file `portfolio.R`. You should use the following command
+    to access the function developed under `portoflio.R`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To calculate portfolio expected return and standard deviations, we require
+    return, weights, and covariance matrix. Now we have all the data and can use the
+    following commands to generate portfolio expected return and risk:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The global minimum variance portfolio is obtained using the following command.
+    You can see here that portfolio weights are different compared to weights in the
+    previous command and this set of weights helps to generate a portfolio which has
+    lower standard deviation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now suppose you want to generate a portfolio which has `0.0002` as the expected
+    return. The following command will help generate portfolio weights and standard
+    deviation for the portfolio of expected return `0.0002`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A tangency portfolio is a portfolio of risky assets which has the highest Sharpe''s
+    slope. To compute this, I used the `tangency.portfolio()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We have already calculated the global minimum variance portfolio, and the other
+    portfolio with maximum expected return can be considered as the second portfolio.
+    Call these portfolios *P1* and *P2* respectively. Now, for any ![Portfolio construction](img/00032.jpeg),
+    another portfolio can be constructed as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Portfolio construction](img/00086.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The efficient frontier can be calculated using the following command. This
+    generates `50` portfolios using ![Portfolio construction](img/00032.jpeg) in the
+    range `-2` to `2`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, in *Figure 5.9*, I plotted the efficient frontier, red and blue points
+    for minimum variance and tangency portfolio, and tangent to the frontier:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Portfolio construction](img/00087.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.9: Efficient frontier for portfolio and tangent line'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Questions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: How do you import stock data into the R workspace from Yahoo Finance?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you generate a momentum strategy using moving average crossover?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Which package helps to calculate the performance metrics of a strategy?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you calculate the covariance matrix for a portfolio consisting of five
+    stocks?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Extract MSFT data from Yahoo and test that the closing price series is non-stationary.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Use the distance method to generate trading signals which exit when the spread
+    reverts to mean.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you test a pair of stocks for co-integration and write code to test it?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you calculate hedge ratio and how does it helps in trading?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you calculate portfolio beta? Show it using an example.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you use the fundamental factor to create quantiles and quantile spread?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write code to calculate portfolio expected `_return` and standard deviation.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you calculate the efficient frontier and plot it using the R command?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, I presented different concepts of trading using R. I started
+    with trend following strategy and explained in depth how the trading signals are
+    generated and how various parameters related to its performance are captured.
+    Momentum strategies was followed by pairs trading using three different methods.
+    The first method covered was distance based pairs trading, the second was correlation
+    based, and the third and final method was co-integration based pairs trading.
+    Sometimes, trading in a portfolio is important to control the risk and reward
+    ratio and for that I have covered capital asset pricing, the multi factor model,
+    and portfolio construction. I used Systematic Investor Toolbox for implementing
+    portfolio ideas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, I will explain trading strategies using machine learning
+    algorithms, which are gaining in popularity. Machine learning algorithms learn
+    automatically from historical market behavior and try to mimic this behavior.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,1344 @@
+- en: Chapter 6.  Trading Using Machine Learning
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the capital market, machine learning-based algorithmic trading is quite popular
+    these days and many companies are putting a lot of effort into machine learning-based
+    algorithms which are either proprietary or for clients. Machine learning algorithms
+    are programmed in such a way that they learn continuously and change their behavior
+    automatically. This helps to identify new patterns when they emerge in the market.
+    Sometimes patterns in the capital market are so complex they cannot be captured
+    by humans. Even if humans somehow managed to find one pattern, humans do not have
+    the tendency to find it efficiently. Complexity in patterns forces people to look
+    for alternative mechanisms which identify such complex patterns accurately and
+    efficiently.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the previous chapter, you got the feel of momentum, pairs-trading-based
+    algorithmic trading, and portfolio construction. In this chapter, I will explain
+    step by step a few supervised and unsupervised machine learning algorithms which
+    are being used in algorithm trading:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logistic regression neural network
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Neural network
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Deep neural network
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K means algorithm
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: K nearest neighborhood
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Support vector machine
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Decision tree
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Random forest
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A few of the packages used in this chapter are `quantmod`, `nnet`, `genalg`,
+    `caret`, `PerformanceAnalytics`, `deepnet`, `h2o`, `clue`, `e1071`, `randomForest`,
+    and `party`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logistic regression neural network
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Market direction is very important for investors or traders. Predicting market
+    direction is quite a challenging task as market data involves lots of noise. The
+    market moves either upward or downward and the nature of market movement is binary.
+    A logistic regression model help us to fit a model using binary behavior and forecast
+    market direction. Logistic regression is one of the probabilistic models which
+    assigns probability to each event. I am assuming you are well versed with extracting
+    data from Yahoo as you have studied this in previous chapters. Here again, I am
+    going to use the `quantmod` package. The next three commands are used for loading
+    the package into the workspace, importing data into R from the `yahoo` repository
+    and extracting only the closing price from the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The input data to the logistic regression is constructed using different indicators,
+    such as moving average, standard deviation, RSI, MACD, Bollinger Bands, and so
+    on, which has some predictive power in market direction, that is, `Up` or `Down.`
+    These indicators can be constructed using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following commands are to create variable direction with either `Up` direction
+    (`1`) or `Down` direction (`0`). `Up` direction is created when the current price
+    is greater than the 20 days previous price and `Down` direction is created when
+    the current price is less than the 20 days previous price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we have to bind all columns consisting of price and indicators, which is
+    shown in the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The dimension of the `dji` object can be calculated using `dim()`. I used `dim()`
+    over `dji` and saved the output in `dm()`. `dm()` has two values stored: the first
+    value is the number of rows and the second value is the number of columns in `dji`.
+    Column names can be extracted using `colnames()`. The third command is used to
+    extract the name for the last column. Next I replaced the column name with a particular
+    name, `Direction`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: We have extracted the **Dow Jones Index** (**DJI**) data into the R workspace.
+    Now, to implement logistic regression, we should divide the data into two parts.
+    The first part is in-sample data and the second part is out-sample data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In-sample data is used for the model building process and out-sample data is
+    used for evaluation purposes. This process also helps to control the variance
+    and bias in the model. The next four lines are for in-sample start, in-sample
+    end, out-sample start, and out-sample end dates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following two commands are to get the row number for the dates, that is,
+    the variable `isrow` extracts row numbers for the in-sample date range and `osrow`
+    extracts the row numbers for the out-sample date range:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The variables `isdji` and `osdji` are the in-sample and out-sample datasets
+    respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you look at the in-sample data, that is, `isdji`, you will realize that
+    the scaling of each column is different: a few columns are in the scale of 100,
+    a few others are in the scale of 10,000, and a few others are in the scale of
+    1\. Difference in scaling can put your results in trouble as higher weights are
+    being assigned to higher scaled variables. So before moving ahead, you should
+    consider standardizing the dataset. I will use the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Logistic regression neural network](img/00088.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The mean and standard deviation of each column using `apply()` can be seen
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An identity matrix of dimension equal to the in-sample data is generated using
+    the following command, which is going to be used for normalization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Use formula 6.1 to standardize the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding line also standardizes the `direction` column, that is, the last
+    column. We don''t want direction to be standardized so I replace the last column
+    again with variable direction for the in-sample data range:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we have created all the data required for model building. You should build
+    a logistic regression model and it will help you to predict market direction based
+    on in-sample data. First, in this step, I created a formula which has direction
+    as dependent and all other columns as independent variables. Then I used a generalized
+    linear model, that is, `glm()`, to fit a model which has formula, family, and
+    dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A summary of the model can be viewed using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next use `predict()` to fit values on the same dataset to estimate the best
+    fitted value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once you have fitted the values, you should try to convert it to probability
+    using the following command. This will convert the output into probabilistic form
+    and the output will be in the range [0,1]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '*Figure 6.1* is plotted using the following commands. The first line of the
+    code shows that we divide the figure into two rows and one column, where the first
+    figure is for prediction of the model and the second figure is for probability:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`head()` can be used to look at the first few values of the variable:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following figure shows the above-defined variable `pred`, which is a real
+    number, and its conversion between `0` and `1`, which represents probability,
+    that is, `prob`, using the preceding transformation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Logistic regression neural network](img/00089.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6.1: Prediction and probability distribution of DJI'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As probabilities are in the range of (0,1) so is our vector `prob`. Now, to
+    classify them as one of the two classes, I considered `Up` direction (`1`) when
+    `prob` is greater than `0.5` and `Down` direction (`0`) when `prob` is less than
+    `0.5`. This assignment can be done using the following commands. `prob> 0.5` generate
+    true for points where it is greater and `pred_direction[prob> 0.5`] assigns `1`
+    to all such points. Similarly, the next statement shows assignment `0` when probability
+    is less than or equal to `0.5`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once we have figured out the predicted direction, we should check model accuracy:
+    how much our model has predicted `Up` direction as `Up` direction and `Down` as
+    `Down.` There might be some scenarios where it predicted the opposite of what
+    it is, such as predicting down when it is actually `Up` and vice versa. We can
+    use the `caret` package to calculate `confusionMatrix()`, which gives a matrix
+    as an output. All diagonal elements are correctly predicted and off-diagonal elements
+    are errors or wrongly predicted. One should aim to reduce the off-diagonal elements
+    in a confusion matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding table shows we have got 94% correct prediction, as 362+819 =
+    1181 are correct predictions out of 1258 (sum of all four values). Prediction
+    above 80% over in-sample data is generally assumed good prediction; however, 80%
+    is not fixed, one has to figure out this value based on the dataset and industry.
+    Now you have implemented the logistic regression model, which has predicted 94%
+    correctly, and need to test it for generalization power. One should test this
+    model using out-sample data and test its accuracy. The first step is to standardize
+    the out-sample data using formula (6.1). Here mean and standard deviations should
+    be the same as those used for in-sample normalization:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next we use `predict()` on the out-sample data and use this value to calculate
+    probability:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once probabilities are determined for the out-sample data, you should put it
+    into either `Up` or `Down` classes using the following commands. `ConfusionMatrix()`
+    here will generate a matrix for the out-sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: This shows 85% accuracy on the out-sample data. Quality of accuracy is beyond
+    the scope of the book so I am not going to cover whether out-sample accuracy is
+    good or bad and what the techniques are to improve this performance. A realistic
+    trading model also accounts for trading cost and market slippage, which decrease
+    the winning odds significantly. The next thing to be done is to devise a trading
+    strategy using predicted directions. I will explain how to implement an automated
+    trading strategy using predicted signals in the next section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural network
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In the previous section, I implemented a model using two classes. In reality,
+    it might be possible that traders do not want to enter trade when the market is
+    range-bound. That is to say, we have to add one more class, `Nowhere`, to the
+    existing two classes. Now we have three classes: `Up`, `Down`, and `Nowhere`.
+    I will be using an artificial neural network to predict `Up`, `Down`, or `Nowhere`
+    direction. Traders buy (sell) when they anticipate a bullish (bearish) trend in
+    some time and no investment when the market is moving `Nowhere.` An artificial
+    neural network with feedforward backpropagation will be implemented in this section.
+    A neural network requires input and output data to the neural network. Closing
+    prices and indicators derived from closing prices are input layer nodes and three
+    classes (`Up`, `Down`, and `Nowhere`) are output layer nodes. However, there is
+    no limit on the number of nodes in the input layer. I will use a dataset consisting
+    of prices and indicators used in the logistic regression. However, it is not mandatory
+    to use same dataset. If you would like to use different indicators, you can do
+    so. You can also increase or decrease the number of indicators in the dataset;
+    it is left to the reader to construct a dataset of their choice. I will continue
+    this section using the same the dataset that is used in logistic regression except
+    direction. In this section, we have `Nowhere` as the third dimension in the direction
+    so I have to calculate the direction parameter again to train the neural network:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: I will generate `Up` (`Down`) direction when the return over the last 20 days
+    is greater (less) than 2% (-2%), and `Nowhere` when the return over the last 20
+    days is between -2% and 2%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first line generates a data frame named direction which consists of NA
+    and a number of rows the same as the number of rows in `dji` and one column. The
+    second command is the return over the last 20 days. The parameter value 20 is
+    sacrosanct; however, you can choose any value you wish to. The third, fourth,
+    and fifth commands are basically the assignment of `Up`, `Down` and `NoWhere`
+    direction as per the condition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Closing price and indicators are clubbed into one variable called `dji` using
+    the following command line:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Data for the neural network is divided into three parts, that is, training
+    dataset, validating dataset, and testing dataset. Training data should be used
+    for training the neural network; however, validating data should be used for validating
+    estimated parameters and testing dataset to measure the accuracy of the prediction.
+    I have used the following `date` variables to define the date range and extract
+    data as per the date range:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Date ranges for the three datasets can be constructed using the following commands,
+    where `train_sdate` and `train_edate` define training period start and end dates
+    respectively. Similarly, validating and testing period dates are also used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The function `which()` is used to generate row numbers where the date is greater
+    than and equal to the start date and less than and equal to the end date:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, using the preceding row numbers, you should extract data for training,
+    validating, and testing periods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following commands are used to calculate the mean and standard deviations
+    of training data column wise. The function `apply()` uses data as the first parameter,
+    direction as the second parameter, in which we would like to apply a certain function,
+    and function is provided as the third parameter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: To normalize the three datasets, we have to create three identity matrices of
+    dimensions equal to the training, validating, and testing data dimensions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following commands do this nicely:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Training, validating, and testing data is normalized using the following commands.
+    `t()` is used for transposing of the data frame, matrix, or vector:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The previously defined normalized data consists of price and indicator values.
+    We should also define training, validating, and testing period direction using
+    the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, I assume the package `nnet()` is installed on your machine. If not, you
+    should `install.package()` to install it. Once installed, you should use the following
+    line to load this into the workspace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following line sets the seed for the neural network, otherwise every time
+    the neural network will start with some random weights and output will differ.
+    We should use `set.seed()` to get the same output every time you run this command.
+    The next line explains neural network fitting, where the first parameter is the
+    set of all normalized columns, the second parameter is the target vector for training
+    period dates which consist of directions, the third parameter is the number of
+    neurons in the hidden layer, and the fourth parameter is the trace, which prints
+    output at the end of execution. I used hidden layer neurons as `4`; however, you
+    should optimize this parameter. I do not want output to get printed at the end
+    of the execution unless I explicitly want it so I use `trade=F`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the second parameter, you must have observed the use of the `class.ind()`
+    function. This function converts three classes to three columns where every column
+    corresponds to each class and each column has `1` at the place where it has the
+    same class, otherwise `0`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'You can see the model output using the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are a few more parameters in `nnet()` which you can set as per your requirement.
+    For more information on `nnet()`, you should type the following command on the
+    command prompt:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This explains the neural network architecture, which is `15-4-3`. This shows
+    three layers; the first layer (input layer), second layer (hidden layer), and
+    third layer (output layer) have `15`, `4`, and `3` neurons respectively, and `79`
+    generated weight parameters. You can see that the number of neurons in the first
+    layer is equal to the number of columns in `norm_traindji`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can see that output has 15 columns, which is the same as the number of
+    input data features. That number of columns are 15 so does the number of neuron
+    in input layer. The second parameter is the number of neurons in the hidden layer,
+    which is provided as input in `nnet()` (in our case, this is `4`), and the final
+    parameter is the number of neurons in the output layer, which is `3`, the same
+    as the number of directions (`Up`, `Down` and `NoWhere`). You must use `predict()`
+    using the trained neural network over the validating dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, we have to figure out the predicted direction using the above information.
+    I define `0.5` as the threshold and pick directions which have a value greater
+    than `0.5`. The first line creates a data frame of length equal to the `vali_pred`
+    length. The next commands are used for each class one by one; it checks condition
+    and writes the name of class where `vali_pred` is greater than `0.5`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we are going to create a confusion matrix to check for its accuracy. First
+    of all, load the caret package into the workspace and use `confusionMatrix()`
+    over the predicted class and original class for the validating dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you look at the accuracy level in the result output, you can see accuracy
+    is 87% and this level of accuracy is quite good. This 87% accuracy for a model
+    trained on training data and accuracy is tested on validating data. Now we should
+    also check accuracy on testing data and check its generalization power. Normalization
+    of the testing dataset is already above so I go to the `predict()` command right
+    away:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Classes for the testing data are defined as the same as the validating data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`ConfusionMatrix()` is generated for testing data using the following command
+    and accuracy on testing dataset is 82% as can be seen here; this prediction accuracy
+    is very similar to the prediction accuracy on the validating dataset. We found
+    results are consistently good as compared to the validating data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Consistency in accuracy across validating and testing datasets shows its generalization
+    power and this model got good generalization power. Now, as we have got classes,
+    the next thing is we should use these classes for signal generation. People buy
+    when they anticipate Up direction and sell when they anticipate `Down` direction.
+    So I generate signals using the same human psychology and the following command
+    does that for you:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Trade return is calculated as defined here. `Lag()` is used over signal as
+    the signal generated in the previous session contributes to trade return. I am
+    assuming cost as `0`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To evaluate the performance of the strategy, we have to load the package and
+    use all relevant commands defined in the following section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following commands generate *Figure 6.2*, which shows cumulative return,
+    daily return, and drawdown. We can see the cumulative return of the strategy is
+    negative. Generating profitable strategy is beyond the scope of this book. This
+    book only explains how one should go about implementing strategy using R:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE47]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Neural network](img/00090.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6.2: Cumulative return, daily return, and drawdown for DJI'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Deep neural network
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Deep neural networks are under the broad category of deep learning. In contrast
+    to neural networks, deep neural networks contain multiple hidden layers. The number
+    of hidden layers can vary from problem to problem and needs to be optimized. R
+    has many packages, such as `darch`, `deepnet`, `deeplearning`, and `h20`, which
+    can create deep networks. However, I will use the `deepnet` package in particular
+    and apply a deep neural network on **DJI** data. The package `deepnet` can be
+    installed and loaded to the workspace using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE48]'
+  prefs: []
+  type: TYPE_PRE
+- en: I will use `set.seed()` to generate uniform output and `dbn.dnn.train()` is
+    used for training deep neural networks. The parameter `hidden` is used for the
+    number of hidden layers and the number of neurons in each layer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the below example, I have used a three hidden layer structure and `3`, `4`,
+    and `6` neurons in the first, second, and third hidden layers respectively. `class.ind()`
+    is again used to convert three directions into column vector, where each column
+    represents one direction:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE49]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following command is to generate the output of three classes using the
+    normalization validation dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE50]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To obtain the accuracy of the model over the validation dataset, you can also
+    use following command. I chose `t=0.4` just for the purpose of showing results.
+    You should use a value as per your requirement. It will create each column of
+    output to certain direction if its value is greater than `0.4`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE51]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`H2o` is another package which can be used for deep neural network learning.
+    It is implemented in Java and can use multithreads and multinodes of the CPU;
+    however, `deepnet` is implemented in R itself and uses only a single thread and
+    doesn''t have the flexibility to use multithreads and multinodes of the CPU. The
+    following commands install and load it into the workspace:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE52]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next I combined the normalized training data and direction into one variable.
+    I converted the normalized data into a data frame as the original data in `xts`,
+    `zoo` format. As the normalized training data is numeric, if I had not converted
+    it into a data frame then adding `traindir`, which is character, would have converted
+    `traindir` to NAs. To avoid this, I used a data frame in the following commands
+    and the class of the input variables can be verified using the next two commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE53]'
+  prefs: []
+  type: TYPE_PRE
+- en: Once I am done with creating a variable then I convert it into an `h2o` object
+    because model fitting requires input data to be in `h2o` format. In the following
+    command, the first parameter is the variable which I would like to be converted
+    and the second parameter is the name of the class in which we would like the first
+    parameter to be converted.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following command, I would like to convert data into `h2o` type. This
+    can also be verified using the second command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE54]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We looked into the dimension of the `h2o` class object which I just created,
+    where the last column is the direction vector and the remaining columns are normalized
+    data columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE55]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Below, `h2o.deeplearning()` trains a deep neural network with a four hidden
+    layer architecture and the number of neurons is `4`,`5`,`2`, and `7` respectively
+    in each hidden layer. The first parameter is the vector of column number 1 to
+    15 assumed as input data and the second parameter 16 implies the 16th column as
+    output supplied to the deep neural network for training. The third parameter is
+    datah2o, which is supplied for deep neural network fitting, and the fourth parameter
+    is hidden. The parameter hidden has important significance here, which shows the
+    total number of hidden layers, and the following example shows four hidden layers:
+    the first hidden layer has 4 neurons, the second has 5 hidden neurons, and the
+    third and fourth layers have 2 and 7 neurons:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE56]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As `vali_pred` is of `H2OFrame`, we should convert it to a data frame to apply
+    the following operations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE57]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I used the caret package and `confusionMatrix()` to create a misclassification
+    matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE58]'
+  prefs: []
+  type: TYPE_PRE
+- en: As we have done this for validation dataset, if accuracy percentage is within
+    desired limit. We should go ahead and predict directions using the testing data
+    and use those predicted directions to generate trading signals as generated in
+    the *Neural network* section. To generate signal and performance of strategy,
+    you should use the command mentioned in the *Neural network* section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: K means algorithm
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The K means algorithm is an unsupervised machine learning algorithm. Unsupervised
+    learning is another way of classifying the data as it does not require labeling
+    of the data. In reality, there are many instances where labeling of the data is
+    not possible, so we require them to classify data based on unsupervised learning.
+    Unsupervised learning uses the similarity between data elements and assigns each
+    data point to its relevant cluster. Each cluster has a set of data points which
+    are similar in nature. The K means algorithm is the most basic unsupervised learning
+    algorithm and it just requires data to plug into the algorithm along with the
+    number of clusters we would like it to cluster returning the vector of cluster
+    labeling for each data point. I used normalized data along with the number of
+    clusters. I used the in-sample data which was used during logistic regression,
+    to be divided into three clusters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`set.seed()` is used to have the same output in every iteration; without using
+    `set.seed()`, the output changes every time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE59]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Normalized in-sample and out-sample data has direction (labels) as the last
+    column, which is not required for unsupervised learning. So I removed the last
+    column in both of these datasets using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE60]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now I do not have any labeling for this data and run `kmeans()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE61]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`model$cluser` returns the relevant cluster number corresponding to each data
+    point and `head()` is used to print out the first few:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE62]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding command shows the first few data points belong to cluster number
+    3\. Similarly, centers of final clusters can be extracted using the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE63]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The number of data points in each cluster can be extracted using the following
+    line of command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE64]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As we are using k means to cluster, which is unsupervised learning, performance
+    or accuracy can be calculated using the ratio of the sum of squares to the total
+    sum of squares. The sum of squares between clusters and the total sum of squares
+    can be extracted using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE65]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The ratio of these values indicates the sum of squares within clusters with
+    respect to the total sum of squares. In our case, it is around 50.7%, as is shown
+    below, which shows the sum of squares within cluster is almost half of the total
+    sum of squares. The model which minimizes this ratio is chosen over a range of
+    models. This is a minimization problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE66]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If we are satisfied with the accuracy of the algorithm, we will go ahead and
+    use this fitted model to predict clusters for the out-sample dataset, which can
+    be done using the `predict()` command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE67]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next line extracts the first few predicted cluster numbers for the out-sample
+    data using `head()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE68]'
+  prefs: []
+  type: TYPE_PRE
+- en: This algorithm assigns each data point from the out-sample dataset into any
+    one of the clusters, where each cluster belongs to one of the market directions,
+    that is, `Up`, `Down`, and `Nowhere`. It is very important to figure out upfront
+    which cluster represents `Up` and which ones represent `Down` and `Nowhere.` Once
+    you recognize each cluster as either `Up`, `Down`, or `Nowhere`, we can enter
+    a relevant trade when a data point falls in the relevant cluster. For example,
+    in the preceding case, the output is two for the first six data points, which
+    implies that these data points lie in the same cluster, but we do not know whether
+    this is the `Up` cluster, `Down` cluster, or `Nowhere` cluster. You can figure
+    out this using the average price of data points in one cluster and if the average
+    is greater than a certain threshold from the first data point then you can consider
+    it as the `Up` cluster; if the average price is less than a certain threshold
+    from the first data point then this is the `Down` cluster; and it is the `Nowhere`
+    cluster if the average price is within a certain threshold above and below the
+    first data point. There are other techniques as well to figure out the class of
+    the cluster; you can use any technique, whichever you would like to use. When
+    a data point falls in the `Up` cluster, we enter long trade; it happens for the
+    other two clusters as well. We should design a trading strategy by looking into
+    each cluster. Behavior recognition is critical as this will help us design a trading
+    strategy. We should know which cluster represents the `Up`, `Down`, or `Nowhere`
+    direction. We should generate a trading signal and return using the example mentioned
+    in the *Neural network* section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: K nearest neighborhood
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'K nearest neighborhood is another supervised learning algorithm which helps
+    us to figure out the class of the out-sample data among k classes. K has to be
+    chosen appropriately, otherwise it might increase variance or bias, which reduces
+    the generalization capacity of the algorithm. I am considering `Up`, `Down`, and
+    `Nowhere` as three classes which have to be recognized on the out-sample data.
+    This is based on Euclidian distance. For each data point in the out-sample data,
+    we calculate its distance from all data points in the in-sample data. Each data
+    point has a vector of distances and the K distance which is close enough will be
+    selected and the final decision about the class of the data point is based on
+    a weighted combination of all k neighborhoods:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE69]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The K nearest neighborhood function in R does not need labeled values in the
+    training data. So I am going to use the normalized in-sample and normalized out-sample
+    data created in the *Logistic regression* section and remove the last column in
+    the normalized in-sample and normalized out-sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE70]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Labeling of the training data is a vector of three directions, that is, `Up`,
+    `Down`, and `Nowhere`, which is constructed using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE71]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`lagret` is the return over the last 20 data points and is used to generate
+    three directions as in the *Neural network* section:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE72]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I choose three neighborhoods and fix the `set.seed()` value to generate the
+    same output every time:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE73]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `knn()` model has the first three mandatory parameters which are the normalized
+    in-sample data, the normalized out-sample data, and the training labeled data
+    in our case. The fourth parameter is optional; I supplied 3 as input here. If
+    this is not supplied by the user, R will consider the default value, which is
+    1\. However, 3 is not fixed; it needs to be optimized using multiple values of
+    neighborhood. The `knn()` function returns classes over the out-sample data which
+    can be checked using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE74]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`Summary()` over the model generates the total number of data points in each
+    class, as you can see in the following command. It has generated `44`, `172`,
+    and `36` data points into the `Down`, `Nowhere`, and `Up` classes respectively:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE75]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We are not sure about the accuracy. We have to test it for accuracy using the
+    following commands. `confusionMatrix()` generates a matrix of counts for correct
+    and wrong predictions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE76]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We also have to minimize off-diagonal elements as these are wrong classified
+    classes. Diagonal elements can be extracted using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE77]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can use a `for` loop over the neighborhood varying from 1 to 30 and find
+    the accuracy at each value. We can pick the optimal value of k, which has the
+    highest and consistent accuracy in its neighborhood.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following few lines of codes explain this. The `For` loop is used for values
+    from 1 to 30\. Inside the `for` loop, I fit model for every value of, that is,
+    `confusionMatrix()` calculate matrix for every `i` followed by calculation of
+    elements as diagonal and total number of elements in out-sample data. The sum
+    of all elements of `matrix$table` is equal to the number of data points in the
+    out-sample data. The misclassification number is calculated by subtracting `diag`
+    from the total number of points and accuracy is calculated by dividing it by the
+    total number of data points:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE78]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can check the variable `accuracy` output using `head()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE79]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following command `plot()` generates *Figure 6.3*, which explain accuracy
+    variation across the value of neighborhood. *Figure 6.3* clearly explains the
+    importance of neighborhood, as error is minimum for **k=14** which is assumed
+    to be the optimal value. However, **k=15** spike the error which means **k=14**
+    is not stable in its neighborhood. The value **k=12** is considered stable in
+    its neighborhood as well, so it is left to the reader, how you would like to pick
+    the optimal value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE80]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![K nearest neighborhood](img/00091.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6.3: Accuracy level for KNN classifier'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Support vector machine
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Support vector machine is another supervised learning algorithm that can be
+    used for classification and regression. It is able to classify data linearly and
+    nonlinearly using kernel methods. Each data point in the training dataset is labeled,
+    as it is supervised learning, and mapped to the input feature space, and the aim
+    is to classify every point of new data to one of the classes. A data point is
+    an *N* dimension number, as *N* is the number of features, and the problem is
+    to separate this data using *N-1* dimensional hyperplane and this is considered
+    to be a linear classifier. There might be many classifiers which segregate the
+    data; however, the optimal classifier is one which has the maximum margin between
+    classes. The maximum margin hyperplane is one which has the maximum distance from
+    the closest point in each size and the corresponding classifier is called the
+    maximum margin classifier. Package `e1071` has all functionalities related to
+    the support vector machine so I am going to install it first using the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE81]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once it is installed, I am going to load it into the workspace using the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE82]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'I am going to use the same normalized in-sample and out-sample data that was
+    used in the previous `section.` The `svm()` function takes a few more parameters,
+    such as type of support vector machine, kernel type, and a few more. The type
+    parameter has the option to train the support vector machine with respect to a
+    classification or regression problem; by default, it considers classification
+    problems. The kernel type has many options to choose from, such as linear, polynomial,
+    radial, and sigmoid, and the linear kernel type is set as the default parameter.
+    The following command explains the use of support vector machine using only the
+    first two parameters and the remaining default parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE83]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of the `svm()` function is saved in the variable model and can be
+    seen by typing the variable name `model` on the command prompt:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE84]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding results show the type of fitted support vector machine, and the
+    kernel type which is used to fit the model. `predict()` helps to predict direction
+    for the out-sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE85]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first few predicted directions can be seen using the following line of
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE86]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `table()` command generates a misclassification matrix and clearly shows
+    45 misclassified data points in total:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE87]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you would like to see the vectors generated by support vector machine, you
+    can do so using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE88]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also see the corresponding index values using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE89]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first few index values can be seen using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE90]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The corresponding coefficients can be accessed using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE91]'
+  prefs: []
+  type: TYPE_PRE
+- en: Decision tree
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Tree-based learning algorithms are one of the best supervised learning methods.
+    They generally have stability over results, and great accuracy and generalization
+    capacity to the out-sample dataset. They can map linear and nonlinear relationships
+    quite well. It is generally represented in the form of a tree of variables and
+    its results. The nodes in a tree are variables and end values are decision rules.
+    I am going to use the package `party` to implement a decision tree. This package
+    first need to be installed and loaded into the workspace using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE92]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `ctree()` function is the function to fit the decision tree and it requires
+    a formula and data as mandatory parameters and it has a few more optional variables.
+    The normalized in-sample and normalized out-sample data does not have labels in
+    the data so we have to merge labels in the data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following commands bind labels into the normalized in-sample and normalized
+    out-sample data and add a column name to the last column for both datasets:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE93]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now both datasets have labeled data in the dataset and we now choose to fit
+    the decision tree using `ctree()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first parameter is the formula which has `Direction`, that is, labels as
+    dependent variable and dot (`.`) on the other side of the formula, which means
+    we are considering all other variables as independent variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The second parameter is the normalized in-sample data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE94]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can use `print()` to see the fitted model output. The variable model is
+    the output of the model so use the following command to see what it contains:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE95]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If you would like to plot the model, this can be done using `plot()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE96]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can also use `summary()` to get the output in summarized form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE97]'
+  prefs: []
+  type: TYPE_PRE
+- en: '`predict()` can be used to estimate the labels using the fitted model and out-sample
+    data. I calculated the dimension of the normalized out-sample data and plugged
+    this data, except the last column, into `predict()`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE98]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first few values of `pred` can be seen using `head()` as shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE99]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The command `plot()` generates a graph for the predicted variable `pred`, which
+    is shown in the figure which follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE100]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following figure clearly shows three classes: one class is between **1.0**
+    and **1.5**, the second class around **2.0,** and the third class around **3.0**.
+    Data points are clearly distinguished based on the clustered and separation criteria:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Decision tree](img/00092.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6.4: Predicted values for normalized out-sample data'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random forest
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Random forest is one of the best tree-based methods. Random forest is an ensemble
+    of decision trees and each decision tree has certain weights associated with it.
+    A decision of the random forest is decided like voting, as the majority of decision
+    tree outcomes decide the outcome of the random forest. So we start using the `randomForest`
+    package and this can be installed and loaded using the following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE101]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also use the following command to know more about this `randomForest`
+    package, including version, date of release, URL, set of functions implemented
+    in this package, and much more:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE102]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Random forest works best for any type of problem and handles classification,
+    regression, and unsupervised problems quite well. Depending upon the type of labeled
+    variable, it will implement relevant decision trees; for example, it uses classification
+    for factor target variables, regression for numeric or integer type target variables,
+    and unsupervised decision tree when the target vector is not defined or completely
+    unknown. I will use the labeled data which I have used throughout this chapter:
+    the normalized in-sample data for model building and normalized out-sample data
+    for model validation. You can see the column names of the input data using the
+    following commands:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE103]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following command helps you to know the number of independent variables
+    in the input data. It shows our input dataset is going to have 15 independent
+    variables which can be seen previously:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE104]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As the labeled data has three classes, `Up`, `Down`, and `Nowhere`, we should
+    build a classification random forest. For classification, the `randomForest()`
+    function accepts labeled data as a factor so the first thing is we should check
+    the labeled data type, which can be done using the following command and it shows
+    the labeled data is character:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE105]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The next thing is we should convert the labeled data into factors as `randomForest()`
+    accepts factor labeled data for classification problems. The following two lines
+    convert character data into factors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE106]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, if we check the class of the labeled data, we can use the `class()` function
+    again and the following command shows we have converted character data type to
+    factor:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE107]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we are set with the in-sample and out-sample datasets and plug these datasets
+    into `randomForest()` using the following command. The first parameter in the
+    function is the normalized in-sample independent variables data frame, the second
+    parameter is in-sample labels, the third parameter is the out-sample independent
+    variables data frame, the fourth parameter is out-sample labels, and the fifth
+    parameter is the number of trees to be used for random forest model building and
+    I used this equal to `500`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE108]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'However, there many more parameters which one can use if required. If you want
+    to know more about the other parameters, the following single line of code will
+    open a new window which explains everything for the `randomForest` function, including
+    input variables, input variables type, output variables, examples, and so on:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE109]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'You can look at the model output using the following command. First it shows
+    the command which is used to fit the model, then the type of forest, which is
+    classification in our case as the labeled data was factor or consisted of three
+    classes, and next the number of trees, as we provided `500` as parameter in the
+    previous command. It also calculates a confusion matrix for the in-sample as well
+    as for out-sample data. The error rate for the in-sample data is `11.76%` and
+    `21.03%` for the out-sample data, which is assumed to be quite good. If you look
+    deep into the in-sample and out-sample confusion matrix, you can also find the
+    error rate for each class separately. In the case of the in-sample confusion matrix,
+    the fourth column contains errors which are `11.34%`. `14.40%`, and `9.55%` for
+    `Down`, `NoWhere`, and `Up` classes respectively. Similarly, you can also interpret
+    the out-sample confusion matrix:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE110]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The fitted model generates errors in matrix form and if you would like to dive
+    deep into error matrices, you can look into the matrix format using `head()`.
+    The following matrix shows the error rate for the in-sample data and the next
+    three columns for each class separately across 500 decision trees:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE111]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following commands plot the overall in-sample and three classes errors
+    for all `500` decision trees and you can see in *Figure 6.5* that after 100 decision
+    trees, there is no significant decrease in the error:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE112]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The plot looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Random forest](img/00093.jpeg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 6.5: Error rate for 500 decision trees'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If you want to extract variables which help to control error, you can choose
+    those variables depending upon `MeanDecreaseGinni`. `MeanDecreaseGinni` can be
+    accessed using the following lines of code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE113]'
+  prefs: []
+  type: TYPE_PRE
+- en: Questions
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: What is machine learning and how it being used in the capital market? Explain
+    in brief.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: What is logistic regression and in which form does it generate its output?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a small piece of code to use a neural network for any stock time series.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How does a confusion matrix explain the accuracy of a model?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How do you standardize data and why is it important in the model building process?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: How is support vector machine different from logistic regression?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Explain supervised and unsupervised learning and how to use these techniques
+    in algorithmic trading.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a small piece of code for the k means algorithm using any one stock closing
+    price.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Apart from `confusionMatrix()`, what is the other function to calculate classification
+    and misclassification matrices?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: What is the difference between decision tree and random forest and how are features
+    selected from random forest?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter presents advanced techniques which are implemented for capital
+    markets. I have presented various supervised and unsupervised learning in detail
+    along with examples. This chapter particularly used Dow Jones Index closing price
+    as dataset, which was divided into in-sample and out-sample data. The in-sample
+    data was used for model building and the out-sample data for validation of the
+    model. Overfitting and underfitting generally questions the generalization capacity
+    of the model which can be understand using confusion matrix. The accuracy of the
+    model was defined using `confusionMatrix()` or `table()`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There are various types of risks that exists in the market and in the next chapter,
+    I will explain how to calculate risk associated with various investments, in particular
+    market risk, portfolio risk, and so on. I will also explain Monte Carlo simulation
+    for risk, hedging techniques, and credit risk, along with Basel regulations.
+  prefs: []
+  type: TYPE_NORMAL
