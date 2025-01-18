@@ -1,254 +1,374 @@
 - en: Chapter 4. Understanding Time Series
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第4章 理解时间序列
 - en: A time series is a form of data that has a temporal dimension and is easily
     the most iconic form of financial data out there. While a single stock quote is
     not a time series, take the quotes you get every day and line them up, and you
     get a much more interesting time series. Virtually all media materials related
     to finance sooner or later show a stock price gap; not a list of prices at a given
     moment, but a development of prices over time.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列是一种具有时间维度的数据形式，也是金融数据中最具代表性的形式。虽然单一的股票报价不是时间序列，但如果将每天收到的报价排成一行，你就会得到一个更有趣的时间序列。几乎所有与金融相关的媒体资料，迟早都会展示股票价格的变化；不是在某一时刻的价格列表，而是价格随时间发展的过程。
 - en: 'You''ll often hear financial commenters discussing the movement of prices:
     "Apple Inc. is up 5%." But what does that mean? You''ll hear absolute values a
     lot less, such as, "A share of Apple Inc. is $137.74." Again, what does that mean?
     This occurs because market participants are interested in how things will develop
     in the future and they try to extrapolate these forecasts from how things developed
     in the past:'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 你会经常听到财经评论员讨论价格的波动：“苹果公司上涨了5%。”但这是什么意思呢？你会很少听到绝对值，比如“苹果公司每股价格是137.74美元。”同样，这又是什么意思呢？这种情况发生是因为市场参与者关注的是未来的走势，他们试图根据过去的发展来推断这些预测。
 - en: '![Understanding Time Series](img/B10354_04_01.jpg)'
+  id: totrans-3
   prefs: []
   type: TYPE_IMG
+  zh: '![理解时间序列](img/B10354_04_01.jpg)'
 - en: Multiple time series graphs as seen on Bloomberg TV
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 如在 Bloomberg TV 上看到的多个时间序列图
 - en: Most forecasting that is done involves looking at past developments over a period
     of time. The concept of a time series set of data is an important element related
     to forecasting; for example, farmers will look at a time series dataset when forecasting
     crop yields. Because of this, a vast body of knowledge and tools for working with
     time series has developed within the fields of statistics, econometrics, and engineering.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 大多数预测工作都涉及回顾一段时间内的过去发展。时间序列数据集的概念是与预测相关的重要元素；例如，农民在预测作物产量时会查看时间序列数据集。正因为如此，统计学、计量经济学和工程学领域已经发展出了大量的知识和工具来处理时间序列。
 - en: In this chapter, we will be looking at a few classic tools that are still very
     much relevant today. We will then learn how neural networks can deal with time
     series, and how deep learning models can express uncertainty.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中，我们将介绍一些至今仍然非常相关的经典工具。接着，我们将学习神经网络如何处理时间序列，以及深度学习模型如何表达不确定性。
 - en: Before we jump into looking at time series, I need to set your expectations
     for this chapter. Many of you might have come to this chapter to read about stock
     market forecasting, but I need to warn you that this chapter is not about stock
     market forecasting, neither is any other chapter in this book.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们开始探讨时间序列之前，我需要为本章设定期望值。你们中的许多人可能是抱着学习股市预测的目的来到本章的，但我必须警告你们，本章并不是关于股市预测的，书中的任何章节也都不是。
 - en: Economic theory shows that markets are somewhat efficient. The efficient market
     hypothesis states that all publicly available information is included in stock
     prices. This extends to information on how to process information, such as forecasting algorithms.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 经济理论表明，市场在一定程度上是有效的。有效市场假说指出，所有公开可用的信息都已反映在股票价格中。这也包括了如何处理信息的方式，例如预测算法。
 - en: If this book were to present an algorithm that could predict prices on the stock
     market and deliver superior returns, many investors would simply implement this
     algorithm. Since those algorithms would all buy or sell in anticipation of price
     changes, they would change the prices in the present, thus destroying the advantage
     that you would gain by using the algorithm. Therefore, the algorithm presented
     would not work for future readers.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果这本书展示了一种能够预测股市价格并带来超额回报的算法，许多投资者会立即实施该算法。由于这些算法会在预期价格变化的情况下买入或卖出股票，它们会改变当前的价格，从而消除使用该算法可能带来的优势。因此，本书展示的算法对于未来读者是行不通的。
 - en: Instead, this chapter will use traffic data from Wikipedia. Our goal is to forecast
     traffic for a specific Wikipedia page. We can obtain the Wikipedia traffic data
     via the `wikipediatrend` CRAN package.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 但本章将使用来自 Wikipedia 的流量数据。我们的目标是预测特定 Wikipedia 页面上的流量。我们可以通过 `wikipediatrend`
+    CRAN 包获取 Wikipedia 流量数据。
 - en: The dataset that we are going to use here is the traffic data of around 145,000
     Wikipedia pages that has been provided by Google. The data can be obtained from Kaggle.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在这里使用的数据集是约145,000个维基百科页面的流量数据，这些数据由Google提供。数据可以从[Kaggle](https://www.kaggle.com/c/web-traffic-time-series-forecasting)获取。
 - en: Note
+  id: totrans-12
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: 'The data can be found at the following links: [https://www.kaggle.com/c/web-traffic-time-series-forecasting](https://www.kaggle.com/c/web-traffic-time-series-forecasting)'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据可以通过以下链接找到：[https://www.kaggle.com/c/web-traffic-time-series-forecasting](https://www.kaggle.com/c/web-traffic-time-series-forecasting)
 - en: '[https://www.kaggle.com/muonneutrino/wikipedia-traffic-data-exploratio](https://www.kaggle.com/muonneutrino/wikipedia-traffic-data-exploratio)'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: '[https://www.kaggle.com/muonneutrino/wikipedia-traffic-data-exploratio](https://www.kaggle.com/muonneutrino/wikipedia-traffic-data-exploratio)'
 - en: Visualization and preparation in pandas
+  id: totrans-15
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: pandas中的可视化和准备
 - en: 'As we saw in [Chapter 2](ch02.xhtml "Chapter 2. Applying Machine Learning to Structured
     Data"), *Applying Machine Learning to Structured Data*, it''s usually a good idea
     to get an overview of the data before we start training. You can achieve this
     for the data we obtained from Kaggle by running the following:'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在[第2章](ch02.xhtml "第2章：将机器学习应用于结构化数据")，*将机器学习应用于结构化数据*中看到的，通常在开始训练之前先对数据进行概览是个好主意。你可以通过运行以下代码来实现对Kaggle上获得的数据的概览：
 - en: '[PRE0]'
+  id: totrans-17
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Running this code will give us the following table:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行这段代码将给我们以下表格：
 - en: '|   | Page | 2015-07-01 | 2015-07-02 | … | 2016-12-31 |'
+  id: totrans-19
   prefs: []
   type: TYPE_TB
+  zh: '|   | 页面 | 2015-07-01 | 2015-07-02 | … | 2016-12-31 |'
 - en: '| --- | --- | --- | --- | --- | --- |'
+  id: totrans-20
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- |'
 - en: '| 0 | 2NE1_zh.wikipedia.org_all-access_spider | 18.0 | 11.0 | … | 20.0 |'
+  id: totrans-21
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | 2NE1_zh.wikipedia.org_all-access_spider | 18.0 | 11.0 | … | 20.0 |'
 - en: '| 1 | 2PM_zh.wikipedia.org_all-access_spider | 11.0 | 14.0 | … | 20.0 |'
+  id: totrans-22
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 2PM_zh.wikipedia.org_all-access_spider | 11.0 | 14.0 | … | 20.0 |'
 - en: The data in the **Page** column contains the name of the page, the language
     of the Wikipedia page, the type of accessing device, and the accessing agent.
     The other columns contain the traffic for that page on that date.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: '**页面**列中的数据包含页面的名称、维基百科页面的语言、访问设备的类型以及访问代理。其他列包含该页面在该日期的流量。'
 - en: So, in the preceding table, the first row contains the page of 2NE1, a Korean
     pop band, on the Chinese version of Wikipedia, by all methods of access, but only
     for agents classified as spider traffic; that is, traffic not coming from humans.
     While most time series work is focused on local, time-dependent features, we can
     enrich all of our models by providing access to **global features**.
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，在前面的表格中，第一行包含了2NE1（一个韩国流行乐队）在中文维基百科页面上的数据，所有访问方法的数据，但只针对被分类为蜘蛛流量的代理；也就是说，来自非人工访问的流量。虽然大多数时间序列工作集中于局部、时间相关的特征，但我们可以通过提供对**全球特征**的访问来丰富我们的所有模型。
 - en: 'Therefore, we want to split up the page string into smaller, more useful features.
     We can achieve this by running the following code:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们希望将页面字符串拆分成更小、更有用的特征。我们可以通过运行以下代码来实现：
 - en: '[PRE1]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: We split the string by underscores. The name of a page could also include an
     underscore, so we separate off the last three fields and then join the rest to
     get the subject of the article.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过下划线分割字符串。页面名称中可能也包含下划线，因此我们分离出最后三个字段，然后将其余部分连接起来，得到文章的主题。
 - en: 'As we can see in the following code, the third-from-last element is the sub
     URL, for example, [en.wikipedia.org](http://en.wikipedia.org). The second-from-last
     element is the access, and the last element the agent:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在以下代码中看到的，倒数第三个元素是子URL，例如，[en.wikipedia.org](http://en.wikipedia.org)。倒数第二个元素是访问类型，最后一个元素是代理：
 - en: '[PRE2]'
+  id: totrans-29
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: '[PRE3]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'When we apply this function to every page entry in the training set, we obtain
     a list of tuples that we can then join together into a new DataFrame, as we can
     see in the following code:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我们将这个函数应用于训练集中的每个页面条目时，我们会得到一个元组列表，然后我们可以将它们连接到一个新的DataFrame中，正如我们在以下代码中看到的：
 - en: '[PRE4]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Finally, we must add this new DataFrame back to our original DataFrame before
     removing the original page column, which we can do by running the following:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们必须将这个新的DataFrame添加回原始的DataFrame中，然后再删除原始的页面列，我们可以通过运行以下代码来实现：
 - en: '[PRE5]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: As a result of running this code, we have successfully finished loading the
     dataset. This means we can now move on to exploring it.
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行这段代码后，我们已经成功加载了数据集。这意味着我们现在可以开始探索数据了。
 - en: Aggregate global feature statistics
+  id: totrans-36
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 汇总全球特征统计数据
 - en: After all of this hard work, we can now create some aggregate statistics on
     global features.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 在完成所有这些工作后，我们现在可以创建一些关于全球**特征**的汇总统计数据。
 - en: 'The pandas `value_counts()` function allows us to plot the distribution of
     global features easily. By running the following code, we will get a bar chart
     output of our Wikipedia dataset:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: pandas 的 `value_counts()` 函数允许我们轻松绘制全局特征的分布图。通过运行以下代码，我们将获得我们维基百科数据集的条形图输出：
 - en: '[PRE6]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'As a result of running the previous code, we will output a bar chat that ranks
     the distributions of records within our dataset:'
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行前面的代码后，我们将输出一个条形图，该图对数据集中的记录分布进行排名：
 - en: '![Aggregate global feature statistics](img/B10354_04_02.jpg)'
+  id: totrans-41
   prefs: []
   type: TYPE_IMG
+  zh: '![聚合全局特征统计](img/B10354_04_02.jpg)'
 - en: Distribution of records by Wikipedia country page
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 按维基百科国家页面划分的记录分布
 - en: The preceding plot shows the number of time series available for each subpage.
     Wikipedia has subpages for different languages, and we can see that our dataset
     contains pages from the English (en), Japanese (ja), German (de), French (fr),
     Chinese (zh), Russian (ru), and Spanish (es) Wikipedia sites.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 上面的图显示了每个子页面的可用时间序列的数量。维基百科有不同语言的子页面，我们可以看到我们的数据集中包含来自英文（en）、日文（ja）、德文（de）、法文（fr）、中文（zh）、俄文（ru）和西班牙文（es）维基百科站点的页面。
 - en: In the bar chart we produced you may have also noted two non-country based Wikipedia
     sites. Both [commons.wikimedia.org](http://commons.wikimedia.org) and [www.mediawiki.org](http://www.mediawiki.org)
     are used to host media files such as images.
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们生成的条形图中，你可能还注意到有两个非国家级的维基百科站点。 [commons.wikimedia.org](http://commons.wikimedia.org)
+    和 [www.mediawiki.org](http://www.mediawiki.org) 都用于托管媒体文件，如图片。
 - en: 'Let''s run that command again, this time focusing on the type of access:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们再运行一次该命令，这次关注访问类型：
 - en: '[PRE7]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'After running this code, we''ll then see the following bar chart as the output:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行该代码后，我们将看到如下的条形图作为输出：
 - en: '![Aggregate global feature statistics](img/B10354_04_03.jpg)'
+  id: totrans-48
   prefs: []
   type: TYPE_IMG
+  zh: '![聚合全局特征统计](img/B10354_04_03.jpg)'
 - en: Distribution of records by access type
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 按访问类型划分的记录分布
 - en: 'There are two possible access methods: **mobile** and **desktop**. There''s
     also a third option **all-access**, which combines the statistics for mobile and
     desktop access.'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 有两种可能的访问方式：**移动端**和**桌面端**。还有第三种选择**全访问**，它结合了移动端和桌面端的统计数据。
 - en: 'We can then plot the distribution of records by agent by running the following code:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们可以通过运行以下代码绘制按代理划分的记录分布：
 - en: '[PRE8]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'After running that code, we''ll output the following chart:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行该代码后，我们将输出以下图表：
 - en: '![Aggregate global feature statistics](img/B10354_04_04.jpg)'
+  id: totrans-54
   prefs: []
   type: TYPE_IMG
+  zh: '![聚合全局特征统计](img/B10354_04_04.jpg)'
 - en: Distribution of records by agent
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 按代理划分的记录分布
 - en: There are time series available not only for spider agents, but also for all
     other types of access. In classic statistical modeling, the next step would be
     to analyze the effect of each of these global features and build models around
     them. However, this is not necessary if there's enough data and computing power
     available.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 不仅蜘蛛代理有时间序列数据，所有其他类型的访问也有时间序列数据。在经典的统计建模中，下一步是分析这些全局特征的影响，并基于这些特征构建模型。然而，如果有足够的数据和计算能力，这一步不是必须的。
 - en: 'If that''s the case then a neural network is able to discover the effects of
     the global features itself and create new features based on their interactions.
     There are only two real considerations that need to be addressed for global features:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果是这种情况，那么神经网络能够自行发现全局特征的影响，并基于它们的交互作用创建新特征。关于全局特征，只有两个真正需要考虑的问题：
 - en: '**Is the distribution of features very skewed?** If this is the case then there might
     only be a few instances that possess a global feature, and our model might overfit
     on this global feature. Imagine that there were only a small number of articles
     from the Chinese Wikipedia in the dataset. The algorithm might distinguish too
     much based on the feature then overfit the few Chinese entries. Our distribution
     is relatively even, so we do not have to worry about this.'
+  id: totrans-58
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**特征的分布是否非常偏斜？** 如果是这样，可能只有少数实例具备某个全局特征，我们的模型可能会在这个全局特征上发生过拟合。想象一下，如果数据集中只有少量来自中文维基百科的文章，算法可能会过度依赖这个特征，从而过拟合这少数的中文条目。我们的分布相对均匀，因此无需担心这一点。'
 - en: '**Can features be easily encoded?** Some global features cannot be one-hot
     encoded. Imagine that we were given the full text of a Wikipedia article with
     the time series. It would not be possible to use this feature straight away, as some
@@ -256,44 +376,61 @@
     are a few relatively straightforward categories that can be one-hot encoded. The
     subject names, however, cannot be one-hot encoded since there are too many of
     them.'
+  id: totrans-59
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**特征是否能轻松编码？** 一些全局特征无法进行独热编码（one-hot encoding）。假设我们得到了带有时间序列的维基百科文章全文，直接使用该特征是不可能的，因为需要进行一些复杂的预处理才能使用它。在我们的例子中，有一些相对直接的类别可以进行独热编码。然而，学科名称则无法进行独热编码，因为它们的数量实在太多了。'
 - en: Examining the sample time series
+  id: totrans-60
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 检查样本时间序列
 - en: To examine the global features, of our dataset, we have to look at a few sample
     time series in order to get an understanding of the challenges that we may face.
     In this section, we will plot the views for the English language page of *Twenty
     One Pilots*, a musical duo from the USA.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了检查我们数据集的全局特征，我们需要查看一些样本时间序列，以便了解我们可能面临的挑战。在这一部分，我们将绘制来自美国的音乐二人组*Twenty One
+    Pilots*的英语语言页面的观看次数。
 - en: 'To plot the actual page views together with a 10-day rolling mean. We can do this
     by running the following code:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了绘制实际的页面观看次数，并同时计算10天滚动平均值，我们可以通过运行以下代码来实现：
 - en: '[PRE9]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: There is a lot going on in this code snippet, and it is worth going through
     it step by step. Firstly, we define which row we want to plot. The Twenty One
     Pilots article is row 39,457 in the training dataset. From there, we then define
     the window size for the rolling mean.
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码有很多内容，值得逐步分析。首先，我们定义我们想要绘制的行。二十一飞行员的文章位于训练数据集中的第39,457行。从这里开始，我们再定义滚动平均值的窗口大小。
 - en: We separate the page view data and the name from the overall dataset by using
     the pandas  `iloc` tool. This allows us to index the data by row and column coordinates.
     Counting the days rather than displaying all the dates of the measurements makes
     the plot easier to read, therefore we are going to create a day counter for the
     *X*-axis.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用pandas的`iloc`工具从整体数据集中分离出页面观看数据和名称。这使得我们可以通过行列坐标来索引数据。通过计算天数而不是显示所有测量日期，使得图表更加易于阅读，因此我们将为*X*轴创建一个天数计数器。
 - en: Next, we set up the plot and make sure it has the desired size by setting `figsize`.
     We also define the axis labels and the title. Next, we plot the actual page views.
     Our *X* coordinates are the days, and the *Y* coordinates are the page views.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们设置图表并确保它具有所需的大小，通过设置`figsize`。我们还定义了坐标轴标签和标题。接下来，我们绘制实际的页面观看次数。我们的*X*坐标是天数，*Y*坐标是页面观看次数。
 - en: 'To compute the mean, we are going to use a **convolve** operation, which you
     might be familiar with as we explored convolutions in [Chapter 3](ch03.xhtml "Chapter 3. Utilizing
     Computer Vision"), *Utilizing Computer Vision*. This convolve operation creates
@@ -302,79 +439,114 @@
     then sums the resulting vector up. This creates a rolling mean with a window size
     10\. We plot this mean in black. Finally, we specify that we want to use a log
     scale for the *Y* axis:'
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算均值，我们将使用**卷积（convolve）**操作，你可能会对它有所了解，因为我们在[第3章](ch03.xhtml "第3章. 利用计算机视觉")
+    *利用计算机视觉* 中探讨过卷积。这个卷积操作会生成一个由窗口大小（在此为10）除以的1的向量。卷积操作将该向量滑动到页面观看次数上，将10个页面观看次数与1/10相乘，然后将得到的向量相加。这就创建了一个窗口大小为10的滚动平均值。我们用黑色绘制这个平均值。最后，我们指定希望*Y*轴使用对数坐标刻度。
 - en: '![Examining the sample time series](img/B10354_04_05.jpg)'
+  id: totrans-68
   prefs: []
   type: TYPE_IMG
+  zh: '![检查样本时间序列](img/B10354_04_05.jpg)'
 - en: Access statistics for the Twenty One Pilots Wikipedia page with a rolling mean
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 获取二十一飞行员维基百科页面的访问统计数据，并计算滚动平均值
 - en: You can see there are some pretty large spikes in the Twenty One Pilots graph
     we just generated, even though we used a logarithmic axis. On some days, views
     skyrocket to 10 times what they were just days before. Because of that, it quickly
     becomes clear that a good model will have to be able to deal with such extreme spikes.
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到我们刚刚生成的二十一飞行员（Twenty One Pilots）图表中有一些非常大的波动，尽管我们使用了对数坐标轴。在某些日子里，观看次数激增到仅仅几天前的10倍。因此，很快就可以看出，一个好的模型必须能够应对这种极端的波动。
 - en: Before we move on, it's worth pointing out that it's also clearly visible that
     there are global trends, as the page views generally increase over time.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 在继续之前，值得指出的是，页面观看次数随时间的推移总体上呈现上升趋势，这一全球趋势也是显而易见的。
 - en: 'For good measure, let''s plot the interest in Twenty One Pilots for all languages.
     We can do this by running the following code:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地说明，我们绘制了所有语言版本中《Twenty One Pilots》的关注度图。我们可以通过运行以下代码来实现：
 - en: '[PRE10]'
+  id: totrans-73
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: In this snippet, we first set up the graph, as before. We then loop over the
     language codes and find the index of Twenty One Pilots. The index is an array
     wrapped in a tuple, so we have to extract the integer specifying the actual index.
     We then extract the page view data from the training dataset and plot the page
     views.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个代码片段中，我们首先像之前一样设置图表。然后，我们遍历语言代码并找到《Twenty One Pilots》的索引。索引是一个包含元组的数组，所以我们需要提取出指定实际索引的整数。接着，我们从训练数据集中提取页面浏览数据并绘制页面浏览量图。
 - en: 'In the following chart, we can view the output of the code that we''ve just
     produced:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 在以下图表中，我们可以查看刚刚生成的代码输出：
 - en: '![Examining the sample time series](img/B10354_04_06.jpg)'
+  id: totrans-76
   prefs: []
   type: TYPE_IMG
+  zh: '![检查样本时间序列](img/B10354_04_06.jpg)'
 - en: Access statistics for Twenty One Pilots by country
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 按国家访问《Twenty One Pilots》的统计数据
 - en: There is clearly some correlation between the time series. The English language
     version of Wikipedia (the top line) is, not surprisingly, by far the most popular.
     We can also see that the time series in our datasets are clearly not stationary;
     they change means and standard deviations over time.
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 显然，时间序列之间存在一定的关联性。英语版的维基百科（最上面一条）毫无意外地是最受欢迎的。我们还可以看到，我们数据集中的时间序列显然并不平稳；它们随时间变化，均值和标准差都有所波动。
 - en: A stationary process is one whose unconditional joint probability distribution
     stays constant over time. In other words, things such as the series mean or standard
     deviation should stay constant.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 平稳过程是指其无条件联合概率分布随时间保持不变的过程。换句话说，诸如序列的均值或标准差应该保持不变。
 - en: However, as you can see, between days 200-250 in the preceding graph, the mean views
     on the page changes dramatically. This result undermines some of the assumptions
     many classic modeling approaches make. Yet, financial time series are hardly ever
     stationary, so it is worthwhile dealing with these problems. By addressing these
     problems, we become familiar with several useful tools that can help us handle nonstationarity.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，正如你所看到的，在前面图表中的第200到250天之间，页面的平均浏览量发生了剧烈变化。这个结果动摇了许多经典建模方法所做的一些假设。然而，金融时间序列几乎从不具有平稳性，因此处理这些问题是值得的。通过解决这些问题，我们能熟悉一些有用的工具，帮助我们应对非平稳性问题。
 - en: Different kinds of stationarity
+  id: totrans-81
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 不同类型的平稳性
 - en: 'Stationarity can mean different things, and it is crucial to understand which
     kind of stationarity is required for the task at hand. For simplicity, we will
     just look at two kinds of stationarity here: mean stationarity and variance stationarity.
     The following image shows four time series with different degrees of (non-)stationarity:'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 平稳性可以有不同的含义，理解在当前任务中需要哪种类型的平稳性至关重要。为简单起见，我们将在这里仅关注两种类型的平稳性：均值平稳性和方差平稳性。下图展示了四个具有不同程度（非）平稳性的时间序列：
 - en: '![Different kinds of stationarity](img/B10354_04_24.jpg)'
+  id: totrans-83
   prefs: []
   type: TYPE_IMG
+  zh: '![不同类型的平稳性](img/B10354_04_24.jpg)'
 - en: Mean stationarity refers to the level of a series being constant. Here, individual
     data points can deviate, of course, but the long-run mean should be stable. Variance
     stationarity refers to the variance from the mean being constant. Again, there
@@ -385,12 +557,16 @@
     stationarity, they usually mean the special condition in which mean, variance,
     and covariances are stationary. Many econometric models, especially in risk management,
     operate under this covariance stationarity assumption.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 均值平稳性指的是时间序列的水平是常数。这里，个别数据点当然可能有所偏离，但长期均值应该是稳定的。方差平稳性指的是均值的方差是常数。同样，可能会有一些异常值和短期序列，其方差似乎较高，但总体方差应保持在同一水平。第三种平稳性，即协方差平稳性，难以可视化，且在此未展示。它指的是不同滞后期之间的协方差保持恒定。当人们提到协方差平稳性时，通常是指均值、方差和协方差都平稳的特殊条件。许多计量经济学模型，特别是在风险管理中，都是在这一协方差平稳性的假设下运行的。
 - en: Why stationarity matters
+  id: totrans-85
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 为什么平稳性很重要
 - en: Many classic econometric methods assume some form of stationarity. A key reason
     for this is that inference and hypothesis testing work better when time series
     are stationary. However, even from a pure forecasting point of view, stationarity
@@ -402,51 +578,71 @@
     values we feed into the model in the same range. Remember that we need to standardize
     data before using a neural network. If a stock price grows from $1 to $1,000,
     we end up with non-standardized data, which will in turn make training difficult.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 许多经典的计量经济学方法假设某种形式的平稳性。其关键原因是，当时间序列平稳时，推断和假设检验效果更好。然而，即便从纯粹的预测角度来看，平稳性也有帮助，因为它减轻了模型的工作量。看看前面图表中的**非均值平稳**系列。你可以看到，预测该系列的一个主要部分是认识到该系列正在向上移动。如果我们能够在模型之外捕捉到这一事实，模型需要学习的内容就会少一些，并且可以将其能力用于其他目的。另一个原因是，它保持了我们输入模型的数值在相同的范围内。记住，在使用神经网络之前，我们需要对数据进行标准化。如果股价从1美元涨到1000美元，我们最终会得到非标准化的数据，这将使得训练变得困难。
 - en: Making a time series stationary
+  id: totrans-87
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使时间序列平稳
 - en: The standard method to achieve mean stationarity in financial data (especially
     prices) is called differencing. It refers to computing the returns from prices.
     In the following image, you can see the raw and differenced versions of S&P 500\.
     The raw version is not mean stationary as the value grows, but the differenced
     version is roughly stationary.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现金融数据（特别是价格）均值平稳性的标准方法是差分。这指的是从价格中计算回报。在下面的图像中，你可以看到S&P 500的原始版本和差分版本。原始版本不是均值平稳的，因为其值在增长，而差分版本则大致平稳。
 - en: '![Making a time series stationary](img/B10354_04_25.jpg)'
+  id: totrans-89
   prefs: []
   type: TYPE_IMG
+  zh: '![使时间序列平稳](img/B10354_04_25.jpg)'
 - en: 'Another approach to mean stationarity is based on linear regression. Here,
     we fit a linear model to the data. A popular library for this kind of classical
     modeling is `statsmodels`, which has an inbuilt linear regression model. The following
     example shows how to use `statsmodels` to remove a linear trend from data:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种基于线性回归的均值平稳性方法是将线性模型拟合到数据中。一个常用的经典建模库是`statsmodels`，它有一个内置的线性回归模型。以下示例展示了如何使用`statsmodels`从数据中去除线性趋势：
 - en: '[PRE11]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: '![Making a time series stationary](img/B10354_04_26.jpg)'
+  id: totrans-92
   prefs: []
   type: TYPE_IMG
+  zh: '![使时间序列平稳](img/B10354_04_26.jpg)'
 - en: It is worth emphasizing that **stationarity is part of modeling and should be
     fit on the training set only**. This is not a big issue with differencing, but
     can lead to problems with linear detrending.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 值得强调的是，**平稳性是建模的一部分，应该只在训练集上进行拟合**。对于差分来说，这不是大问题，但对于线性去趋势化可能会导致问题。
 - en: Removing variance non-stationarity is harder. A typical approach is to compute
     some rolling variance and divide new values by that variance. On the training
     set, you can also **studentize** the data. To do this, you need to compute the
     daily variance, and then divide all values by the root of it. Again, you may do
     this only on the training set, as the variance computation requires that you already
     know the values.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 去除方差非平稳性更为困难。一个典型的方法是计算滚动方差，并将新值除以该方差。在训练集上，你还可以**进行学生化**数据。为此，你需要计算每日方差，然后将所有值除以其平方根。同样，你只能在训练集上进行此操作，因为方差计算要求你已经知道这些值。
 - en: When to ignore stationarity issues
+  id: totrans-95
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 何时忽略平稳性问题
 - en: There are times when you should not worry about stationarity. When forecasting
     a sudden change, a so-called structural break, for instance. In the Wikipedia
     example, we are interested in knowing when the sites begin to be visited much
@@ -459,30 +655,40 @@
     have to worry about it. Forecasting is a much more forgiving task than inference
     and hypothesis testing, so we might get away with a few non-stationarities if
     our model can pick up on them.
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 有时候你不必担心平稳性。例如，在预测突变时，所谓的结构性断裂。在维基百科的例子中，我们感兴趣的是知道何时网站的访问频率比之前高得多。在这种情况下，去除水平差异会阻止我们的模型学习预测这种变化。同样，我们可能能够轻松地将非平稳性纳入我们的模型中，或者在管道的后续阶段确保其平稳性。我们通常只在整个数据集的一个小子序列上训练神经网络。如果我们对每个子序列进行标准化，那么子序列内的均值变化可能可以忽略不计，我们就不必为此担心。预测比推理和假设检验更宽容一些，因此如果我们的模型能够识别出非平稳性，我们可能会容忍一些非平稳性。
 - en: Fast Fourier transformations
+  id: totrans-97
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 快速傅里叶变换
 - en: Another interesting statistic we often want to compute about time series is
     the Fourier transformation (FT). Without going into the math, a Fourier transformation
     will show us the amount of oscillation within a particular frequency in a function.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个我们常常需要计算的有趣统计量是傅里叶变换（FT）。不深入数学细节，傅里叶变换将展示函数中某一特定频率下的振荡程度。
 - en: You can imagine this like the tuner on an old FM radio. As you turn the tuner,
     you search through different frequencies. Every once in a while, you find a frequency
     that gives you a clear signal of a particular radio station. A Fourier transformation
     basically scans through the entire frequency spectrum and records at what frequencies
     there is a strong signal. In terms of a time series, this is useful when trying
     to find periodic patterns in the data.
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以将其想象为老式调频收音机上的调谐器。当你转动调谐器时，你在不同的频率之间搜索。偶尔，你会找到一个频率，能清楚地接收到某个电台的信号。傅里叶变换基本上就是扫描整个频率谱，并记录在哪些频率下有强信号。在时间序列的背景下，当我们尝试找到数据中的周期性模式时，这非常有用。
 - en: Imagine that we found out that a frequency of one per week gave us a strong
     pattern. This would mean that knowledge about what the traffic was ton the same
     day one week ago would help our model.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们发现每周一次的频率给出了一个强烈的模式。这意味着，关于一周前同一天的交通情况的知识会有助于我们的模型。
 - en: When both the function and the Fourier transform are discrete, which is the
     case in a series of daily measurements, it is called the **discrete Fourier transform**
     (**DFT**). A very fast algorithm that is used for computing the DFT is known as
@@ -490,8 +696,11 @@
     algorithm in scientific computing. This theory was known to the mathematician
     Carl Gauss in 1805 but was brought to light more recently by American mathematicians
     James W. Cooley and John Tukey in 1965.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 当函数和傅里叶变换都是离散的，这通常发生在一系列日常测量中，这种情况称为**离散傅里叶变换**（**DFT**）。一种用于计算离散傅里叶变换的非常快速的算法被称为**快速傅里叶变换**（**FFT**），它如今已经成为科学计算中的一个重要算法。这个理论早在1805年就为数学家卡尔·高斯所知，但直到1965年才被美国数学家詹姆斯·W·库利（James
+    W. Cooley）和约翰·图基（John Tukey）重新揭示。
 - en: It's beyond the scope of this chapter to go into how and why the Fourier transformations
     work, so in this section we will only be giving a brief introduction. Imagine
     our function as a piece of wire. We take this wire and wrap it around a point,
@@ -499,280 +708,402 @@
     the frequency of a signal, all of the signal peaks will be on one side of the
     pole. This means that the center of mass of the wire will move away from the point
     we wrapped the wire around.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的内容不涉及傅里叶变换如何以及为何有效，因此在本节中我们只会简要介绍。假设我们的函数是一根电线。我们将这根电线绕到一个点上，如果你绕电线时绕的圈数与信号的频率相匹配，那么信号的所有波峰都会集中在一点一侧。这意味着电线的质心将从我们绕线的点上移动开。
 - en: In math, wrapping a function around a point can be achieved by multiplying the
     function *g*(*n*) with ![Fast Fourier transformations](img/B10354_04_002.jpg),
     where *f* is the frequency of wrapping, *n* is the number of the item from the
     series, and *i* is the imaginary square root of -1\. Readers that are not familiar
     with imaginary numbers can think of them as coordinates in which each number has
     a two-dimensional coordinate consisting of both a real and an imaginary number.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 在数学中，将一个函数包裹在某个点周围可以通过将函数 *g*(*n*) 与 ![快速傅里叶变换](img/B10354_04_002.jpg) 相乘来实现，其中
+    *f* 是包裹的频率，*n* 是序列中项的编号，*i* 是虚数单位的平方根 -1。对于不熟悉虚数的读者，可以将其视为坐标系，其中每个数字都有一个由实数和虚数组成的二维坐标。
 - en: 'To compute the center of mass, we average the coordinates of the points in
     our discrete function. The DFT formula is, therefore, as follows:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算质心，我们对离散函数中点的坐标取平均值。因此，DFT 公式如下所示：
 - en: '![Fast Fourier transformations](img/B10354_04_003.jpg)'
+  id: totrans-105
   prefs: []
   type: TYPE_IMG
+  zh: '![快速傅里叶变换](img/B10354_04_003.jpg)'
 - en: Here *y*[*f*] is the *f*th element in the transformed series, and *x*[*n*] is
     the *n*th element of the input series, *x*. *N* is the total number of points
     in the input series. Note that *y*[*f*] will be a number with a real and a discrete
     element.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，*y*[*f*] 是变换后序列中的第 *f* 个元素，*x*[*n*] 是输入序列 *x* 中的第 *n* 个元素，*N* 是输入序列中的总点数。注意，*y*[*f*]
+    将是一个包含实数和离散元素的数字。
 - en: To detect frequencies, we are only really interested in the overall magnitude
     of *y*[*f*]. To get this magnitude we need to so we compute the root of the sum
     of the squares of the imaginary and real parts. In Python, we do not have to worry
     about all the math as we can use `scikit-learn's fftpack`, which has an FFT function
     built in.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了检测频率，我们真正关心的只是 *y*[*f*] 的整体幅值。为了获得这个幅值，我们需要计算虚部和实部平方和的平方根。在 Python 中，我们不需要担心所有的数学计算，因为我们可以使用
+    `scikit-learn` 的 fftpack，它内置了 FFT 函数。
 - en: 'The next step is to run the following code:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是运行以下代码：
 - en: '[PRE12]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: Here, we first extract the time series measurements without the global features
     from our training set. Then we run the FFT algorithm, before finally computing
     the magnitudes of the transformation.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们首先从训练集提取没有全局特征的时间序列测量值。然后，我们运行 FFT 算法，最后计算变换的幅值。
 - en: 'After running that code, we now have the Fourier transformations for all the
     time series datasets. In order to allow us to get a better insight into the general
     behavior of the Fourier transformations we can average them by simply running:'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行完该代码后，我们现在得到了所有时间序列数据集的傅里叶变换。为了更好地了解傅里叶变换的一般行为，我们可以通过简单地运行以下代码来对它们进行平均处理：
 - en: '[PRE13]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: This first turns the magnitudes into a NumPy array before then computing the
     mean. We want to compute the mean per frequency, not just the mean value of all
     the magnitudes, therefore we need to specify the `axis` along which to take the
     mean value.
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 这首先将幅值转换为 NumPy 数组，然后计算均值。我们想要计算每个频率的均值，而不仅仅是所有幅值的均值，因此我们需要指定计算均值的 `axis` 轴。
 - en: 'In this case, the series are stacked in rows, so taking the mean column-wise
     (axis zero) will result in frequency-wise means. To better plot the transformation,
     we need to create a list of frequencies tested. The frequencies are in the form:
     day/all days in the dataset for each day, so 1/550, 2/550, 3/550, and so on. To
     create the list we need to run:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，序列按行堆叠，因此按列计算均值（axis 0）将得到按频率计算的均值。为了更好地绘制变换，我们需要创建一个测试频率的列表。频率的形式是：每一天的频率与数据集中所有天数的比值，例如
+    1/550，2/550，3/550，依此类推。要创建该列表，我们需要运行以下代码：
 - en: '[PRE14]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'In this visualization, we only care about the range of frequencies in a weekly
     range, so we will remove the second half of the transformation, which we can do by
     running:'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个可视化中，我们只关心每周范围内的频率，因此我们将去掉变换的后半部分，这可以通过运行以下代码来完成：
 - en: '[PRE15]'
+  id: totrans-117
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'Finally, we can plot our transformation:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们可以绘制我们的变换：
 - en: '[PRE16]'
+  id: totrans-119
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'Upon plotting the transformation, we will have successfully produced a chart
     similar to the one you see here:'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 绘制变换后，我们将成功地生成一个类似于这里所见的图表：
 - en: '![Fast Fourier transformations](img/B10354_04_07.jpg)'
+  id: totrans-121
   prefs: []
   type: TYPE_IMG
+  zh: '![快速傅里叶变换](img/B10354_04_07.jpg)'
 - en: Fourier transformation of Wikipedia access statistics. Spikes marked by vertical
     lines
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: 维基百科访问统计的傅里叶变换。由垂直线标记的尖峰。
 - en: As you can see in the chart we produced, there are spikes at roughly 1/7 (0.14),
     2/7 (0.28), and 3/7 (0.42). As a week has seven days, that is a frequency of one
     time per week, two times per week, and three times per week. In other words, page
     statistics repeat themselves (approximately) every week, so that, for example,
     access on one Saturday correlates with access on the previous Saturday.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在生成的图表中看到的，大约在1/7（0.14）、2/7（0.28）和3/7（0.42）处存在峰值。由于一周有七天，这意味着每周一次、每周两次和每周三次的频率。换句话说，页面统计数据大约每周会重复一次，因此，例如，某个星期六的访问量与上一个星期六的访问量相关。
 - en: Autocorrelation
+  id: totrans-124
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 自相关
 - en: Autocorrelation is the correlation between two elements of a series separated
     by a given interval. Intuitively, we would, for example, assume that knowledge
     about the last time step helps us in forecasting the next step. But how about
     knowledge from 2 time steps ago or from 100 time steps ago?
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: 自相关是指两个在给定间隔下分离的系列元素之间的相关性。直观地说，我们可能假设，了解上一个时间步的信息有助于我们预测下一个时间步。但是，来自两次时间步前的信息或来自100次时间步前的信息又如何呢？
 - en: Running `autocorrelation_plot` will plot the correlation between elements with different
     lag times and can help us answer these questions. As a matter of fact, pandas
     comes with a handy autocorrelation plotting tool. To use it, we have to pass a series
     of data. In our case, we pass the page views of a page, selected at random.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行`autocorrelation_plot`将绘制不同滞后时间下元素之间的相关性，并且可以帮助我们回答这些问题。事实上，pandas自带了一个方便的自相关绘图工具。要使用它，我们需要传入一系列数据。在我们的例子中，我们传入一个页面的页面浏览量数据，随机选择。
 - en: 'We can do this by running the following code:'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过运行以下代码来实现这一点：
 - en: '[PRE17]'
+  id: totrans-128
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'This will present us with the following diagram:'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将为我们呈现以下图表：
 - en: '![Autocorrelation](img/B10354_04_08.jpg)'
+  id: totrans-130
   prefs: []
   type: TYPE_IMG
+  zh: '![自相关](img/B10354_04_08.jpg)'
 - en: Autocorrelation of the Oh My Girl Chinese Wikipedia page
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 《哦我的女孩》中文维基页面的自相关
 - en: The plot in the preceding chart shows the correlation of page views for the
     Wikipedia page of *Oh My Girl*, a South Korean girl group, within the Chinese
     Wikipedia.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面的图表显示了*哦我的女孩*，一支韩国女子组合，在中文维基百科页面的页面浏览量的相关性。
 - en: You can see that shorter time intervals between 1 and 20 days show a higher
     autocorrelation than longer intervals. Likewise there are also curious spikes,
     such as around 120 days and 280 days. It's possible that annual, quarterly, or
     monthly events could lead to an increase in the frequency of visits to the *Oh
     My Girl* Wikipedia page.
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到，1到20天之间的较短时间间隔显示出比较长时间间隔更高的自相关。同样，也可以看到一些奇特的峰值，例如大约在120天和280天时。可能是年、季度或月度事件导致了访问*哦我的女孩*维基页面的频率增加。
 - en: 'We can examine the general pattern of these frequencies by drawing 1,000 of
     these autocorrelation plots. To do this we run the following code:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过绘制1,000个这样的自相关图来检查这些频率的一般模式。为此，我们运行以下代码：
 - en: '[PRE18]'
+  id: totrans-135
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'This code snippet first samples 1,000 random numbers between 0 and the number
     of series in our dataset, which in our case is around 145,000\. We use these as
     indices to randomly sample rows from our dataset for which we then draw the autocorrelation
     plot, which we can see in the following graphic:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码首先从0到数据集中的系列数量（在我们的例子中大约是145,000）之间随机抽取1,000个随机数。我们使用这些随机数作为索引，随机抽取数据集中的行，然后绘制自相关图，我们可以在下面的图形中看到：
 - en: '![Autocorrelation](img/B10354_04_09.jpg)'
+  id: totrans-137
   prefs: []
   type: TYPE_IMG
+  zh: '![自相关](img/B10354_04_09.jpg)'
 - en: Autocorrelations for 1,000 Wikipedia pages
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 1,000个维基页面的自相关
 - en: As you can see, autocorrelations can be quite different for different series
     and there is a lot of noise within the chart. There also seems to be a general
     trend toward higher correlations at around the 350-day mark.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所看到的，不同的系列可能具有非常不同的自相关性，而且图表中存在大量噪声。似乎在大约350天的节点上，相关性普遍较高。
 - en: Therefore, it makes sense to incorporate annual lagged page views as a time-dependent
     feature as well as the autocorrelation for one-year time intervals as a global
     feature. The same is true for quarterly and half-year lag as these seem to have
     high autocorrelations, or sometimes quite negative autocorrelations, which makes
     them valuable as well.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，将年度滞后页面浏览量作为时间依赖特征以及一年的时间间隔自相关作为全局特征是有意义的。季度和半年滞后也是如此，因为它们似乎有较高的自相关性，或者有时会表现出相当负的自相关性，这使得它们也具有很高的价值。
 - en: Time series analysis, such as in the examples shown previously, can help us
     engineer features for our model. Complex neural networks could, in theory, discover
     all of these features by themselves. However, it is often much easier to help
     them a bit, especially with information about long periods of time.
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列分析，正如前面示例所示，可以帮助我们为模型工程化特征。复杂的神经网络理论上可以自行发现所有这些特征。然而，通常帮助它们一些，特别是关于长时间段的信息，会更加容易。
 - en: Establishing a training and testing regime
+  id: totrans-142
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 建立训练和测试方案
 - en: 'Even with lots of data available, we have to ask ourselves; How do we want
     to split data between *training*, *validation*, and *testing*. This dataset already
     comes with a test set of future data, therefore we don''t have to worry about
     the test set, but for the validation set, there are two ways of splitting: a walk-forward
     split, and a side-by-side split:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 即使有大量数据可用，我们仍然需要问自己：我们如何在*训练*、*验证*和*测试*之间划分数据？这个数据集已经包含了未来数据的测试集，因此我们不需要担心测试集。但对于验证集，有两种分割方式：前向滚动分割和并行分割：
 - en: '![Establishing a training and testing regime](img/B10354_04_10.jpg)'
+  id: totrans-144
   prefs: []
   type: TYPE_IMG
+  zh: '![建立训练和测试方案](img/B10354_04_10.jpg)'
 - en: Possible testing regimes
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 可能的测试方案
 - en: In a walk-forward split, we train on all 145,000 series. To validate, we are
     going to use more recent data from all the series. In a side-by-side split, we
     sample a number of series for training and use the rest for validation.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前向滚动分割中，我们在所有145,000个序列上进行训练。为了验证，我们将使用所有序列中更近期的数据。在并行分割中，我们从多个序列中抽样用于训练，其余的用于验证。
 - en: Both have advantages and disadvantages. The disadvantage of walk-forward splitting
     is that we cannot use all of the observations of the series for our predictions.
     The disadvantage of side-by-side splitting is that we cannot use all series for training.
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 两者都有优缺点。前向滚动分割的缺点是我们不能使用序列中的所有观测值来进行预测。并行分割的缺点是我们不能将所有序列都用于训练。
 - en: If we have few series, but multiple data observations per series, a walk-forward
     split is preferable. However, if we have a lot of series, but few observations
     per series, then a side-by-side split is preferable.
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们只有少量的序列，但每个序列有多个数据观测点，建议使用前向滚动分割。然而，如果我们有大量的序列，但每个序列的观测点较少，那么并行分割更为合适。
 - en: Establishing a training and testing regime also aligns more nicely with the
     forecasting problem at hand. In side-by-side splitting, the model might overfit
     to global events in the prediction period. Imagine that Wikipedia was down for
     a week in the prediction period used in side-by-side splitting. This event would
     reduce the number of views for all the pages, and as a result the model would
     overfit to this global event.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 建立训练和测试方案也更好地契合了当前的预测问题。在并行分割中，模型可能会过拟合预测期间的全球事件。想象一下，如果在预测期内，Wikipedia停机了一周，那么这一事件将减少所有页面的访问量，结果模型会过拟合这种全球事件。
 - en: We would not catch the overfitting in our validation set because the prediction
     period would also be affected by the global event. However, in our case, we have
     multiple time series, but only about 550 observations per series. Therefore there
     seems to be no global events that would have significantly impacted all the Wikipedia
     pages in that time period.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们在验证集中无法发现过拟合问题，因为预测期也会受到全球事件的影响。然而，在我们的案例中，我们有多个时间序列，但每个序列只有大约550个观测值。因此，似乎没有全球性事件能显著影响该时间段内的所有Wikipedia页面。
 - en: However, there are some global events that impacted views for some pages, such
     as the Winter Olympics. Yet, this is a reasonable risk in this case, as the number
     of pages affected by such global events is still small. Since we have an abundance
     of series and only a few observations per series, a side-by-side split is more
     feasible in our case.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，确实有一些全球事件影响了某些页面的访问量，比如冬季奥运会。不过，在这种情况下，这是一种合理的风险，因为受到这种全球事件影响的页面数量仍然较少。由于我们拥有大量的序列，并且每个序列的观测值较少，因此在我们的情况下，并行分割更为可行。
 - en: 'In this chapter, we''re focusing on forecasting traffic for 50 days. So, we
     must first split the last 50 days of each series from the rest, as seen in the
     following code, before splitting the training and validation set:'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将重点讨论如何预测未来50天的流量。因此，我们必须首先将每个序列的最后50天与其他部分分开，如下面的代码所示，然后再分割训练集和验证集：
 - en: '[PRE19]'
+  id: totrans-153
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: When splitting, we use `X.values` to only get the data, not a DataFrame containing
     the data. After splitting we are left with 130,556 series for training and 14,507
     for validation.
+  id: totrans-154
   prefs: []
   type: TYPE_NORMAL
+  zh: 在分割时，我们使用`X.values`来仅获取数据，而不是包含数据的DataFrame。分割后，我们得到130,556个训练系列和14,507个验证系列。
 - en: 'In this example, we are going to use the **mean absolute percentage error**
     (**MAPE**) as a loss and evaluation metric. MAPE can cause division-by-zero errors
     if the true value of `y` is zero. Thus, to prevent division by zero occurring,
     we''ll use a small-value epsilon:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个例子中，我们将使用**平均绝对百分比误差**（**MAPE**）作为损失和评估指标。如果`y`的真实值为零，MAPE可能会导致除零错误。因此，为了防止除零错误的发生，我们将使用一个小值ε：
 - en: '[PRE20]'
+  id: totrans-156
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: A note on backtesting
+  id: totrans-157
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 关于回测的说明
 - en: The peculiarities of choosing training and testing sets are especially important
     in both systematic investing and algorithmic trading. The main way to test trading
     algorithms is a process called **backtesting**.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 选择训练集和测试集的特殊性在系统化投资和算法交易中尤为重要。测试交易算法的主要方法是一个叫做**回测**的过程。
 - en: Backtesting means we train the algorithm on data from a certain time period
     and then test its performance on *older* data. For example, we could train on
     data from a date range of 2015 to 2018 and then test on data from 1990 to 2015\.
     By doing this, not only is the model's accuracy tested, but the backtested algorithm
     executes virtual trades so its profitability can be evaluated. Backtesting is
     done because there is plenty of past data available.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 回测是指我们使用某一时间段的数据来训练算法，然后再用*更早*的数据测试其表现。例如，我们可以用2015年至2018年的数据进行训练，再用1990年至2015年的数据进行测试。通过这样做，不仅可以测试模型的准确性，还可以通过回测算法执行虚拟交易，从而评估其盈利能力。回测之所以重要，是因为有大量过去的数据可以利用。
 - en: 'With all that being said, backtesting does suffer from several biases. Let''s
     take a look at four of the most important biases that we need to be aware of:'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管如此，回测确实存在一些偏差。我们来看看需要特别注意的四种最重要的偏差：
 - en: '**Look-ahead bias**: This is introduced if future data is accidentally included
     at a point in the simulation where that data would not have been available yet.
     This can be caused by a technical bug in the simulator, but it can also stem from
@@ -780,17 +1111,21 @@
     securities, for example, and the correlation is calculated once for all time,
     a look-ahead bias is introduced. The same goes for the calculation of maxima or
     minima.'
+  id: totrans-161
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**前瞻偏差**：如果在模拟中不小心包含了未来的数据，而这些数据在当时是不可能已经获得的，就会引入前瞻偏差。这可能是模拟器中的技术错误造成的，也可能源自于参数计算。例如，如果某个策略利用了两只证券之间的相关性，而相关性是一次性计算得出的，那么就会引入前瞻偏差。最大值或最小值的计算也是如此。'
 - en: '**Survivorship bias**: This is introduced if only stocks that still exist at
     the time of testing are included in the simulation. Consider, for example, the
     2008 financial crisis in which many firms went bankrupt. Leaving the stocks of
     these firms out when building a simulator in 2018 would introduce survivorship
     bias. After all, the algorithm could have invested in those stocks in 2008.'
+  id: totrans-162
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**幸存者偏差**：如果在测试时只包含那些在模拟时仍然存在的股票，就会引入这种偏差。例如，考虑2008年金融危机，许多公司破产。如果在2018年构建模拟器时排除了这些公司股票，就会引入幸存者偏差。毕竟，在2008年，算法本可以投资这些股票。'
 - en: '**Psychological tolerance bias**: What looks good in a backtest might not be
     good in real life. Consider an algorithm that loses money for four months in a
     row before making it all back in a backtest. We might feel satisfied with this
@@ -798,9 +1133,11 @@
     life and we don''t know whether it will make that amount back, then will we sit
     tight or pull the plug? In the backtest, we know the final result, but in real
     life, we do not.'
+  id: totrans-163
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**心理容忍偏差**：在回测中看起来不错的策略，未必在现实中有效。考虑一个算法，它连续四个月亏损，然后在回测中将亏损全部弥补。如果是回测，我们可能会对这个算法感到满意。然而，如果算法在现实中连续四个月亏损，我们却不知道它是否能弥补这些损失，那么我们会选择坚持下去，还是立即停止？在回测中，我们知道最终的结果，但在现实中，我们并不知情。'
 - en: '**Overfitting**: This is a problem for all machine learning algorithms, but
     in backtesting, overfitting is a persistent and insidious problem. Not only does the
     algorithm potentially overfit, but the designer of the algorithm might also use
@@ -809,436 +1146,630 @@
     then look great in backtests. While it might be subtle, such as relying on certain
     correlations that held up well in the past, but it is easy to build bias into
     models that are evaluated in backtesting.'
+  id: totrans-164
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**过拟合**：这是所有机器学习算法面临的问题，但在回测中，过拟合是一个持久且隐蔽的问题。算法不仅可能会发生过拟合，算法的设计者也可能利用过去的知识，构建一个过拟合的算法。事后选股是很容易的，知识可以被纳入模型中，从而使得回测结果看起来非常好。虽然这种偏差可能比较微妙，比如依赖于过去表现良好的某些相关性，但在回测中评估的模型中很容易构建偏差。'
 - en: Building good testing regimes is a core activity of any quantitative investment
     firm or anyone working intensively with forecasting. One popular strategy for
     testing algorithms, other than backtesting, testing models on data that is statistically
     similar to stock data but differs because it's generated. We might build a generator
     for data that looks like real stock data but is not real, thus avoiding knowledge
     about real market events creeping into our models.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 建立良好的测试机制是任何量化投资公司或任何与预测密切合作的人的核心活动。除回测外，测试算法的一个流行策略是使用与股票数据在统计上相似，但因是生成的而有所不同的数据来测试模型。我们可能会构建一个生成器，生成看起来像真实股票数据但并不真实的数据，从而避免真实市场事件的知识渗透到我们的模型中。
 - en: Another option is to deploy models silently and test them in the future. The
     algorithm runs but executes only virtual trades so that if things go wrong, no
     money will be lost. This approach makes use of future data instead of past data.
     However, the downside to this method is that we have to wait for quite a while
     before the algorithm can be used.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种选择是静默地部署模型并在未来进行测试。算法运行，但仅执行虚拟交易，因此如果出现问题，资金不会丢失。这种方法利用未来的数据，而不是过去的数据。然而，这种方法的缺点是我们必须等待相当长的时间，才能使用该算法。
 - en: In practice, a combination regime is used. Statisticians carefully design regimes
     to see how an algorithm responds to different simulations. In our web traffic
     forecasting model, we will simply validate on different pages and then test on future data
     in the end.
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 在实践中，通常使用组合机制。统计学家精心设计机制，以观察算法如何对不同的模拟做出响应。在我们的网络流量预测模型中，我们将简单地在不同的页面上进行验证，最后再对未来的数据进行测试。
 - en: Median forecasting
+  id: totrans-168
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 中位数预测
 - en: A good sanity check and an often underrated forecasting tool is medians. A median
     is a value separating the higher half of a distribution from the lower half; it
     sits exactly in the middle of the distribution. Medians have the advantage of
     removing noise, coupled with the fact that they are less susceptible to outliers
     than means, and the way they capture the midpoint of distribution means that they
     are also easy to compute.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个好的合理性检查工具和常常被低估的预测工具是中位数。中位数是将分布的上半部分与下半部分分开的值；它恰好位于分布的中间。中位数的优点在于它能够去除噪音，并且比均值更不容易受到异常值的影响，而它捕捉分布中点的方式也使得计算变得更加简单。
 - en: To make a forecast, we compute the median over a look-back window in our training
     data. In this case, we use a window size of 50, but you could experiment with
     other values. The next step is to select the last 50 values from our *X* values
     and compute the median.
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了进行预测，我们计算训练数据中回看窗口的中位数。在这个例子中，我们使用窗口大小为 50，但你可以尝试其他值。下一步是从我们的*X*值中选择最后 50
+    个值并计算中位数。
 - en: 'Take a minute to note that in the NumPy median function, we have to set `keepdims=True`.
     This ensures that we keep a two-dimensional matrix rather than a flat array, which
     is important when computing the error. So, to make a forecast, we need to run
     the following code:'
+  id: totrans-171
   prefs: []
   type: TYPE_NORMAL
+  zh: 请花一点时间注意，在 NumPy 的中位数函数中，我们必须设置`keepdims=True`。这确保了我们保持一个二维矩阵，而不是一个一维数组，这在计算误差时非常重要。因此，为了进行预测，我们需要运行以下代码：
 - en: '[PRE21]'
+  id: totrans-172
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'The output returned shows we obtain an error of about 68.1%; not bad given
     the simplicity of our method. To see how the medians work, let''s plot the *X*
     values, the true *y* values, and predictions for a random page:'
+  id: totrans-173
   prefs: []
   type: TYPE_NORMAL
+  zh: 返回的输出显示我们得到了约 68.1% 的误差；考虑到我们方法的简单性，这个结果还不错。为了看看中位数是如何工作的，我们来绘制一下*X*值、真实的*y*值和一个随机页面的预测结果：
 - en: '[PRE22]'
+  id: totrans-174
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: As you can see, our plotting consists of drawing three plots. For each plot,
     we must specify the *X* and *Y* values for the plot. For `X_train`, the *X* values
     range from 0 to 500, and for `y_train` and the forecast they range from 500 to
     550\. We then select the series we want to plot from our training data. Since
     we have only one median value, we repeat the median forecast of the desired series
     50 times in order to draw our forecast.
+  id: totrans-175
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，我们的绘图包括绘制三个图。对于每个图，我们必须指定*X*和*Y*值。对于`X_train`，*X*值的范围是从0到500，而对于`y_train`和预测值，它们的范围是从500到550。然后，我们从训练数据中选择要绘制的序列。由于我们只有一个中位数值，所以我们重复所需序列的中位数预测50次，以便绘制我们的预测。
 - en: 'The output can be seen here:'
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 输出结果可以在这里看到：
 - en: '![Median forecasting](img/B10354_04_11.jpg)'
+  id: totrans-177
   prefs: []
   type: TYPE_IMG
+  zh: '![中位数预测](img/B10354_04_11.jpg)'
 - en: Median forecast and actual values for access of an image file. The True values
     are to the right-hand side of the plot, and the median forecast is the horizontal
     line in the center of them.
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于访问图像文件的中位数预测和实际值，真实值位于图形的右侧，中位数预测是它们之间的水平线。
 - en: As you can see in the preceding output median forecast, the data for this page,
     in this case, an image of American actor Eric Stoltz, is very noisy, and the median
     cuts through all the noise. The median is especially useful here for pages that
     are visited infrequently and where there is no clear trend or pattern.
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你在前面的输出中看到的中位数预测结果，这一页的数据（在这种情况下是美国演员埃里克·斯托尔茨的图片）非常嘈杂，而中位数能够穿透所有噪声。中位数在这里特别有用，尤其是对于那些访问不频繁且没有明显趋势或模式的页面。
 - en: This is not all you can do with medians. Beyond what we've just covered, you
     could, for example, use different medians for weekends or use a median of medians from
     multiple look-back periods. A simple tool, such as median forecasting, is able
     to deliver good results with smart feature engineering. Therefore, it makes sense
     to spend a bit of time on implementing median forecasting as a baseline and performing
     a sanity check before using more advanced methods.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 这并不是你能做的所有事情。除了我们刚才讲解的内容外，你还可以，比如，针对周末使用不同的中位数，或者使用多个回溯周期的中位数中位数。像中位数预测这样一个简单的工具，通过聪明的特征工程就能获得良好的结果。因此，在使用更高级的方法之前，花一点时间实现中位数预测作为基准并进行合理性检查是非常有意义的。
 - en: ARIMA
+  id: totrans-181
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: ARIMA
 - en: Earlier, in the section on exploratory data analysis, we talked about how seasonality
     and stationarity are important elements when it comes to forecasting time series.
     In fact, median forecasting has trouble with both. If the mean of a time series
     continuously shifts, then median forecasting will not continue the trend, and
     if a time series shows cyclical behavior, then the median will not continue with
     the cycle.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面关于探索性数据分析的部分中，我们谈到了季节性和平稳性在时间序列预测中的重要性。事实上，中位数预测在这两方面都有困难。如果时间序列的均值持续变化，那么中位数预测将无法继续该趋势；如果时间序列呈现周期性行为，那么中位数将无法继续该周期。
 - en: '**ARIMA** which stands for **Autoregressive Integrated Moving Average**, is
     made up of three core components:'
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: '**ARIMA**，即**自回归积分滑动平均**，由三个核心组成部分构成：'
 - en: '**Autoregression**: The model uses the relationship between a value and a number
     of lagged observations.'
+  id: totrans-184
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**自回归**：该模型使用一个值与多个滞后观测值之间的关系。'
 - en: '**Integrated**: The model uses the difference between raw observations to make
     the time series stationary. A time series going continuously upward will have
     a flat integral as the differences between points are always the same.'
+  id: totrans-185
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**积分**：该模型使用原始观测值之间的差异，使时间序列变得平稳。一个持续上升的时间序列将有一个平坦的积分，因为点与点之间的差异始终相同。'
 - en: '**Moving Average**: The model uses residual errors from a moving average.'
+  id: totrans-186
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**移动平均**：该模型使用来自移动平均的残差误差。'
 - en: We have to manually specify how many lagged observations we want to include,
     *p*, how often we want to differentiate the series, *d*, and how large the moving
     average window should be, *q*. ARIMA then performs a linear regression against
     all the included lagged observations and moving average residuals on the differentiated
     series.
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们必须手动指定要包含多少个滞后观测值，*p*，我们希望多频繁地对序列进行差分，*d*，以及滑动平均窗口的大小，*q*。然后，ARIMA 对差分序列上的所有包含的滞后观测值和滑动平均残差进行线性回归。
 - en: 'We can use ARIMA in Python with `statsmodels`, a library with many helpful
     statistical tools. To do this, we simply run this:'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以在 Python 中使用 `statsmodels` 库来应用 ARIMA，这是一个包含许多有用统计工具的库。为此，我们只需要运行以下代码：
 - en: '[PRE23]'
+  id: totrans-189
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'Then, to create a new ARIMA model, we pass the data we want to fit, in this
     case from our earlier example of views for 2NE1 from the Chinese Wikipedia, as
     well as the desired values for *p*, *d,* and *q,* in that order. In this case,
     we want to include five lagged observations, differentiate once, and take a moving
     average window of five. In code, this works out as follows:'
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，要创建一个新的ARIMA模型，我们传递要拟合的数据，在这个例子中是来自中文维基百科的2NE1页面访问量数据，以及所需的*p*、*d*和*q*值，按顺序排列。在这个例子中，我们希望包括五个滞后观测值，对数据进行一次差分，并取一个五天的移动平均窗口。代码如下：
 - en: '[PRE24]'
+  id: totrans-191
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'We can then fit the model using `model.fit()`:'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用`model.fit()`来拟合模型：
 - en: '[PRE25]'
+  id: totrans-193
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'Running `model.summary()` at this point would output all the coefficients as
     well as significance values for statistical analysis. We, however, are more interested
     in how well our model does in forecasting. So, to complete this, and see the output,
     we simply run:'
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 此时运行`model.summary()`将输出所有系数以及用于统计分析的显著性值。然而，我们更关心的是模型在预测方面的表现。因此，为了完成这一操作并查看输出，我们只需要运行：
 - en: '[PRE26]'
+  id: totrans-195
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'After running the previous code, we''ll be able to output the results for 2NE1
     page views, as we can see in this graph:'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行前面的代码后，我们可以输出2NE1页面访问量的预测结果，正如这个图表所示：
 - en: '![ARIMA](img/B10354_04_12.jpg)'
+  id: totrans-197
   prefs: []
   type: TYPE_IMG
+  zh: '![ARIMA](img/B10354_04_12.jpg)'
 - en: The residual error of the ARIMA forecast
+  id: totrans-198
   prefs: []
   type: TYPE_NORMAL
+  zh: ARIMA预测的残差误差
 - en: In the preceding chart, we can see that the model does very well in the beginning
     but really begins to struggle at around the 300-day mark. This could be because
     page views are harder to predict or because there is more volatility in this period.
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的图表中，我们可以看到模型在开始时表现得非常好，但在大约300天时开始出现较大偏差。这可能是因为页面访问量更难预测，或者该时期波动性较大。
 - en: In order for us to ensure that our model is not skewed, we need to examine the
     distribution of the residuals. We can do this by plotting a *kernel density estimator*,
     which is a mathematical method designed to estimate distributions without needing
     to model them.
+  id: totrans-200
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了确保我们的模型不受偏差影响，我们需要检查残差的分布。我们可以通过绘制*核密度估计器*来实现，这是一个用于估计分布的数学方法，无需对其进行建模。
 - en: 'We can do this by running the following code:'
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过运行以下代码来完成：
 - en: '[PRE27]'
+  id: totrans-202
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'This code will then output the following graph:'
+  id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码将输出以下图表：
 - en: '![ARIMA](img/B10354_04_13.jpg)'
+  id: totrans-204
   prefs: []
   type: TYPE_IMG
+  zh: '![ARIMA](img/B10354_04_13.jpg)'
 - en: Approximately normally distributed residuals from ARIMA forecast
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 来自ARIMA预测的近似正态分布残差
 - en: As you can see, our model roughly represents a Gaussian distribution with a
     mean of zero. So, it's all good on that front, but then the question arises, "how
     do we make forecasts?"
+  id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，我们的模型大致呈现一个均值为零的高斯分布。因此，在这方面一切正常，但接下来出现了一个问题：“我们如何进行预测？”
 - en: 'To use this model for forecasting, all we have to do is to specify the number
     of days we want to forecast, which we can do with the following code:'
+  id: totrans-207
   prefs: []
   type: TYPE_NORMAL
+  zh: 要使用这个模型进行预测，我们只需要指定我们想要预测的天数，可以使用以下代码来完成：
 - en: '[PRE28]'
+  id: totrans-208
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: This forecast not only gives us predictions but also the standard error and
     confidence interval, which is 95% by default.
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个预测不仅给出了我们的预测值，还提供了标准误差和置信区间，默认情况下是95%。
 - en: 'Let''s plot the projected views against the real views to see how we are doing.
     This graph shows the last 20 days for our prediction basis as well as the forecast
     to keep things readable. To produce this, we must execute the following code:'
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们将预测视图与实际视图进行对比，看看我们的表现如何。这个图表显示了过去20天的预测基础和预测结果，以便保持图表可读性。要生成这个图表，我们需要执行以下代码：
 - en: '[PRE29]'
+  id: totrans-211
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'This code will output the following graph:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段代码将输出以下图表：
 - en: '![ARIMA](img/B10354_04_14.jpg)'
+  id: totrans-213
   prefs: []
   type: TYPE_IMG
+  zh: '![ARIMA](img/B10354_04_14.jpg)'
 - en: ARIMA forecast and actual access
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: ARIMA预测与实际访问量
 - en: You can see that ARIMA captures the periodicity of the series very well. Its
     forecast does steer off a bit toward the end, but in the beginning, it does a
     remarkable job.
+  id: totrans-215
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到，ARIMA很好地捕捉了序列的周期性。尽管其预测在最后有所偏离，但在开始时做得相当出色。
 - en: Kalman filters
+  id: totrans-216
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器
 - en: Kalman filters are a method of extracting a signal from either noisy or incomplete
     measurements. They were invented by Hungarian-born, American engineer, Rudolf
     Emil Kalman, for the purpose of electrical engineering, and were first used in
     the Apollo Space program in the 1960s.
+  id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器是一种从噪声或不完全的测量中提取信号的方法。它们由匈牙利裔美国工程师鲁道夫·埃米尔·卡尔曼发明，最初用于电气工程，并在1960年代的阿波罗太空计划中首次使用。
 - en: The basic idea behind the Kalman filter is that there is some hidden state of
     a system that we cannot observe directly but for which we can obtain noisy measurements.
     Imagine you want to measure the temperature inside a rocket engine. You cannot
     put a measurement device directly into the engine, because it's too hot, but you
     can have a device on the outside of the engine.
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器背后的基本思想是，系统中有一个我们无法直接观察到的隐藏状态，但我们可以通过噪声测量来获取这个状态。想象一下你想测量火箭发动机内部的温度。你不能将测量设备直接放入发动机中，因为太热了，但你可以在发动机外部放置一个设备。
 - en: Naturally, this measurement is not going to be perfect, as there are a lot of
     external factors occurring outside of the engine that make the measurement noisy.
     Therefore, to estimate the temperature inside the rocket, you need a method that
     can deal with the noise. We can think of the internal state in the page forecasting
     as the actual interest in a certain page, of which the page views represent only
     a noisy measurement.
+  id: totrans-219
   prefs: []
   type: TYPE_NORMAL
+  zh: 自然，这个测量值不会完美，因为发动机外部发生了许多外部因素，这些因素使得测量值存在噪声。因此，为了估计火箭内部的温度，我们需要一种能够处理噪声的方法。我们可以将页面预测中的内部状态视为某个页面的实际兴趣，而页面浏览量仅代表一个噪声测量值。
 - en: 'The idea here is that the internal state, ![Kalman filters](img/B10354_04_004.jpg),
     at time *k* is a state transition matrix, *A,* multiplied with the previous internal
     state, ![Kalman filters](img/B10354_04_005.jpg), plus some process noise, ![Kalman
     filters](img/B10354_04_006.jpg). How interest in the Wikipedia page of 2NE1 develops
     is to some degree random. The randomness is assumed to follow a Gaussian normal
     distribution with mean zero and variance *Q*:'
+  id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的思想是，时间 *k* 时的内部状态，![卡尔曼滤波器](img/B10354_04_004.jpg)，是由状态转移矩阵 *A* 乘以前一个内部状态，![卡尔曼滤波器](img/B10354_04_005.jpg)，加上一些过程噪声，![卡尔曼滤波器](img/B10354_04_006.jpg)。2NE1维基页面的兴趣发展在某种程度上是随机的。这种随机性假定遵循一个均值为零、方差为
+    *Q* 的高斯正态分布：
 - en: '![Kalman filters](img/B10354_04_007.jpg)'
+  id: totrans-221
   prefs: []
   type: TYPE_IMG
+  zh: '![卡尔曼滤波器](img/B10354_04_007.jpg)'
 - en: 'The obtained measurement at time *k*, ![Kalman filters](img/B10354_04_008.jpg),
     is an observation model, *H*, describing how states translate to measurements
     times the state, ![Kalman filters](img/B10354_04_009.jpg), plus some observation
     noise, ![Kalman filters](img/B10354_04_010.jpg). The observation noise is assumed
     to follow a Gaussian normal distribution with mean zero and variance *R*:'
+  id: totrans-222
   prefs: []
   type: TYPE_NORMAL
+  zh: 在时间 *k* 时获得的测量值，![卡尔曼滤波器](img/B10354_04_008.jpg)，是一个观察模型，*H*，描述了状态如何转换为测量值，乘以状态，![卡尔曼滤波器](img/B10354_04_009.jpg)，再加上一些观察噪声，![卡尔曼滤波器](img/B10354_04_010.jpg)。观察噪声假定遵循一个均值为零、方差为
+    *R* 的高斯正态分布：
 - en: '![Kalman filters](img/B10354_04_011.jpg)'
+  id: totrans-223
   prefs: []
   type: TYPE_IMG
+  zh: '![卡尔曼滤波器](img/B10354_04_011.jpg)'
 - en: Roughly speaking, Kalman filters fit a function by estimating *A*, *H*, *Q,*
     and *R*. The process of going over a time series and updating the parameters is
     called smoothing. The exact mathematics of the estimation process is complicated
     and not very relevant if all we want to do is forecasting. Yet, what is relevant
     is that we need to provide priors to these values.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 简而言之，卡尔曼滤波器通过估计 *A*、*H*、*Q* 和 *R* 来拟合一个函数。遍历时间序列并更新参数的过程称为平滑。估计过程的精确数学非常复杂，如果我们只是想进行预测，它并不是特别相关。然而，相关的是我们需要为这些值提供先验。
 - en: 'We should note that our state does not have to be only one number. In this
     case, our state is an eight-dimensional vector, with one hidden level as well
     as seven levels to capture weekly seasonality, as we can see in this code:'
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们应该注意到，我们的状态不必只有一个数值。在这种情况下，我们的状态是一个八维向量，包含一个隐藏层以及七个层次来捕捉每周的季节性，正如我们在这段代码中看到的那样：
 - en: '[PRE30]'
+  id: totrans-226
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'The transition matrix, *A,* looks like the following table, describing one
     hidden level, which we might interpret as the real interest as well as a seasonality
     model:'
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 转移矩阵，*A*，如下表所示，描述了一个隐藏层，我们可以将其解释为实际利率以及季节性模型：
 - en: '[PRE31]'
+  id: totrans-228
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'The observation model, *H,* maps the general interest plus seasonality to a
     single measurement:'
+  id: totrans-229
   prefs: []
   type: TYPE_NORMAL
+  zh: 观察模型，*H*，将总兴趣加上季节性映射到一个单一的测量值：
 - en: '[PRE32]'
+  id: totrans-230
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'The observation model looks like this:'
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: 观察模型如下所示：
 - en: '[PRE33]'
+  id: totrans-232
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: 'The noise priors are just estimates scaled by a "smoothing factor," which allows
     us to control the update process:'
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: 噪声先验只是通过“平滑因子”缩放的估计值，这使我们能够控制更新过程：
 - en: '[PRE34]'
+  id: totrans-234
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: '`process_noise_cov` is an eight-dimensional vector, matching the eight-dimensional
     state vector. Meanwhile, `observation_noise_cov` is a single number, as we have
     only a single measurement. The only real requirement for these priors is that
     their shapes must allow the matrix multiplications described in the two preceding
     formulas. Other than that, we are free to specify transition models as we see
     them.'
+  id: totrans-235
   prefs: []
   type: TYPE_NORMAL
+  zh: '`process_noise_cov` 是一个八维向量，与八维状态向量相匹配。与此同时，`observation_noise_cov` 是一个单一的数字，因为我们只有一个测量值。这些先验的唯一要求是它们的形状必须允许前两个公式中描述的矩阵乘法。除此之外，我们可以自由地根据需要指定转移模型。'
 - en: Otto Seiskari, a mathematician and 8th place winner in the original Wikipedia
     traffic forecasting competition, wrote a very fast Kalman filtering library, which
     we will be using here. His library allows for the vectorized processing of multiple
     independent time series, which is very handy if you have 145,000 time series to
     process.
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 奥托·塞伊斯卡里（Otto Seiskari），一位数学家以及最初维基百科交通预测竞赛中的第8名获得者，编写了一个非常快速的卡尔曼滤波库，我们将在这里使用。
+    他的库允许对多个独立的时间序列进行矢量化处理，如果你需要处理145,000个时间序列，这非常方便。
 - en: Note
+  id: totrans-237
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: The library''s repository can be found here: [https://github.com/oseiskar/simdkalman](https://github.com/oseiskar/simdkalman).'
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：该库的代码库可以在这里找到：[https://github.com/oseiskar/simdkalman](https://github.com/oseiskar/simdkalman)。'
 - en: 'You can install his library using the following command:'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以使用以下命令安装他的库：
 - en: '[PRE35]'
+  id: totrans-240
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'To import it, run the following code:'
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: 要导入它，运行以下代码：
 - en: '[PRE36]'
+  id: totrans-242
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE36]'
 - en: 'Although `simdkalman` is very sophisticated, it is quite simple to use. Firstly,
     we are going to specify a Kalman filter using the priors we just defined:'
+  id: totrans-243
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管 `simdkalman` 非常复杂，但使用起来相当简单。首先，我们将使用我们刚刚定义的先验来指定一个卡尔曼滤波器：
 - en: '[PRE37]'
+  id: totrans-244
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE37]'
 - en: 'From there we can then estimate the parameters and compute a forecast in one
     step:'
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 从那里我们可以估计参数并一步到位地计算预测：
 - en: '[PRE38]'
+  id: totrans-246
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE38]'
 - en: Once again, we make forecasts for 2NE1's Chinese page and create a forecast
     for 50 days. Take a minute to note that we could also pass multiple series, for example,
     the first 10 with `X_train[:10]`, and compute separate filters for all of them
     at once.
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: 再次，我们为2NE1的中文页面进行预测，并创建50天的预测。请花一点时间注意，我们也可以传递多个系列，例如使用 `X_train[:10]` 来传递前10个系列，并一次性为它们计算独立的滤波器。
 - en: The result of the compute function contains the state and observation estimates
     from the smoothing process as well as predicted internal states and observations.
     States and observations are Gaussian distributions, so to get a plottable value,
     we need to access their mean.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: '`compute` 函数的结果包含了平滑过程中的状态和观测估计值，以及预测的内部状态和观测值。状态和观测是高斯分布，因此为了获得可绘制的值，我们需要访问它们的均值。'
 - en: 'Our states are eight-dimensional, but we only care about the non-seasonal state
     value, so we need to index the mean, which we can achieve by running the following:'
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的状态是八维的，但我们只关心非季节性状态值，因此我们需要索引均值，我们可以通过运行以下代码来实现：
 - en: '[PRE39]'
+  id: totrans-250
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE39]'
 - en: 'The preceding code will then output the following chart:'
+  id: totrans-251
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述代码将输出以下图表：
 - en: '![Kalman filters](img/B10354_04_15.jpg)'
+  id: totrans-252
   prefs: []
   type: TYPE_IMG
+  zh: '![卡尔曼滤波器](img/B10354_04_15.jpg)'
 - en: Predictions and inner states from the Kalman filter
+  id: totrans-253
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器的预测和内部状态
 - en: We can clearly see in the preceding graph the effects of our prior modeling
     on the predictions. We can see the model predicts strong weekly oscillation, stronger
     than actually observed. Likewise, we can also see that the model does not anticipate
     any trends since we did not see model trends in our prior model.
+  id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以在上面的图表中清楚地看到先验建模对预测的影响。我们可以看到模型预测了强烈的周波动，比实际观察到的波动要强。同样，我们也可以看到模型没有预见到任何趋势，因为在我们的先验模型中没有看到趋势。
 - en: Kalman filters are a useful tool and are used in many applications, from electrical
     engineering to finance. In fact, until relatively recently, they were the go-to
     tool for time series modeling. Smart modelers were able to create smart systems
     that described the time series very well. However, one weakness of Kalman filters
     is that they cannot discover patterns by themselves and need carefully engineered
     priors in order to work.
+  id: totrans-255
   prefs: []
   type: TYPE_NORMAL
+  zh: 卡尔曼滤波器是一种有用的工具，广泛应用于许多领域，从电气工程到金融。事实上，直到最近，它们都是时间序列建模的首选工具。聪明的建模者能够创建智能系统，非常好地描述时间序列。然而，卡尔曼滤波器的一个弱点是它们无法自主发现模式，必须依赖精心设计的先验才能有效工作。
 - en: In the second half of this chapter, we will be looking at neural network-based
     approaches that can automatically model time series, and often with higher accuracy.
+  id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章的后半部分，我们将探讨基于神经网络的方法，这些方法能够自动建模时间序列，并且通常具有更高的准确性。
 - en: Forecasting with neural networks
+  id: totrans-257
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 神经网络预测
 - en: The second half of the chapter is all about neural networks. In the first part,
     we will be building a simple neural network that only forecasts the next time
     step. Since the spikes in the series are very large, we will be working with log-transformed
     page views in input and output. We can use the short-term forecast neural network
     to make longer-term forecasts, too, by feeding its predictions back into the network.
+  id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章的后半部分将集中讲解神经网络。在第一部分，我们将构建一个简单的神经网络，只预测下一时刻的值。由于序列中的波动很大，我们将使用对数变换后的页面访问量作为输入和输出。我们还可以通过将短期预测神经网络的预测结果反馈到网络中，来进行长期预测。
 - en: Before we can dive in and start building forecast models, we need to do some
     preprocessing and feature engineering. The advantage of neural networks is that
     they can take in both a high number of features in addition to very high-dimensional
@@ -1246,134 +1777,196 @@
     Remember how we discussed look-ahead bias earlier in the chapter, including future
     data that would not have been available at the time of forecasting, which is a
     problem in backtesting.
+  id: totrans-259
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们开始构建预测模型之前，需要进行一些预处理和特征工程。神经网络的优势在于它们不仅能够处理大量特征，还能处理非常高维的数据。劣势是我们必须小心输入哪些特征。记得我们在本章早些时候讨论过前瞻性偏差，包括将未来的数据作为输入，这些数据在预测时并不可得，这在回测中是一个问题。
 - en: Data preparation
+  id: totrans-260
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 数据准备
 - en: 'For each series, we will assemble the following features:'
+  id: totrans-261
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于每个系列，我们将组装以下特征：
 - en: '`log_view`: The natural logarithm of page views. Since the logarithm of zero
     is undefined, we will use `log1p`, which is the natural logarithm of page views
     plus one.'
+  id: totrans-262
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`log_view`: 页面访问量的自然对数。由于零的对数是未定义的，我们将使用`log1p`，它是页面访问量加一后的自然对数。'
 - en: '`days`: One-hot encoded weekdays.'
+  id: totrans-263
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`days`: 一热编码的工作日。'
 - en: '`year_lag`: The value of `log_view` from 365 days ago. `-1` if there is no
     value available.'
+  id: totrans-264
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`year_lag`: 365天前的`log_view`值。如果没有可用值，则为`-1`。'
 - en: '`halfyear_lag`: The value of `log_view` from 182 days ago. `-1` if there is
     no value available.'
+  id: totrans-265
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`halfyear_lag`: 182天前的`log_view`值。如果没有可用值，则为`-1`。'
 - en: '`quarter_lag`: The value of `log_view` from 91 days ago. `-1` if there is no
     value available.'
+  id: totrans-266
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`quarter_lag`: 91天前的`log_view`值。如果没有可用值，则为`-1`。'
 - en: '`page_enc`: The one-hot encoded subpage.'
+  id: totrans-267
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`page_enc`: 一热编码的子页面。'
 - en: '`agent_enc`: The one-hot encoded agent.'
+  id: totrans-268
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`agent_enc`: 一热编码的代理。'
 - en: '`acc_enc`: The one-hot encoded access method.'
+  id: totrans-269
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`acc_enc`: 一热编码的访问方式。'
 - en: '`year_autocorr`: The autocorrelation of the series of 365 days.'
+  id: totrans-270
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`year_autocorr`: 365天系列的自相关。'
 - en: '`halfyr_autocorr`: The autocorrelation of the series of 182 days.'
+  id: totrans-271
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`halfyr_autocorr`: 182天系列的自相关。'
 - en: '`quarter_autocorr`: The autocorrelation of the series of 91 days.'
+  id: totrans-272
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`quarter_autocorr`: 91天系列的自相关。'
 - en: '`medians`: The median of page views over the lookback period.'
+  id: totrans-273
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '`medians`: 回溯期间页面访问量的中位数。'
 - en: These features are assembled for each time series, giving our input data the
     shape (batch size, look back window size, 29).
+  id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些特征是为每个时间序列组装的，赋予我们的输入数据形状为（批次大小，回溯窗口大小，29）。
 - en: Weekdays
+  id: totrans-275
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 工作日
 - en: 'The day of the week matters. Sundays may show different access behavior, when
     people are browsing from their couch, compared to Mondays, when people may be
     looking up things for work. So, we need to encode the weekday. A simple one-hot
     encoding will do the job:'
+  id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 星期几是很重要的。星期天的访问行为可能与星期一不同，因为星期天人们可能坐在沙发上浏览，而星期一则是人们可能在查找工作相关的事情。因此，我们需要对工作日进行编码。简单的一热编码就能完成这项工作：
 - en: '[PRE40]'
+  id: totrans-277
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE40]'
 - en: 'Firstly, we turn the date strings (such as 2017-03-02) into their weekday (Thursday).
     This is very simple to do, and can be done with the following code:'
+  id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们将日期字符串（如2017-03-02）转换为工作日（星期四）。这非常简单，可以通过以下代码实现：
 - en: '[PRE41]'
+  id: totrans-279
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE41]'
 - en: 'We then encode the weekdays into integers, so that "Monday" becomes `1`, "Tuesday"
     becomes `2`, and so on. We reshape the resulting array into a rank-2 tensor with
     shape (array length, 1) so that the one-hot encoder knows that we have many observations,
     but only one feature, and not the other way around:'
+  id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将工作日编码为整数，"Monday"（星期一）变为`1`，"Tuesday"（星期二）变为`2`，依此类推。然后，我们将结果数组重塑为形状为（数组长度，1）的二维张量，这样一热编码器就知道我们有多个观察值，但只有一个特征，而不是反过来：
 - en: '[PRE42]'
+  id: totrans-281
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE42]'
 - en: 'Finally, we one-hot encode the days. We then add a new dimension to the tensor
     showing that we only have one "row" of dates. We will later repeat the array along
     this axis:'
+  id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们对天数进行一热编码。然后，我们向张量中添加一个新的维度，表示我们只有一行日期。稍后我们将在该轴上重复这个数组：
 - en: '[PRE43]'
+  id: totrans-283
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE43]'
 - en: We will need the encoders for the agents later when we encode the agent of each series.
+  id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 在编码每个系列的代理时，我们稍后会需要这些代理的编码器。
 - en: Here, we first create a `LabelEncoder` instance that can transform the agent
     name strings into integers. We then transform all of the agents into such an integer
     string in order to set up a `OneHotEncoder` instance that can one-hot encode the
     agents. To save memory, we will then delete the already-encoded agents.
+  id: totrans-285
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们首先创建一个`LabelEncoder`实例，它可以将代理名称字符串转换为整数。然后，我们将所有代理转换为这样的整数字符串，以便设置一个`OneHotEncoder`实例，它可以对代理进行独热编码。为了节省内存，我们接着会删除已经编码过的代理。
 - en: 'We do the same for subpages and access methods by running the following:'
+  id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们对子页面和访问方法也做同样的操作，运行以下代码：
 - en: '[PRE44]'
+  id: totrans-287
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE44]'
 - en: 'Now we come to the lagged features. Technically, neural networks could discover
     what past events are relevant for forecasting themselves. However, this is pretty
     difficult because of the vanishing gradient problem, something that is covered
     in more detail later, in the *LSTM* section of this chapter. For now, let''s just
     set up a little function that creates an array lagged by a number of days:'
+  id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们来讲讲滞后特征。技术上来说，神经网络可以自己发现哪些过去的事件对预测是相关的。然而，由于梯度消失问题，这非常困难，梯度消失问题在本章的*LSTM*部分会详细讲解。现在，先让我们设置一个小函数，用于创建一个滞后指定天数的数组：
 - en: '[PRE45]'
+  id: totrans-289
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE45]'
 - en: 'This function first creates a new array that will fill up the "empty space"
     from the shift. The new array has as many rows as the original array but its series
     length, or width, is the number of days we want to lag. We then attach this array
@@ -1382,114 +1975,168 @@
     time intervals. To compute the autocorrelation for a single series, we shift the
     series by the amount of lag we want to measure the autocorrelation for. We then
     compute the autocorrelation:'
+  id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个函数首先创建一个新的数组，用来填补由于偏移而产生的“空白”。新数组的行数和原始数组一样，但其序列长度或宽度是我们想要滞后的天数。然后，我们将这个数组附加到原始数组的前面。最后，我们从数组的末尾删除元素，以恢复到原始数组的序列长度或宽度。我们想要告诉我们的模型，不同时间间隔的自相关程度。为了计算单个序列的自相关，我们将序列按我们想要衡量的滞后量进行偏移。然后，我们计算自相关：
 - en: '![Weekdays](img/B10354_04_012.jpg)'
+  id: totrans-291
   prefs: []
   type: TYPE_IMG
+  zh: '![Weekdays](img/B10354_04_012.jpg)'
 - en: 'In this formula ![Weekdays](img/B10354_04_013.jpg) is the lag indicator. We
     do not just use a NumPy function since there is a real possibility that the divider
     is zero. In this case, our function will just return 0:'
+  id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这个公式中，![Weekdays](img/B10354_04_013.jpg) 是滞后指标。我们并不直接使用NumPy函数，因为有可能分母为零。在这种情况下，我们的函数将返回0：
 - en: '[PRE46]'
+  id: totrans-293
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE46]'
 - en: 'We can use this function, which we wrote for a single series, to create a batch
     of autocorrelation features, as seen here:'
+  id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用这个函数，它是我们为单个序列编写的，来创建一个自相关特征批次，如下所示：
 - en: '[PRE47]'
+  id: totrans-295
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE47]'
 - en: Firstly, we calculate the autocorrelations for each series in the batch. Then
     we fuse the correlations together into one NumPy array. Since autocorrelations
     are a global feature, we need to create a new dimension for the length of the
     series and another new dimension to show that this is only one feature. We then
     repeat the autocorrelations over the entire length of the series.
+  id: totrans-296
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们计算批次中每个序列的自相关。然后，我们将这些相关性融合到一个NumPy数组中。由于自相关是一个全局特征，我们需要为序列的长度创建一个新维度，并且需要再创建一个新维度来表示这只是一个特征。接着，我们将自相关在整个序列的长度上重复。
 - en: 'The `get_batch` function utilizes all of these tools in order to provide us
     with one batch of data, as can be seen with the following code:'
+  id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: '`get_batch`函数利用所有这些工具来为我们提供一个数据批次，如下代码所示：'
 - en: '[PRE48]'
+  id: totrans-298
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE48]'
 - en: 'That was a lot of code, so let''s take a minute to walk through the preceding
     code step by step in order to fully understand it:'
+  id: totrans-299
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码量有点多，所以让我们花点时间逐步走过之前的代码，以便充分理解它：
 - en: Ensures there is enough data to create a lookback window and a target from the
     given starting point.
+  id: totrans-300
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 确保有足够的数据可以从给定的起点创建一个回溯窗口和一个目标。
 - en: Separates the lookback window from the training data.
+  id: totrans-301
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将回溯窗口与训练数据分开。
 - en: Separates the target and then takes the one plus logarithm of it.
+  id: totrans-302
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 分离目标数据，并对其取回溯窗口的一加对数。
 - en: Takes the one plus logarithm of the lookback window and adds a feature dimension.
+  id: totrans-303
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 取回溯窗口的一加对数并增加一个特征维度。
 - en: Gets the days from the precomputed one-hot encoding of days and repeats it for
     each time series in the batch.
+  id: totrans-304
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 获取从预计算的天数独热编码中得到的天数，并为批次中的每个时间序列重复这一过程。
 - en: Computes the lag features for year lag, half-year lag, and quarterly lag.
+  id: totrans-305
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算年滞后、半年滞后和季度滞后的滞后特征。
 - en: This step will encode the global features using the preceding defined encoders.
     The next two steps, 8 and 9, will echo the same role.
+  id: totrans-306
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 这一步将使用之前定义的编码器对全局特征进行编码。接下来的两步，8 和 9，将执行相同的操作。
 - en: This step repeats step 7.
+  id: totrans-307
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 这一步重复第 7 步。
 - en: This step repeats step 7 and 8.
+  id: totrans-308
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 这一步重复第 7 步和第 8 步。
 - en: Calculates the year, half-year, and quarterly autocorrelation.
+  id: totrans-309
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算年、半年和季度的自相关。
 - en: Calculates the median for the lookback data.
+  id: totrans-310
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算回溯数据的中位数。
 - en: Fuses all these features into one batch.
+  id: totrans-311
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将所有这些特征融合成一个批次。
 - en: Finally, we can use our `get_batch` function to write a generator, just like
     we did in [Chapter 3](ch03.xhtml "Chapter 3. Utilizing Computer Vision"), *Utilizing
     Computer Vision*. This generator loops over the original training set and passes
     a subset into the `get_batch` function. It then yields the batch obtained.
+  id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们可以使用我们的`get_batch`函数编写生成器，就像我们在[第 3 章](ch03.xhtml "第 3 章. 利用计算机视觉")*利用计算机视觉*中做的那样。这个生成器会遍历原始训练集，并将一个子集传递到`get_batch`函数中。然后，它会返回获得的批次。
 - en: 'Note that we choose random starting points to make the most out of our data:'
+  id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们选择随机起点，以充分利用我们的数据：
 - en: '[PRE49]'
+  id: totrans-314
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE49]'
 - en: This function is what we will train and validate on.
+  id: totrans-315
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个函数就是我们将训练和验证的内容。
 - en: Conv1D
+  id: totrans-316
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Conv1D
 - en: You might remember Convolution Neural Networks (ConvNets, or CNNs) from [Chapter
     3,](ch03.xhtml "Chapter 3. Utilizing Computer Vision") *Utilizing Computer Vision*,
     where we looked briefly at roofs and insurance. In computer vision, convolutional
@@ -1498,136 +2145,202 @@
     sequence, much like the output of a two-dimensional convolution was another image.
     Everything else about one-dimensional convolutions is exactly the same as two-dimensional
     convolutions.
+  id: totrans-317
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可能还记得在[第 3 章](ch03.xhtml "第 3 章. 利用计算机视觉")*利用计算机视觉*中提到的卷积神经网络（ConvNets，或 CNNs），我们简要地讨论了屋顶和保险。在计算机视觉中，卷积滤波器是二维滑动在图像上。此外，还有一种可以在序列上进行一维滑动的卷积滤波器。其输出是另一个序列，就像二维卷积的输出是另一幅图像一样。一维卷积的其他一切与二维卷积完全相同。
 - en: 'In this section, we''re going to start by building a ConvNet that expects a
     fixed input length:'
+  id: totrans-318
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一部分，我们将从构建一个期望固定输入长度的 ConvNet 开始：
 - en: '[PRE50]'
+  id: totrans-319
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE50]'
 - en: Notice that next to `Conv1D` and `Activation`, there are two more layers in
     this network. `MaxPool1D` works exactly like `MaxPooling2D`, which we used earlier
     in the book. It takes a piece of the sequence with a specified length and returns
     the maximum element in the sequence. This is similar to how it returned the maximum
     element of a small window in two-dimensional convolutional networks.
+  id: totrans-320
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，在`Conv1D`和`Activation`旁边，还有两个层。在这个网络中，`MaxPool1D`的工作方式与我们之前在书中使用的`MaxPooling2D`完全相同。它会获取指定长度的序列片段，并返回该序列中的最大元素。这类似于它在二维卷积网络中如何返回一个小窗口中的最大元素。
 - en: Take note that max pooling always returns the maximum element for each channel.
     `Flatten` transforms the two-dimensional sequence tensor into a one-dimensional
     flat tensor. To use `Flatten` in combination with `Dense`, we need to specify
     the sequence length in the input shape. Here, we set it with the `max_len` variable.
     We do this because `Dense` expects a fixed input shape and `Flatten` will return
     a tensor based on the size of its input.
+  id: totrans-321
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，最大池化总是返回每个通道的最大元素。`Flatten`将二维序列张量转换为一维的扁平张量。为了将`Flatten`与`Dense`结合使用，我们需要在输入形状中指定序列长度。在这里，我们通过`max_len`变量来设置它。我们这样做是因为`Dense`期望一个固定的输入形状，而`Flatten`会根据输入的大小返回一个张量。
 - en: An alternative to using `Flatten` is `GlobalMaxPool1D`, which returns the maximum
     element of the entire sequence. Since the sequence is fixed in size, you can use
     a `Dense` layer afterward without fixing the input length.
+  id: totrans-322
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`Flatten`的替代方法是`GlobalMaxPool1D`，它返回整个序列的最大元素。由于序列大小是固定的，因此你可以在之后使用`Dense`层，而无需固定输入长度。
 - en: 'Our model compiles just as you would expect:'
+  id: totrans-323
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的模型就像你预期的那样进行了编译：
 - en: '[PRE51]'
+  id: totrans-324
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE51]'
 - en: 'We then train it on the generator that we wrote earlier. To obtain separate
     train and validation sets, we must first split the overall dataset and then create
     two generators based on the two datasets. To do this, run the following code:'
+  id: totrans-325
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们在之前写的生成器上训练它。为了获得单独的训练集和验证集，我们必须首先拆分整个数据集，然后基于这两个数据集创建两个生成器。为此，请运行以下代码：
 - en: '[PRE52]'
+  id: totrans-326
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE52]'
 - en: 'Finally, we can train our model on a generator, just like we did in computer
     vision:'
+  id: totrans-327
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们可以像在计算机视觉中一样，在生成器上训练我们的模型：
 - en: '[PRE53]'
+  id: totrans-328
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE53]'
 - en: Your validation loss will still be quite high, around 12,798,928\. The absolute
     loss value is never a good guide for how well your model is doing. You'll find
     that it's better to use other metrics in order to see whether your forecasts are
     useful. However, please note that we will reduce the loss significantly later
     in this chapter.
+  id: totrans-329
   prefs: []
   type: TYPE_NORMAL
+  zh: 你的验证损失仍然会很高，大约为12,798,928。绝对损失值从来不是衡量模型好坏的好指标。你会发现使用其他评估指标会更好，这样你就能判断你的预测是否有用。不过，请注意，我们将在本章稍后显著降低损失。
 - en: Dilated and causal convolution
+  id: totrans-330
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 扩张卷积和因果卷积
 - en: 'As discussed in the section on backtesting, we have to make sure that our model
     does not suffer from look-ahead bias:'
+  id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 如回测部分所述，我们必须确保模型不会受到未来数据泄漏偏差的影响：
 - en: '![Dilated and causal convolution](img/B10354_04_16.jpg)'
+  id: totrans-332
   prefs: []
   type: TYPE_IMG
+  zh: '![扩张卷积和因果卷积](img/B10354_04_16.jpg)'
 - en: Standard convolution does not take the direction of convolution into account
+  id: totrans-333
   prefs: []
   type: TYPE_NORMAL
+  zh: 标准卷积不考虑卷积的方向
 - en: 'As the convolutional filter slides over the data, it looks into the future
     as well as the past. Causal convolution ensures that the output at time *t* derives
     only from inputs from time *t - 1*:'
+  id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 当卷积滤波器在数据上滑动时，它不仅查看过去的输入，还查看未来的输入。因果卷积确保时间*t*的输出仅来自时间*t - 1*的输入：
 - en: '![Dilated and causal convolution](img/B10354_04_17.jpg)'
+  id: totrans-335
   prefs: []
   type: TYPE_IMG
+  zh: '![扩张卷积和因果卷积](img/B10354_04_17.jpg)'
 - en: Causal convolution shifts the filter in the right direction
+  id: totrans-336
   prefs: []
   type: TYPE_NORMAL
+  zh: 因果卷积将滤波器向正确的方向移动
 - en: 'In Keras, all we have to do is set the `padding` parameter to `causal`. We
     can do this by executing the following code:'
+  id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Keras中，我们只需将`padding`参数设置为`causal`。我们可以通过执行以下代码来实现：
 - en: '[PRE54]'
+  id: totrans-338
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE54]'
 - en: Another useful trick is dilated convolutional networks. Dilation means that
     the filter only accesses every *n*th element, as we can see in the image below.
+  id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一个有用的技巧是扩张卷积网络。扩张意味着滤波器仅访问每个*第n*个元素，正如我们在下图中看到的那样。
 - en: '![Dilated and causal convolution](img/B10354_04_18.jpg)'
+  id: totrans-340
   prefs: []
   type: TYPE_IMG
+  zh: '![扩张卷积和因果卷积](img/B10354_04_18.jpg)'
 - en: Dilated convolution skips over inputs while convolving
+  id: totrans-341
   prefs: []
   type: TYPE_NORMAL
+  zh: 扩张卷积在卷积时跳过输入
 - en: 'In the preceding diagram, the upper convolutional layer has a dilation rate
     of 4 and the lower layer a dilation rate of 1\. We can set the dilation rate in
     Keras by running the following:'
+  id: totrans-342
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上面的图中，顶部的卷积层具有4的扩张率，而底部的卷积层具有1的扩张率。我们可以通过运行以下代码在Keras中设置扩张率：
 - en: '[PRE55]'
+  id: totrans-343
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE55]'
 - en: Simple RNN
+  id: totrans-344
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 简单RNN
 - en: 'Another method to make order matter within neural networks is to give the network
     some kind of memory. So far, all of our networks have done a forward pass without
     any memory of what happened before or after the pass. It''s time to change that
     with a **recurrent neural network** (**RNN**):'
+  id: totrans-345
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种让顺序在神经网络中起作用的方法是给网络某种形式的记忆。到目前为止，我们的所有网络都是前向传播，而没有任何关于之前或之后发生的事情的记忆。现在是时候通过**循环神经网络**（**RNN**）来改变这一点了：
 - en: '![Simple RNN](img/B10354_04_19.jpg)'
+  id: totrans-346
   prefs: []
   type: TYPE_IMG
+  zh: '![简单RNN](img/B10354_04_19.jpg)'
 - en: The scheme of an RNN
+  id: totrans-347
   prefs: []
   type: TYPE_NORMAL
+  zh: RNN的结构
 - en: 'RNNs contain recurrent layers. Recurrent layers can remember their last activation
     and use it as their own input:'
+  id: totrans-348
   prefs: []
   type: TYPE_NORMAL
+  zh: RNN包含循环层。循环层可以记住它们的最后一个激活，并将其作为输入：
 - en: '![Simple RNN](img/B10354_04_014.jpg)'
+  id: totrans-349
   prefs: []
   type: TYPE_IMG
+  zh: '![简单RNN](img/B10354_04_014.jpg)'
 - en: A recurrent layer takes a sequence as an input. For each element, it then computes
     a matrix multiplication (*W * in*), just like a `Dense` layer, and runs the result
     through an activation function, such as `relu`. It then retains its own activation.
@@ -1635,330 +2348,489 @@
     as before, but this time it also multiplies its previous activation with a second
     matrix (![Simple RNN](img/B10354_04_015.jpg)). The recurrent layer adds the result
     of both operations together and passes it through the activation function again.
+  id: totrans-350
   prefs: []
   type: TYPE_NORMAL
+  zh: 循环层接收一个序列作为输入。对于每个元素，它会计算一个矩阵乘法（*W * in*），就像`Dense`层一样，并将结果通过激活函数（例如`relu`）。然后，它保留自己的激活。当序列的下一个元素到来时，它会像之前一样执行矩阵乘法，但这一次它还将先前的激活与第二个矩阵相乘
+    (![简单RNN](img/B10354_04_015.jpg))。循环层将两者的结果相加，并再次通过激活函数。
 - en: 'In Keras, we can use a simple RNN as follows:'
+  id: totrans-351
   prefs: []
   type: TYPE_NORMAL
+  zh: 在Keras中，我们可以如下使用简单RNN：
 - en: '[PRE56]'
+  id: totrans-352
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE56]'
 - en: The only parameter we need to specify is the size of the recurrent layer. This
     is basically the same as setting the size of a `Dense` layer, as `SimpleRNN` layers
     are very similar to `Dense` layers except that they feed their output back in
     as input. RNNs, by default, only return the last output of the sequence.
+  id: totrans-353
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要指定的唯一参数是循环层的大小。这基本上与设置`Dense`层的大小相同，因为`SimpleRNN`层与`Dense`层非常相似，区别在于它们将输出反馈作为输入。默认情况下，RNN只返回序列的最后一个输出。
 - en: 'To stack multiple RNNs, we need to set `return_sequences` to `True`, which
     we can do by running the following code:'
+  id: totrans-354
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了堆叠多个RNN，我们需要将`return_sequences`设置为`True`，我们可以通过运行以下代码来实现：
 - en: '[PRE57]'
+  id: totrans-355
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE57]'
 - en: As a result of this code, we'll be able to see that a simple RNN does much better
     than the convolutional model, with a loss of around 1,548,653\. You'll remember
     that previously our loss was at 12,793,928\. However, we can do much better using
     a more sophisticated version of the RNN.
+  id: totrans-356
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行这段代码后，我们会看到简单RNN比卷积模型表现得要好得多，损失大约为1,548,653。你还记得之前我们的损失为12,793,928。不过，我们可以使用更复杂的RNN版本做到更好。
 - en: LSTM
+  id: totrans-357
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: LSTM
 - en: In the last section, we learned about basic RNNs. In theory, simple RNNs should
     be able to retain even long-term memories. However, in practice, this approach
     often falls short because of the vanishing gradients problem.
+  id: totrans-358
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一节中，我们了解了基本的RNN。理论上，简单的RNN应该能够保持长期记忆。然而，实际上，由于梯度消失问题，这种方法常常不尽如人意。
 - en: Over the course of many timesteps, the network has a hard time keeping up meaningful
     gradients. While this is not the focus of this chapter, a more detailed exploration
     of why this happens can be read in the 1994 paper, *Learning long-term dependencies
     with gradient descent is difficult,* available at -[https://ieeexplore.ieee.org/document/279181](https://ieeexplore.ieee.org/document/279181)
     - by Yoshua Bengio, Patrice Simard, and Paolo Frasconi.
+  id: totrans-359
   prefs: []
   type: TYPE_NORMAL
+  zh: 在多个时间步的过程中，网络很难保持有意义的梯度。虽然这不是本章的重点，但可以在1994年的论文《*使用梯度下降学习长期依赖关系是困难的*》中更详细地了解为什么会发生这种情况，论文可以在-[https://ieeexplore.ieee.org/document/279181](https://ieeexplore.ieee.org/document/279181)上找到，作者是Yoshua
+    Bengio、Patrice Simard和Paolo Frasconi。
 - en: In direct response to the vanishing gradients problem of simple RNNs, the **Long
     Short-Term Memory** (**LSTM**) layer was invented. This layer performs much better
     at longer time series. Yet, if relevant observations are a few hundred steps behind
     in the series, then even LSTM will struggle. This is why we manually included
     some lagged observations.
+  id: totrans-360
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了直接应对简单RNN的梯度消失问题，发明了**长短期记忆**（**LSTM**）层。这个层在长时间序列上表现得更好。然而，如果相关的观察数据落后几百步，即便是LSTM也会遇到困难。这就是我们为什么手动包括了一些滞后的观察数据。
 - en: 'Before we dive into details, let''s look at a simple RNN that has been unrolled
     over time:'
+  id: totrans-361
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们深入细节之前，先来看一个已在时间上展开的简单RNN：
 - en: '![LSTM](img/B10354_04_20.jpg)'
+  id: totrans-362
   prefs: []
   type: TYPE_IMG
+  zh: '![LSTM](img/B10354_04_20.jpg)'
 - en: A rolled out RNN
+  id: totrans-363
   prefs: []
   type: TYPE_NORMAL
+  zh: 展开的RNN
 - en: As you can see, this is the same as the RNN that we saw in [Chapter 2](ch02.xhtml
     "Chapter 2. Applying Machine Learning to Structured Data"), *Applying Machine
     Learning to Structured Data*, except that this has been unrolled over time.
+  id: totrans-364
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所见，这与我们在[第2章](ch02.xhtml "第2章：将机器学习应用于结构化数据")中看到的RNN相同，*将机器学习应用于结构化数据*，唯一的不同是它在时间上已经展开。
 - en: The carry
+  id: totrans-365
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 载体
 - en: 'The central addition of an LSTM over an RNN is the *carry*. The carry is like
     a conveyor belt that runs along the RNN layer. At each time step, the carry is
     fed into the RNN layer. The new carry gets computed from the input, RNN output,
     and old carry, in a separate operation from the RNN layer itself::'
+  id: totrans-366
   prefs: []
   type: TYPE_NORMAL
+  zh: LSTM相对于RNN的核心增加就是*载体*。载体就像是一个沿着RNN层运行的传送带。在每个时间步，载体被输入到RNN层。新的载体是通过从输入、RNN输出和旧载体中计算出来的，这一操作与RNN层本身是分开的：
 - en: '![The carry](img/B10354_04_21.jpg)'
+  id: totrans-367
   prefs: []
   type: TYPE_IMG
+  zh: '![载体](img/B10354_04_21.jpg)'
 - en: The LSTM schematic
+  id: totrans-368
   prefs: []
   type: TYPE_NORMAL
+  zh: LSTM示意图
 - en: 'To understand what the Compute Carry is, we should determine what should be
     added from the input and state:'
+  id: totrans-369
   prefs: []
   type: TYPE_NORMAL
+  zh: 要理解什么是计算载体，我们需要确定从输入和状态中应该添加什么：
 - en: '![The carry](img/B10354_04_016.jpg)![The carry](img/B10354_04_017.jpg)'
+  id: totrans-370
   prefs: []
   type: TYPE_IMG
+  zh: '![载体](img/B10354_04_016.jpg)![载体](img/B10354_04_017.jpg)'
 - en: In these formulas ![The carry](img/B10354_04_018.jpg) is the state at time *t*
     (output of the simple RNN layer), ![The carry](img/B10354_04_019.jpg) is the input
     at time *t,* and *Ui*, *Wi*, *Uk*, and *Wk* are the model parameters (matrices)
     that will be learned. *a()* is an activation function.
+  id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这些公式中，![载体](img/B10354_04_018.jpg)是时间*t*的状态（简单RNN层的输出），![载体](img/B10354_04_019.jpg)是时间*t*的输入，而*Ui*、*Wi*、*Uk*和*Wk*是模型的参数（矩阵），这些参数将会被学习。*a()*是激活函数。
 - en: 'To determine what should be forgotten from the state and input, we need to
     use the following formula:'
+  id: totrans-372
   prefs: []
   type: TYPE_NORMAL
+  zh: 要确定从状态和输入中应该忘记什么，我们需要使用以下公式：
 - en: '![The carry](img/B10354_04_020.jpg)'
+  id: totrans-373
   prefs: []
   type: TYPE_IMG
+  zh: '![载体](img/B10354_04_020.jpg)'
 - en: 'The new carry is then computed as follows:'
+  id: totrans-374
   prefs: []
   type: TYPE_NORMAL
+  zh: 新的载体则按如下方式计算：
 - en: '![The carry](img/B10354_04_021.jpg)'
+  id: totrans-375
   prefs: []
   type: TYPE_IMG
+  zh: '![载体](img/B10354_04_021.jpg)'
 - en: While the standard theory claims that the LSTM layer learns what to add and
     what to forget, in practice, nobody knows what really happens inside an LSTM.
     However, LSTM models have been shown to be quite effective at learning long-term
     memory.
+  id: totrans-376
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管标准理论声称LSTM层会学习该添加什么和该忘记什么，但实际上没有人知道LSTM内部到底发生了什么。然而，LSTM模型已经证明在学习长期记忆方面非常有效。
 - en: Take this time to note that LSTM layers do not need an extra activation function
     as they already come with a `tanh` activation function out of the box.
+  id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，LSTM层不需要额外的激活函数，因为它们自带`tanh`激活函数。
 - en: 'LSTMs can be used in the same way as `SimpleRNN`:'
+  id: totrans-378
   prefs: []
   type: TYPE_NORMAL
+  zh: LSTM可以像`SimpleRNN`一样使用：
 - en: '[PRE58]'
+  id: totrans-379
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE58]'
 - en: 'To stack layers, you also need to set `return_sequences` to `True`. Note that
     you can easily combine `LSTM` and `SimpleRNN` using the following code:'
+  id: totrans-380
   prefs: []
   type: TYPE_NORMAL
+  zh: 要堆叠层，你还需要将`return_sequences`设置为`True`。请注意，你可以通过以下代码轻松地将`LSTM`和`SimpleRNN`结合使用：
 - en: '[PRE59]'
+  id: totrans-381
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE59]'
 - en: Note
+  id: totrans-382
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: If you are using a GPU and TensorFlow backend with Keras, use `CuDNNLSTM`
     instead of `LSTM`. It''s significantly faster while working in exactly the same
     way.'
+  id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：如果你使用的是GPU并且在Keras中使用TensorFlow作为后端，请使用`CuDNNLSTM`代替`LSTM`。它在工作方式完全相同的情况下要快得多。'
 - en: 'We''ll now compile and run the model just as we did before:'
+  id: totrans-384
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们将像之前一样编译并运行模型：
 - en: '[PRE60]'
+  id: totrans-385
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE60]'
 - en: This time, the loss went as low as 88,735, which is several orders of magnitude
     better than our initial model.
+  id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 这一次，损失下降到了88,735，远远好于我们最初的模型，提升了几个数量级。
 - en: Recurrent dropout
+  id: totrans-387
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 循环丢弃
 - en: 'Having read this far into the book, you''ve already encountered the concept
     of *dropout*. Dropout removes some elements of one layer of input at random. A
     common and important tool in RNNs is a *recurrent dropout*, which does not remove
     any inputs between layers but inputs between time steps:'
+  id: totrans-388
   prefs: []
   type: TYPE_NORMAL
+  zh: 读到这里，你已经遇到了*丢弃*的概念。丢弃会随机移除一个层次的某些输入元素。RNN中的一个常见且重要的工具是*循环丢弃*，它不会在层与层之间移除输入，而是移除时间步之间的输入：
 - en: '![Recurrent dropout](img/B10354_04_22.jpg)'
+  id: totrans-389
   prefs: []
   type: TYPE_IMG
+  zh: '![循环丢弃](img/B10354_04_22.jpg)'
 - en: Recurrent dropout scheme
+  id: totrans-390
   prefs: []
   type: TYPE_NORMAL
+  zh: 循环丢弃方案
 - en: Just as with regular dropout, recurrent dropout has a regularizing effect and
     can prevent overfitting. It's used in Keras by simply passing an argument to the
     LSTM or RNN layer.
+  id: totrans-391
   prefs: []
   type: TYPE_NORMAL
+  zh: 与常规的丢弃一样，循环丢弃也具有正则化效果，并且可以防止过拟合。在Keras中，只需向LSTM或RNN层传递一个参数即可使用它。
 - en: 'As we can see in the following code, recurrent dropout, unlike regular dropout,
     does not have its own layer:'
+  id: totrans-392
   prefs: []
   type: TYPE_NORMAL
+  zh: 如我们在下面的代码中所见，循环丢弃与常规丢弃不同，它没有自己的层：
 - en: '[PRE61]'
+  id: totrans-393
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE61]'
 - en: Bayesian deep learning
+  id: totrans-394
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 贝叶斯深度学习
 - en: We now have a whole set of models that can make forecasts on time series. But are the
     point estimates that these models give sensible estimates or just random guesses?
     How certain is the model? Most classic probabilistic modeling techniques, such
     as Kalman filters, can give confidence intervals for predictions, whereas regular
     deep learning cannot do this. The field of Bayesian deep learning combines Bayesian approaches
     with deep learning to enable models to express uncertainty.
+  id: totrans-395
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们有了一整套可以对时间序列进行预测的模型。但这些模型给出的点估计是合理的估计，还是仅仅是随机猜测？模型的确定性如何？大多数经典的概率建模技术，如卡尔曼滤波器，能够为预测提供置信区间，而常规的深度学习无法做到这一点。贝叶斯深度学习领域结合了贝叶斯方法与深度学习，使模型能够表达不确定性。
 - en: The key idea in Bayesian deep learning is that there is inherent uncertainty
     in the model. Sometimes this is done by learning a mean and standard deviation
     for weights instead of just a single weight value. However, this approach increases
     the number of parameters required, so it did not catch on. A simpler hack that
     allows us to turn regular deep networks into Bayesian deep networks is to activate
     dropout during prediction time and then make multiple predictions.
+  id: totrans-396
   prefs: []
   type: TYPE_NORMAL
+  zh: 贝叶斯深度学习的核心思想是模型中存在固有的不确定性。有时通过学习权重的均值和标准差，而不是单一的权重值来实现这一点。然而，这种方法增加了所需参数的数量，因此并没有广泛采用。一种更简单的技巧是，在预测时启用丢弃，然后进行多次预测，从而将常规深度网络转化为贝叶斯深度网络。
 - en: In this section, we will be using a simpler dataset than before. Our `X` values
     are 20 random values between -5 and 5, and our `y` values are just the sine function
     applied to these values.
+  id: totrans-397
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一节中，我们将使用一个比之前更简单的数据集。我们的`X`值是20个介于-5和5之间的随机值，而`y`值只是这些值应用正弦函数后的结果。
 - en: 'We start by running the following code:'
+  id: totrans-398
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先运行以下代码：
 - en: '[PRE62]'
+  id: totrans-399
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE62]'
 - en: 'Our neural network is relatively straightforward, too. Note that Keras does
     not allow us to make a dropout layer the first layer, therefore we need to add
     a `Dense` layer that just passes through the input value. We can achieve this
     with the following code:'
+  id: totrans-400
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的神经网络也相对简单。请注意，Keras 不允许我们将 dropout 层作为第一层，因此我们需要添加一个 `Dense` 层，它仅仅通过输入值。我们可以通过以下代码来实现：
 - en: '[PRE63]'
+  id: totrans-401
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE63]'
 - en: To fit this function, we need a relatively low learning rate, so we import the
     Keras vanilla stochastic gradient descent optimizer in order to set the learning
     rate there. We then train the model for 10,000 epochs. Since we are not interested
     in the training logs, we set `verbose` to `0`, which makes the model train "quietly."
+  id: totrans-402
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了拟合这个函数，我们需要一个相对较低的学习率，因此我们导入了 Keras 的普通随机梯度下降优化器，以便在其中设置学习率。然后我们训练模型 10,000
+    个 epochs。由于我们对训练日志不感兴趣，我们将 `verbose` 设置为 `0`，这样模型就会“安静”地训练。
 - en: 'We do this by running the following:'
+  id: totrans-403
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们通过运行以下代码来实现这一点：
 - en: '[PRE64]'
+  id: totrans-404
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE64]'
 - en: 'We want to test our model over a larger range of values, so we create a test
     dataset with 200 values ranging from -10 to 10 in 0.1 intervals. We can imitate
     the test by running the following code:'
+  id: totrans-405
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们希望在更大的数值范围内测试我们的模型，因此我们创建了一个包含 200 个值的测试数据集，范围从 -10 到 10，间隔为 0.1。我们可以通过运行以下代码来模拟测试：
 - en: '[PRE65]'
+  id: totrans-406
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE65]'
 - en: And now comes the magic trick! Using `keras.backend`, we can pass settings to
     TensorFlow, which runs the operations in the background. We use the backend to
     set the learning phase parameter to `1`. This makes TensorFlow believe that we
     are training, and so it will apply dropout. We then make 100 predictions for our
     test data. The result of these 100 predictions is a probability distribution for
     the `y` value at every instance of `X`.
+  id: totrans-407
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在到了魔术环节！使用 `keras.backend`，我们可以将设置传递给 TensorFlow，后者在后台运行操作。我们使用后端将学习阶段参数设置为
+    `1`。这使得 TensorFlow 认为我们正在训练，因此它会应用 dropout。接着，我们为测试数据做 100 次预测。这 100 次预测的结果是每个
+    `X` 实例对应的 `y` 值的概率分布。
 - en: Note
+  id: totrans-408
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: For this example to work, you have to load the backend, clear the
     session, and set the learning phase before defining and training the model, as
     the training process will leave the setting in the TensorFlow graph. You can also
     save the trained model, clear the session, and reload the model. See the code
     for this section for a working implementation.'
+  id: totrans-409
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：为了让此示例正常工作，必须在定义和训练模型之前加载后端、清除会话并设置学习阶段，因为训练过程会将该设置保留在 TensorFlow 图中。你也可以保存已训练的模型，清除会话，然后重新加载模型。请参阅本节的代码，查看如何实现。'
 - en: 'To start this process, we first run:'
+  id: totrans-410
   prefs: []
   type: TYPE_NORMAL
+  zh: 要开始这个过程，我们首先运行：
 - en: '[PRE66]'
+  id: totrans-411
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE66]'
 - en: 'And now we can obtain our distributions with the following code:'
+  id: totrans-412
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以通过以下代码获取我们的分布：
 - en: '[PRE67]'
+  id: totrans-413
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE67]'
 - en: 'Next we can calculate the mean and standard deviation for our distributions:'
+  id: totrans-414
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们可以计算我们的分布的均值和标准差：
 - en: '[PRE68]'
+  id: totrans-415
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE68]'
 - en: 'Finally, we plot the model''s predictions with one, two, and four standard
     deviations (corresponding to different shades of blue):'
+  id: totrans-416
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们绘制了模型的预测结果，分别为一、二、四个标准差（对应不同的蓝色阴影）：
 - en: '[PRE69]'
+  id: totrans-417
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE69]'
 - en: 'As a result of running this code, we will see the following graph:'
+  id: totrans-418
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行这段代码的结果，我们将看到以下图表：
 - en: '![Bayesian deep learning](img/B10354_04_23.jpg)'
+  id: totrans-419
   prefs: []
   type: TYPE_IMG
+  zh: '![贝叶斯深度学习](img/B10354_04_23.jpg)'
 - en: Predictions with uncertainty bands
+  id: totrans-420
   prefs: []
   type: TYPE_NORMAL
+  zh: 带有不确定性带宽的预测
 - en: As you can see, the model is relatively confident around areas where it had
     data and becomes less and less confident the further away it gets from the data
     points.
+  id: totrans-421
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所看到的，模型在有数据的区域相对自信，而在远离数据点的地方，它的信心变得越来越低。
 - en: Getting uncertainty estimates from our model increases the value we can get
     from it. It also helps in improving the model if we can detect where the model
     is over or under confident. Right now, Bayesian deep learning is only in its infancy,
     and we will certainly see many advances in the next few years.
+  id: totrans-422
   prefs: []
   type: TYPE_NORMAL
+  zh: 从我们的模型中获取不确定性估计可以提高我们从中获得的价值。如果我们能检测到模型在哪些地方过于自信或不自信，也有助于改善模型。目前，贝叶斯深度学习仍处于初期阶段，未来几年我们肯定会看到许多进展。
 - en: Exercises
+  id: totrans-423
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 练习
 - en: 'Now we''re at the end of the chapter, why not try some of the following exercises?
     You''ll find guides on how to complete them all throughout this chapter:'
+  id: totrans-424
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们已经到了本章的结尾，为什么不尝试一下以下的练习呢？在本章中，你会找到如何完成它们的指南：
 - en: A good trick is to use LSTMs on top of one-dimensional convolution, as one-dimensional
     convolution can go over large sequences while using fewer parameters. Try to implement
     an architecture that first uses a few convolutional and pooling layers and then
     a few LSTM layers. Try it out on the web traffic dataset. Then try adding (recurrent)
     dropout. Can you beat the LSTM model?
+  id: totrans-425
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 一个好的技巧是将LSTM放在一维卷积之上，因为一维卷积可以处理较长的序列，同时使用更少的参数。尝试实现一个架构，首先使用一些卷积和池化层，然后使用一些LSTM层。在网页流量数据集上试验。然后尝试添加（递归）dropout。你能超过LSTM模型吗？
 - en: Add uncertainty to your web traffic forecasts. To do this, remember to run your
     model with dropout turned on at inference time. You will obtain multiple forecasts
     for one time step. Think about what this would mean in the context of trading
     and stock prices.
+  id: totrans-426
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 将不确定性添加到你的网页流量预测中。为此，记得在推理时启用dropout。你将为一个时间步获取多个预测。想想这在交易和股票价格背景下意味着什么。
 - en: 'Visit the Kaggle datasets page and search for time series data. Make a forecasting
     model. This involves feature engineering with autocorrelation and Fourier transformation,
     picking the right model from the ones introduced (for example, ARIMA versus neural
@@ -1966,67 +2838,95 @@
     Any dataset will do, but I suggest that you may want to try the stock market dataset
     here: [https://www.kaggle.com/szrlee/stock-time-series-20050101-to-20171231](https://www.kaggle.com/szrlee/stock-time-series-20050101-to-20171231),
     or the electric power consumption dataset here: [https://www.kaggle.com/uciml/electric-power-consumption-data-set](https://www.kaggle.com/uciml/electric-power-consumption-data-set).'
+  id: totrans-427
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 访问Kaggle数据集页面并搜索时间序列数据。构建一个预测模型。这涉及使用自相关和傅里叶变换进行特征工程，从已介绍的模型中选择合适的模型（例如，ARIMA与神经网络），然后训练模型。虽然这是一项艰难的任务，但你将学到很多东西！任何数据集都可以使用，但我建议你尝试这里的股市数据集：[https://www.kaggle.com/szrlee/stock-time-series-20050101-to-20171231](https://www.kaggle.com/szrlee/stock-time-series-20050101-to-20171231)，或者这里的电力消耗数据集：[https://www.kaggle.com/uciml/electric-power-consumption-data-set](https://www.kaggle.com/uciml/electric-power-consumption-data-set)。
 - en: Summary
+  id: totrans-428
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, you learned about a wide range of conventional tools for dealing
     with time series data. You also learned about one-dimensional convolution and
     recurrent architectures, and finally, you learned a simple way to get your models
     to express uncertainty.
+  id: totrans-429
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，你学习了处理时间序列数据的广泛传统工具。你还了解了一维卷积和递归架构，最后，你学到了一个简单的方法，使得模型能够表达不确定性。
 - en: 'Time series are the most iconic form of financial data. This chapter has given
     you a rich toolbox for dealing with time series. Let''s recap all of the things that
     we''ve covered on the example of forecasting web traffic for Wikipedia:'
+  id: totrans-430
   prefs: []
   type: TYPE_NORMAL
+  zh: 时间序列是金融数据中最具代表性的形式。本章为你提供了处理时间序列的丰富工具箱。让我们通过预测维基百科的网页流量来回顾一下我们已经涵盖的内容：
 - en: Basic data exploration to understand what we are dealing with
+  id: totrans-431
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基本数据探索，以理解我们所处理的数据
 - en: Fourier transformation and autocorrelation as tools for feature engineering
     and understanding data
+  id: totrans-432
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 傅里叶变换和自相关作为特征工程和数据理解的工具
 - en: Using a simple median forecast as a baseline and sanity check
+  id: totrans-433
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用简单的中位数预测作为基准和理性检查
 - en: Understanding and using ARIMA and Kalman filters as classic prediction models
+  id: totrans-434
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 理解并使用ARIMA和卡尔曼滤波器作为经典的预测模型
 - en: Designing features, including building a data loading mechanism for all our
     time series
+  id: totrans-435
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 设计特征，包括为所有时间序列构建数据加载机制
 - en: Using one-dimensional convolutions and variants such as causal convolutions
     and dilated convolutions
+  id: totrans-436
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用一维卷积及其变体，如因果卷积和膨胀卷积
 - en: Understanding the purpose and use of RNNs and their more powerful variant, LSTMs
+  id: totrans-437
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 理解RNN的目的和使用，以及其更强大的变体LSTM
 - en: Getting to grips with understanding how to add uncertainty to our forecasts
     with the dropout trick, taking our first step into Bayesian learning
+  id: totrans-438
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 掌握如何通过dropout技巧为预测添加不确定性，迈出了进入贝叶斯学习的第一步
 - en: This rich toolbox of time series techniques comes in especially handy in the
     next chapter, where we will cover natural language processing. Language is basically
     a sequence, or time series, of words. This means we can reuse many tools from
     time series modeling for natural language processing.
+  id: totrans-439
   prefs: []
   type: TYPE_NORMAL
+  zh: 这一套丰富的时间序列技术工具在下一章中尤为有用，那里我们将介绍自然语言处理。语言基本上是一个单词的序列，或者说是一个时间序列。这意味着我们可以将许多时间序列建模工具复用于自然语言处理。
 - en: In the next chapter, you will learn how to find company names in text, how to
     group text by topic, and even how to translate text using neural networks.
+  id: totrans-440
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，你将学习如何在文本中找到公司名称，如何按主题对文本进行分组，甚至如何使用神经网络翻译文本。
