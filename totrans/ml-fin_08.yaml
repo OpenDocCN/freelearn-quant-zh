@@ -2392,6 +2392,7 @@
   id: totrans-329
   prefs: []
   type: TYPE_NORMAL
+  zh: 估计器是通过输入函数进行训练的。输入函数允许我们指定一个完整的管道，这个管道会高效执行。在这种情况下，我们只需要一个生成训练集的输入函数：
 - en: '[PRE34]'
   id: totrans-330
   prefs: []
@@ -2402,6 +2403,7 @@
   id: totrans-331
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们在输入数据上训练估计器。就是这样；你现在可以利用分布式 TensorFlow 与估计器：
 - en: '[PRE35]'
   id: totrans-332
   prefs: []
@@ -2412,12 +2414,15 @@
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 使用优化的层，如 CuDNNLSTM
 - en: You will often find that someone created a special layer optimized to perform
     certain tasks on certain hardware. Keras' `CuDNNLSTM` layer, for example, only
     runs on GPUs supporting CUDA, a programming language specifically for GPUs.
   id: totrans-334
   prefs: []
   type: TYPE_NORMAL
+  zh: 你经常会发现有人创建了一个特殊的层，优化了在特定硬件上执行某些任务。例如，Keras 的 `CuDNNLSTM` 层仅在支持 CUDA 的 GPU 上运行，CUDA
+    是一种专为 GPU 设计的编程语言。
 - en: When you lock in your model to specialized hardware, you can often make significant
     gains in your performance. If you have the resources, it might even make sense
     to write your own specialized layer in CUDA. If you want to change hardware later, you
@@ -2425,17 +2430,20 @@
   id: totrans-335
   prefs: []
   type: TYPE_NORMAL
+  zh: 当你将模型固定到专用硬件上时，你通常可以显著提升性能。如果你有资源，甚至可以考虑用 CUDA 编写自己的专用层。如果以后需要更换硬件，通常可以导出权重并将其导入到不同的层中。
 - en: Optimizing your pipeline
   id: totrans-336
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 优化你的管道
 - en: 'With the right hardware and optimized software in place, your model often ceases
     to be the bottleneck. You should check your GPU utilization by entering the following
     command in your Terminal:'
   id: totrans-337
   prefs: []
   type: TYPE_NORMAL
+  zh: 在有了正确的硬件和优化的软件的情况下，你的模型通常不再是瓶颈。你应该通过在终端中输入以下命令来检查 GPU 的使用情况：
 - en: '[PRE36]'
   id: totrans-338
   prefs: []
@@ -2447,6 +2455,7 @@
   id: totrans-339
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你的 GPU 使用率没有达到大约 80% 到 100%，通过优化管道，你可以获得显著的性能提升。你可以采取以下几步来优化你的管道：
 - en: '**Create a pipeline running parallel to the model**: Otherwise, your GPU will
     be idle while the data is loading. Keras does this by default. If you have a generator
     and want to have a larger queue of data to be held ready for preprocessing, change
@@ -2457,6 +2466,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**创建一个与模型并行运行的管道**：否则，在数据加载时，GPU 将处于空闲状态。Keras 默认会这样做。如果你有一个生成器并希望有一个更大的数据队列以便准备好进行预处理，可以更改
+    `fit_generator` 方法的 `max_queue_size` 参数。如果你将 `fit_generator` 方法的 `workers` 参数设置为零，生成器将在主线程上运行，这会使得速度变慢。'
 - en: '**Preprocess data in parallel**: Even if you have a generator working independently
     of the model training, it might not keep up with the model. So, it is better to
     run multiple generators in parallel. In Keras, you can do this by setting `use_multiprocessing`
@@ -2466,6 +2477,8 @@
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**并行预处理数据**：即使你有一个独立于模型训练工作的生成器，它可能也无法跟上模型的速度。因此，最好同时运行多个生成器。在 Keras 中，你可以通过将
+    `use_multiprocessing` 设置为 `true` 并将 `workers` 的数量设置为大于 1 的值，最好是可用 CPU 的数量。我们来看一个示例：'
 - en: '[PRE37]'
   id: totrans-342
   prefs:
@@ -2478,6 +2491,7 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 你需要确保你的生成器是线程安全的。你可以使用以下代码片段使任何生成器变得线程安全：
 - en: '[PRE38]'
   id: totrans-344
   prefs:
@@ -2489,6 +2503,7 @@
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: 让我们来看一下前面代码中的三个关键组件：
 - en: The `thread_safe_iter` class makes any iterator thread safe by locking threads
     when the iterator has to produce the next yield.
   id: totrans-346
@@ -2496,6 +2511,7 @@
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`thread_safe_iter` 类通过在迭代器必须生成下一个值时锁定线程，使得任何迭代器都变得线程安全。'
 - en: When `next()` is called on the iterator, the iterators thread is locked. Locking
     means that no other function, say, another variable, can access variables from
     the thread while it is locked. Once the thread is locked, it yields the next element.
@@ -2504,6 +2520,7 @@
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 当在迭代器上调用 `next()` 时，迭代器的线程会被锁定。锁定意味着在线程被锁定期间，其他函数（比如另一个变量）无法访问线程中的变量。一旦线程被锁定，它会生成下一个元素。
 - en: '`thread_safe_generator` is a Python decorator that turns any iterator it decorates
     into a thread-safe iterator. It takes the function, passes it to the thread-safe
     iterator, and then returns the thread-safe version of the function.'
@@ -2512,6 +2529,7 @@
   - PREF_IND
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`thread_safe_generator` 是一个 Python 装饰器，它将任何它装饰的迭代器变成线程安全的迭代器。它接收函数，将其传递给线程安全的迭代器，然后返回线程安全版本的函数。'
 - en: You can also use the `tf.data` API together with an estimator, which does most
     of the work for you.
   id: totrans-349
@@ -2673,10 +2691,13 @@
   id: totrans-370
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，我们必须导入 `print_function` 以确保 `print()` 能以 Python 3 风格工作。要在 Cython 中使用此代码片段，请将其保存为
+    `cython_fib_8_7.pyx`。
 - en: 'Now create a new file called `8_7_cython_setup.py`:'
   id: totrans-371
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在创建一个名为 `8_7_cython_setup.py` 的新文件：
 - en: '[PRE44]'
   id: totrans-372
   prefs: []
@@ -2686,26 +2707,31 @@
   id: totrans-373
   prefs: []
   type: TYPE_NORMAL
+  zh: 代码的三个主要特征如下：
 - en: The `setup` function is a Python function to create modules, such as the ones
     you install with `pip`.
   id: totrans-374
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`setup` 函数是一个 Python 函数，用于创建模块，类似于你通过 `pip` 安装的模块。'
 - en: '`cythonize` is a function to turn a `pyx` Python file into Cython C code.'
   id: totrans-375
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: '`cythonize` 是一个将 `pyx` Python 文件转化为 Cython C 代码的函数。'
 - en: We create a new model by calling `setup` and passing on our Cythonized code.
   id: totrans-376
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们通过调用 `setup` 并传递我们的 Cython 化代码来创建一个新模型。
 - en: 'To run this, we now run the following command in a Terminal:'
   id: totrans-377
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了运行这个，我们现在在终端中运行以下命令：
 - en: '[PRE45]'
   id: totrans-378
   prefs: []
@@ -2716,6 +2742,7 @@
   id: totrans-379
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将创建一个 C 文件、一个构建文件和一个编译后的模块。现在我们可以通过运行以下命令导入这个模块：
 - en: '[PRE46]'
   id: totrans-380
   prefs: []
@@ -2727,6 +2754,7 @@
   id: totrans-381
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将打印出 Fibonacci 数列直到 1,000。Cython 还自带一个方便的调试器，显示 Cython 需要回退到 Python 代码的位置，这会导致速度变慢。请在终端中输入以下命令：
 - en: '[PRE47]'
   id: totrans-382
   prefs: []
@@ -2736,14 +2764,17 @@
   id: totrans-383
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将创建一个 HTML 文件，打开时在浏览器中看起来类似于此：
 - en: '![Speeding up your code with Cython](img/B10354_08_10.jpg)'
   id: totrans-384
   prefs: []
   type: TYPE_IMG
+  zh: '![使用 Cython 加速代码](img/B10354_08_10.jpg)'
 - en: Cython profile
   id: totrans-385
   prefs: []
   type: TYPE_NORMAL
+  zh: Cython 性能分析
 - en: 'As you can see, Cython has to fall back on Python all the time in our script
     because we did not specify the types of variables. By letting Cython know what
     data type a variable has, we can speed up the code significantly. To define a
@@ -2751,6 +2782,8 @@
   id: totrans-386
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你所看到的，因为我们没有指定变量的类型，Cython 在我们的脚本中总是需要回退到 Python。通过告诉 Cython 变量的类型，我们可以显著加速代码。要定义一个具有类型的变量，我们使用
+    `cdef`：
 - en: '[PRE48]'
   id: totrans-387
   prefs: []
@@ -2763,11 +2796,14 @@
   id: totrans-388
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个代码片段已经更好了。进一步优化当然是可能的，通过在打印之前先计算这些数字，我们可以减少对 Python `print` 语句的依赖。总体来说，Cython
+    是一个保持 Python 开发速度和易用性，同时提高执行速度的绝佳方式。
 - en: Caching frequent requests
   id: totrans-389
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 缓存频繁请求
 - en: An under-appreciated way to make models run faster is to cache frequent requests
     in a database. You can go so far as to cache millions of predictions in a database
     and then look them up. This has the advantage that you can make your model as
@@ -2775,6 +2811,7 @@
   id: totrans-390
   prefs: []
   type: TYPE_NORMAL
+  zh: 一种被低估的加速模型运行的方法是将频繁的请求缓存到数据库中。你可以将数百万个预测缓存到数据库中，然后查找它们。这样做的好处是，你可以将模型做得足够大，并投入大量计算资源进行预测。
 - en: By using a MapReduce database, looking up requests in a very large pool of possible
     requests and predictions is entirely possible. Of course, this requires requests
     to be somewhat discrete. If you have continuous features, you can round them if
@@ -2782,49 +2819,58 @@
   id: totrans-391
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用 MapReduce 数据库，在一个非常大的请求和预测池中查找请求是完全可能的。当然，这要求请求必须是某种离散的。如果你有连续的特征，如果精度不重要，可以将其四舍五入。
 - en: Exercises
   id: totrans-392
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 练习
 - en: Now that we're at the end of this chapter, it's time to put what we've learned
     into use. Using the knowledge that you've gained in this chapter, why not try
     the following exercises?
   id: totrans-393
   prefs: []
   type: TYPE_NORMAL
+  zh: 既然我们已经到了本章的结尾，现在是时候将我们学到的内容付诸实践了。运用你在本章中获得的知识，为什么不尝试以下练习呢？
 - en: Try to build any model that features exploding gradients in training. Hint: Do
     not normalize inputs and play with the initialization of layers.
   id: totrans-394
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 尝试构建任何在训练中会出现梯度爆炸的模型。提示：不要对输入进行标准化，并尝试调整层的初始化方式。
 - en: Go to any example in this book and try to optimize performance by improving
     the data pipeline.
   id: totrans-395
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 去书中的任何例子，尝试通过改善数据管道来优化性能。
 - en: Summary
   id: totrans-396
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: 'In this chapter, you have learned a number of practical tips for debugging
     and improving your model. Let''s recap all of the things that we have looked at:'
   id: totrans-397
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，你学到了许多调试和改进模型的实用技巧。让我们回顾一下我们所学到的所有内容：
 - en: Finding flaws in your data that lead to flaws in your learned model
   id: totrans-398
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 找出数据中的缺陷，导致你的学习模型出现缺陷
 - en: Using creative tricks to make your model learn more from less data
   id: totrans-399
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用创造性技巧让你的模型从更少的数据中学到更多
 - en: Unit testing data in production or training to make sure standards are met
   id: totrans-400
   prefs:

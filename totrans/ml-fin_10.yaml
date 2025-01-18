@@ -1,1077 +1,1590 @@
 - en: Chapter 10. Bayesian Inference and Probabilistic Programming
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第10章：贝叶斯推断与概率编程
 - en: Mathematics is a big space of which humans so far have only charted a small
     amount. We know of countless areas in mathematics that we would like to visit,
     but that are not tractable computationally.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 数学是一个广阔的领域，人类迄今为止只绘制了其中的一小部分。我们知道数学中有无数个领域我们希望访问，但这些领域在计算上是不可处理的。
 - en: A prime reason Newtonian physics, as well as much of quantitative finance, is built
     around elegant but oversimplified models is that these models are easy to compute.
     For centuries, mathematicians have mapped small paths in the mathematical universe
     that they could travel down with a pen and paper. However, this all changed with
     the advent of modern high-performance computing. It unlocked the ability for us
     to explore wider spaces of mathematics and thus gain more accurate models.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 牛顿物理学以及大量量化金融学建立在优雅但过于简化的模型上的一个主要原因是这些模型易于计算。几个世纪以来，数学家们在数学宇宙中绘制出一条条小路，他们可以用笔和纸沿着这些小路走。然而，这一切随着现代高性能计算的出现发生了变化。它解锁了我们探索更广阔数学空间的能力，从而获得了更精确的模型。
 - en: 'In the final chapter of this book, you''ll learn about the following:'
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 本书的最后一章，你将学习以下内容：
 - en: The empirical derivation of the Bayes formula
+  id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 贝叶斯公式的经验推导
 - en: How and why the Markov Chain Monte Carlo works
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 马尔可夫链蒙特卡洛方法的原理与作用
 - en: How to use PyMC3 for Bayesian inference and probabilistic programming
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用PyMC3进行贝叶斯推断和概率编程
 - en: How various methods get applied in stochastic volatility models
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 各种方法如何应用于随机波动性模型
 - en: This book has largely covered deep learning and its applications in the finance
     industry. As we've witnessed, deep learning has been made practical through modern
     computing power, but it is not the only technique benefiting from this large increase
     in power.
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 本书大致涵盖了深度学习及其在金融行业的应用。正如我们所见，深度学习已经通过现代计算能力变得实用，但它并不是唯一从这一巨大计算能力提升中受益的技术。
 - en: Both Bayesian inference and probabilistic programming are two up and coming
     techniques whose recent progress is powered by the increase in computing power.
     While the advances in the field have received significantly less press coverage
     than deep learning, they might be even more useful to the financial practitioner.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 贝叶斯推断和概率编程是两种新兴的技术，它们最近的进展得益于计算能力的提升。尽管该领域的进展获得的媒体关注远远低于深度学习，但它们可能对金融从业者来说更为有用。
 - en: Bayesian models are interpretable and can express uncertainty naturally. They
     are less "black box," instead making the modeler's assumptions more explicit.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 贝叶斯模型是可解释的，并且能够自然地表达不确定性。它们不再是“黑箱”，而是使模型构建者的假设更加明确。
 - en: An intuitive guide to Bayesian inference
+  id: totrans-11
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 贝叶斯推断的直观指南
 - en: 'Before starting, we need to import `numpy` and `matplotlib`, which we can do
     by running the following code:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 在开始之前，我们需要导入`numpy`和`matplotlib`，可以通过运行以下代码来实现：
 - en: '[PRE0]'
+  id: totrans-13
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'This example is similar to the one given in the 2015 book, *Bayesian Methods
     for Hackers: Probabilistic Programming and Bayesian Inference*, written by Cameron
     Davidson-Pilon. However, in our case, this is adapted to a financial context and rewritten
     so that the mathematical concepts intuitively arise from the code.'
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: '这个例子类似于2015年由卡梅隆·戴维森-皮隆（Cameron Davidson-Pilon）撰写的《*Bayesian Methods for Hackers:
+    Probabilistic Programming and Bayesian Inference*》一书中的例子。然而，在我们的例子中，它被适应到金融背景中，并且重新编写，使得数学概念通过代码自然而然地呈现出来。'
 - en: Note
+  id: totrans-15
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: You can view the example at the following link: [http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/](http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/).'
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：你可以通过以下链接查看该示例：[http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/](http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/)。'
 - en: Let's imagine that you have a security that can either pay $1 or, alternatively,
     nothing. The payoff depends on a two-step process. With a 50% probability, the
     payoff is random, with a 50% chance of getting $1 and a 50% chance of making nothing.
     The 50% chance of getting the dollar is the **true payoff probability** (**TPP**),
     *x*.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设你有一个证券，其支付金额可能是$1或，另外，什么也不支付。支付取决于一个两步过程。在50%的概率下，支付是随机的，50%的机会获得$1，另外50%的机会什么也得不到。获得$1的50%概率就是**真实支付概率**（**TPP**），*x*。
 - en: 'This payoff scheme is visualized in the following diagram:'
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个支付方案在下图中进行了可视化：
 - en: '![An intuitive guide to Bayesian inference](img/B10354_10_01.jpg)'
+  id: totrans-19
   prefs: []
   type: TYPE_IMG
+  zh: '![贝叶斯推断的直观指南](img/B10354_10_01.jpg)'
 - en: Payoff scheme
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 支付方案
 - en: You are interested in finding out what the true payoff ratio is, as it will
     inform your trading strategy. In our case, your boss allows you to buy 100 units
     of securities. You do, and 54 of the 100 securities pay you a dollar.
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
+  zh: 你有兴趣了解真实的回报比例，因为它将影响你的交易策略。在我们的案例中，你的老板允许你购买100单位的证券。你这样做了，100个证券中有54个给你支付了1美元。
 - en: But what is the actual TPP? In this case, there is an analytical solution to
     calculate the most likely TPP, but we will be using a computational method that
     also works for more complicated cases.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 但实际的TPP是什么呢？在这种情况下，有一个解析解来计算最可能的TPP，但我们将使用一种计算方法，它也适用于更复杂的情况。
 - en: In the next section we will simulate the securities payoff process.
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一部分中，我们将模拟证券的回报过程。
 - en: Flat prior
+  id: totrans-24
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 平坦先验
 - en: The variable *x* represents the TPP. We randomly sample 100 truth values, which
     are 1 if you had gotten the dollar under the true payoff, and 0 if otherwise.
     We also sample the two random choices at **Start** and **Random Payoff** in the
     preceding scheme. It is computationally more efficient to sample the random outcomes
     in one go for all trials, even though they are not all needed.
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 变量*x*代表TPP。我们随机抽取100个真实值，如果你在真实回报下获得了美元，则为1，否则为0。我们还会在前述方案中对**开始**和**随机回报**进行随机抽样。尽管并非所有结果都需要，但一次性抽样所有试验的随机结果在计算上更加高效。
 - en: Finally, we sum up the payoffs and divide them by the number of securities in
     our simulation in order to obtain the share of payoffs in the simulation.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，我们总结所有的回报，并将其除以模拟中的证券数量，从而获得模拟中的回报份额。
 - en: 'The following code snippet runs one simulation. It''s important, though, to
     make sure that you understand how the computations follow from our securities
     structure:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码片段运行一次模拟。然而，重要的是确保你理解这些计算是如何从我们的证券结构推导出来的：
 - en: '[PRE1]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: Next, we would like to try out a number of possible TPPs. So, in our case, we'll
     sample a candidate TPP and run the simulation with the candidate probability.
     If the simulation outputs the same payoff as we observed in real life, then our
     candidate is a real possibility.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们希望尝试一些可能的TPP。因此，在我们的案例中，我们会抽取一个候选TPP，并用候选概率运行模拟。如果模拟输出与我们在现实中观察到的回报相同，那么我们的候选就是一个真实的可能性。
 - en: 'The following sample method returns real possibilities, or `None` if the candidate
     it tried out was not suitable:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下的采样方法返回真实的可能性，或者如果它尝试的候选不合适，则返回`None`：
 - en: '[PRE2]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: As we have to sample a number of possible TPPs, it's only natural that we want
     to speed this process up. To do this, we can use a library called `JobLib`, which
     will help with parallel execution.
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们需要抽样许多可能的TPP，因此加速这一过程是很自然的。为此，我们可以使用一个名为`JobLib`的库，它将帮助进行并行执行。
 - en: Note
+  id: totrans-33
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: `JobLib` is preinstalled on Kaggle kernels. For more information,
     you can visit [https://joblib.readthedocs.io/en/latest/](https://joblib.readthedocs.io/en/latest/).'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：`JobLib`已预安装在Kaggle内核中。欲了解更多信息，可以访问[https://joblib.readthedocs.io/en/latest/](https://joblib.readthedocs.io/en/latest/)。'
 - en: 'To do this, we need to import the `Parallel` class, which will help to run
     loops in parallel, and the `delayed` method, which helps to execute functions
     in order inside the parallel loop. We can import them by running the following:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
+  zh: 为此，我们需要导入`Parallel`类，它将帮助我们并行运行循环，以及`delayed`方法，它有助于在并行循环内按顺序执行函数。我们可以通过运行以下代码导入它们：
 - en: '[PRE3]'
+  id: totrans-36
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: The details are not relevant for this example, but the `Parallel(n_jobs=-1)`
     method makes the job run with as many parallel executions as there are CPUs on
     the machine. For example, `delayed(sample)() for i in range(100000)` runs the sample
     method 100,000 times.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 细节对这个例子来说并不重要，但`Parallel(n_jobs=-1)`方法会让任务运行时并行执行的次数与机器上的CPU数量相同。例如，`delayed(sample)()
+    for i in range(100000)`会执行`sample`方法100,000次。
 - en: 'We obtain a Python list, `t`, which we turn into a NumPy array. As you can
     see in the following code snippet, about 98% of the array are `None` values. That
     means that 98% of the values the sampler tried out for *x* did not yield results
     matching our data:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们得到一个Python列表` t`，然后将其转换为NumPy数组。正如下面的代码片段所示，数组中大约98%的值是`None`。这意味着采样器尝试的98%的*x*值没有得到与我们数据相符的结果：
 - en: '[PRE4]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: '[PRE5]'
+  id: totrans-40
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Therefore, we''ll now throw away all of the `None` values, leaving us with
     the possible values for *x*:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们现在会丢弃所有的`None`值，留下可能的*x*值：
 - en: '[PRE6]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'As a result of running this code, we''ll get the following output:'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 执行此代码后，我们将得到如下输出：
 - en: '![Flat prior](img/B10354_10_02.jpg)'
+  id: totrans-44
   prefs: []
   type: TYPE_IMG
+  zh: '![平坦先验](img/B10354_10_02.jpg)'
 - en: Distribution of possible true payoff probabilities as found by our naïve sampler
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的天真采样器找到的可能真实回报概率的分布
 - en: As you can see, there is a *distribution* of possible TPPs. What this graph
     shows us is that the most likely TPP is somewhere around 50% to 60%; though other
     values are possible, they are somewhat less likely.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，这里有一个 *分布*，表示可能的 TPP。这张图展示给我们的是，最可能的 TPP 大约在 50% 到 60% 之间；尽管其他值也有可能，但它们相对不太可能。
 - en: What you've just seen is one of the big advantages of Bayesian methods. All
     of the estimates come in distributions, for which we can then calculate confidence
     intervals, or credibility intervals, as they are known in Bayesian terminology.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 你刚刚看到的是贝叶斯方法的一个重大优势。所有的估计都以分布的形式呈现，我们可以基于这些分布计算置信区间，或者在贝叶斯术语中称为可信区间。
 - en: This allows us to be more precise about how sure we are about things and what
     other values parameters in our model could have. Relating it back to our interest
     in finance, with financial applications, where millions are staked on the outputs
     of models, it becomes very advantageous to quantify such uncertainty.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 这使我们能够更精确地知道我们对事物的确定程度，以及我们模型中其他参数可能的值。回到我们在金融领域的兴趣，金融应用中，数百万资金押注于模型的输出，因此量化这种不确定性变得非常有利。
 - en: <50% prior
+  id: totrans-49
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: <50% 先验
 - en: At this point, you are able to take your results to your boss, who is a domain
     expert on the securities that you are trading. He looks at your analysis and shakes
     his head saying, *"The TPP cannot be more than 0.5."* He explains, *"From the
     underlying business, it's physically impossible to do more than that."*
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 到此时，你已经能够将你的结果交给你的老板，他是你所交易证券的领域专家。他查看了你的分析后摇了摇头，说，*“TPP 不可能超过 0.5。”* 他解释道，*“从底层业务来看，超过这个值是物理上不可能的。”*
 - en: 'So, how can you incorporate this fact into your simulation analysis? Well,
     the straightforward solution is to only try out candidate TPPs from 0 to 0.5\.
     All you have to do is to limit the space you sample the candidate value of *x*,
     which can be achieved by running the following code:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 那么，如何将这个事实融入到你的模拟分析中呢？直接的解决方案是只尝试从 0 到 0.5 的候选 TPP。你需要做的就是限制你采样 *x* 值的空间，这可以通过运行以下代码实现：
 - en: '[PRE7]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Now you can run the simulations exactly as before:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你可以像以前一样运行模拟：
 - en: '[PRE8]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: '[PRE9]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: '[PRE10]'
+  id: totrans-56
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'Which, just like before, will give us the following output:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 就像之前一样，这将给我们以下输出：
 - en: '![<50% prior](img/B10354_10_03.jpg)'
+  id: totrans-58
   prefs: []
   type: TYPE_IMG
+  zh: '![<50% 先验](img/B10354_10_03.jpg)'
 - en: Distribution of possible TPPs from 0 to 0.5
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 0 到 0.5 的可能 TPP 分布
 - en: Prior and posterior
+  id: totrans-60
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 先验和后验
 - en: Clearly, your choice of values to try influenced the outcome of your simulation
     analysis; it also reflected your beliefs about the possible values of *x*.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 很明显，你选择的尝试值影响了你的模拟分析结果；它也反映了你对 *x* 可能值的信念。
 - en: The first time around, you believed that all TPPs between 0 and 100% were equally
     likely before seeing any data. This is called a flat prior, as the distribution
     of values is the same for all values and is therefore flat. The second time, you
     believed that the TPPs had to be below 50%.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一次，你相信在看到任何数据之前，所有介于 0 和 100% 之间的 TPP 都是同样可能的。这叫做平坦先验，因为所有值的分布是相同的，因此是平的。第二次，你相信
+    TPP 必须低于 50%。
 - en: The distribution expressing your beliefs about *x* before seeing the data is
     called the prior distribution, *P*(*TPP*), or just prior. The distribution of
     the possible values of *x* that we obtained from simulation, that is, after seeing
     data *D*, is called the posterior distribution, ![Prior and posterior](img/B10354_10_002.jpg),
     or just posterior.
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在看到数据之前，你对 *x* 的信念所表示的分布叫做先验分布，*P*(*TPP*)，简称先验。而通过模拟得到的 *x* 的可能值分布，即在看到数据 *D*
+    之后，叫做后验分布，![先验和后验](img/B10354_10_002.jpg)，简称后验。
 - en: 'The following plots show samples from prior and posterior for the first and
     second rounds. The first plot shows the results with a `flat` posterior:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的图展示了在第一次和第二次轮次中先验和后验的样本。第一张图展示了使用 `平坦` 后验的结果：
 - en: '[PRE11]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'This produces the following chart:'
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 这产生了以下图表：
 - en: '![Prior and posterior](img/B10354_10_04.jpg)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![先验和后验](img/B10354_10_04.jpg)'
 - en: The results of our sampler with a flat prior
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的采样器在平坦先验下的结果
 - en: 'The next plot shows the output of our sampler with a <50% prior:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一个图显示了我们使用 <50% 先验的采样器输出：
 - en: '[PRE12]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'While it''s still the same sampler, you can see that the outcome is quite different:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然仍然是相同的采样器，但你可以看到结果有很大不同：
 - en: '![Prior and posterior](img/B10354_10_05.jpg)'
+  id: totrans-72
   prefs: []
   type: TYPE_IMG
+  zh: '![先验和后验](img/B10354_10_05.jpg)'
 - en: The results of our sampler with a <50% prior
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们的采样器在 <50% 先验下的结果
 - en: Have you noticed anything curious? The posterior values of the second round
     are roughly equal to the posterior values of the first round, but here they are
     cut off at 0.5\. This is because the second round prior is 0 for values above
     0.5 and 1 for everywhere else.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 你注意到什么奇怪的吗？第二轮的后验值大致等于第一轮的后验值，但这里它们在0.5处被截断。这是因为第二轮的先验值在0.5以上为0，其他地方为1。
 - en: As we only keep simulation results that match the data, the number of kept simulation
     results shown in the histogram reflects the probability of running a simulation
     that yields the observed data *D* for a given TPP, *C*, ![Prior and posterior](img/B10354_10_003.jpg).
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们只保留与数据匹配的模拟结果，直方图中显示的保留模拟结果的数量反映了对于给定的TPP，*C*，产生观察数据*D*的模拟的概率，![Prior and
+    posterior](img/B10354_10_003.jpg)。
 - en: The posterior probabilities, ![Prior and posterior](img/B10354_10_004.jpg),
     that we obtain from our simulations are equal to the probability that we observe
     the data when trying out a given TPP, ![Prior and posterior](img/B10354_10_005.jpg),
     times the probability, *P*(*TPP*).
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从模拟中获得的后验概率，![Prior and posterior](img/B10354_10_004.jpg)，等于我们尝试给定TPP时观察到数据的概率，![Prior
+    and posterior](img/B10354_10_005.jpg)，乘以概率，*P*(*TPP*)。
 - en: 'Mathematically, this is represented as follows:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 从数学上讲，这可以表示为以下公式：
 - en: '![Prior and posterior](img/B10354_10_007.jpg)'
+  id: totrans-78
   prefs: []
   type: TYPE_IMG
+  zh: '![Prior and posterior](img/B10354_10_007.jpg)'
 - en: When the data is naturally obtained, such as through a face-to-face meeting,
     then we might need to account for biases in our data collection method. Most of
     the time, we do not have to worry about this and can simply leave it out, but
     sometimes the measurement can amplify certain outcomes.
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 当数据是自然获得的，例如通过面对面会议时，我们可能需要考虑数据收集方法中的偏差。大多数时候，我们不需要担心这个问题，可以直接忽略，但有时测量可能会放大某些结果。
 - en: 'To mitigate this, we''ll divide by the data distribution, ![Prior and posterior](img/B10354_10_008.jpg),
     as a final addon to our posterior formula and arrive at the following formula:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了缓解这个问题，我们将通过数据分布进行除法运算，![Prior and posterior](img/B10354_10_008.jpg)，作为我们后验公式的最终附加项，得到以下公式：
 - en: '![Prior and posterior](img/B10354_10_009.jpg)'
+  id: totrans-81
   prefs: []
   type: TYPE_IMG
+  zh: '![Prior and posterior](img/B10354_10_009.jpg)'
 - en: As you can see, it's the Bayes formula! When running our simulation, we are
     sampling from the posterior. So, why can't we just use the Bayes formula to calculate
     the posterior? The simple answer is because evaluating
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 如你所见，这是贝叶斯公式！在运行我们的模拟时，我们是从后验分布中进行抽样。那么，为什么我们不能直接使用贝叶斯公式来计算后验分布呢？简单的答案是因为评估
 - en: '![Prior and posterior](img/B10354_10_010.jpg)'
+  id: totrans-83
   prefs: []
   type: TYPE_IMG
+  zh: '![Prior and posterior](img/B10354_10_010.jpg)'
 - en: requires integrating over *TPP*, which is intractable. Our simulation method
     is, as an alternative, a simple and convenient workaround.
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要对*TPP*进行积分，这在计算上是不可行的。作为替代方案，我们的模拟方法提供了一种简单且方便的解决方法。
 - en: Note
+  id: totrans-85
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: The first round prior (all TPPs are equally likely) is called a "flat prior"
     because we make no assumptions about the distributions of values. In this case,
     the Bayesian posterior is equal to the maximum likelihood estimate.'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：第一轮的先验（所有TPP的可能性相等）称为“平坦先验”，因为我们没有对值的分布做出任何假设。在这种情况下，贝叶斯后验等于最大似然估计。'
 - en: Markov Chain Monte Carlo
+  id: totrans-87
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 马尔可夫链蒙特卡洛
 - en: In the previous section, we approximated the posterior distribution by randomly
     sampling from our prior and then trying out the sampled value. This kind of random
     trying works fine if our model only has one parameter, for example, the TPP. Yet,
     as our model grows in complexity and we add many more parameters, the random search
     method will become even slower.
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前一部分中，我们通过从先验中随机抽样并尝试所抽样的值来近似后验分布。如果我们的模型只有一个参数，例如TPP，那么这种随机尝试方法工作得很好。然而，随着模型的复杂度增加，加入更多参数时，随机搜索方法将变得更加缓慢。
 - en: Eventually, there will be too many possible parameter combinations that have
     no chance of generating our data. Therefore, we need to guide our search and sample
     parameters with higher posterior probabilities more often.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终，会有太多可能的参数组合无法生成我们的数据。因此，我们需要引导我们的搜索，并更频繁地抽样具有更高后验概率的参数。
 - en: The approach of a guided, but still random, sampling is called the "Markov Chain
     Monte Carlo algorithm". The "Monte Carlo" component means that randomness and simulation
     are involved, whereas the "Markov Chain" means that we move over the parameter
     space under certain probabilities.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 引导但仍然随机的抽样方法称为“马尔可夫链蒙特卡洛算法”。“蒙特卡洛”部分意味着涉及了随机性和模拟，而“马尔可夫链”意味着我们在一定的概率下遍历参数空间。
 - en: In the specific algorithm covered here, we will move to a different parameter
     value with a probability that is the ratio of the posterior probability of the
     parameter value. Here, we'll think of going to the posterior probability of the
     parameter value. As probabilities cannot be larger than one, we cap the ratio
     at one, but that is just a mathematical finite that does not matter much for the
     algorithm.
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里介绍的具体算法中，我们将以某个参数值的后验概率的比例移动到另一个参数值。在这里，我们将考虑移动到该参数值的后验概率。由于概率不能大于1，我们将比例限制为1，但这只是一个数学上的有限值，对于算法本身并没有太大影响。
 - en: 'The following diagram shows the basic workings of the Markov Chain Monte Carlo
     algorithm:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下图表展示了马尔可夫链蒙特卡洛算法的基本工作原理：
 - en: '![Markov Chain Monte Carlo](img/B10354_10_06.jpg)'
+  id: totrans-93
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫链蒙特卡洛](img/B10354_10_06.jpg)'
 - en: The Markov Chain Monte Carlo algorithm
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 马尔可夫链蒙特卡洛算法
 - en: What the image shows is that we are on a "random walk" in which we more or less
     randomly go over different parameter values. However, we don't move *entirely*
     randomly, but instead prefer parameter values that have high posterior probabilities.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 图像所示的是我们正在进行一场“随机漫步”，在这过程中，我们或多或少地随机地遍历不同的参数值。然而，我们并不是*完全*随机地移动，而是更倾向于那些具有高后验概率的参数值。
 - en: 'To execute this algorithm, we need to do four things:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了执行此算法，我们需要做四件事：
 - en: Propose a new parameter value, ![Markov Chain Monte Carlo](img/B10354_10_011.jpg),
     from our current parameter value, *x*.
+  id: totrans-97
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从当前的参数值*x*提出一个新的参数值![马尔可夫链蒙特卡洛](img/B10354_10_011.jpg)。
 - en: Estimate the posterior probability of ![Markov Chain Monte Carlo](img/B10354_10_012.jpg),
     ![Markov Chain Monte Carlo](img/B10354_10_013.jpg). We can use the Bayes rule
     for this.
+  id: totrans-98
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 估计![马尔可夫链蒙特卡洛](img/B10354_10_012.jpg)和![马尔可夫链蒙特卡洛](img/B10354_10_013.jpg)的后验概率。我们可以使用贝叶斯定理来计算这个。
 - en: Calculate the probability, ![Markov Chain Monte Carlo](img/B10354_10_014.jpg),
     of moving to that new parameter value, ![Markov Chain Monte Carlo](img/B10354_10_015.jpg)
     (remember that probabilities have to be smaller than one):![Markov Chain Monte
     Carlo](img/B10354_10_016.jpg)
+  id: totrans-99
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算移动到该新参数值![马尔可夫链蒙特卡洛](img/B10354_10_015.jpg)的概率![马尔可夫链蒙特卡洛](img/B10354_10_014.jpg)（记住，概率必须小于1）：![马尔可夫链蒙特卡洛](img/B10354_10_016.jpg)
 - en: Move to the new parameter value with probability ![Markov Chain Monte Carlo](img/B10354_10_017.jpg).
+  id: totrans-100
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 以概率![马尔可夫链蒙特卡洛](img/B10354_10_017.jpg)移动到新的参数值。
 - en: 'The next step is to build up these components step by step:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是一步步构建这些组件：
 - en: '[PRE13]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: First, we need to propose a new *X[c]*. This has to be dependent on the previous
     value of *x* since we do not want a blind random search, but a more refined random
     walk. In this case, we will sample *x[cand]* from a normal distribution with mean
     *x* and a standard deviation of 0.1.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要提出一个新的*X[c]*。这个值必须依赖于*x*的先前值，因为我们不希望进行盲目的随机搜索，而是希望进行更精细的随机漫步。在这种情况下，我们将从一个均值为*x*、标准差为0.1的正态分布中采样*x[cand]*。
 - en: 'It''s also possible to sample from other distributions or with other standard
     deviations, as long as *x[cand]* is related to *x*:'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 也可以从其他分布或使用其他标准差进行采样，只要*x[cand]*与*x*相关：
 - en: '[PRE14]'
+  id: totrans-105
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: In the first section, by sampling from the prior and then running the simulation,
     we sampled directly from the posterior. As we are now sampling through our proposed
     method, we are no longer sampling from the posterior directly. Therefore, to calculate
     the posterior probability, we'll use the Bayes rule.
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 在第一部分，通过从先验中采样并运行模拟，我们直接从后验中采样。由于我们现在通过我们提出的方法进行采样，因此不再直接从后验中采样。因此，为了计算后验概率，我们将使用贝叶斯定理。
 - en: Remember that we usually don't need to divide by *P*(*D*) as we don't assume
     biased measurements. The Bayes rule simplifies to ![Markov Chain Monte Carlo](img/B10354_10_022.jpg),
     where ![Markov Chain Monte Carlo](img/B10354_10_023.jpg) is the posterior, *P*(*TPP*)
     is the prior, and ![Markov Chain Monte Carlo](img/B10354_10_025.jpg) is the likelihood.
     So, to estimate the likelihood for a parameter value, *x*, we run a number of
     simulations with that parameter.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，我们通常不需要除以*P*(*D*)，因为我们不假设有偏的测量。贝叶斯定理简化为![马尔可夫链蒙特卡洛](img/B10354_10_022.jpg)，其中![马尔可夫链蒙特卡洛](img/B10354_10_023.jpg)是后验，*P*(*TPP*)是先验，![马尔可夫链蒙特卡洛](img/B10354_10_025.jpg)是似然性。因此，为了估计某个参数值*x*的似然性，我们需要进行若干次使用该参数的模拟。
 - en: 'The likelihood is the share of simulations that match our data:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 似然性是与我们数据匹配的模拟比例：
 - en: '[PRE15]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'For starters, we will use a flat prior again; each TPP is equally likely:'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们将再次使用一个平坦的先验；每个TPP的可能性是相等的：
 - en: '[PRE16]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'The posterior probability of a parameter value, *x*, is the likelihood times
     the prior:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数值*x*的后验概率是似然与先验的乘积：
 - en: '[PRE17]'
+  id: totrans-113
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Now we are ready to put it all together into the Metropolis-Hastings MCMC algorithm!
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们准备将所有内容整合到Metropolis-Hastings MCMC算法中！
 - en: 'First, we need to set some initial value for *x*. To make the algorithm find
     likely values quickly, it is sensible to initialize it at the maximum likelihood
     value or some estimate that we deem likely. We also need to compute the posterior
     probability of this initial value, which we can do by running the following code:'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要为*x*设置一些初始值。为了使算法能够快速找到可能的值，合理的做法是将其初始化为最大似然值或我们认为可能的某个估计值。我们还需要计算这个初始值的后验概率，这可以通过运行以下代码来完成：
 - en: '[PRE18]'
+  id: totrans-116
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'Likewise, we need to keep track of all of the values sampled in a trace. Purely
     for exhibition purposes, we will also keep track of the posterior probabilities.
     To do this, we''re going to run the following:'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 同样，我们需要跟踪所有在轨迹中采样的值。为了展示，我们还将跟踪后验概率。为此，我们将运行以下代码：
 - en: '[PRE19]'
+  id: totrans-118
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'Now we get to the main loop. However, before we do, it''s important to remember
     that the algorithm consists of four steps:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们进入主循环。不过，在我们进行之前，重要的是要记住算法包括四个步骤：
 - en: Propose a new candidate *x[cand]*
+  id: totrans-120
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 提议一个新的候选值*x[cand]*
 - en: Compute the posterior probability of![Markov Chain Monte Carlo](img/B10354_10_027.jpg)
+  id: totrans-121
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算后验概率：![马尔可夫链蒙特卡洛](img/B10354_10_027.jpg)
 - en: Compute the acceptance probability:![Markov Chain Monte Carlo](img/B10354_10_028.jpg)
+  id: totrans-122
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 计算接受概率：![马尔可夫链蒙特卡洛](img/B10354_10_028.jpg)
 - en: 'Set *x* to *X[C]* and with a probability, ![Markov Chain Monte Carlo](img/B10354_10_030.jpg):'
+  id: totrans-123
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 将*x*设置为*X[C]*，并具有概率，![马尔可夫链蒙特卡洛](img/B10354_10_030.jpg)：
 - en: '[PRE20]'
+  id: totrans-124
   prefs:
   - PREF_IND
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: '[PRE21]'
+  id: totrans-125
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'After running this algorithm for a number of epochs, we end up with a distribution
     of possible cheater shares with payoffs. As we''ve done before, we can simply
     run the following code to visualize this:'
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 在运行这个算法若干个周期后，我们最终会得到一个可能的作弊份额及其回报的分布。像之前做的那样，我们可以简单地运行以下代码来可视化这个结果：
 - en: '[PRE22]'
+  id: totrans-127
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Once we''ve run the previous code, we''ll receive this graph as the output:'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 一旦我们运行了之前的代码，我们将得到以下图形作为输出：
 - en: '![Markov Chain Monte Carlo](img/B10354_10_07.jpg)'
+  id: totrans-129
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫链蒙特卡洛](img/B10354_10_07.jpg)'
 - en: The outcome of the Metropolis Hastings sampler
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: Metropolis Hastings采样器的结果
 - en: 'By viewing the trace over time, it shows how the algorithm moves randomly but centers
     around highly likely values:'
+  id: totrans-131
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过查看随时间变化的轨迹，显示了算法如何随机移动，但围绕高可能值集中：
 - en: '[PRE23]'
+  id: totrans-132
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: 'We will then get an output, in the form of a chart, which shows us the trace
     of the **Metropolis Hasings** (**MH**) sampler:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们将得到一个输出，形式为图表，展示**Metropolis Hasings**（**MH**）采样器的轨迹：
 - en: '![Markov Chain Monte Carlo](img/B10354_10_08.jpg)'
+  id: totrans-134
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫链蒙特卡洛](img/B10354_10_08.jpg)'
 - en: Trace of the Metropolis Hastings sampler
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: Metropolis Hastings采样器的轨迹
 - en: 'For a better understanding, we can plot the posterior probabilities over the
     tried out values:'
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了更好地理解，我们可以绘制试验值的后验概率：
 - en: '[PRE24]'
+  id: totrans-137
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: 'After successful executing the code, we''ll then get the following chart as
     an output:'
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 在成功执行代码后，我们将得到以下图表作为输出：
 - en: '![Markov Chain Monte Carlo](img/B10354_10_09.jpg)'
+  id: totrans-139
   prefs: []
   type: TYPE_IMG
+  zh: '![马尔可夫链蒙特卡洛](img/B10354_10_09.jpg)'
 - en: The proposed value versus posterior probability
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 提议的值与后验概率
 - en: Metropolis-Hastings MCMC
+  id: totrans-141
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: Metropolis-Hastings MCMC
 - en: To demonstrate the power and flexibility of PyMC3, we are going to use it for a classic
     econometrics task, but we will put a Bayesian spin on it.
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了展示PyMC3的强大功能和灵活性，我们将用它来完成一个经典的计量经济学任务，但我们将为其加上贝叶斯的视角。
 - en: Note
+  id: totrans-143
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: '**Note**: This example is a straight adaptation of an example from the PyMC3
     documentation: [https://docs.pymc.io/notebooks/stochastic_volatility.html](https://docs.pymc.io/notebooks/stochastic_volatility.html).
     This, in turn, is an adaptation of an example from Hoffman''s 2011 paper, *No-U-Turn
     Sampler*, available at: [https://arxiv.org/abs/1111.4246](https://arxiv.org/abs/1111.4246).'
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: '**注意**：这个例子是直接改编自PyMC3文档中的一个示例：[https://docs.pymc.io/notebooks/stochastic_volatility.html](https://docs.pymc.io/notebooks/stochastic_volatility.html)。而这个示例又是改编自Hoffman
+    2011年论文中的一个示例，*No-U-Turn Sampler*，可以在此获取：[https://arxiv.org/abs/1111.4246](https://arxiv.org/abs/1111.4246)。'
 - en: Stock prices and other financial asset prices fluctuate, and the variance of
     daily returns is called volatility. Volatility is a commonly used risk measure,
     so it's quite important to measure it accurately.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 股票价格和其他金融资产价格会波动，日收益率的方差称为波动性。波动性是常用的风险度量，因此准确衡量它非常重要。
 - en: The easy solution here would be to compute a backward-looking variance of return.
     However, there is a benefit to expressing uncertainty about the actual volatility.
     Similar to the payoff example we looked at earlier on, there is a distribution
     of "actual" values from which the realized values are drawn. This is also called
     "stochastic volatility" because there is a distribution of possible volatility
     values from which the observed volatility is a realized sample.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里的简单解决方案是计算一个回溯的回报方差。然而，表达对实际波动率的不确定性是有益的。类似于我们之前看到的收益示例，存在一个“实际”值的分布，真实值是从中抽取的。这也称为“随机波动率”，因为有一个可能的波动率值分布，而观察到的波动率是从中获得的一个实现样本。
 - en: In this case we are interested in building a model of stochastic volatility
     of the S&P 500, the American stock market index. To do this, we must first load
     the data. You can either download them from Yahoo finance directly or find it
     on Kaggle, at [https://www.kaggle.com/crescenzo/sp500](https://www.kaggle.com/crescenzo/sp500).
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，我们有兴趣建立S&P 500的随机波动率模型，即美国股市指数。为此，我们必须首先加载数据。你可以直接从雅虎财经下载，或者在Kaggle上找到，网址为[https://www.kaggle.com/crescenzo/sp500](https://www.kaggle.com/crescenzo/sp500)。
 - en: 'To load the data, run the following code:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 要加载数据，请运行以下代码：
 - en: '[PRE25]'
+  id: totrans-149
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'In the example we''re looking at, we are interested in the closing prices,
     so we need to extract the closing prices from the dataset. The dataset shows new
     data first, so we need to invert it, which we achieve with the following code:'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 在我们正在查看的示例中，我们对收盘价感兴趣，因此需要从数据集中提取收盘价。数据集显示的是最新数据，所以我们需要将其反转，使用以下代码可以实现：
 - en: '[PRE26]'
+  id: totrans-151
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'When plotting the closing prices, which we do in the following code, we see,
     through the outputted graphic, a familiar plot:'
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 当我们绘制收盘价时（在接下来的代码中），通过输出的图形，我们会看到一个熟悉的图表：
 - en: '[PRE27]'
+  id: totrans-153
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: '[PRE28]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: 'As a result, we''ll then get the following chart as an output:'
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果，我们将获得以下图表作为输出：
 - en: '![Metropolis-Hastings MCMC](img/B10354_10_10.jpg)'
+  id: totrans-156
   prefs: []
   type: TYPE_IMG
+  zh: '![Metropolis-Hastings MCMC](img/B10354_10_10.jpg)'
 - en: The S&P 500 from inception to late 2018
+  id: totrans-157
   prefs: []
   type: TYPE_NORMAL
+  zh: 从创立到2018年底的S&P 500
 - en: 'The dataset contains the S&P since its inception, which for us is a bit too
     much, so in our case, we''re going to cut it off at 1990\. We can specify this
     date by running the following:'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据集包含自S&P 500创立以来的所有数据，对我们来说有些过多，因此我们将在我们的情况下将数据截取至1990年。我们可以通过运行以下命令来指定这一日期：
 - en: '[PRE29]'
+  id: totrans-159
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: 'As we are interested in the returns, we need to compute the price differences.
     We can use `np.diff` to get daily price differences. We are going to package the
     whole thing into a pandas series for easier plotting:'
+  id: totrans-160
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们对回报感兴趣，我们需要计算价格差异。我们可以使用`np.diff`来获取每日价格差异。我们将把整个过程打包成一个pandas序列，方便绘图：
 - en: '[PRE30]'
+  id: totrans-161
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'This will give us the following chart:'
+  id: totrans-162
   prefs: []
   type: TYPE_NORMAL
+  zh: 这将给我们以下图表：
 - en: '![Metropolis-Hastings MCMC](img/B10354_10_11.jpg)'
+  id: totrans-163
   prefs: []
   type: TYPE_IMG
+  zh: '![Metropolis-Hastings MCMC](img/B10354_10_11.jpg)'
 - en: The returns of the S&P 500 from 1990 to late 2018
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: S&P 500 从1990年到2018年底的回报率
 - en: Now the fun with PyMC3 begins. PyMC3 includes some special distributions for
     dealing with time series, such as a random walk. This is exactly the right thing
     to use when we want to model stock prices.
+  id: totrans-165
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，PyMC3的乐趣开始了。PyMC3包括一些专门处理时间序列的分布，例如随机游走。这正是我们在建模股票价格时需要使用的。
 - en: 'Firstly, we need to import PyMC3 and its tool for time series, the random walk
     class:'
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们需要导入PyMC3及其时间序列工具——随机游走类：
 - en: '[PRE31]'
+  id: totrans-167
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: 'Then lastly, we need to set up the model. We can achieve this by running the
     following code:'
+  id: totrans-168
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后最后，我们需要设置模型。我们可以通过运行以下代码来实现这一点：
 - en: '[PRE32]'
+  id: totrans-169
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'Let''s now look at the commands we just executed in order to set up the model.
     As you can see, it consists of four key elements:'
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，让我们看看我们刚刚执行的命令，以便设置模型。如你所见，它由四个关键元素组成：
 - en: The volatility, `s`, is modeled as a random walk with an underlying step size,
     `step_size`. Our prior for the step size is an exponential distribution with ![Metropolis-Hastings
     MCMC](img/B10354_10_031.jpg) (once again, understanding the details of every distribution
     used is not necessary for the demonstration).
+  id: totrans-171
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 波动率` s `被建模为一个随机游走，其中包含一个基本的步长` step_size`。我们对步长的先验是一个指数分布，使用了![Metropolis-Hastings
+    MCMC](img/B10354_10_031.jpg)（再次强调，理解每个分布的细节并非本演示的必要内容）。
 - en: We then model the stochastic volatility itself. Note how we plug in the step
     size, which is itself a random variable. The random walk should have the same
     length as the observed return values.
+  id: totrans-172
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 然后，我们对随机波动率本身进行建模。请注意，我们将步长插入模型中，而步长本身是一个随机变量。随机游走应与观察到的回报值的长度相同。
 - en: We model the actual stock returns to be drawn from a `StudentT` distribution
     with `nu` degrees of freedom. Our prior for `nu` is an exponential distribution
     as well.
+  id: totrans-173
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 我们将实际的股票回报建模为来自`StudentT`分布，且具有`nu`个自由度。我们的`nu`的先验也是一个指数分布。
 - en: Finally, we get to model the actual returns. We model them to be drawn from
     a `StudentT` distribution with a scaling factor![Metropolis-Hastings MCMC](img/B10354_10_032.jpg)
+  id: totrans-174
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 最后，我们可以开始建模实际的回报。我们将其建模为来自`StudentT`分布，具有缩放因子![Metropolis-Hastings MCMC](img/B10354_10_032.jpg)
 - en: (or `lam` in code) produced by our stochastic volatile model. To condition the
     model on observed data, we pass on the observed return values.
+  id: totrans-175
   prefs:
   - PREF_IND
   type: TYPE_NORMAL
+  zh: （或在代码中为`lam`）由我们的随机波动模型生成。为了将模型与观察到的数据相结合，我们传递观察到的回报值。
 - en: The standard sampler for PyMC3 is not Metropolis Hastings, but the **No-U-Turn
     Sampler** (**NUTS**). PyMC3 will default to NUTS if we specify no sampler and
     just call `sample`.
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: PyMC3的标准采样器不是Metropolis Hastings，而是**无转弯采样器**（**NUTS**）。如果我们没有指定采样器，PyMC3会默认使用NUTS，只需调用`sample`。
 - en: To make the sampling run smoothly here, we need to specify a relatively high
     amount of `tune` samples. Those are samples that the sampler will draw from in
     order to find a good starting point, and that will not be part of the posterior,
     similar to the burned samples before.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了使采样顺利进行，我们需要指定一个相对较高的`tune`样本数。这些是采样器用来找到一个良好起点的样本，这些样本不会成为后验的一部分，类似于之前的“烧毁样本”。
 - en: 'We also need to tell NUTS to be lenient when accepting values by setting a
     high `target_accept` value. We can achieve this by running the following:'
+  id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还需要告诉NUTS在接受值时要宽松一些，通过设置较高的`target_accept`值来实现这一点。我们可以通过运行以下代码来做到这一点：
 - en: '[PRE33]'
+  id: totrans-179
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: PyMC3 has a nice utility that we can use to visualize the outcomes of sampling.
     We are interested in the standard deviation of the volatility random walk, ![Metropolis-Hastings
     MCMC](img/B10354_10_033.jpg), as well as the degrees of freedom of the `StudentT`
     distribution from which the actual returns are drawn.
+  id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: PyMC3有一个很好的工具，可以用来可视化采样结果。我们对波动随机游走的标准差感兴趣，![Metropolis-Hastings MCMC](img/B10354_10_033.jpg)，以及`StudentT`分布的自由度，从中抽取实际的回报。
 - en: 'As we ran two chains in parallel, you can see that we obtained two different
     output distributions. If we had run the sampler for longer, those two outcomes
     would converge. We can obtain a better estimate by averaging them, which is what
     PyMC3 does for predictions. For instance, let''s now try that with the following
     code:'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们并行运行了两个链，因此可以看到我们得到了两个不同的输出分布。如果我们运行采样器更长时间，这两个结果将会收敛。通过对它们取平均值，我们可以获得更好的估计，这正是PyMC3在进行预测时的做法。例如，现在我们可以通过以下代码来尝试：
 - en: '[PRE34]'
+  id: totrans-182
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE34]'
 - en: 'With the result of that code being shown in the following charts:'
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 该代码的结果将通过以下图表展示：
 - en: '![Metropolis-Hastings MCMC](img/B10354_10_12.jpg)'
+  id: totrans-184
   prefs: []
   type: TYPE_IMG
+  zh: '![Metropolis-Hastings MCMC](img/B10354_10_12.jpg)'
 - en: Results overview of the PyMC3 sampler. On the left, you can see the distributions
     produced by the two sampler chains. On the right, you can see their traces.
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: PyMC3采样器的结果概述。左侧可以看到由两个采样器链生成的分布，右侧可以看到它们的轨迹。
 - en: 'In the final step, we can show how stochastic volatility has behaved over time.
     You can see how it nicely aligns with volatile periods such as the 2008 financial
     crisis. You can also see that there are periods when the model is more or less
     certain about volatility:'
+  id: totrans-186
   prefs: []
   type: TYPE_NORMAL
+  zh: 在最后一步，我们可以展示随机波动随时间的变化情况。你可以看到它如何与波动较大的时期（例如2008年金融危机）很好地对齐。你还可以看到模型在某些时期对于波动的确定性较强或较弱：
 - en: '[PRE35]'
+  id: totrans-187
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE35]'
 - en: 'As we can see, the output of that code will return the chart that we see below:'
+  id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 如我们所见，代码的输出将返回我们下面看到的图表：
 - en: '![Metropolis-Hastings MCMC](img/B10354_10_13.jpg)'
+  id: totrans-189
   prefs: []
   type: TYPE_IMG
+  zh: '![Metropolis-Hastings MCMC](img/B10354_10_13.jpg)'
 - en: Inferred stochastic volatility from 1990 to late 2018
+  id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 从1990年到2018年底的随机波动推断
 - en: There are a large number of applications that can be modeled well with such
     relatively small Bayesian models. The main advantage is that the models are easy
     to interpret and can express uncertainty well. Probabilistic programming aligns
     well with the "storytelling" approach to data science, as the story is clearly
     expressed in the model.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 有大量应用可以通过这种相对较小的贝叶斯模型很好地建模。主要的优点是这些模型易于解释，并且能够很好地表达不确定性。概率编程与数据科学中的“讲故事”方法非常契合，因为故事在模型中得到了清晰的表达。
 - en: In the next section, we will move from shallow probabilistic programming to
     deep probabilistic programming.
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一节中，我们将从浅层概率编程过渡到深度概率编程。
 - en: From probabilistic programming to deep probabilistic programming
+  id: totrans-193
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 从概率编程到深度概率编程
 - en: The Bayesian models that we've developed so far are all quite shallow. So, let's
     ask ourselves whether we can combine the predictive power of deep networks with
     the advantages of Bayesian models. This is an active field of research and a fitting
     way to close this book.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们所开发的贝叶斯模型都相当浅显。那么，是否可以将深度网络的预测能力与贝叶斯模型的优势结合起来呢？这是一个活跃的研究领域，也是本书的一个合适结尾。
 - en: Deep networks have a number of parameters; this makes searching through the
     parameter space a hard problem. In traditional supervised deep learning, we would
     use backpropagation to solve this problem. Backpropagation can also be used for
     Bayesian models. However, it's not the only, or even necessarily the best, way to
     do Bayesian deep learning.
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 深度网络有大量的参数，这使得在参数空间中进行搜索成为一个困难的问题。在传统的监督深度学习中，我们会使用反向传播来解决这个问题。反向传播也可以用于贝叶斯模型。然而，这并不是唯一的方法，甚至不一定是做贝叶斯深度学习的最佳方式。
 - en: 'By and large, there are four ways to do Bayesian deep learning:'
+  id: totrans-196
   prefs: []
   type: TYPE_NORMAL
+  zh: 总的来说，进行贝叶斯深度学习有四种方式：
 - en: Use **Automatic Differentiation Variational Inference** (**AVI**). This means
     approximating the posterior with a guide model and then optimizing model parameters
     using gradient descent. PyMC3 can do this using the AVI optimizer. See the paper,
     *Automatic Differentiation Variational Inference*, by Alp Kucukelbir and others,
     2016 paper at [https://arxiv.org/abs/1603.00788](https://arxiv.org/abs/1603.00788).
+  id: totrans-197
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用**自动微分变分推断**（**AVI**）。这意味着通过引导模型来近似后验分布，然后使用梯度下降法优化模型参数。PyMC3可以使用AVI优化器来实现这一点。请参阅由Alp
+    Kucukelbir等人于2016年发布的论文，*自动微分变分推断*，网址：[https://arxiv.org/abs/1603.00788](https://arxiv.org/abs/1603.00788)。
 - en: 'Alternatively, you can use, Pyro which implements fast, GPU-optimized AVI,
     which you can view here: [http://pyro.ai/](http://pyro.ai/).'
+  id: totrans-198
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 或者，你可以使用Pyro，它实现了快速的、GPU优化的AVI，你可以在这里查看：[http://pyro.ai/](http://pyro.ai/)。
 - en: 'While it would be too much to give an extensive tutorial on this approach here,
     the PyMC3 documentation has a good tutorial on this: [https://docs.pymc.io/ notebooks/bayesian_neural_network_advi.html](https://docs.pymc.io/%20notebooks/bayesian_neural_network_advi.html).'
+  id: totrans-199
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 虽然在这里提供一个详尽的教程会过于冗长，但PyMC3文档中有一个很好的教程：[https://docs.pymc.io/ notebooks/bayesian_neural_network_advi.html](https://docs.pymc.io/%20notebooks/bayesian_neural_network_advi.html)。
 - en: Assume posterior values are normally distributed, then use a standard neural
     network library such as Keras and learn a mean and standard deviation for every
     parameter. Remember how we sampled the *z* value from a parameterized normal distribution
     when working on variational autoencoders? We can do this for every layer. This
     trains faster and takes less computing power and memory than AVI but is less flexible
     and has twice the parameters of a non-Bayesian neural network.
+  id: totrans-200
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 假设后验值服从正态分布，然后使用标准神经网络库（如Keras）学习每个参数的均值和标准差。记得我们在处理变分自编码器时如何从参数化的正态分布中抽取*z*值吗？我们可以对每一层进行类似的操作。这种方法训练速度较快，所需计算能力和内存少于AVI，但灵活性较差，并且拥有比非贝叶斯神经网络多两倍的参数。
 - en: Use the dropout trick. When working with time series, we turned dropout on at
     test time and ran inference multiple times to obtain confidence intervals. This
     is a form of Bayesian learning that is very easy to achieve, with no more parameters
     than a regular neural network. However, it's slower at inference time, and does
     not come with all the flexibility of AVI, either.
+  id: totrans-201
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用dropout技巧。在处理时间序列时，我们在测试时启用了dropout，并多次运行推断以获取置信区间。这是一种非常容易实现的贝叶斯学习方式，它的参数数量与普通神经网络相同，但推断时速度较慢，并且没有AVI那么灵活。
 - en: Pick and mix. To train a neural network, we need a gradient signal, which we
     can obtain from AVI. We can train the socket of a neural network, sometimes called
     the feature extractor, in a regular fashion and the head of the network in a Bayesian
     manner. This way, we obtain uncertainty estimates while not having to pay the
     whole cost of Bayesian methods.
+  id: totrans-202
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 混合选择。为了训练神经网络，我们需要一个梯度信号，这可以通过AVI获得。我们可以常规地训练神经网络的部分（有时称为特征提取器），而网络的头部则以贝叶斯方式进行训练。这样，我们在不需要支付贝叶斯方法全部成本的情况下，仍然能够获得不确定性估计。
 - en: Summary
+  id: totrans-203
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, you got a brief overview of modern Bayesian machine learning
     and its applications in finance. We've only touched upon this as it is a very
     active field of research from which we can expect many breakthroughs in the near
     future. It will be exciting to observe its development and bring its applications
     into production.
+  id: totrans-204
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，你简要了解了现代贝叶斯机器学习及其在金融中的应用。我们仅仅触及了这一领域，因为它是一个非常活跃的研究领域，预计在不久的将来会有许多突破。观察其发展并将其应用带入生产将是非常激动人心的。
 - en: 'Looking back at this chapter, we should feel confident in understanding the
     following:'
+  id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 回顾这一章，我们应该对以下内容有信心：
 - en: The empirical derivation of Bayes formula
+  id: totrans-206
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 贝叶斯公式的经验推导
 - en: How and why the Markov Chain Monte Carlo works
+  id: totrans-207
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 马尔可夫链蒙特卡洛如何以及为何有效
 - en: How to use PyMC3 for Bayesian inference and probabilistic programming
+  id: totrans-208
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 如何使用PyMC3进行贝叶斯推断和概率编程
 - en: How these methods get applied in stochastic volatility models
+  id: totrans-209
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 这些方法如何应用于随机波动率模型
 - en: Notice how everything you have learned here transfers to bigger models as well,
     such as the deep neural networks that we've discussed throughout the entirety
     of the book. The sampling process is still a bit slow for very large models, but
     researchers are actively working on making it faster, and what you've learned
     is a great foundation for the future.
+  id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，你在这里学到的一切也可以转移到更大的模型中，比如我们在整本书中讨论的深度神经网络。对于非常大的模型，采样过程仍然有些慢，但研究人员正在积极工作以加快速度，而你所学到的内容为未来奠定了坚实的基础。
 - en: Farewell
+  id: totrans-211
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 告别
 - en: And thus, we close the last chapter of our journey, and I say goodbye to you,
     dear reader. Let's look back at the table of contents that we were met with at
     the start of our journey.
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们结束了这段旅程的最后一章，向你告别，亲爱的读者。让我们回顾一下我们在旅程开始时遇到的目录。
 - en: 'Over the past 10 chapters, we''ve covered a whole lot, including the following:'
+  id: totrans-213
   prefs: []
   type: TYPE_NORMAL
+  zh: 在过去的10章中，我们涵盖了很多内容，包括以下内容：
 - en: Gradient descent-based optimization
+  id: totrans-214
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于梯度下降的优化
 - en: Feature engineering
+  id: totrans-215
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 特征工程
 - en: Tree-based methods
+  id: totrans-216
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基于树的方法
 - en: Computer vision
+  id: totrans-217
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 计算机视觉
 - en: Time series models
+  id: totrans-218
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 时间序列模型
 - en: Natural language processing
+  id: totrans-219
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 自然语言处理
 - en: Generative models
+  id: totrans-220
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 生成模型
 - en: Debugging machine learning systems
+  id: totrans-221
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 调试机器学习系统
 - en: Ethics in machine learning
+  id: totrans-222
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 机器学习中的伦理
 - en: Bayesian inference
+  id: totrans-223
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 贝叶斯推断
 - en: In each chapter, we created a large bag of practical tips and tricks that you
     can use. This will allow you to build state-of-the-art systems that will change
     the financial industry.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: 在每一章中，我们创建了一个包含大量实用技巧和窍门的大袋子，你可以使用它们。这将使你能够构建最先进的系统，从而改变金融行业。
 - en: Yet, in many ways we have only scratched the surface. Each of the chapter topics
     merit their own book, and even that would not adequately cover everything that
     could be said about machine learning in finance.
+  id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，在许多方面，我们仅仅触及了表面。每个章节的话题都值得单独成书，即便如此，也无法充分涵盖关于金融领域中机器学习的所有内容。
 - en: 'I leave you with this thought: Machine learning in finance is an exciting field
     in which there is still much to uncover, so onward dear reader; there are models
     to be trained, data to be analyzed, and inferences to be made!'
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 我留给你这个思考：金融领域中的机器学习是一个令人兴奋的领域，还有很多未解之谜，因此，亲爱的读者，继续前进吧；有模型需要训练，数据需要分析，还有推断需要做！
 - en: Further reading
+  id: totrans-227
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 进一步阅读
 - en: You made it to the end of the book! What are you going to do now? Read more
     books! Machine learning, and in particular, deep learning, is a fast-moving field,
     so any reading list risks being outdated by the time you read it. However, the
     following list aims to show you the most relevant books that have a safety net
     of remaining relevant over the coming years.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 你已经读完了这本书！接下来你打算做什么？阅读更多的书！机器学习，特别是深度学习，是一个快速发展的领域，因此任何阅读清单在你阅读时都可能已经过时。然而，以下清单旨在向你展示一些最相关的书籍，这些书籍具有在未来几年内仍然保持相关性的安全网。
 - en: General data analysis
+  id: totrans-229
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 一般数据分析
 - en: Wes McKinney, *Python for Data Analysis*, [http://wesmckinney.com/pages/book.html](http://wesmckinney.com/pages/book.html).
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: Wes McKinney, *《Python数据分析》*, [http://wesmckinney.com/pages/book.html](http://wesmckinney.com/pages/book.html)。
 - en: Wes is the original creator of pandas, a popular Python data-handling tool that
     we saw in [Chapter 2](ch02.xhtml "Chapter 2. Applying Machine Learning to Structured
     Data"), *Applying Machine Learning to Structured Data*. pandas is a core component
     of any data science workflow in Python and will remain so for the foreseeable
     future. Investing in sound knowledge of the tools he presents is definitely worth
     your time.
+  id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: Wes 是 pandas 的原创者，pandas 是一个流行的 Python 数据处理工具，我们在[第2章](ch02.xhtml "第2章：将机器学习应用于结构化数据")中看到过。*将机器学习应用于结构化数据*。pandas
+    是 Python 中任何数据科学工作流的核心组成部分，并将在可预见的未来继续如此。投资于他所介绍工具的扎实知识绝对值得你花时间。
 - en: Sound science in machine learning
+  id: totrans-232
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 机器学习中的可靠科学
 - en: Marcos Lopez de Prado, *Advances in Financial Machine Learning*, [https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086).
+  id: totrans-233
   prefs: []
   type: TYPE_NORMAL
+  zh: Marcos Lopez de Prado，*金融机器学习进展*，[https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086](https://www.wiley.com/en-us/Advances+in+Financial+Machine+Learning-p-9781119482086)。
 - en: Marcos is an expert at applying machine learning in finance. His book is largely
     focused on the danger of overfitting and how careful researchers have to be when
     doing proper science. While focused more on high-frequency trading, Marcos writes
     very clearly and makes potential issues and solutions very understandable.
+  id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: Marcos 是将机器学习应用于金融领域的专家。他的书主要集中在过拟合的危险性以及研究人员在做出正确科学时需要非常小心。虽然更多地关注高频交易，Marcos
+    写得非常清晰，并使潜在问题和解决方案非常易于理解。
 - en: General machine learning
+  id: totrans-235
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 通用机器学习
 - en: Trevor Hastie, Robert Tibshirani, and Jerome Friedman, *Elements of Statistical
     Learning*, [https://web.stanford.edu/~hastie/ElemStatLearn/](https://web.stanford.edu/~hastie/ElemStatLearn/).
+  id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: Trevor Hastie，Robert Tibshirani 和 Jerome Friedman，*统计学习的元素*，[https://web.stanford.edu/~hastie/ElemStatLearn/](https://web.stanford.edu/~hastie/ElemStatLearn/)。
 - en: The "bible" of statistical machine learning, containing good explanations of
     all the important concepts of statistical learning. This book is best used as
     a lookup book whenever you need some in-depth information on one concept.
+  id: totrans-237
   prefs: []
   type: TYPE_NORMAL
+  zh: 统计机器学习的“圣经”，包含了所有重要概念的良好解释。这本书最好作为查阅书籍，随时需要深入了解某个概念时参考。
 - en: Gareth James, Daniela Witten, Trevor Hastie, and Robert Tibshirani, *Introduction
     to Statistical Learning*, [https://www-bcf.usc.edu/~gareth/ISL/](https://www-bcf.usc.edu/~gareth/ISL/).
+  id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: Gareth James，Daniela Witten，Trevor Hastie 和 Robert Tibshirani，*统计学习入门*，[https://www-bcf.usc.edu/~gareth/ISL/](https://www-bcf.usc.edu/~gareth/ISL/)。
 - en: '*Introduction to Statistical Learning* is a bit like a companion to *Elements
     of Statistical Learning*. Written by some of the same authors, it introduces the
     most important concepts in statistical learning in a rigorous manner. It''s ideal
     if you are new to statistical learning.'
+  id: totrans-239
   prefs: []
   type: TYPE_NORMAL
+  zh: '*统计学习入门*有点像*统计学习的元素*的配套书。由一些相同的作者编写，它以严谨的方式介绍了统计学习中的最重要概念。如果你是统计学习的新手，这是理想之选。'
 - en: General deep learning
+  id: totrans-240
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 通用深度学习
 - en: Ian Goodfellow, Yoshua Bengio, and Aaron Courville, *Deep Learning*, [https://www.deeplearningbook.org/](https://www.deeplearningbook.org/).
+  id: totrans-241
   prefs: []
   type: TYPE_NORMAL
+  zh: Ian Goodfellow，Yoshua Bengio 和 Aaron Courville，*深度学习*，[https://www.deeplearningbook.org/](https://www.deeplearningbook.org/)。
 - en: While this book is very praxis-oriented, *Deep Learning* is more focused on
     the theory behind deep learning. It covers a broad range of topics and derives
     practical applications from theoretical concepts.
+  id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管这本书非常注重实践，但*深度学习*更多地聚焦于深度学习背后的理论。它涵盖了广泛的主题，并从理论概念中推导出实际应用。
 - en: Reinforcement learning
+  id: totrans-243
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 强化学习
 - en: 'Richard S. Sutton and Andrew G. Barto, *Reinforcement Learning: An Introduction*,
     [http://incompleteideas.net/book/the-book-2nd.html](http://incompleteideas.net/book/the-book-2nd.html).'
+  id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: Richard S. Sutton 和 Andrew G. Barto，*强化学习：导论*，[http://incompleteideas.net/book/the-book-2nd.html](http://incompleteideas.net/book/the-book-2nd.html)。
 - en: The standard work of reinforcement learning discusses all major algorithms in depth.
     The focus is less on flashy results and more on the reasoning behind and derivation
     of reinforcement learning algorithms.
+  id: totrans-245
   prefs: []
   type: TYPE_NORMAL
+  zh: 强化学习的标准著作深入讨论了所有主要算法。重点不在于炫目的结果，而在于强化学习算法背后的推理和推导。
 - en: Bayesian machine learning
+  id: totrans-246
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 贝叶斯机器学习
 - en: 'Kevin P. Murphy, *Machine Learning: a Probabilistic Perspective*, [https://www.cs.ubc.ca/~murphyk/MLbook/](https://www.cs.ubc.ca/~murphyk/MLbook/).'
+  id: totrans-247
   prefs: []
   type: TYPE_NORMAL
+  zh: Kevin P. Murphy，*机器学习：一种概率视角*，[https://www.cs.ubc.ca/~murphyk/MLbook/](https://www.cs.ubc.ca/~murphyk/MLbook/)。
 - en: This book covers machine learning techniques from a probabilistic and much more
     Bayesian perspective. It's a very good guide if you want to think about machine
     learning differently.
+  id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 本书从概率论和更加贝叶斯的角度讲解机器学习技术。如果你想用不同的方式思考机器学习，这本书是一个非常好的指南。
 - en: Cameron Davidson-Pilon, *Probabilistic Programming and Bayesian Methods for
     Hackers*, [http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/](http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/).
+  id: totrans-249
   prefs: []
   type: TYPE_NORMAL
+  zh: Cameron Davidson-Pilon，*《黑客的概率编程与贝叶斯方法》*，[http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/](http://camdavidsonpilon.github.io/Probabilistic-Programming-and-Bayesian-Methods-for-Hackers/)。
 - en: This is probably the only probabilistic programming book that focuses on practical
     applications. Not only is it free and open source, it also gets frequent updates
     with new libraries and tools so that it always stays relevant.
+  id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 这可能是唯一一本专注于实际应用的概率编程书籍。它不仅是免费且开源的，而且经常更新新库和工具，确保始终保持相关性。
