@@ -1,7 +1,9 @@
 - en: Chapter 5. FX Derivatives
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第五章 外汇衍生品
 - en: 'FX derivatives (or foreign exchange derivatives) are financial derivative products
     whose payoff is a function of the exchange rate of two (or more) currencies. Like
     derivatives in general, FX derivatives can be grouped in three main categories:
@@ -10,20 +12,28 @@
     Black-Scholes model, and will show how to price a simple European call or put
     currency option. Afterwards, we will discuss the pricing of exchange options and
     quanto options.'
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: FX 衍生品（或外汇衍生品）是金融衍生产品，其支付结构取决于两种（或更多）货币的汇率。像一般衍生品一样，FX 衍生品可以分为三大类：期货、掉期和期权。在本章中，我们将仅讨论期权类型的衍生品。我们将从基础的
+    Black-Scholes 模型的简单推广开始，展示如何对简单的欧式看涨或看跌货币期权进行定价。之后，我们将讨论外汇期权和 Quanto 期权的定价。
 - en: Throughout this chapter, we will assume that you have some basic knowledge about
     derivative pricing, especially the Black-Scholes model and risk-neutral valuation.
     Occasionally, we will refer to some mathematic relationships often used in quantitative
     finance (such as Itô's lemma or Girsanov theorem), but a deep understanding of
     these theorems is not essential for this chapter. However, those interested in
     the pure mathematical background of this topic can check out *Medvegyev (2007)*.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们假设你对衍生品定价有一些基本了解，特别是对 Black-Scholes 模型和风险中性定价方法有所掌握。偶尔，我们会提到一些定量金融中常用的数学关系（例如伊藤引理或吉尔萨诺夫定理），但对这些定理的深刻理解对于本章并非必需。然而，那些对该主题的纯数学背景感兴趣的人可以参考*Medvegyev
+    (2007)*。
 - en: Terminology and notations
+  id: totrans-3
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 术语和符号
 - en: 'As we will work with FX rates, it is important to clarify some related terms.
     Generally, we will denote spot FX rates by *S*, which measures the price of one
     currency (called base currency) in terms of another currency (called variable
@@ -36,31 +46,49 @@
     which means that 1 dollar is worth 0.8 euros. Usually, it depends on historical
     market conventions that decide which currency is treated as the base currency
     in a given FX-pair.'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于我们将处理外汇汇率，因此澄清一些相关术语非常重要。通常，我们会用 *S* 来表示即期外汇汇率，它衡量一种货币（称为基础货币）与另一种货币（称为计价货币）的价格关系。换句话说，1
+    单位基础货币等于 *S* 单位的计价货币。理解如何读取外汇市场报价也非常重要。外汇对的报价由两种货币的缩写表示：基础货币的三字母代码，后跟计价货币的三字母代码。例如，EURUSD=1.25
+    意味着 1 欧元等于 1.25 美元。这等同于报价 USDEUR=0.8，意味着 1 美元等于 0.8 欧元。通常，哪种货币作为基础货币在某个外汇对中，取决于历史市场惯例。
 - en: In [Chapter 4](ch04.html "Chapter 4. Big Data – Advanced Analytics"), *Big Data
     – Advanced Analytics*, we have already seen how to download currency rates from
     the Internet, so we can use what we have learned to check this on real data.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 在[第四章](ch04.html "第四章 大数据 - 高级分析")*大数据 - 高级分析*中，我们已经学习了如何从互联网下载货币汇率，因此我们可以利用所学的内容，查看实际数据。
 - en: 'This short code plots the EURUSD and USDEUR rates to the same plot window:'
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 这段简短的代码绘制了 EURUSD 和 USDEUR 汇率在同一图表窗口中的显示：
 - en: '[PRE0]'
+  id: totrans-7
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Here, we can see the result in the following image:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们可以看到以下图片中的结果：
 - en: '![Terminology and notations](img/2078OT_05_01.jpg)'
+  id: totrans-9
   prefs: []
   type: TYPE_IMG
+  zh: '![术语和符号](img/2078OT_05_01.jpg)'
 - en: 'We can also check out the first few lines of the data:'
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以查看数据的前几行：
 - en: '[PRE1]'
+  id: totrans-11
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Here, we have to say something about notations. So far, we have denoted FX
     rates by *S*. However, the price of the underlying asset in derivatives pricing
     is generally denoted by *S*, regardless of whether it is a stock or a currency.
@@ -72,36 +100,50 @@
     FX rates, and strike prices might appear at the same time. We decided to adopt
     the notations of R-functions as much as possible, so in this chapter, the notations
     we will follow are as follows:'
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们需要谈一下符号问题。到目前为止，我们将外汇汇率表示为*S*。然而，在衍生品定价中，基础资产的价格通常表示为*S*，无论它是股票还是货币。另一方面，外汇汇率通常表示为*X*，有时也表示为*E*（两者都来源于“exchange”一词）。此外，期权的执行价格或行权价格也常用*X*或*E*表示。现在，作为读者，您可能已经意识到，在本章中使用一致的符号系统是多么具有挑战性，因为基础资产可能是股票或货币，而且股票价格、外汇汇率和行权价格可能同时出现。我们决定尽可能采用R函数的符号，因此在本章中，我们将遵循以下符号：
 - en: The price of the underlying will always be *S*, but if it is not necessarily
     a currency, we will use numeric or alphabetic indices such as *S[1]* or *S[A]*
+  id: totrans-13
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 基础资产的价格将始终是*S*，但如果它不一定是货币，我们将使用数字或字母指数，如*S[1]*或*S[A]*。
 - en: The strike price will always be *X*
+  id: totrans-14
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 行权价格将始终是*X*。
 - en: The expected value operator will be denoted by *E*
+  id: totrans-15
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 期望值算符将用*E*表示。
 - en: We strongly recommend that you be careful when reading other literature on this
     topic, because their notation might differ from ours.
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们强烈建议在阅读关于此主题的其他文献时要小心，因为他们的符号可能与我们的不同。
 - en: Currency options
+  id: totrans-17
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 货币期权
 - en: European currency options grant the holder the right to buy (call option) or
     sell (put option) currency at a predetermined exchange rate (strike price or exercise
     price, *X*), on a specified date (maturity, *T*). These financial assets are also
     called foreign exchange options (or FX options), but to avoid confusion with the
     term "exchange option", we prefer the "currency option" terminology.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 欧式货币期权赋予持有者在特定日期（到期日，*T*）以预定汇率（行权价格或执行价格，*X*）买入（看涨期权）或卖出（看跌期权）货币的权利。这些金融资产也被称为外汇期权（或FX期权），但为了避免与“交换期权”这一术语混淆，我们更倾向于使用“货币期权”这一术语。
 - en: A basic assumption of the original Black-Scholes model (*Black and Sholes, 1973*,
     see also *Merton, 1973*) is that the underlying is a stock that pays no dividend.
     More generally, the results of the model are held only if the underlying does
@@ -109,21 +151,31 @@
     this assumption might be relaxed easily, and an extended version of the Black-Scholes
     formula is valid for currency options as well, while all the logic and argumentation
     of the model is unchanged.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 原始Black-Scholes模型（*Black和Sholes，1973*，另见*Merton，1973*）的基本假设是基础资产是没有红利的股票。更一般地说，模型的结果只有在基础资产不支付任何形式的收益，也不产生任何形式的成本时才成立。然而，这一假设可以轻松放宽，Black-Scholes公式的扩展版本同样适用于货币期权，同时模型的所有逻辑和推理保持不变。
 - en: 'The closed form formula for the price of a European currency call option (*c[0]*)
     is the following:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 欧式货币看涨期权的闭式公式（*c[0]*）如下：
 - en: '![Currency options](img/2078OT_05_02.jpg)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![货币期权](img/2078OT_05_02.jpg)'
 - en: 'In the preceding formula, the values of d[1] and d[2] are as follows:'
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的公式中，d[1]和d[2]的值如下：
 - en: '![Currency options](img/2078OT_05_03.jpg) and ![Currency options](img/2078OT_05_04.jpg).'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: '![货币期权](img/2078OT_05_03.jpg) 和 ![货币期权](img/2078OT_05_04.jpg)。'
 - en: 'In the preceding formulas, *S[0]* is the spot FX rate (the price of one unit
     of the base currency, expressed in the variable currency), *X* is the strike price,
     *T* is the time to maturity of the option (in years), *σ* is the volatility of
@@ -132,337 +184,502 @@
     of the standard normal distribution. It is easy to see from put-call parity that
     the price of a European currency put option (*p[0]*) with the same parameters
     is as follows:'
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的公式中，*S[0]*是现货外汇汇率（基准货币的一单位价格，用变量货币表示），*X*是行权价格，*T*是期权到期时间（以年为单位），*σ*是外汇汇率的波动率，*r*和*q*分别是变量货币和基准货币的无风险对数回报，*N*表示标准正态分布的累积分布函数。从认购-认沽平价公式可以看出，具有相同参数的欧洲货币认沽期权(*p[0]*)的价格如下：
 - en: '![Currency options](img/2078OT_05_05.jpg)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![货币期权](img/2078OT_05_05.jpg)'
 - en: The Black-Scholes formula and other option pricing models are available in the
     `fOptions` package. We can use the `BlackScholesOption` or the `GBSOption` function,
     both of which are practically the same, and the latter is a shorthand alias for
     the prior function.
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: Black-Scholes公式及其他期权定价模型可以在`fOptions`包中找到。我们可以使用`BlackScholesOption`或`GBSOption`函数，它们实际上是一样的，后者是前者的简写别名。
 - en: '[PRE2]'
+  id: totrans-27
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: Here, `TypeFlag` is either the character `c`, which stands for call or `p` (put).
     `S` is the current price and `sigma` is the volatility of the underlying. `X`
     is the strike price and `Time` is the time to maturity.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，`TypeFlag`是字符`c`（表示认购期权）或`p`（表示认沽期权）。`S`是当前价格，`sigma`是标的资产的波动率。`X`是行权价格，`Time`是到期时间。
 - en: The other two parameters are a bit tricky because `r` and `b` are the risk-free
     rates, but the second one is meaningless when pricing options for stocks with
     the original BS model. This indicates that we must set `b = r` to get the BS stock
     option model, and set `b = r-q` to get the currency option model or the stock
     option model with continuous dividend yield. The other parameters of the function
     are optional and we do not need them.
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 另外两个参数有点棘手，因为`r`和`b`是无风险利率，但在使用原始BS模型定价股票期权时，第二个参数是没有意义的。这意味着我们必须将`b = r`来得到BS股票期权模型，并将`b
+    = r-q`来得到货币期权模型或具有连续股息收益的股票期权模型。该函数的其他参数是可选的，我们不需要它们。
 - en: 'To see how it works, let''s say we have an option for EUR with five years''
     maturity, and the strike price is 0.7\. The USD risk-free rate is `r = 3%` and
     the EUR risk-free rate is `q = 2%.` 1 USD is currently 0.7450 EUR, so this is
     the spot price of the underlying. Let the EUR volatility be 20 percent. If we
     call the `BlackSholesOption` function with the given parameters, we will get the
     following result:'
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了看它是如何运作的，假设我们有一个到期时间为五年的欧元期权，行权价格为0.7。美元的无风险利率是`r = 3%`，欧元的无风险利率是`q = 2%`。1美元当前等于0.7450欧元，因此这是标的资产的现货价格。假设欧元的波动率为20%。如果我们使用给定参数调用`BlackSholesOption`函数，我们将得到以下结果：
 - en: '[PRE3]'
+  id: totrans-31
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'We can also check out the price of the put option:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以查看认沽期权的价格：
 - en: '[PRE4]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'Then, we can also check the consistency with the put-call parity, which takes
     the following form for the currency options:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们还可以检查与认购-认沽平价的一致性，对于货币期权，其形式如下：
 - en: '[PRE5]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Substituting the data, on the left hand-side we have:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 替换数据后，在左侧我们得到：
 - en: '[PRE6]'
+  id: totrans-37
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'On the right-hand side, we have:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 在右侧，我们得到：
 - en: '[PRE7]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Tip
+  id: totrans-40
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 提示
 - en: Prices of options are rounded to eight digits, so there is a slight difference.
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 期权价格被四舍五入到八位数字，因此会有略微的差异。
 - en: It is important to mention that pricing a currency option is equivalent to pricing
     an option with any kind of underlying asset that grants continuous yield. For
     example, if the underlying is a stock or stock index with dividend yield *q* per
     annum, then the pricing formulas are the same as mentioned earlier.
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 需要特别提到的是，定价货币期权等同于定价任何具有连续收益的标的资产的期权。例如，如果标的是具有每年股息收益*q*的股票或股票指数，那么定价公式与前面提到的相同。
 - en: Exchange options
+  id: totrans-43
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 交换期权
 - en: Exchange options grant the holder the right to exchange one risky asset to another
     risky asset at maturity. It is easy to see that simple options are special forms
     of exchange options where one of the risky assets is a constant amount of money
     (the strike price).
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 交换期权赋予持有者在到期时将一种风险资产交换为另一种风险资产的权利。很容易看出，简单期权是交换期权的一种特殊形式，其中一个风险资产是一个固定金额的钱（行权价格）。
 - en: The pricing formula of an exchange option was first derived by *Margrabe, 1978*.
     The model assumptions, the pricing principles, and the resultant formula of `Margrabe`
     are very similar to (more precisely, the generalization of) those of Black, Scholes,
     and Merton. Now we will show how to determine the value of an exchange option.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 交换期权的定价公式最早由*Margrabe, 1978*推导出来。模型假设、定价原则和最终公式与Black、Scholes和Merton的定价方法非常相似（更准确地说，是它们的推广）。现在，我们将展示如何确定交换期权的价值。
 - en: Let's denote the spot prices of the two risky assets at time *t* by *S[1t]*
     and *S[2t]*. We assume that these prices under the risk neutral probability measure
     (*Q*) follow geometric Brownian motion with drifts equal to the risk-free rate
     (*r*), shown as ![Exchange options](img/2078OT_05_06.jpg) and ![Exchange options](img/2078OT_05_07.jpg).
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 设定在时间*t*时，两个风险资产的现货价格分别为*S[1t]*和*S[2t]*。我们假设在风险中性概率测度(*Q*)下，这些价格遵循几何布朗运动，漂移项等于无风险利率(*r*)，如图所示！[交换期权](img/2078OT_05_06.jpg)
+    和 ![交换期权](img/2078OT_05_07.jpg)。
 - en: Here, *W[1]* and *W[2]* are standard Wiener processes under *Q*, with correlation
     *ρ*. You may observe that here, the assets have no yield (for example, stocks
     that pay no dividend). It is well known (and easy to see with Itô's lemma) that
     the solutions of the earlier mentioned stochastic differential equations are ![Exchange
     options](img/2078OT_05_08.jpg) and ![Exchange options](img/2078OT_05_09.jpg) (1)
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，*W[1]* 和 *W[2]* 是*Q*下的标准维纳过程，相关系数为*ρ*。你可能会注意到，这里资产没有收益（例如，不支付股息的股票）。众所周知（并且可以通过伊藤引理轻松看出），之前提到的随机微分方程的解是
+    ![交换期权](img/2078OT_05_08.jpg) 和 ![交换期权](img/2078OT_05_09.jpg) (1)
 - en: We assume that you are familiar with the basics of stochastic processes in one
     dimension. However, in the case of exchange options, we have a two-dimensional
     Wiener process, so it is useful to illustrate how this looks.
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们假设你已经熟悉一维随机过程的基础知识。然而，在交换期权的情况下，我们有一个二维维纳过程，因此说明这种情况如何表现是很有用的。
 - en: Two-dimensional Wiener processes
+  id: totrans-49
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 二维维纳过程
 - en: The 2D Wiener process is like a random walk in two dimensions and continuous
     time. We can easily generate such a process with a few lines of code when the
     coordinates are independent Wiener processes (not bothering ourselves with scaling
     the process because it looks the same).
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 2D维纳过程就像是一个二维的随机游走，并且是连续时间的。我们可以通过几行代码轻松生成这样的过程，当坐标是独立的维纳过程时（我们不需要担心对过程进行缩放，因为它的外观是一样的）。
 - en: '[PRE8]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'If we call this function, the output is something like this:'
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们调用这个函数，输出结果大致如下：
 - en: '[PRE9]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'Here, we can see the result in the following image:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们可以在下图中看到结果：
 - en: '![Two-dimensional Wiener processes](img/2078OT_05_10.jpg)'
+  id: totrans-55
   prefs: []
   type: TYPE_IMG
+  zh: '![二维维纳过程](img/2078OT_05_10.jpg)'
 - en: Correlation between the Wiener processes changes the picture dramatically. In
     the case of positive correlation, the two Wiener processes look like they are
     moving in the same direction; in the case of negative correlation, they look like
     they are moving in the opposite direction.
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 维纳过程之间的相关性会显著改变图像。在正相关的情况下，两个维纳过程看起来像是朝同一个方向移动；而在负相关的情况下，它们看起来像是朝相反方向移动。
 - en: 'We can modify our function to get correlated Wiener processes. It is easy to
     see that the following code does the job:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以修改我们的函数以获得相关的维纳过程。很容易看出，以下代码完成了这个任务：
 - en: '[PRE10]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The result depends on the generated random numbers, but it is pretty much like
     this:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果依赖于生成的随机数，但大致是这样的：
 - en: '[PRE11]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'Here, we can see the result in the following image:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们可以在下图中看到结果：
 - en: '![Two-dimensional Wiener processes](img/2078OT_05_11.jpg)'
+  id: totrans-62
   prefs: []
   type: TYPE_IMG
+  zh: '![二维维纳过程](img/2078OT_05_11.jpg)'
 - en: 'In the previous example, we set the correlation coefficient to 0.6\. Now, let''s
     see what happens when it is -0.7:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 在之前的例子中，我们将相关系数设置为0.6。现在，让我们看看当相关系数为-0.7时会发生什么：
 - en: '[PRE12]'
+  id: totrans-64
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Here, we can see the result in the following image:'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们可以在下图中看到结果：
 - en: '![Two-dimensional Wiener processes](img/2078OT_05_12.jpg)'
+  id: totrans-66
   prefs: []
   type: TYPE_IMG
+  zh: '![二维维纳过程](img/2078OT_05_12.jpg)'
 - en: We can clearly see the difference between the processes with different correlations.
     Now, let's turn our attention back to exchange options.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以清楚地看到，不同相关性的过程之间的差异。现在，让我们将注意力重新集中在交换期权上。
 - en: The Margrabe formula
+  id: totrans-68
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 马格拉比公式
 - en: 'The payoff *H[T]* of the exchange option at maturity is defined by ![The Margrabe
     formula](img/2078OT_05_13.jpg). According to the basic risk-neutral pricing principle,
     the value of this payoff (or equivalently, the price of the exchange option, denoted
     by *π(H[T])*) is as follows:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 交换期权到期时的*H[T]*收益由![马格拉布公式](img/2078OT_05_13.jpg)定义。根据基本的风险中性定价原则，这一收益的价值（或等价地，交换期权的价格，用*π(H[T])*表示）如下所示：
 - en: '![The Margrabe formula](img/2078OT_05_14.jpg)![The Margrabe formula](img/2078OT_05_15.jpg)![The
     Margrabe formula](img/2078OT_05_16.jpg)'
+  id: totrans-70
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_14.jpg)![马格拉布公式](img/2078OT_05_15.jpg)![马格拉布公式](img/2078OT_05_16.jpg)'
 - en: In Equation (2), *S[t]* (without number 1 or 2 in the index) is defined as the
     *S[1t]/S[2t]* quotient. In other words, *S* is the price of *S[1]* in terms of
     *S[2]*. If the two risky assets are two currencies, then *S* is an FX rate, and
     that is why we use this notation.
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 在方程（2）中，*S[t]*（没有1或2的编号）被定义为*S[1t]/S[2t]*的商。换句话说，*S*是*S[1]*相对于*S[2]*的价格。如果这两个风险资产是两种货币，那么*S*就是外汇汇率，这也是我们使用这种符号的原因。
 - en: 'To calculate the earlier mentioned expected value, we need to introduce a new
     measure (*R*), defined by the following Radon-Nikodym derivative:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算前面提到的期望值，我们需要引入一个新的度量（*R*），由以下的Radon-Nikodym导数定义：
 - en: '![The Margrabe formula](img/2078OT_05_17.jpg)'
+  id: totrans-73
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_17.jpg)'
 - en: Here, the right-hand side of the earlier equation comes from Equation (1) for
     *S[2]*.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，前面方程右侧的内容来自于方程（1）中*S[2]*的表达式。
 - en: 'Then, the price of the exchange option will take the following form:'
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，交换期权的价格将采取以下形式：
 - en: '![The Margrabe formula](img/2078OT_05_18.jpg)![The Margrabe formula](img/2078OT_05_19.jpg)'
+  id: totrans-76
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_18.jpg)![马格拉布公式](img/2078OT_05_19.jpg)'
 - en: 'Now, we have to determine what kind of process *S* follows under *R*. From
     Girsanov''s theorem, we know that ![The Margrabe formula](img/2078OT_05_20.jpg)
     and ![The Margrabe formula](img/2078OT_05_21.jpg) are Wiener processes under *R*,
     and their correlation is still *ρ*. Let''s introduce the following two notations:'
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们需要确定*S*在*R*下遵循的过程。根据Girsanov定理，我们知道![马格拉布公式](img/2078OT_05_20.jpg)和![马格拉布公式](img/2078OT_05_21.jpg)是*R*下的Wiener过程，且它们的相关性仍然是*ρ*。我们引入以下两个符号：
 - en: '![The Margrabe formula](img/2078OT_05_22.jpg)![The Margrabe formula](img/2078OT_05_23.jpg)'
+  id: totrans-78
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_22.jpg)![马格拉布公式](img/2078OT_05_23.jpg)'
 - en: 'From Lévy''s characterisation, we know that *W* is a Wiener process under *R*.
     Now we can determine the equation of *S*:'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据Lévy的表征，我们知道*W*在*R*下是一个Wiener过程。现在我们可以确定*S*的方程：
 - en: '![The Margrabe formula](img/2078OT_05_24.jpg)![The Margrabe formula](img/2078OT_05_25.jpg)![The
     Margrabe formula](img/2078OT_05_26.jpg)![The Margrabe formula](img/2078OT_05_27.jpg)![The
     Margrabe formula](img/2078OT_05_28.jpg)![The Margrabe formula](img/2078OT_05_29.jpg)'
+  id: totrans-80
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_24.jpg)![马格拉布公式](img/2078OT_05_25.jpg)![马格拉布公式](img/2078OT_05_26.jpg)![马格拉布公式](img/2078OT_05_27.jpg)![马格拉布公式](img/2078OT_05_28.jpg)![马格拉布公式](img/2078OT_05_29.jpg)'
 - en: This means that *S* under *R* is a geometric Brownian motion with zero drift,
     that is ![The Margrabe formula](img/2078OT_05_30.jpg).
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，在*R*下，*S*是一个几何布朗运动，漂移为零，即![马格拉布公式](img/2078OT_05_30.jpg)。
 - en: 'Now, if you remember, in Equation (3), we had the following equation for the
     price of the exchange option:'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，如果你还记得，在方程（3）中，我们有关于交换期权价格的以下方程：
 - en: '![The Margrabe formula](img/2078OT_05_31.jpg)'
+  id: totrans-83
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_31.jpg)'
 - en: Using this relationship for *S*, the expected value at the right-hand side is
     the value of a simple call option with an underlying asset *S*, *r* is equal to
     0, and *X* is equal to 1\. Let's denote the price of this call option simply with
     *c[0]*. Then ![The Margrabe formula](img/2078OT_05_32.jpg).
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用这个*S*的关系，右侧的期望值是一个简单的看涨期权的价值，其标的资产是*S*，*r*等于0，*X*等于1。我们简化地将这个看涨期权的价格记为*c[0]*。然后![马格拉布公式](img/2078OT_05_32.jpg)。
 - en: 'Here, *c[0]* might be determined with the help of the basic Black-Scholes formula,
     substituting the parameters we just discussed:'
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，*c[0]* 可能通过基本的Black-Scholes公式来确定，替换我们刚刚讨论的参数：
 - en: '![The Margrabe formula](img/2078OT_05_33.jpg)![The Margrabe formula](img/2078OT_05_34.jpg)'
+  id: totrans-86
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_33.jpg)![马格拉布公式](img/2078OT_05_34.jpg)'
 - en: Hence ![The Margrabe formula](img/2078OT_05_35.jpg)
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此![马格拉布公式](img/2078OT_05_35.jpg)
 - en: where ![The Margrabe formula](img/2078OT_05_36.jpg) and ![The Margrabe formula](img/2078OT_05_37.jpg)
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中![马格拉布公式](img/2078OT_05_36.jpg)和![马格拉布公式](img/2078OT_05_37.jpg)
 - en: The previously mentioned formula for *π(H[T])*, which is the pricing formula
     for the exchange option, is called the Margrabe formula. Continuous dividend yields,
     if applicable, might be inserted into the formula as simply as in the case of
     the Black-Scholes formula. Without repeating the calculations, we give only the
     results for this case.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 之前提到的*π(H[T])*公式，即交换期权的定价公式，被称为马格拉布公式。如果适用，连续的股息收益率可以像在Black-Scholes公式中一样简单地插入该公式中。在不重复计算的情况下，我们仅提供该情况下的结果。
 - en: 'So, let''s assume that the risky assets to be exchanged have positive continuous
     dividend yields denoted by *δ[1]* and *δ[2]* respectively. In this case, the processes
     of their prices under measure *Q* are as follows:'
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，假设要交换的风险资产具有正的连续股息收益率，分别表示为*δ[1]*和*δ[2]*。在这种情况下，它们的价格过程在*Q*测度下如下所示：
 - en: '![The Margrabe formula](img/2078OT_05_38.jpg) and ![The Margrabe formula](img/2078OT_05_39.jpg)'
+  id: totrans-91
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_38.jpg) 和 ![马格拉布公式](img/2078OT_05_39.jpg)'
 - en: 'In this case, the Margrabe formula will take the following form:'
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这种情况下，马格拉布公式将呈现以下形式：
 - en: '![The Margrabe formula](img/2078OT_05_40.jpg)'
+  id: totrans-93
   prefs: []
   type: TYPE_IMG
+  zh: '![马格拉布公式](img/2078OT_05_40.jpg)'
 - en: Here, ![The Margrabe formula](img/2078OT_05_41.jpg) and ![The Margrabe formula](img/2078OT_05_42.jpg).
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，![马格拉布公式](img/2078OT_05_41.jpg) 和 ![马格拉布公式](img/2078OT_05_42.jpg)。
 - en: Application in R
+  id: totrans-95
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: R中的应用
 - en: 'R has no built-in function for the Margrabe formula. However, it is much more
     difficult to understand the complex theory behind it than implement the result.
     Here, we present the `Margrabe` function only in a few lines, which calculates
     the price of the exchange option based on the parameters shown in the following
     code:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: R中没有内建的马格拉布公式函数。然而，理解其背后的复杂理论比实现结果更为困难。这里，我们只用几行代码展示了`Margrabe`函数，它基于以下代码中的参数计算交换期权的价格：
 - en: '[PRE13]'
+  id: totrans-97
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'This is the core body of the function. If we are more demanding or want to
     develop a user-friendly application, we need to catch possible errors and exceptions.
     For example, we should include something like this:'
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是该函数的核心部分。如果我们要求更高或希望开发一个用户友好的应用程序，我们需要捕捉可能的错误和异常。例如，我们应该包括如下内容：
 - en: '[PRE14]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: The execution should also be stopped when volatility is negative, but user-experience
     and related software design are beyond the scope of this book. We can use this
     function with valid parameters to see an example of how it works. Let's say we
     have two risky assets that pay no dividend, one with a price of 100 USD and 20
     percent volatility, and the other with a price of 120 USD and 30 percent volatility,
     and the maturity is two years. At first, let the correlation be 15 percent.
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 当波动率为负时，执行也应该停止，但用户体验和相关软件设计超出了本书的范围。我们可以使用此函数并提供有效的参数，来看一个其工作原理的示例。假设我们有两个没有分红的风险资产，一个价格为100美元，波动率为20%，另一个价格为120美元，波动率为30%，且到期时间为两年。首先，让相关性为15%。
 - en: 'We simply call the `Margrabe` function with the given parameters:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们只需使用给定的参数调用`Margrabe`函数：
 - en: '[PRE15]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'The result is 12 USD. Now, let''s see what happens if one of the assets is
     riskless, that is, its volatility is 0\. Let''s call the function with the following
     parameters:'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是12美元。现在，让我们看看如果其中一个资产是无风险的，即其波动率为0，会发生什么。我们用以下参数调用函数：
 - en: '[PRE16]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'What does this mean? This product grants us the right to change the first risky
     asset, which is a stock that costs 100 USD with 20 percent volatility, to the
     second "risky" asset, which has a price of 120 USD, pays a 3 percent dividend,
@@ -470,49 +687,75 @@
     Practically, in two years, it would be the right to buy the stock for 120 USD
     when the risk-free rate is 3 percent. Let''s compare the price to the BS price
     of this call option:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着什么？该产品赋予我们改变第一个风险资产的权利，该资产是一只价格为100美元、波动率为20%的股票，换成第二个“风险”资产，后者的价格为120美元，支付3%的股息，且波动率为0（因此它是一个固定现金金额），利率为3%。实际上，两年后，它将是以3%的无风险利率以120美元购买股票的权利。我们将其与该认购期权的BS价格进行比较：
 - en: '[PRE17]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: Yes, they are indeed the same. If we set the volatility of the first asset to
     0, this practically means that we have a put option for the second asset.
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 是的，它们确实是相同的。如果我们将第一个资产的波动率设置为0，这实际上意味着我们拥有第二个资产的认沽期权。
 - en: '[PRE18]'
+  id: totrans-108
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'The result of the BS formula is as follows:'
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: BS公式的结果如下：
 - en: '[PRE19]'
+  id: totrans-110
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: In both cases, there is only a numeric error from the fifth digit.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这两种情况下，只有从第五位数字开始才会有数值误差。
 - en: 'We can also use the Margrabe formula to get the price of the currency option
     we discussed in the section *Currency Options*. We can check whether the BS formula
     provided the same price:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以使用 Margrabe 公式来获取我们在 *货币期权* 部分讨论的货币期权的价格。我们可以检查 BS 公式是否提供了相同的价格：
 - en: '[PRE20]'
+  id: totrans-113
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'The last thing we need to discuss is how correlation affects the price of the
     option. To illustrate this, we calculate the Margrabe price of the option for
     different values of correlation. This can be done with a few lines of code:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要讨论的最后一件事是相关性如何影响期权的价格。为了说明这一点，我们将计算不同相关性值下期权的 Margrabe 价格。这可以通过几行代码来完成：
 - en: '[PRE21]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Here, we can see the result in the following image:'
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们可以看到以下图片中的结果：
 - en: '![Application in R](img/2078OT_05_43.jpg)'
+  id: totrans-117
   prefs: []
   type: TYPE_IMG
+  zh: '![R 中的应用](img/2078OT_05_43.jpg)'
 - en: The result is not surprising. When correlation is high, we have the right to
     switch between identical stocks, which, clearly, is worth nothing. When the correlation
     is high on the negative side, we have better chances to make a good deal with
@@ -522,105 +765,156 @@
     for insurance rather than speculation; we do not have to bear the risk from the
     price change of the other asset. This is why the option is more valuable when
     correlation is negative.
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果并不令人惊讶。当相关性较高时，我们可以在相同的股票之间进行转换，显然这没有任何价值。当相关性高且为负时，如果事情出现问题，我们就有更大的机会通过期权达成好的交易（这意味着，如果我们的资产下降，负相关性越高，另一资产的价格上涨并拯救我们免于亏损的机会就越大）。换句话说，在这种情况下，期权更多的是为了保险而非投机；我们不需要承担来自其他资产价格变化的风险。这就是为什么当相关性为负时，期权更有价值的原因。
 - en: Quanto options
+  id: totrans-119
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: Quanto 期权
 - en: The term "**quanto**" is the abbreviation of **quantity adjusting option**.
     The payoff of quanto derivatives is determined by an asset denominated in one
     currency, but is paid in another currency.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 术语“**quanto**”是**数量调整期权**（quantity adjusting option）的缩写。Quanto 衍生品的收益由以一种货币计价的资产决定，但以另一种货币支付。
 - en: 'The best way to understand a quanto product (or any kind of derivative) is
     to examine its payoff function. It is well known that assuming the underlying
     asset is a stock that pays no dividend, the payoff of a European call option is
     as follows:'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 理解 quanto 产品（或任何种类的衍生品）最好的方法是检查其收益函数。众所周知，假设标的资产是一个不支付红利的股票，欧洲看涨期权的收益如下：
 - en: '![Quanto options](img/2078OT_05_44.jpg)'
+  id: totrans-122
   prefs: []
   type: TYPE_IMG
+  zh: '![Quanto 期权](img/2078OT_05_44.jpg)'
 - en: Here, *S[A]* is the price of the stock and *X* is the strike price. Here, *c*,
     *S[AT]*, and *X* are denominated in the same currency; let's call it domestic
     currency.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，*S[A]* 是股票的价格，*X* 是行权价格。这里，*c*、*S[AT]* 和 *X* 都以相同的货币计价；我们将其称为本国货币。
 - en: 'The payoff of a European call quanto is as follows:'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 欧洲看涨 quanto 的收益如下：
 - en: '![Quanto options](img/2078OT_05_45.jpg)'
+  id: totrans-125
   prefs: []
   type: TYPE_IMG
+  zh: '![Quanto 期权](img/2078OT_05_45.jpg)'
 - en: Here, *S* is a foreign exchange rate. Thus, a call quanto pays the same "quantity"
     of money as a simple call option, but in another currency—let's call it foreign
     currency. So, this quantity paid has to be multiplied by an FX rate so that we
     get the payoff's value in domestic currency. Of course, *S* has to be the price
     of the foreign currency in terms of domestic currency. In other words, in the
     quotation of *S*, the base currency is the foreign one.
+  id: totrans-126
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，*S* 是外汇汇率。因此，看涨 quanto 期权支付的金额与简单的看涨期权相同，但使用的是另一种货币——我们称之为外币。因此，这个支付的数量必须乘以一个外汇汇率，以便我们得到以本国货币计价的收益值。当然，*S*
+    必须是外币相对于本国货币的价格。换句话说，在 *S* 的报价中，基准货币是外币。
 - en: Pricing formula for a call quanto
+  id: totrans-127
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 看涨 quanto 定价公式
 - en: 'Pricing a call quanto means determining the value of the earlier payoff. As
     usual, we will assume that the price of the underlying asset under the risk neutral
     measure (*Q*) follows geometric Brownian motion with drift equal to the risk-free
     domestic rate (*r*), that is:'
+  id: totrans-128
   prefs: []
   type: TYPE_NORMAL
+  zh: 定价一个看涨 quanto 意味着确定之前的收益值。像往常一样，我们将假设在风险中性度量（*Q*）下，标的资产的价格遵循几何布朗运动，其漂移等于无风险的本国利率（*r*），即：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_46.jpg)'
+  id: totrans-129
   prefs: []
   type: TYPE_IMG
+  zh: '![看涨 quanto 定价公式](img/2078OT_05_46.jpg)'
 - en: 'Furthermore, we assume that the FX rate follows a similar process:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，我们假设外汇汇率遵循类似的过程：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_47.jpg)'
+  id: totrans-131
   prefs: []
   type: TYPE_IMG
+  zh: '![看涨 quanto 定价公式](img/2078OT_05_47.jpg)'
 - en: 'In these equations, *W[1]* and *W[2]* are standard Wiener processes under *Q*,
     with correlation *ρ*. Let *q* denote the risk-free foreign rate. This means that
     the value of one unit of foreign bank deposit at time *t* is *exp(qt)*. In terms
     of the domestic currency, this value is as follows:'
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这些方程中，*W[1]*和*W[2]*是*Q*下的标准Wiener过程，相关性为*ρ*。令*q*表示无风险外汇利率。这意味着外币银行存款在时间*t*的价值是*exp(qt)*。以本国货币表示时，这个价值为：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_48.jpg)'
+  id: totrans-133
   prefs: []
   type: TYPE_IMG
+  zh: '![定价公式](img/2078OT_05_48.jpg)'
 - en: 'Supposing that this is a traded product in the domestic market, its discounted
     value has to be a martingale under *Q*. Let''s calculate this discounted value:'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设这是一个在国内市场上交易的产品，那么它的折现值必须在*Q*下是一个马尔科夫过程。我们来计算这个折现值：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_49.jpg)'
+  id: totrans-135
   prefs: []
   type: TYPE_IMG
+  zh: '![定价公式](img/2078OT_05_49.jpg)'
 - en: This process is martingale only if ![Pricing formula for a call quanto](img/2078OT_05_50.jpg),
     which is under *Q*.
+  id: totrans-136
   prefs: []
   type: TYPE_NORMAL
+  zh: 这个过程只有在![定价公式](img/2078OT_05_50.jpg)时是马尔科夫过程，这个是在*Q*下的。
 - en: '![Pricing formula for a call quanto](img/2078OT_05_51.jpg)'
+  id: totrans-137
   prefs: []
   type: TYPE_IMG
+  zh: '![定价公式](img/2078OT_05_51.jpg)'
 - en: Now, we will calculate the *SS[A]* product, which we will denote by *Y*.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们将计算*SS[A]*产品，记作*Y*。
 - en: '![Pricing formula for a call quanto](img/2078OT_05_52.jpg)![Pricing formula
     for a call quanto](img/2078OT_05_53.jpg)![Pricing formula for a call quanto](img/2078OT_05_54.jpg)'
+  id: totrans-139
   prefs: []
   type: TYPE_IMG
+  zh: '![定价公式](img/2078OT_05_52.jpg)![定价公式](img/2078OT_05_53.jpg)![定价公式](img/2078OT_05_54.jpg)'
 - en: Here, ![Pricing formula for a call quanto](img/2078OT_05_55.jpg) and ![Pricing
     formula for a call quanto](img/2078OT_05_56.jpg).
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，![定价公式](img/2078OT_05_55.jpg)和![定价公式](img/2078OT_05_56.jpg)。
 - en: The correlation ![Pricing formula for a call quanto](img/2078OT_05_57.jpg) between
     *W[2]* and *W[3]* is ![Pricing formula for a call quanto](img/2078OT_05_58.jpg).
+  id: totrans-141
   prefs: []
   type: TYPE_NORMAL
+  zh: '*W[2]*和*W[3]*之间的相关性是![定价公式](img/2078OT_05_58.jpg)。'
 - en: Consequently, ![Pricing formula for a call quanto](img/2078OT_05_59.jpg).
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，![定价公式](img/2078OT_05_59.jpg)。
 - en: 'Now, it is important to notice that the call quanto is a special exchange option,
     and hence, might be priced with Margrabe''s formula. We only have to identify
     the two risky assets to be exchanged upon exercising the option, and the related
@@ -632,91 +926,137 @@
     should be handled as if the dividend yield was ![Pricing formula for a call quanto](img/2078OT_05_71.jpg),
     while in case of *XS*, it is simply *q*. The only remaining parameter to be determined
     is *σ*. With straightforward substitutions, we have the following calculation:'
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，需要特别注意的是，call quanto是一个特殊的交换期权，因此可以使用Margrabe公式进行定价。我们只需识别在行使期权时将要交换的两种风险资产及相关参数。从quanto的支付函数中可以看出，第一个风险资产是*SS[A]
+    = Y*，第二个是*XS*（都以本国货币表示）。由于在*Q*下这些过程的漂移成分并非简单的无风险国内利率，我们必须使用包含股息收益率的`Margrabe`公式。从之前的计算可以看出，*Y*过程应该当作股息收益率为![定价公式](img/2078OT_05_71.jpg)来处理，而*XS*则为简单的*q*。唯一需要确定的剩余参数是*σ*。通过直接替换，我们得到以下计算：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_60.jpg)![Pricing formula
     for a call quanto](img/2078OT_05_61.jpg)![Pricing formula for a call quanto](img/2078OT_05_62.jpg)'
+  id: totrans-144
   prefs: []
   type: TYPE_IMG
+  zh: '![定价公式](img/2078OT_05_60.jpg)![定价公式](img/2078OT_05_61.jpg)![定价公式](img/2078OT_05_62.jpg)'
 - en: Summarizing all these results, we have to use the `Margrabe` formula (given
     in Equation (4)) with the substitutions ![Pricing formula for a call quanto](img/2078OT_05_63.jpg),
     ![Pricing formula for a call quanto](img/2078OT_05_64.jpg), ![Pricing formula
     for a call quanto](img/2078OT_05_65.jpg), ![Pricing formula for a call quanto](img/2078OT_05_66.jpg),
     and ![Pricing formula for a call quanto](img/2078OT_05_67.jpg).
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 总结所有这些结果，我们必须使用`Margrabe`公式（见公式(4)），并进行替换！[定价公式](img/2078OT_05_63.jpg)、![定价公式](img/2078OT_05_64.jpg)、![定价公式](img/2078OT_05_65.jpg)、![定价公式](img/2078OT_05_66.jpg)和![定价公式](img/2078OT_05_67.jpg)。
 - en: 'Hence, the price of the call quanto is as follows:'
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，call quanto的价格如下：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_68.jpg)'
+  id: totrans-147
   prefs: []
   type: TYPE_IMG
+  zh: '![定价公式](img/2078OT_05_68.jpg)'
 - en: 'In the earlier equation, d[1] and d[2] were as follows:'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 在之前的方程中，d[1] 和 d[2] 如下：
 - en: '![Pricing formula for a call quanto](img/2078OT_05_69.jpg) and ![Pricing formula
     for a call quanto](img/2078OT_05_70.jpg).'
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: '![看涨 quanto 的定价公式](img/2078OT_05_69.jpg) 和 ![看涨 quanto 的定价公式](img/2078OT_05_70.jpg)。'
 - en: Pricing a call quanto in R
+  id: totrans-150
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 在 R 中定价看涨 quanto
 - en: Let's see an example to price a call quanto in R. Our favorite stock is priced
     at 100 USD and 20 percent volatility. We need a call option with 90 USD, which
     is paid in EURs in three years. The USD risk-free rate is `r = 2%` and the EUR
     risk-free rate is `q = 3%`. Currently, 1 USD is equal to 0.7467 EUR. The EUR volatility
     is 15%, and the correlation between the stock price and the USDEUR exchange rate
     is 10%.
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看一个在 R 中定价看涨 quanto 的例子。我们喜欢的股票价格为 100 美元，波动率为 20%。我们需要一个 90 美元的看涨期权，该期权在三年后以欧元支付。美元的无风险利率为`r
+    = 2%`，欧元的无风险利率为`q = 3%`。目前，1 美元等于 0.7467 欧元。欧元的波动率为 15%，股票价格和美元欧元汇率之间的相关性为 10%。
 - en: If in three years the price of the stock is higher than 90 USD, the difference
     is paid in EUR. If, for instance, the price is 110 USD in 3 years, we will get
     20 EURs. On the current FX rate, it is `20*0.7467 = 26.78093 USD`, but if the
     EURUSD exchange rate is different in three years, for example, USDEUR is equal
     to 0.7, this equals 28.57143 USD. So the payoff can be different in USD, but we
     eliminated the FX rate risk if we want to be paid in EUR.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果三年后股票价格高于 90 美元，差额将以欧元支付。例如，如果三年后价格为 110 美元，我们将获得 20 欧元。按当前汇率，`20*0.7467 =
+    26.78093 美元`，但如果三年后欧元美元汇率不同，例如，美元欧元汇率为 0.7，那么这相当于 28.57143 美元。所以，收益可能以美元不同，但如果我们希望以欧元支付，我们就消除了汇率风险。
 - en: This seems complicated, but fortunately, we can use the Margrabe formula and
     our `Margrabe` function to calculate the price of the option.
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 这看起来很复杂，但幸运的是，我们可以使用 Margrabe 公式和我们的 `Margrabe` 函数来计算期权的价格。
 - en: '[PRE22]'
+  id: totrans-154
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: We need these substitutions ![Pricing a call quanto in R](img/2078OT_05_63.jpg),
     ![Pricing a call quanto in R](img/2078OT_05_64.jpg), ![Pricing a call quanto in
     R](img/2078OT_05_65.jpg), ![Pricing a call quanto in R](img/2078OT_05_66.jpg),
     and ![Pricing a call quanto in R](img/2078OT_05_67.jpg).
+  id: totrans-155
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要这些替代项 ![在 R 中定价看涨 quanto](img/2078OT_05_63.jpg)，![在 R 中定价看涨 quanto](img/2078OT_05_64.jpg)，![在
+    R 中定价看涨 quanto](img/2078OT_05_65.jpg)，![在 R 中定价看涨 quanto](img/2078OT_05_66.jpg)，和
+    ![在 R 中定价看涨 quanto](img/2078OT_05_67.jpg)。
 - en: '`S1` is the stock price in EUR, and `S2` is the strike price in EUR. `delta1`
     and `delta2` can be calculated easily: `delta1 = 0.03-0.02-0.2*0.15*0.1` and `delta2
     = 0.03`. The only problem is that we need to set `sigma = sigma1`, but `sigma`
     is not a parameter of the Margrabe function; it is calculated inside the function
     body. Consider the following command:'
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: '`S1` 是欧元计价的股票价格，`S2` 是欧元计价的行权价格。`delta1` 和 `delta2` 可以很容易地计算：`delta1 = 0.03-0.02-0.2*0.15*0.1`
+    和 `delta2 = 0.03`。唯一的问题是，我们需要设置 `sigma = sigma1`，但是 `sigma` 不是 Margrabe 函数的参数，它是在函数体内计算的。考虑以下命令：'
 - en: '[PRE23]'
+  id: totrans-157
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: To get the *sigma = sigma1* result, we need to set *sigma2 = rho = 0*.
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了得到 *sigma = sigma1* 的结果，我们需要设置 *sigma2 = rho = 0*。
 - en: Now, we can call the `Margrabe` function with the given parameters.
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们可以使用给定的参数调用`Margrabe`函数。
 - en: '[PRE24]'
+  id: totrans-160
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: The result is 16.23\. This is the price of the quanto.
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果是 16.23。这是 quanto 期权的价格。
 - en: Summary
+  id: totrans-162
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: 'In this chapter, we met the challenge of discussing one of the most beautiful
     and most difficult parts of financial math: derivative pricing. We learned in
     theory and in practice about generalizations of the Black-Scholes model for related
@@ -725,33 +1065,50 @@
     is an extension of the Black-Scholes model. We used this formula to price stock
     options, currency options, and exchange options. Finally, we discussed quanto
     options and realized that quantos can also be priced with the Margrabe formula.'
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这一章中，我们面对了讨论金融数学中最美丽、最困难部分之一的挑战：衍生品定价。我们在理论和实践中学习了 Black-Scholes 模型的相关问题的推广。我们学习了如何使用
+    R 和 Black-Scholes 公式定价货币期权。我们看到了实现 Margrabe 公式的自定义代码是多么简单，这一公式是 Black-Scholes
+    模型的扩展。我们使用该公式定价了股票期权、货币期权和兑换期权。最后，我们讨论了 quanto 期权，并意识到 quanto 期权也可以使用 Margrabe
+    公式定价。
 - en: If you found this chapter exciting, you will be enthusiastic about the next
     one, which is about a related topic, that is, interest rate derivatives.
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你觉得这一章很有趣，那么你一定会对下一章感兴趣，下一章将涉及一个相关的话题——即利率衍生品。
 - en: References
+  id: totrans-165
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '**Black, F. and Scholes, M. (1973)**: The Pricing of Options and Corporate
     Liabilities. *The Journal of Political Economy*, 81(3), pp. 637-654.'
+  id: totrans-166
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Black, F. 和 Scholes, M. (1973)**: 期权和公司负债定价。*政治经济学期刊*, 81(3), 第637-654页。'
 - en: '**Margrabe, W. (1978)**: The Value of an Option to Exchange One Asset for Another.
     *Journal of Finance*, 33(1), pp. 177-186.'
+  id: totrans-167
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Margrabe, W. (1978)**: 交换一种资产与另一种资产的期权价值。*金融学期刊*, 33(1), 第177-186页。'
 - en: '**Medvegyev, Péter (2007)**: *Stochastic Integration Theory*. Oxford University
     Press.'
+  id: totrans-168
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Medvegyev, Péter (2007)**: *随机积分理论*。牛津大学出版社。'
 - en: '**Merton, R. (1973)**: Theory of Rational Option Pricing. *The Bell Journal
     of Economics and Management Science*, 4(1), pp. 141-183.'
+  id: totrans-169
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Merton, R. (1973)**: 理性期权定价理论。*贝尔经济学与管理科学期刊*, 4(1), 第141-183页。'

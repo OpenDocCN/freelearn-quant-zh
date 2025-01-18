@@ -1,10 +1,14 @@
 - en: '10'
+  id: totrans-0
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: '10'
 - en: Variational Quantum Eigensolver
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 变分量子本征求解器
 - en: 'Parameterised quantum circuits can find many possible applications outside
     the quantum machine learning use cases considered in the previous chapters. They
     can be used to solve problems as diverse as portfolio optimisation   [[168](Biblography.xhtml#XKolotouros2021)]
@@ -15,8 +19,10 @@
     in turn, is done through the minimisation of some cost function – it can be a
     classification error in the case of a QNN-based classifier or a distance between
     two distributions in the case of QCBM.'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 参数化量子电路可以在量子机器学习之外找到许多潜在应用，这些应用超出了前几章讨论的用例。它们可以用来解决如投资组合优化[[168](Biblography.xhtml#XKolotouros2021)]和蛋白质折叠[[248](Biblography.xhtml#XRobert2019)]等多种不同问题。然而，无论具体的算法细节如何，有一个方面始终相同：通过最优的PQC配置（假设）和可调PQC参数集来构建具有所需特性的量子态。反过来，这通常是通过最小化某些成本函数来完成的——例如，在QNN分类器的情况下，它可以是分类错误；在QCBM的情况下，它可以是两个分布之间的距离。
 - en: The Variational Quantum Eigensolver (VQE) is a PQC-based algorithm that aims
     to find the smallest eigenvalue (the lowest energy) of a problem Hamiltonian.
     As we know from Chapter [3](Chapter_3.xhtml#x1-630003), the objective functions
@@ -28,12 +34,16 @@
     The variational part of the algorithm refers to the systematic search for the
     best possible approximation of the ground state by trying various PQC ansätze
     and configurations of adjustable PQC parameters – the variational approach.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 变分量子本征求解器（VQE）是一种基于量子电路的算法，旨在找到问题哈密顿量的最小本征值（最低能量）。正如我们在第[3](Chapter_3.xhtml#x1-630003)章中了解到的，许多NP难度的组合优化问题的目标函数可以编码在量子系统的哈密顿量中——因此，找到哈密顿量的基态可以为我们提供目标函数的最小值。VQE最早在[[231](Biblography.xhtml#XPeruzzo2014)]中提出，并迅速成为实验解决NISQ设备上可解的各种优化问题的最流行工具之一[[153](Biblography.xhtml#XKandala2017)，[215](Biblography.xhtml#XMoll2018)]。该算法的变分部分指的是通过尝试不同的量子电路（PQC）假设和可调PQC参数配置，系统地搜索基态的最佳近似——即变分方法。
 - en: 10.1 The Variational Approach
+  id: totrans-4
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 10.1 变分方法
 - en: 'Let us start with recollecting the details of training discriminative (QNN)
     and generative (QCBM) models. In both cases our task was to find an optimal configuration
     of PQC parameters (e.g., rotation angles of adjustable one-qubit gates) such that
@@ -44,72 +54,109 @@
     QML use cases. This learning can be done either in a differentiable or in a non-differentiable
     way, but it always consists of the minimisation of some cost function through
     varying the adjustable circuit parameters.'
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们首先回顾一下训练判别性（QNN）和生成性（QCBM）模型的细节。在这两种情况下，我们的任务是找到PQC参数的最佳配置（例如，可调单量子比特门的旋转角度），以使得得到的量子态具有所需的特性：我们可以从编码的概率分布中采样（生成模型）或为给定的样本获取类别标签（判别模型）。寻找PQC参数的最佳配置的过程在处理量子机器学习用例时称为*学习*。这种学习可以是可微分的，也可以是不可微分的，但它总是通过改变可调电路参数来最小化某些成本函数。
 - en: What if the cost function we want to minimise is encoded in the problem Hamiltonian
     and the task is formulated as finding its ground state? In Chapter [3](Chapter_3.xhtml#x1-630003),
     we saw how this problem can be solved on a quantum annealer. But it is also possible
     to find the lowest energy state of a quantum system (or at least a good approximation)
     using a gate model quantum computer within the PQC framework.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们想要最小化的成本函数被编码在问题哈密顿量中，并且任务被表述为寻找它的基态呢？在第[3](Chapter_3.xhtml#x1-630003)章中，我们看到了如何在量子退火机上解决这个问题。但在
+    PQC 框架内，也可以使用门模型量子计算机找到量子系统的最低能量态（或者至少是一个好的近似）。
 - en: The characteristic equation for the Hamiltonian ℋ reads
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 哈密顿量 ℋ 的特征方程为
 - en: '| ![ℋ &#124;ψi⟩ = Ei &#124;ψi⟩, ](img/file840.jpg) |  |'
+  id: totrans-8
   prefs: []
   type: TYPE_TB
+  zh: '| ![ℋ &#124;ψi⟩ = Ei &#124;ψi⟩, ](img/file840.jpg) |  |'
 - en: 'where ![|ψi⟩](img/file841.jpg) is an eigenstate associated with the eigenvalue
     *E*[i]. The objective is to find the smallest eigenvalue *E*[0] (the lowest energy)
     of ℋ corresponding to the ground state (the lowest energy state) ![|ψ0 ⟩](img/file842.jpg).
     This would be a straightforward task if the latter was known since the eigenvalue
     (energy) of ℋ is simply the expectation of ℋ:'
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 ![|ψi⟩](img/file841.jpg) 是与特征值 *E*[i] 相关的特征态。目标是找到 ℋ 的最小特征值 *E*[0]（最低能量），对应于基态（最低能量态）![|ψ0
+    ⟩](img/file842.jpg)。如果基态已知，这将是一个简单的任务，因为 ℋ 的特征值（能量）实际上就是 ℋ 的期望值：
 - en: '| ![⟨ψi&#124;ℋ &#124;ψi⟩ = ⟨ψi&#124;Ei &#124;ψi⟩ = Ei ⟨ψi&#124;ψi⟩ = Ei. ](img/file843.jpg)
     |  |'
+  id: totrans-10
   prefs: []
   type: TYPE_TB
+  zh: '| ![⟨ψi&#124;ℋ &#124;ψi⟩ = ⟨ψi&#124;Ei &#124;ψi⟩ = Ei ⟨ψi&#124;ψi⟩ = Ei. ](img/file843.jpg)
+    |  |'
 - en: We will explain below how this expectation is calculated on a quantum computer.
     However, in most cases the ground state is not known. In fact, the task is to
     find the ground state that encodes the solution to the optimisation problem by
     searching for the state that minimises the expectation value of ℋ. What we can
     do is to construct a progressively better approximation of the ground state, yielding
     a tighter and tighter upper bound for the ground state energy *E*[0].
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将在下面解释如何在量子计算机上计算这个期望值。然而，在大多数情况下，基态是未知的。实际上，任务是通过寻找能够最小化 ℋ 的期望值的状态来找到基态，从而编码优化问题的解决方案。我们可以做的是构造一个逐步改进的基态近似，从而为基态能量
+    *E*[0] 提供一个越来越紧的上界。
 - en: The variational approach is motivated by the spectral theorem introduced in
     Chapter [1](Chapter_1.xhtml#x1-220001), which allows us to expand the Hermitian
     Hamiltonian ℋ as
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 变分方法的动机来源于第[1](Chapter_1.xhtml#x1-220001)章中引入的谱定理，它允许我们将厄米哈密顿量 ℋ 展开为
 - en: '| ![ ∑ ℋ = Ei &#124;ψi⟩⟨ψi&#124;. i ](img/file844.jpg) |  |'
+  id: totrans-13
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ∑ ℋ = Ei &#124;ψi⟩⟨ψi&#124;. i ](img/file844.jpg) |  |'
 - en: Assume that we constructed a state ![|ψ⟩](img/file845.jpg), which is an approximation
     of the true ground state ![|ψ0 ⟩](img/file846.jpg). As we know from Chapter [1](Chapter_1.xhtml#x1-220001),
     the expectation value of ℋ in state ![|ψ ⟩](img/file847.jpg) is ⟨*ψ*|ℋ![|ψ⟩](img/file848.jpg).
     Substituting ℋ given by ([10.1](#x1-2030001)) into this, we obtain, by linearity,
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们构造了一个状态 ![|ψ⟩](img/file845.jpg)，它是实际基态 ![|ψ0 ⟩](img/file846.jpg) 的近似。正如我们在第[1](Chapter_1.xhtml#x1-220001)章中所知道的，ℋ
+    在状态 ![|ψ ⟩](img/file847.jpg) 中的期望值是 ⟨*ψ*|ℋ![|ψ⟩](img/file848.jpg)。将 ([10.1](#x1-2030001))
+    中给出的 ℋ 代入其中，通过线性运算，我们得到
 - en: '| ![ ( ) ∑ ⟨ψ&#124;ℋ &#124;ψ⟩ = ⟨ψ&#124; Ei &#124;ψi⟩⟨ψi&#124; &#124;ψ⟩ ∑ i
     ∑ = Ei ⟨ψ&#124;ψi⟩⟨ψi&#124;ψ ⟩ = Ei&#124;⟨ψ,ψi⟩&#124;2 . i i ](img/file849.jpg)
     |  |'
+  id: totrans-15
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ( ) ∑ ⟨ψ&#124;ℋ &#124;ψ⟩ = ⟨ψ&#124; Ei &#124;ψi⟩⟨ψi&#124; &#124;ψ⟩ ∑ i
+    ∑ = Ei ⟨ψ&#124;ψi⟩⟨ψi&#124;ψ ⟩ = Ei&#124;⟨ψ,ψi⟩&#124;2 . i i ](img/file849.jpg)
+    |  |'
 - en: Expression ([10.1](#x1-2030001)) shows that the expectation of ℋ on any state ![|ψ⟩](img/file850.jpg)
     can be expressed as a linear combination of the eigenvalues of ℋ with all weights
     greater than or equal to zero, since |![⟨ψ, ψ ⟩ i](img/file851.jpg)|² ≥ 0 for
     each *i*. Therefore, we obtain
+  id: totrans-16
   prefs: []
   type: TYPE_NORMAL
+  zh: 表达式 ([10.1](#x1-2030001)) 显示，ℋ 在任何状态 ![|ψ⟩](img/file850.jpg) 中的期望值可以表示为 ℋ 的特征值的线性组合，所有权重都大于或等于零，因为
+    |![⟨ψ, ψ ⟩ i](img/file851.jpg)|² ≥ 0 对于每个 *i* 都成立。因此，我们得到
 - en: '| ![⟨ψ&#124;ℋ &#124;ψ ⟩ ≥ E0, ](img/file852.jpg) |  |'
+  id: totrans-17
   prefs: []
   type: TYPE_TB
+  zh: '| ![⟨ψ&#124;ℋ &#124;ψ ⟩ ≥ E0, ](img/file852.jpg) |  |'
 - en: since *E*[0] is the smallest eigenvalue of ℋ and all coefficients (weights)
     in the linear combination ([10.1](#x1-2030001)) are non-negative.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 因为 *E*[0] 是 ℋ 的最小特征值，并且线性组合中的所有系数（权重）([10.1](#x1-2030001))都是非负的。
 - en: The role of PQC is to produce the candidate state ![|ψ ⟩](img/file853.jpg).
     The *variational* part of the algorithm consists of iterative improvements of
     the candidate state (iterative updates of the adjustable parameters). This is
@@ -117,46 +164,68 @@
     protocol. The quantum part of the algorithm consists of running the PQC and then
     measuring ℋ on the constructed quantum state in order to obtain the expectation
     value of ℋ.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: PQC 的作用是生成候选态 ![|ψ ⟩](img/file853.jpg)。算法的*变分*部分由候选态的迭代改进（可调参数的迭代更新）组成。这是可以作为混合量子-经典协议中的经典部分来执行的。算法的量子部分包括运行
+    PQC，然后在构建的量子态上测量 ℋ，以获得 ℋ 的期望值。
 - en: The variational approach allows us to solve hard optimisation problems encoded
     in the Hamiltonian on the digital gate model quantum computer – an alternative
     to adiabatic quantum computing since not all optimisation problems can be efficiently
     formulated in a QUBO format.
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 变分方法使我们能够在数字门模型量子计算机上求解编码在哈密顿量中的困难优化问题——这是与绝热量子计算的替代方案，因为并非所有优化问题都能有效地以 QUBO
+    格式表述。
 - en: 10.2 Calculating Expectations on a Quantum Computer
+  id: totrans-21
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 10.2 在量子计算机上计算期望值
 - en: The key element of the VQE algorithm is the calculation of the expectation value.
     We now show how this can be performed on a quantum computer. We start with the
     one-qubit case and then generalise the proposed approach to the two-qubit and
     multi-qubit cases.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: VQE 算法的关键元素是期望值的计算。我们现在展示如何在量子计算机上执行这一过程。我们从单量子比特情况开始，然后将所提出的方法推广到双量子比特和多量子比特的情况。
 - en: 10.2.1 The one-qubit case
+  id: totrans-23
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.2.1 单量子比特情况
 - en: Consider the simplest case of a one-qubit system. Since any 2 × 2 unitary and
     Hermitian matrix can always be decomposed into a sum of the Pauli matrices X,
     Y, Z and an identity matrix I (more on this in Section [10.2.3](#x1-2070003)),
     we can represent any one-qubit Hamiltonian as
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑最简单的单量子比特系统的情况。由于任何 2 × 2 单位矩阵和厄米矩阵都可以始终分解为 Pauli 矩阵 X、Y、Z 以及单位矩阵 I 的和（在第 [10.2.3](#x1-2070003)
+    节中有更多讨论），我们可以将任何单量子比特哈密顿量表示为
 - en: '| ![ℋ = aX + bY+ cZ + dI, ](img/file854.jpg) |  |'
+  id: totrans-25
   prefs: []
   type: TYPE_TB
+  zh: '| ![ℋ = aX + bY + cZ + dI, ](img/file854.jpg) |  |'
 - en: where *a*, *b*, *c*, and *d* are some real coefficients. For a given state ![|ψ
     ⟩](img/file855.jpg), the expectation value of the Hamiltonian ([10.2.1](#x1-2050001))
     is given by
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 *a*、*b*、*c* 和 *d* 是一些实系数。对于给定的态 ![|ψ ⟩](img/file855.jpg)，哈密顿量的期望值（[10.2.1](#x1-2050001)）为
 - en: '| ![⟨ℋ ⟩ ≡ ⟨ψ &#124;ℋ &#124;ψ ⟩ = a ⟨ψ&#124;X &#124;ψ ⟩+ b⟨ψ &#124;Y &#124;ψ⟩
     + c⟨ψ&#124;Z &#124;ψ ⟩+ d⟨ψ &#124;I &#124;ψ⟩ . ](img/file856.jpg) |  |'
+  id: totrans-27
   prefs: []
   type: TYPE_TB
+  zh: '| ![⟨ℋ ⟩ ≡ ⟨ψ &#124;ℋ &#124;ψ ⟩ = a ⟨ψ&#124;X &#124;ψ ⟩+ b⟨ψ &#124;Y &#124;ψ⟩
+    + c⟨ψ&#124;Z &#124;ψ ⟩+ d⟨ψ &#124;I &#124;ψ⟩ . ](img/file856.jpg) |  |'
 - en: The expectation value of ℋ is computed by adding the expectation values of all
     its terms, which means that we can compute the expectation values of the Pauli
     terms independently and then sum them up to obtain ![⟨ℋ ⟩](img/file857.jpg). We
@@ -166,50 +235,78 @@
     number of times in order to obtain accurate statistics. Let us go through the
     terms of the Hamiltonian ([10.2.1](#x1-2050001)) one by one to see how it can
     be done.
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: ℋ 的期望值是通过将其所有项的期望值相加来计算的，这意味着我们可以独立地计算 Pauli 项的期望值，然后将它们相加以得到 ![⟨ℋ ⟩](img/file857.jpg)。我们可以通过首先构建态
+    ![|ψ ⟩](img/file858.jpg)（利用 PQC 的帮助）并在计算基上执行测量来完成这一过程。构建态和执行测量的过程应当重复足够多次，以获得准确的统计数据。让我们逐项查看哈密顿量的项（[10.2.1](#x1-2050001)），看看如何执行。
 - en: 'We start with the last term, which is the identity operator I multiplied by
     the coefficient *d*. This is a trivial case and we do not even need to run a quantum
     circuit to compute its expectation value, since the expectation value of I is
     1:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们从最后一项开始，它是单位算符 I 乘以系数 *d*。这是一个简单的情况，我们甚至不需要运行量子电路来计算其期望值，因为 I 的期望值为 1：
 - en: '| ![⟨ψ&#124;I &#124;ψ⟩ = ⟨ψ &#124;ψ ⟩ = 1, ](img/file859.jpg) |  |'
+  id: totrans-30
   prefs: []
   type: TYPE_TB
+  zh: '| ![⟨ψ&#124;I &#124;ψ⟩ = ⟨ψ &#124;ψ ⟩ = 1, ](img/file859.jpg) |  |'
 - en: so that this term will contribute *d* to ![⟨ℋ ⟩](img/file860.jpg).
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，这一项将对 ![⟨ℋ ⟩](img/file860.jpg) 贡献 *d*。
 - en: We move now to the next term, *c*Z. The measurement is performed in the computational
     basis, which is the *z*-basis. In this basis, ![|ψ⟩](img/file861.jpg) can be represented
     as a superposition of the basis states ![|0⟩](img/file862.jpg) and ![|1⟩](img/file863.jpg)
     as
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们转向下一个项 *c*Z。测量在计算基进行，这是 *z* 基。在该基中，![|ψ⟩](img/file861.jpg) 可以表示为基态 ![|0⟩](img/file862.jpg)
+    和 ![|1⟩](img/file863.jpg) 的叠加态，如下所示
 - en: '| ![&#124;ψ ⟩ = αz &#124;0⟩+ βz &#124;1⟩, ](img/file864.jpg) |  |'
+  id: totrans-33
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;ψ ⟩ = αz &#124;0⟩+ βz &#124;1⟩, ](img/file864.jpg) |  |'
 - en: with *α*[z]*,β*[z] ∈ℂ. The expectation ⟨*ψ*|Z![|ψ⟩](img/file865.jpg) is then
     calculated as
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 有 *α*[z]*,β*[z] ∈ℂ。期望 ⟨*ψ*|Z![|ψ⟩](img/file865.jpg) 然后计算为
 - en: '| ⟨*ψ*&#124;Z![&#124;ψ ⟩](img/file866.jpg) | = &#124;*α*[z]&#124;² ⟨0&#124;Z![&#124;0⟩](img/file867.jpg)
     + *α* [z]^∗*β* [z] ⟨0&#124;Z![&#124;1⟩](img/file868.jpg) + *α*[z]*β*[z]^∗⟨1&#124;Z![&#124;0⟩](img/file869.jpg)
     + &#124;*β* [z]&#124;² ⟨1&#124;Z![&#124;1⟩](img/file870.jpg) |'
+  id: totrans-35
   prefs: []
   type: TYPE_TB
+  zh: '| ⟨*ψ*&#124;Z![&#124;ψ ⟩](img/file866.jpg) | = &#124;*α*[z]&#124;² ⟨0&#124;Z![&#124;0⟩](img/file867.jpg)
+    + *α* [z]^∗*β* [z] ⟨0&#124;Z![&#124;1⟩](img/file868.jpg) + *α*[z]*β*[z]^∗⟨1&#124;Z![&#124;0⟩](img/file869.jpg)
+    + &#124;*β* [z]&#124;² ⟨1&#124;Z![&#124;1⟩](img/file870.jpg) |'
 - en: '|  | = &#124;*α*[z]&#124;²![⟨0&#124;0⟩](img/file871.jpg)− *α* [z]^∗*β* [z]![⟨0&#124;1⟩](img/file872.jpg)
     + *α*[z]*β*[z]^∗![⟨1&#124;0⟩](img/file873.jpg)−&#124;*β* [z]&#124;²![⟨1&#124;1⟩](img/file874.jpg)
     |'
+  id: totrans-36
   prefs: []
   type: TYPE_TB
+  zh: '|  | = &#124;*α*[z]&#124;²![⟨0&#124;0⟩](img/file871.jpg)− *α* [z]^∗*β* [z]![⟨0&#124;1⟩](img/file872.jpg)
+    + *α*[z]*β*[z]^∗![⟨1&#124;0⟩](img/file873.jpg)−&#124;*β* [z]&#124;²![⟨1&#124;1⟩](img/file874.jpg)
+    |'
 - en: '|  | = &#124;*α*[z]&#124;² −&#124;*β* [z]&#124;²*,* |'
+  id: totrans-37
   prefs: []
   type: TYPE_TB
+  zh: '|  | = &#124;*α*[z]&#124;² −&#124;*β* [z]&#124;²*,* |'
 - en: using the definition of the Z-gate (Chapter [6](Chapter_6.xhtml#x1-1190006))
     and orthogonality of the basis states.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用Z门的定义（第[6](Chapter_6.xhtml#x1-1190006)章）和基态的正交性。
 - en: By definition, |*α*[z]|² and |*β*[z]|² are the probabilities that after the
     *z*-basis measurement, the quantum state ![|ψ ⟩](img/file875.jpg) will become
     ![|0⟩](img/file876.jpg) or ![|1⟩](img/file877.jpg) respectively. In order to find
@@ -219,69 +316,115 @@
     the number of state ![|0⟩](img/file880.jpg) measurements. Similarly, the probability
     of finding a qubit in state ![|1⟩](img/file881.jpg) can be estimated as *n*[1]*∕N*,
     where *n*[1] is the number of state ![|1⟩](img/file882.jpg) measurements.
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据定义，|*α*[z]|² 和 |*β*[z]|² 是在 *z* 基测量后，量子态![|ψ ⟩](img/file875.jpg) 分别变为 ![|0⟩](img/file876.jpg)
+    或 ![|1⟩](img/file877.jpg) 的概率。为了求得该值，我们应当运行量子电路（构造态 ![|ψ⟩](img/file878.jpg)），然后进行*N*次测量。找到量子比特处于状态
+    ![|0⟩](img/file879.jpg) 的概率估计为 *n*[0]*∕N*，其中 *n*[0] 是测量到状态 ![|0⟩](img/file880.jpg)
+    的次数。类似地，找到量子比特处于状态 ![|1⟩](img/file881.jpg) 的概率可以估计为 *n*[1]*∕N*，其中 *n*[1] 是测量到状态
+    ![|1⟩](img/file882.jpg) 的次数。
 - en: Therefore, the contribution of the Z-term to ![⟨ℋ ⟩](img/file883.jpg) is given
     by
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，Z 项对 ![⟨ℋ ⟩](img/file883.jpg) 的贡献为
 - en: '| ![c⟨ψ&#124;Z &#124;ψ⟩ = cn0 −-n1-. N ](img/file884.jpg) |  |'
+  id: totrans-41
   prefs: []
   type: TYPE_TB
+  zh: '| ![c⟨ψ&#124;Z &#124;ψ⟩ = cn0 −-n1-. N ](img/file884.jpg) |  |'
 - en: Now we can move to the first two terms on the right side of ([10.2.1](#x1-2050001)).
     Recall that ![|0⟩](img/file885.jpg) and ![|1⟩](img/file886.jpg) are the eigenstates
     of Z with corresponding eigenvalues +1 and −1, namely
+  id: totrans-42
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们可以转向右侧的前两个项 ([10.2.1](#x1-2050001))。回想一下，![|0⟩](img/file885.jpg) 和 ![|1⟩](img/file886.jpg)
+    是Z的本征态，具有对应的本征值 +1 和 −1，即
 - en: '| ![Z &#124;0⟩ = &#124;0⟩ and Z &#124;1⟩ = − &#124;1⟩. ](img/file887.jpg) |  |'
+  id: totrans-43
   prefs: []
   type: TYPE_TB
+  zh: '| ![Z &#124;0⟩ = &#124;0⟩ 和 Z &#124;1⟩ = − &#124;1⟩. ](img/file887.jpg) |  |'
 - en: Furthermore, the eigenstates of X are
+  id: totrans-44
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，X的本征态是
 - en: '| ![ &#124;0⟩+ &#124;1⟩ &#124;0⟩− &#124;1⟩ &#124;+ ⟩ = --√----- and &#124;−
     ⟩ =---√----, 2 2 ](img/file888.jpg) |  |'
+  id: totrans-45
   prefs: []
   type: TYPE_TB
+  zh: '| ![ &#124;0⟩+ &#124;1⟩ &#124;0⟩− &#124;1⟩ &#124;+ ⟩ = --√----- 和 &#124;− ⟩
+    =---√----, 2 2 ](img/file888.jpg) |  |'
 - en: and the eigenstates of Y are
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: Y的本征态是
 - en: '| ![ &#124;0⟩+ i &#124;1⟩ &#124;0⟩− i &#124;1⟩ &#124;R⟩ = ---√----- and &#124;L⟩
     = ---√-----. 2 2 ](img/file889.jpg) |  |'
+  id: totrans-47
   prefs: []
   type: TYPE_TB
+  zh: '| ![ &#124;0⟩+ i &#124;1⟩ &#124;0⟩− i &#124;1⟩ &#124;R⟩ = ---√----- 和 &#124;L⟩
+    = ---√-----. 2 2 ](img/file889.jpg) |  |'
 - en: Their corresponding eigenvalues also are +1 and −1, so that
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 它们对应的本征值也是 +1 和 −1，因此
 - en: '| ![X &#124;+ ⟩ = &#124;+ ⟩, X &#124;− ⟩ = − &#124;− ⟩, Y &#124;R ⟩ = &#124;R⟩
     , Y &#124;L⟩ = − &#124;L⟩. ](img/file890.jpg) |  |'
+  id: totrans-49
   prefs: []
   type: TYPE_TB
+  zh: '| ![X &#124;+ ⟩ = &#124;+ ⟩, X &#124;− ⟩ = − &#124;− ⟩, Y &#124;R ⟩ = &#124;R⟩
+    , Y &#124;L⟩ = − &#124;L⟩. ](img/file890.jpg) |  |'
 - en: 'Therefore, the quantum state ![|ψ ⟩](img/file891.jpg) can also be decomposed
     into the superposition of the basis states {![|R ⟩](img/file892.jpg)*,*![|L⟩](img/file893.jpg)}
     (*y*-basis) and {![|+⟩](img/file894.jpg)*,*![|− ⟩](img/file895.jpg)} (*x*-basis):'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，量子态 ![|ψ ⟩](img/file891.jpg) 也可以分解为基态的叠加，{![|R ⟩](img/file892.jpg)*,*![|L⟩](img/file893.jpg)}
+    (*y*-基) 和 {![|+⟩](img/file894.jpg)*,*![|− ⟩](img/file895.jpg)} (*x*-基)：
 - en: '| ![&#124;ψ ⟩ = αx &#124;+⟩ + βx &#124;− ⟩ = αy &#124;R⟩+ βy &#124;L⟩. ](img/file896.jpg)
     |  |'
+  id: totrans-51
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;ψ ⟩ = αx &#124;+⟩ + βx &#124;− ⟩ = αy &#124;R⟩+ βy &#124;L⟩. ](img/file896.jpg)
+    |  |'
 - en: If we can perform measurement in the *x*-basis and the *y*-basis, the expectations
     ⟨*ψ*|X![|ψ⟩](img/file897.jpg) and ⟨*ψ*|Y![|ψ ⟩](img/file898.jpg) can be calculated
     in exactly the same way as the expectation ⟨*ψ*|Z![|ψ⟩](img/file899.jpg), namely
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们能够在 *x*-基和 *y*-基中进行测量，期望值 ⟨*ψ*|X![|ψ⟩](img/file897.jpg) 和 ⟨*ψ*|Y![|ψ ⟩](img/file898.jpg)
+    可以以与期望值 ⟨*ψ*|Z![|ψ⟩](img/file899.jpg) 相同的方式计算，即
 - en: '| ![a ⟨ψ&#124;X &#124;ψ ⟩ = a n+-−-n−-, b⟨ψ&#124;Y &#124;ψ ⟩ = b nR-−-nL. N
     N ](img/file900.jpg) |  |'
+  id: totrans-53
   prefs: []
   type: TYPE_TB
+  zh: '| ![a ⟨ψ&#124;X &#124;ψ ⟩ = a n+-−-n−-, b⟨ψ&#124;Y &#124;ψ ⟩ = b nR-−-nL. N
+    N ](img/file900.jpg) |  |'
 - en: Here, *n*[+] and *n*[−] are the numbers of measurements in the *x*-basis that
     correspond, respectively, to the ![|+ ⟩](img/file901.jpg) and ![|− ⟩](img/file902.jpg)
     outcomes, and *n*[R] and *n*[L] are the numbers of measurements in the *y*-basis
     that correspond, respectively, to ![|R⟩](img/file903.jpg) and ![|L ⟩](img/file904.jpg)
     outcomes.
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，*n*[+] 和 *n*[−] 分别是对应于 *x*-基中 ![|+ ⟩](img/file901.jpg) 和 ![|− ⟩](img/file902.jpg)
+    测量结果的次数，*n*[R] 和 *n*[L] 分别是对应于 *y*-基中 ![|R⟩](img/file903.jpg) 和 ![|L ⟩](img/file904.jpg)
+    测量结果的次数。
 - en: However, it may be the case that we can only perform measurement in the *z*-basis.
     In this case, we need to apply some additional gates to ![|ψ⟩](img/file905.jpg)
     before the measurement, such that the probability of measuring ![|0⟩](img/file906.jpg)
@@ -290,36 +433,60 @@
     of measuring ![|0⟩](img/file909.jpg) in the *z*-basis is the same as the probability
     of measuring ![|R⟩](img/file910.jpg) in the *y*-basis if we are calculating ⟨*ψ*|Y![|ψ⟩](img/file911.jpg).
     Denoting these gates H and G, we have
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
+  zh: 然而，可能我们只能在 *z*-基中进行测量。在这种情况下，我们需要在测量前对 ![|ψ⟩](img/file905.jpg) 应用一些附加的门，以使在
+    *z*-基中测量 ![|0⟩](img/file906.jpg) 的概率与在 *x*-基中测量 ![|+ ⟩](img/file907.jpg) 的概率相同，如果我们在计算
+    ⟨*ψ*|X![|ψ⟩](img/file908.jpg)，或者在 *z*-基中测量 ![|0⟩](img/file909.jpg) 的概率与在 *y*-基中测量 ![|R⟩](img/file910.jpg)
+    的概率相同，如果我们在计算 ⟨*ψ*|Y![|ψ⟩](img/file911.jpg)。这些门记作 H 和 G，得到
 - en: '| ![H &#124;ψ⟩ = H(αx &#124;+ ⟩+ βx &#124;− ⟩) = αx &#124;0⟩ + βx &#124;1⟩,
     ](img/file912.jpg) |  |'
+  id: totrans-56
   prefs: []
   type: TYPE_TB
+  zh: '| ![H &#124;ψ⟩ = H(αx &#124;+ ⟩+ βx &#124;− ⟩) = αx &#124;0⟩ + βx &#124;1⟩,
+    ](img/file912.jpg) |  |'
 - en: with H![|+ ⟩](img/file913.jpg) = ![|0⟩](img/file914.jpg) and H![|− ⟩](img/file915.jpg)
     = ![|1⟩](img/file916.jpg) and
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用H![|+ ⟩](img/file913.jpg) = ![|0⟩](img/file914.jpg) 和 H![|− ⟩](img/file915.jpg)
+    = ![|1⟩](img/file916.jpg)，并且
 - en: '| ![G &#124;ψ⟩ = G(αy &#124;R⟩ + βy &#124;L⟩) = αy &#124;0⟩+ βy &#124;1⟩, ](img/file917.jpg)
     |  |'
+  id: totrans-58
   prefs: []
   type: TYPE_TB
+  zh: '| ![G &#124;ψ⟩ = G(αy &#124;R⟩ + βy &#124;L⟩) = αy &#124;0⟩+ βy &#124;1⟩, ](img/file917.jpg)
+    |  |'
 - en: with G![|R ⟩](img/file918.jpg) = ![|0 ⟩](img/file919.jpg) and G![|L ⟩](img/file920.jpg)
     = ![|1⟩](img/file921.jpg).
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用G![|R ⟩](img/file918.jpg) = ![|0 ⟩](img/file919.jpg) 和 G![|L ⟩](img/file920.jpg)
+    = ![|1⟩](img/file921.jpg)。
 - en: The operators H (which is simply the Hadamard operator) and G admit the matrix
     representations
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 运算符 H（即哈达玛尔运算符）和 G 的矩阵表示为
 - en: '| ![ ⌊ ⌋ ⌊ ⌋ -1- 1 1 -1- 1 − i H = √2--⌈ ⌉ and G = √2-⌈ ⌉ . 1 − 1 1 i ](img/file922.jpg)
     |  |'
+  id: totrans-61
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ⌊ ⌋ ⌊ ⌋ -1- 1 1 -1- 1 − i H = √2--⌈ ⌉ and G = √2-⌈ ⌉ . 1 − 1 1 i ](img/file922.jpg)
+    |  |'
 - en: 10.2.2 The two-qubit case
+  id: totrans-62
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.2.2 两个量子比特的情况
 - en: 'What if the problem Hamiltonian has terms involving more than a single qubit?
     Consider a Hamiltonian with terms consisting of tensor products of Pauli matrices
     such as X⊗Y, Y⊗Z, etc. The general approach remains the same: the expectation
@@ -327,44 +494,69 @@
     terms. Thus, we need to know how to calculate the expectation value of the product
     of Pauli matrices. Without loss of generality, consider the X⊗Y term – as the
     very same logic applies to all other Pauli tensor products.'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果问题的哈密顿量包含涉及多个量子比特的项怎么办？考虑一个包含保利矩阵张量积的哈密顿量，如X⊗Y, Y⊗Z等。一般方法保持不变：哈密顿量的期望值由所有项的期望值之和组成。因此，我们需要知道如何计算保利矩阵乘积的期望值。为了不失一般性，考虑X⊗Y这一项——相同的逻辑适用于所有其他保利张量积。
 - en: Recall that X⊗Y is the tensor product of the two Pauli operators X and Y, each
     acting on their own qubits, not a sequential application of gates X and Y to the
     same qubit. Indeed, given for two unitary operators U[1] and U[2], the tensor
     product U[1] ⊗U[2] acts on the state of a two-qubit system as
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 记住，X⊗Y 是两个保利算符 X 和 Y 的张量积，每个算符作用于各自的量子比特，而不是将 X 和 Y 门按顺序应用于同一个量子比特。事实上，考虑两个单位算符
+    U[1] 和 U[2]，张量积 U[1] ⊗U[2] 在二量子比特系统的状态上作用如下
 - en: '| ![ ( ) ( ) (U1 ⊗ U2) &#124;ψ1⟩ ⊗ &#124;ψ2 ⟩ = U1 &#124;ψ1⟩ ⊗ U2 &#124;ψ2
     ⟩ . ](img/file923.jpg) |  |'
+  id: totrans-65
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ( ) ( ) (U1 ⊗ U2) &#124;ψ1⟩ ⊗ &#124;ψ2 ⟩ = U1 &#124;ψ1⟩ ⊗ U2 &#124;ψ2
+    ⟩ . ](img/file923.jpg) |  |'
 - en: We immediately see from ([10.2.2](#x1-2060002)) that the tensor product of eigenvectors
     of X and Y is an eigenvector of X⊗Y. Indeed, if U![|ψU ⟩](img/file924.jpg) = *E*[U]![|ψU⟩](img/file925.jpg)
     with *E*[U] ∈ℂ, for U ∈{X*,*Y}, then
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们立即从 ([10.2.2](#x1-2060002)) 看到，X 和 Y 的特征向量的张量积是 X⊗Y 的特征向量。事实上，如果 U![|ψU ⟩](img/file924.jpg)
+    = *E*[U]![|ψU⟩](img/file925.jpg)，其中 *E*[U] ∈ℂ，且 U ∈{X*,*Y}，则
 - en: '![(X⊗ Y) |ψX⟩⊗ |ψY⟩ = X |ψX⟩⊗ Y |ψY ⟩ = EX |ψX⟩⊗ EY |ψY⟩ = EXEY |ψX ⟩⊗ |ψY
     ⟩. ](img/file926.jpg)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![(X⊗ Y) |ψX⟩⊗ |ψY⟩ = X |ψX⟩⊗ Y |ψY ⟩ = EX |ψX⟩⊗ EY |ψY⟩ = EXEY |ψX ⟩⊗ |ψY
+    ⟩. ](img/file926.jpg)'
 - en: We also remember that all eigenvectors of Pauli operators have eigenvalues equal
     to either +1 or −1 (as detailed in ([10.2.1](#x1-2050001)) and ([10.2.1](#x1-2050001))).
     Now, for the X⊗Y Pauli term, the eigenvectors with eigenvalue +1 are
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还记得所有保利算符的特征向量的特征值要么是 +1，要么是 −1（详细信息见 ([10.2.1](#x1-2050001)) 和 ([10.2.1](#x1-2050001))）。现在，对于
+    X⊗Y 保利项，特征值为 +1 的特征向量是
 - en: '![|+ ⟩⊗ |R⟩ = |+R ⟩ and |− ⟩ ⊗ |L⟩ = |− L⟩, ](img/file927.jpg)'
+  id: totrans-69
   prefs: []
   type: TYPE_IMG
+  zh: '![|+ ⟩⊗ |R⟩ = |+R ⟩ 和 |− ⟩ ⊗ |L⟩ = |− L⟩, ](img/file927.jpg)'
 - en: and the eigenvectors with eigenvalue −1 are
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
+  zh: 而特征值为 −1 的特征向量是
 - en: '![|+ ⟩⊗ |L⟩ = |+L ⟩ and |− ⟩⊗ |R ⟩ = |− R⟩, ](img/file928.jpg)'
+  id: totrans-71
   prefs: []
   type: TYPE_IMG
+  zh: '![|+ ⟩⊗ |L⟩ = |+L ⟩ 和 |− ⟩⊗ |R ⟩ = |− R⟩, ](img/file928.jpg)'
 - en: which follow directly from the computations
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些直接来自于计算结果
 - en: '| ![(X⊗ Y) &#124;+R ⟩ = (X⊗ Y) &#124;+⟩⊗ &#124;R ⟩ = X &#124;+⟩ ⊗ Y &#124;R
     ⟩ = &#124;+ ⟩⊗ &#124;R⟩ = &#124;+R ⟩, (X⊗ Y) &#124;+L ⟩ = (X⊗ Y) &#124;+ ⟩⊗ &#124;L⟩
     = X &#124;+ ⟩⊗ Y &#124;L⟩ = &#124;+ ⟩⊗ (− &#124;L⟩) = − &#124;+L ⟩, (X⊗ Y) &#124;−
@@ -372,122 +564,206 @@
     &#124;R ⟩ = − &#124;− R⟩ , (X⊗ Y) &#124;− L⟩ = (X⊗ Y) &#124;− ⟩⊗ &#124;L⟩ = X
     &#124;− ⟩⊗ Y &#124;L⟩ = (− &#124;− ⟩) ⊗ (− &#124;L ⟩) = &#124;− L⟩. ](img/file929.jpg)
     |  |'
+  id: totrans-73
   prefs: []
   type: TYPE_TB
+  zh: '| ![(X⊗ Y) &#124;+R ⟩ = (X⊗ Y) &#124;+⟩⊗ &#124;R ⟩ = X &#124;+⟩ ⊗ Y &#124;R
+    ⟩ = &#124;+ ⟩⊗ &#124;R⟩ = &#124;+R ⟩, (X⊗ Y) &#124;+L ⟩ = (X⊗ Y) &#124;+ ⟩⊗ &#124;L⟩
+    = X &#124;+ ⟩⊗ Y &#124;L⟩ = &#124;+ ⟩⊗ (− &#124;L⟩) = − &#124;+L ⟩, (X⊗ Y) &#124;−
+    R⟩ = (X⊗ Y) &#124;− ⟩⊗ &#124;R ⟩ = X &#124;− ⟩ ⊗ Y &#124;R ⟩ = (− &#124;− ⟩)⊗
+    &#124;R ⟩ = − &#124;− R⟩ , (X⊗ Y) &#124;− L⟩ = (X⊗ Y) &#124;− ⟩⊗ &#124;L⟩ = X
+    &#124;− ⟩⊗ Y &#124;L⟩ = (− &#124;− ⟩) ⊗ (− &#124;L ⟩) = &#124;− L⟩. ](img/file929.jpg)
+    |  |'
 - en: 'Let us write down the representation of a quantum state of the two-qubit system
     ![|ψ ⟩](img/file930.jpg) = ![|ψ1⟩](img/file931.jpg)⊗![|ψ2 ⟩](img/file932.jpg)
     in the basis of X⊗Y eigenvectors:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们写出二量子比特系统的量子态表示 ![|ψ ⟩](img/file930.jpg) = ![|ψ1⟩](img/file931.jpg)⊗![|ψ2
+    ⟩](img/file932.jpg) 在 X⊗Y 特征向量基底下的表示：
 - en: '| ![&#124;ψ⟩ = &#124;ψ1⟩⊗ &#124;ψ2⟩ = (αx &#124;+ ⟩+ βx &#124;− ⟩)⊗ (αy &#124;R
     ⟩+ βy &#124;L⟩) = αxαy &#124;+R ⟩+ αxβy &#124;+L ⟩+ βxαy &#124;− R ⟩+ βxβy &#124;−
     L ⟩, ](img/file933.jpg) |  |'
+  id: totrans-75
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;ψ⟩ = &#124;ψ1⟩⊗ &#124;ψ2⟩ = (αx &#124;+ ⟩+ βx &#124;− ⟩)⊗ (αy &#124;R
+    ⟩+ βy &#124;L⟩) = αxαy &#124;+R ⟩+ αxβy &#124;+L ⟩+ βxαy &#124;− R ⟩+ βxβy &#124;−
+    L ⟩, ](img/file933.jpg) |  |'
 - en: 'with (*α*[x]*,β*[x]*,α*[y]*,β*[y]) ∈ℂ⁴. We want to apply an operator allowing
     us to perform measurements in the *z*-basis such that the probability amplitudes
     of the corresponding states remain the same. It is easy to see that this operator
     is a tensor product of the H and G gates:'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 (*α*[x]*,β*[x]*,α*[y]*,β*[y]) ∈ℂ⁴。我们希望应用一个算符，使得我们可以在 *z* 基底下进行测量，同时相应态的概率幅保持不变。很容易看出，这个算符是
+    H 和 G 门的张量积：
 - en: '| (H⊗G)![&#124;ψ⟩](img/file934.jpg) | = (H⊗G)![(αx αy &#124;+R ⟩ + αxβy &#124;+L
     ⟩+ βxαy &#124;− R⟩ + βxβy &#124;− L⟩)](img/file935.jpg) |'
+  id: totrans-77
   prefs: []
   type: TYPE_TB
+  zh: '| (H⊗G)![&#124;ψ⟩](img/file934.jpg) | = (H⊗G)![(αx αy &#124;+R ⟩ + αxβy &#124;+L
+    ⟩+ βxαy &#124;− R⟩ + βxβy &#124;− L⟩)](img/file935.jpg) |'
 - en: '|  | = *α*[x]*α*[y](H⊗G)![&#124;+ ⟩](img/file936.jpg)⊗![&#124;R ⟩](img/file937.jpg)
     + *α*[x]*β*[y](H⊗G)![&#124;+ ⟩](img/file938.jpg)⊗![&#124;L ⟩](img/file939.jpg)
     |'
+  id: totrans-78
   prefs: []
   type: TYPE_TB
+  zh: '|  | = *α*[x]*α*[y](H⊗G)![&#124;+ ⟩](img/file936.jpg)⊗![&#124;R ⟩](img/file937.jpg)
+    + *α*[x]*β*[y](H⊗G)![&#124;+ ⟩](img/file938.jpg)⊗![&#124;L ⟩](img/file939.jpg)
+    |'
 - en: '|  | + *β*[x]*α*[y](H⊗G)![&#124;− ⟩](img/file940.jpg)⊗![&#124;R⟩](img/file941.jpg)
     + *β*[x]*β*[y](H⊗G)![&#124;− ⟩](img/file942.jpg)⊗![&#124;L⟩](img/file943.jpg)
     |'
+  id: totrans-79
   prefs: []
   type: TYPE_TB
+  zh: '|  | + *β*[x]*α*[y](H⊗G)![&#124;− ⟩](img/file940.jpg)⊗![&#124;R⟩](img/file941.jpg)
+    + *β*[x]*β*[y](H⊗G)![&#124;− ⟩](img/file942.jpg)⊗![&#124;L⟩](img/file943.jpg)
+    |'
 - en: '|  | = *α*[x]*α*[y](H![&#124;+ ⟩](img/file944.jpg)⊗G![&#124;R⟩](img/file945.jpg))
     + *α*[x]*β*[y](H![&#124;+ ⟩](img/file946.jpg)⊗G![&#124;L ⟩](img/file947.jpg))
     |'
+  id: totrans-80
   prefs: []
   type: TYPE_TB
+  zh: '|  | = *α*[x]*α*[y](H![&#124;+ ⟩](img/file944.jpg)⊗G![&#124;R⟩](img/file945.jpg))
+    + *α*[x]*β*[y](H![&#124;+ ⟩](img/file946.jpg)⊗G![&#124;L ⟩](img/file947.jpg))
+    |'
 - en: '|  | + *β*[x]*α*[y](H![&#124;− ⟩](img/file948.jpg)⊗G![&#124;R⟩](img/file949.jpg))
     + *β*[x]*β*[y](H![&#124;− ⟩](img/file950.jpg)⊗G![&#124;L⟩](img/file951.jpg)) |'
+  id: totrans-81
   prefs: []
   type: TYPE_TB
+  zh: '|  | + *β*[x]*α*[y](H![&#124;− ⟩](img/file948.jpg)⊗G![&#124;R⟩](img/file949.jpg))
+    + *β*[x]*β*[y](H![&#124;− ⟩](img/file950.jpg)⊗G![&#124;L⟩](img/file951.jpg)) |'
 - en: '|  | = *α*[x]*α*[y](![&#124;0⟩](img/file952.jpg)⊗![&#124;0⟩](img/file953.jpg))
     + *α*[x]*β*[y](![&#124;0⟩](img/file954.jpg)⊗![&#124;1⟩](img/file955.jpg)) + *β*[x]*α*[y](![&#124;1⟩](img/file956.jpg)⊗![&#124;0⟩](img/file957.jpg))
     + *β*[x]*β*[y](![&#124;1⟩](img/file958.jpg)⊗![&#124;1⟩](img/file959.jpg)) |'
+  id: totrans-82
   prefs: []
   type: TYPE_TB
+  zh: '|  | = *α*[x]*α*[y](![&#124;0⟩](img/file952.jpg)⊗![&#124;0⟩](img/file953.jpg))
+    + *α*[x]*β*[y](![&#124;0⟩](img/file954.jpg)⊗![&#124;1⟩](img/file955.jpg)) + *β*[x]*α*[y](![&#124;1⟩](img/file956.jpg)⊗![&#124;0⟩](img/file957.jpg))
+    + *β*[x]*β*[y](![&#124;1⟩](img/file958.jpg)⊗![&#124;1⟩](img/file959.jpg)) |'
 - en: '|  | = *α*[x]*α*[y]![&#124;00⟩](img/file960.jpg) + *α*[x]*β*[y]![&#124;01⟩](img/file961.jpg)
     + *β*[x]*α*[y]![&#124;10⟩](img/file962.jpg) + *β*[x]*β*[y]![&#124;11⟩](img/file963.jpg)*.*
     |'
+  id: totrans-83
   prefs: []
   type: TYPE_TB
+  zh: '|  | = *α*[x]*α*[y]![&#124;00⟩](img/file960.jpg) + *α*[x]*β*[y]![&#124;01⟩](img/file961.jpg)
+    + *β*[x]*α*[y]![&#124;10⟩](img/file962.jpg) + *β*[x]*β*[y]![&#124;11⟩](img/file963.jpg)*.*
+    |'
 - en: 'The eigenvalues of Z⊗Z corresponding to the eigenstates {![|00⟩](img/file964.jpg)*,*![|01
     ⟩](img/file965.jpg)*,*![|10⟩](img/file966.jpg)*,*![|11⟩](img/file967.jpg)} are
     the same as the eigenvalues of X⊗Y corresponding to the eigenstates {![|+R ⟩](img/file968.jpg)*,*![|+L
     ⟩](img/file969.jpg)*,*![|− R⟩](img/file970.jpg)*,*![|− L⟩](img/file971.jpg)}:'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: Z⊗Z 的本征值对应于本征态 {![|00⟩](img/file964.jpg)*,*![|01 ⟩](img/file965.jpg)*,*![|10⟩](img/file966.jpg)*,*![|11⟩](img/file967.jpg)}，与
+    X⊗Y 对应的本征值相同，本征态为 {![|+R ⟩](img/file968.jpg)*,*![|+L ⟩](img/file969.jpg)*,*![|−
+    R⟩](img/file970.jpg)*,*![|− L⟩](img/file971.jpg)}：
 - en: '| ![(Z⊗ Z) &#124;00⟩ = (Z⊗ Z ) &#124;0⟩⊗ &#124;0⟩ = Z &#124;0⟩⊗ Z &#124;0⟩
     = &#124;0⟩⊗ &#124;0⟩ = &#124;00⟩ , (Z⊗ Z) &#124;01⟩ = (Z⊗ Z ) &#124;0⟩⊗ &#124;1⟩
     = Z &#124;0⟩⊗ Z &#124;1⟩ = &#124;0⟩⊗ (− &#124;1⟩) = − &#124;01⟩, (Z⊗ Z) &#124;10⟩
     = (Z⊗ Z ) &#124;1⟩⊗ &#124;0⟩ = Z &#124;1⟩⊗ Z &#124;0⟩ = (− &#124;1⟩) ⊗ &#124;0⟩
     = − &#124;10⟩, (Z⊗ Z) &#124;11⟩ = (Z⊗ Z ) &#124;1⟩⊗ &#124;1⟩ = Z &#124;1⟩⊗ Z &#124;1⟩
     = (− &#124;1⟩) ⊗ (− &#124;1⟩) = &#124;11⟩. ](img/file972.jpg) |  |'
+  id: totrans-85
   prefs: []
   type: TYPE_TB
+  zh: '| ![(Z⊗ Z) &#124;00⟩ = (Z⊗ Z ) &#124;0⟩⊗ &#124;0⟩ = Z &#124;0⟩⊗ Z &#124;0⟩
+    = &#124;0⟩⊗ &#124;0⟩ = &#124;00⟩ , (Z⊗ Z) &#124;01⟩ = (Z⊗ Z ) &#124;0⟩⊗ &#124;1⟩
+    = Z &#124;0⟩⊗ Z &#124;1⟩ = &#124;0⟩⊗ (− &#124;1⟩) = − &#124;01⟩, (Z⊗ Z) &#124;10⟩
+    = (Z⊗ Z ) &#124;1⟩⊗ &#124;0⟩ = Z &#124;1⟩⊗ Z &#124;0⟩ = (− &#124;1⟩) ⊗ &#124;0⟩
+    = − &#124;10⟩, (Z⊗ Z) &#124;11⟩ = (Z⊗ Z ) &#124;1⟩⊗ &#124;1⟩ = Z &#124;1⟩⊗ Z &#124;1⟩
+    = (− &#124;1⟩) ⊗ (− &#124;1⟩) = &#124;11⟩. ](img/file972.jpg) |  |'
 - en: Therefore, the expectation ⟨*ϕ*|Z⊗Z![|ϕ⟩](img/file973.jpg), with
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，期望 ⟨*ϕ*|Z⊗Z![|ϕ⟩](img/file973.jpg)，其中
 - en: '| ![&#124;ϕ⟩ = αxαy &#124;00⟩ + αxβy &#124;01 ⟩+ βxαy &#124;10⟩+ βxβy &#124;11
     ⟩, ](img/file974.jpg) |  |'
+  id: totrans-87
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;ϕ⟩ = αxαy &#124;00⟩ + αxβy &#124;01 ⟩+ βxαy &#124;10⟩+ βxβy &#124;11
+    ⟩, ](img/file974.jpg) |  |'
 - en: in the *z*-basis is given by
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 在 *z* 基础上给出的
 - en: '| ![&#124;α α &#124;2 − &#124;α β &#124;2 − &#124;β α &#124;2 + &#124;β β &#124;2\.
     x y x y x y x y ](img/file975.jpg) |  |'
+  id: totrans-89
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;α α &#124;2 − &#124;α β &#124;2 − &#124;β α &#124;2 + &#124;β β &#124;2\.
+    x y x y x y x y ](img/file975.jpg) |  |'
 - en: The values of the probabilities |*α*[x]*α*[y]|², |*α*[x]*β*[y]|², |*β*[x]*α*[y]|²,
     and |*β*[x]*β*[y]|² can be found using quantum computers in exactly the same way
     we found probabilities in the one-qubit case. By counting the numbers *n*[ij]
     of outcomes ![|ij⟩](img/file976.jpg) (for *i,j* ∈{0*,*1}, with ∑ [i,j∈{0,1}]*n*[ij]
     = *N*), the expectation value of X⊗Y is given by
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 概率的值 |*α*[x]*α*[y]|², |*α*[x]*β*[y]|², |*β*[x]*α*[y]|², 和 |*β*[x]*β*[y]|² 可以通过量子计算机按与一比特情况相同的方式计算得出。通过统计结果的数量
+    *n*[ij]（对于 *i,j* ∈{0,*1}，其中 ∑ [i,j∈{0,1}]*n*[ij] = *N*），X⊗Y 的期望值为
 - en: '| ![⟨X ⊗ Y⟩ = n00 −-n01-−-n10 +-n11\. N ](img/file977.jpg) |  |'
+  id: totrans-91
   prefs: []
   type: TYPE_TB
+  zh: '| ![⟨X ⊗ Y⟩ = n00 −-n01-−-n10 +-n11\. N ](img/file977.jpg) |  |'
 - en: 10.2.3 The multi-qubit case
+  id: totrans-92
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.2.3 多量子比特情况
 - en: It is straightforward to scale this approach to more complex Pauli products
     and larger Hamiltonians since any Hamiltonian may be written as
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 将这种方法扩展到更复杂的保利乘积和更大的哈密顿量是简单的，因为任何哈密顿量都可以表示为
 - en: '| ![ ∑ i i ∑ ij i j ℋ = hα σα + hαβσ ασβ + ... iα ijαβ ](img/file978.jpg) |  |'
+  id: totrans-94
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ∑ i i ∑ ij i j ℋ = hα σα + hαβσ ασβ + ... iα ijαβ ](img/file978.jpg) |  |'
 - en: for real *h*, where the superscripts *i,j,…* identify the subsystem (qubit)
     on which the operator acts, and the subscripts *α,β,…* identify the Pauli operator.
     For example, *i* = 1, *α* = *x*, and *σ*[x]¹ = X acting on qubit 1\. No assumption
     about the dimension or structure of the Hermitian Hamiltonian is needed for this
     expansion to be valid  [[231](Biblography.xhtml#XPeruzzo2014)].
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于实数 *h*，其中上标 *i,j,…* 标识算符作用的子系统（量子比特），下标 *α,β,…* 标识保利算符。例如，*i* = 1, *α* = *x*，且
+    *σ*[x]¹ = X 作用于量子比特 1。对于这个展开式的有效性，不需要对厄米哈密顿量的维度或结构做任何假设 [[231](Biblography.xhtml#XPeruzzo2014)]。
 - en: 'We have already used the linearity of quantum observables that allows us to
     calculate the expectation of the Hamiltonian as a sum of expectations of the individual
     terms:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经使用了量子可观察量的线性特性，这使我们能够将哈密顿量的期望值计算为各个项期望值的总和：
 - en: '| ![ ∑ i⟨ i⟩ ∑ ij ⟨ i j⟩ ⟨ℋ⟩ = h α σα + hαβ σασβ + ... iα ijαβ ](img/file979.jpg)
     |  |'
+  id: totrans-97
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ∑ i⟨ i⟩ ∑ ij ⟨ i j⟩ ⟨ℋ⟩ = h α σα + hαβ σασβ + ... iα ijαβ ](img/file979.jpg)
+    |  |'
 - en: As long as we consider Hamiltonians that can be written as a polynomial number
     of terms with respect to the system size, the evaluation of ![⟨ℋ⟩](img/file980.jpg)
     is reduced to the sum of a polynomial number of expectation values of simple Pauli
@@ -495,18 +771,24 @@
     real constants. As we have seen above, a quantum computer can efficiently evaluate
     the expectation value of a tensor product of an arbitrary number of simple Pauli
     operators  [[227](Biblography.xhtml#XOrtiz2001)].
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 只要我们考虑可以写成关于系统大小的多项式项数的哈密顿量，评估![⟨ℋ⟩](img/file980.jpg)就简化为一些量子态![|ψ ⟩](img/file981.jpg)的简单保利算符的期望值之和，并乘以一些实常数。正如我们上面所见，量子计算机可以高效地评估任意数量简单保利算符的张量积的期望值[[227](Biblography.xhtml#XOrtiz2001)]。
 - en: Quantum computers can be used to efficiently calculate expectation values of
     Hamiltonians consisting of tensor products of Pauli operators. Any Hamiltonian
     may be represented as a sum of tensor products of Pauli operators (X, Y, Z, and
     I gates).
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 量子计算机可以用来高效地计算由保利算符的张量积组成的哈密顿量的期望值。任何哈密顿量都可以表示为保利算符（X、Y、Z 和 I 门）的张量积之和。
 - en: 10.3 Constructing the PQC
+  id: totrans-100
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 10.3 构建 PQC
 - en: The question of how to construct a high-quality candidate state used to calculate
     expectations is of fundamental importance. Unless we have some prior knowledge
     about the ground state and where to search for it in the Hilbert space of the
@@ -514,91 +796,138 @@
     that will cover the whole Hilbert space without being heavily concentrated in
     any one region. Let us see how this can be done for the single-qubit and multi-qubit
     systems.
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 如何构建用于计算期望值的高质量候选态是一个至关重要的问题。除非我们对基态以及在 *n* 量子比特系统的希尔伯特空间中查找基态的位置有一定的先验知识，否则首要任务是生成一系列候选态，这些态能够覆盖整个希尔伯特空间，而不会在任何一个区域过于集中。让我们看看如何在单量子比特和多量子比特系统中实现这一点。
 - en: 10.3.1 One-qubit ansatz
+  id: totrans-102
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.3.1 单量子比特的 Ansatz
 - en: We return to the Bloch sphere that visualises the possible states of a one-qubit
     system. Figure [10.1](#10.1) shows how the qubit state can change from its initial
     state ![|0⟩](img/file982.jpg) to the intermediate state ![|ψi⟩](img/file983.jpg)
     and then to the final state ![|ψf⟩](img/file984.jpg) through a rotation around
     the *y*-axis followed by a rotation around the *z*-axis.
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们回到布洛赫球，它可视化了单量子比特系统的可能状态。图[10.1](#10.1)展示了量子比特状态如何从其初始状态![|0⟩](img/file982.jpg)变化到中间状态![|ψi⟩](img/file983.jpg)，然后通过绕
+    *y* 轴旋转，再绕 *z* 轴旋转，最终到达状态![|ψf⟩](img/file984.jpg)。
 - en: '![Figure 10.1: Bloch sphere: visualisation of one-qubit rotations. ](img/file985.jpg)'
+  id: totrans-104
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.1：布洛赫球：单量子比特旋转的可视化。](img/file985.jpg)'
 - en: 'Figure 10.1: Bloch sphere: visualisation of one-qubit rotations.'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10.1：布洛赫球：单量子比特旋转的可视化。
 - en: It is possible to reach any point on the Bloch sphere starting from ![|0⟩](img/file986.jpg)
     with just two rotations around any two orthogonal axes. The corresponding circuit
     is shown in Figure [10.2](#10.2).
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 从![|0⟩](img/file986.jpg)开始，通过绕任何两条正交轴旋转两次，可以到达布洛赫球上的任何一点。相应的电路如图[10.2](#10.2)所示。
 - en: '![Figure 10.2: PQC for a one-qubit system. ](img/file987.jpg)'
+  id: totrans-107
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.2：单量子比特系统的 PQC。](img/file987.jpg)'
 - en: 'Figure 10.2: PQC for a one-qubit system.'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10.2：单量子比特系统的 PQC。
 - en: The PQC shown in Figure [10.2](#10.2) is everything we need in the one-qubit
     case if we only have the Z and I terms in the problem Hamiltonian. If we want
     to calculate the expectation value of the X term, we have to add an H gate to
     the circuit as shown in Figure [10.3](#10.3).
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 如图[10.2](#10.2)所示的 PQC 是在单量子比特情况下，如果问题哈密顿量中仅包含 Z 和 I 项时我们所需的一切。如果我们想要计算 X 项的期望值，我们必须在电路中添加一个
+    H 门，如图[10.3](#10.3)所示。
 - en: '![Figure 10.3: PQC with H gate to calculate ⟨X⟩. ](img/file989.jpg)'
+  id: totrans-110
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.3：使用 H 门的 PQC 来计算 ⟨X⟩。](img/file989.jpg)'
 - en: 'Figure 10.3: PQC with H gate to calculate ![⟨X⟩](img/file988.jpg).'
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 10.3：使用 H 门的 PQC 来计算![⟨X⟩](img/file988.jpg)。
 - en: 'Similarly, if we want to calculate the expectation value of the Y term, we
     have to add a G gate to the circuit as shown below:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 类似地，如果我们想要计算 Y 项的期望值，我们需要在电路中添加一个 G 门，如下所示：
 - en: '![Figure 10.4: PQC with G gate to calculate ⟨Y⟩. ](img/file991.jpg)'
+  id: totrans-113
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.4: 使用G门计算⟨Y⟩的PQC。](img/file991.jpg)'
 - en: 'Figure 10.4: PQC with G gate to calculate ![⟨Y⟩](img/file990.jpg).'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 10.4: 使用G门计算![⟨Y⟩](img/file990.jpg)的PQC。'
 - en: 10.3.2 Multi-qubit ansatz
+  id: totrans-115
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.3.2 多量子比特的安扎特
 - en: We now look at the multi-qubit case, and assume that the optimisation problem
     is encoded in the two-qubit Hamiltonian
+  id: totrans-116
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们来看多量子比特的情况，假设优化问题被编码在两量子比特哈密顿量中。
 - en: '| ![ℋ = aX ⊗ Y+ bY ⊗ Z+ cZ ⊗ X, ](img/file992.jpg) |  |'
+  id: totrans-117
   prefs: []
   type: TYPE_TB
+  zh: '| ![ℋ = aX ⊗ Y+ bY ⊗ Z+ cZ ⊗ X，](img/file992.jpg) |  |'
 - en: 'for some coefficients *a,b,c* ∈ℝ. As we know, the expectation value of the
     Hamiltonian ([10.3.2](#x1-2100002)) is given by the sum of expectation values
     of individual terms:'
+  id: totrans-118
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于一些系数*a, b, c* ∈ℝ。如我们所知，哈密顿量的期望值（[10.3.2](#x1-2100002)）由各个项的期望值之和给出：
 - en: '| ![⟨ℋ ⟩ ≡ ⟨ψ &#124;ℋ &#124;ψ⟩ = a⟨ψ &#124;X ⊗ Y &#124;ψ ⟩+ b⟨ψ &#124;Y⊗ Z
     &#124;ψ ⟩+ c⟨ψ &#124;Z⊗ X &#124;ψ⟩. ](img/file993.jpg) |  |'
+  id: totrans-119
   prefs: []
   type: TYPE_TB
+  zh: '| ![⟨ℋ ⟩ ≡ ⟨ψ &#124;ℋ &#124;ψ⟩ = a⟨ψ &#124;X ⊗ Y &#124;ψ ⟩+ b⟨ψ &#124;Y⊗ Z
+    &#124;ψ ⟩+ c⟨ψ &#124;Z⊗ X &#124;ψ⟩。](img/file993.jpg) |  |'
 - en: 'We need to calculate all these expectations for the same quantum state ![|ψ⟩](img/file994.jpg).
     To do so, we need to construct a quantum circuit with sufficiently flexible adjustable
     gates to support a wide range of possible candidate states. Since the problem
     Hamiltonian operates on two-qubit states, the PQC that constructs the candidate
     states may look like the one shown in Figure [10.5](#10.5):'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们需要计算所有这些期望值，对于相同的量子态![|ψ⟩](img/file994.jpg)。为了做到这一点，我们需要构建一个量子电路，使用足够灵活的可调门，以支持一系列可能的候选态。由于问题哈密顿量作用于两量子比特态，构建候选态的PQC可能如下图[10.5](#10.5)所示：
 - en: '![Figure 10.5: PQC for the construction of candidate states. ](img/file995.jpg)'
+  id: totrans-121
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.5: 用于构建候选态的PQC。](img/file995.jpg)'
 - en: 'Figure 10.5: PQC for the construction of candidate states.'
+  id: totrans-122
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 10.5: 用于构建候选态的PQC。'
 - en: In the PQC shown in Figure [10.5](#10.5), the parameters (rotation angles) *𝜃*[1]
     and *𝜃*[2] uniquely specify state ![|ψ1⟩](img/file996.jpg) of the first qubit,
     and the parameters *𝜃*[3] and *𝜃*[4] uniquely specify state ![|ψ2⟩](img/file997.jpg)
@@ -608,26 +937,42 @@
     of basis layer before the measurement in the computational basis. Figures [10.7](#10.7)
     and [10.8](#10.8) display the PQCs for the calculation of ![⟨Y ⊗ Z⟩](img/file999.jpg)
     and ![⟨Z ⊗ X⟩](img/file1000.jpg).
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 在图[10.5](#10.5)所示的PQC中，参数（旋转角度）*𝜃*[1]和*𝜃*[2]唯一地指定了第一量子比特的态![|ψ1⟩](img/file996.jpg)，而参数*𝜃*[3]和*𝜃*[4]唯一地指定了第二量子比特的态![|ψ2⟩](img/file997.jpg)。计算期望值![⟨X
+    ⊗ Y⟩](img/file998.jpg)的完整量子电路如图[10.6](#10.6)所示，其中门H（第一个量子寄存器）和G（第二个量子寄存器）形成了在计算基中测量之前的基变换层。图[10.7](#10.7)和[10.8](#10.8)展示了用于计算![⟨Y
+    ⊗ Z⟩](img/file999.jpg)和![⟨Z ⊗ X⟩](img/file1000.jpg)的PQC。
 - en: '![Figure 10.6: PQC for the calculation of the ⟨X ⊗ Y⟩ term. ](img/file1002.jpg)'
+  id: totrans-124
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.6: 用于计算⟨X ⊗ Y⟩项的PQC。](img/file1002.jpg)'
 - en: 'Figure 10.6: PQC for the calculation of the ![⟨X ⊗ Y⟩](img/file1001.jpg) term.'
+  id: totrans-125
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 10.6: 用于计算![⟨X ⊗ Y⟩](img/file1001.jpg)项的PQC。'
 - en: '![Figure 10.7: PQC for the calculation of the ⟨Y ⊗ Z⟩ term. ](img/file1004.jpg)'
+  id: totrans-126
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.7: 用于计算⟨Y ⊗ Z⟩项的PQC。](img/file1004.jpg)'
 - en: 'Figure 10.7: PQC for the calculation of the ![⟨Y ⊗ Z⟩](img/file1003.jpg) term.'
+  id: totrans-127
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 10.7: 用于计算![⟨Y ⊗ Z⟩](img/file1003.jpg)项的PQC。'
 - en: '![Figure 10.8: PQC for the calculation of the ⟨Z ⊗ X⟩ term. ](img/file1006.jpg)'
+  id: totrans-128
   prefs: []
   type: TYPE_IMG
+  zh: '![图 10.8: 用于计算⟨Z ⊗ X⟩项的PQC。](img/file1006.jpg)'
 - en: 'Figure 10.8: PQC for the calculation of the ![⟨Z ⊗ X⟩](img/file1005.jpg) term.'
+  id: totrans-129
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 10.8: 用于计算![⟨Z ⊗ X⟩](img/file1005.jpg)项的PQC。'
 - en: Note that the state construction circuits shown in Figures [10.6](#10.6)-[10.8](#10.8)
     consist of one-qubit gates and do not contain two-qubit gates that would create
     entanglement. Adding two-qubit gates, such as CNOT and CPHASE, would help explore
@@ -635,22 +980,30 @@
     as we know from the previous chapters. However, our task here is to illustrate
     the general principle and compare the results obtained by running the PQC with
     the calculations done "by hand", as we shall see in the next section.
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，图[10.6](#10.6)-[10.8](#10.8)所示的态构建电路由单量子比特门组成，并不包含会产生纠缠的两量子比特门。添加两量子比特门（如CNOT和CPHASE）将有助于探索更广泛的量子态范围，正如我们在之前的章节中所知道的那样，应该理所当然地进行。然而，我们在这里的任务是说明一般原理，并将通过运行PQC得到的结果与手动计算的结果进行比较，正如我们将在下一节中看到的那样。
 - en: 10.4 Running the PQC
+  id: totrans-131
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 10.4 运行PQC
 - en: We now run some numerical experiments for the optimisation problem encoded in
     the Hamiltonian ([10.3.2](#x1-2100002)) and compare the obtained results with
     direct calculations to better understand the mechanics of the algorithm and to
     build intuition.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在进行一些数值实验，以优化问题的哈密顿量([10.3.2](#x1-2100002))为编码，并将获得的结果与直接计算进行比较，以更好地理解算法的机制并建立直觉。
 - en: 10.4.1 Experimenting with the two-qubit ansatz
+  id: totrans-133
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.4.1 两量子比特初始态的实验
 - en: 'In line with the variational approach and taking into account the PQC architecture
     specified in Figure [10.5](#10.5), we need to build the candidate states controlled
     by the four adjustable parameters *𝜃*[1], *𝜃*[2], *𝜃*[3], and *𝜃*[4]. In Chapters [8](Chapter_8.xhtml#x1-1620008)
@@ -660,103 +1013,154 @@
     parameters for the PQC of arbitrary size. However, the PQC shown in Figure [10.5](#10.5)
     is only two-layer deep and two-quantum register wide – it is perfectly feasible
     in this case to apply the brute force method.'
+  id: totrans-134
   prefs: []
   type: TYPE_NORMAL
+  zh: 根据变分方法，并考虑图[10.5](#10.5)中指定的PQC架构，我们需要构建由四个可调参数*𝜃*[1]、*𝜃*[2]、*𝜃*[3]和*𝜃*[4]控制的候选态。在第[8](Chapter_8.xhtml#x1-1620008)章和第[9](Chapter_9.xhtml#x1-1850009)章中，我们考虑了训练PQC的两种可能方法：可微分学习和不可微分学习。两种方法各有优缺点，可以用来找到任意大小PQC的最优可调参数集。然而，图[10.5](#10.5)中展示的PQC仅为两层深、两量子寄存器宽，因此在这种情况下应用暴力搜索方法是完全可行的。
 - en: The brute force method consists of discretising the range of possible values
     of the rotation angles with the elementary step (increment) kept reasonably small.
     The parameters *𝜃*[1] and *𝜃*[3] are rotation angles around the *y*-axis and are
     defined on the interval [0*,π*], which we discretise as
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 暴力搜索方法包括将旋转角度的可能值范围离散化，并保持合理小的基本步长（增量）。参数*𝜃*[1]和*𝜃*[3]是绕*y*-轴的旋转角度，定义在区间[0*,π*]上，我们将其离散化为：
 - en: '| ![{ } (2k +-1-)π , 2m k=0,...,m−1 ](img/file1007.jpg) |  |'
+  id: totrans-136
   prefs: []
   type: TYPE_TB
+  zh: '| ![{ } (2k +-1-)π , 2m k=0,...,m−1 ](img/file1007.jpg) |  |'
 - en: for some integer *m*. Similarly, *𝜃*[2] and *𝜃*[4] are rotation angles around
     the *z*-axis defined on [0*,*2*π*], with range
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于某些整数*m*，同样地，*𝜃*[2]和*𝜃*[4]是绕*z*-轴的旋转角度，定义在[0*,*2*π*]区间内，范围为：
 - en: '| ![{ (2k + 1)π} --------- . 2m k=0,...,2m− 1 ](img/file1008.jpg) |  |'
+  id: totrans-138
   prefs: []
   type: TYPE_TB
+  zh: '| ![{ (2k + 1)π} --------- . 2m k=0,...,2m− 1 ](img/file1008.jpg) |  |'
 - en: In both cases the increment is *π∕m*. Taking, for example, *m* = 8 is a sensible
     compromise between speed and accuracy. What is more, once the optimal configuration
     of adjustable parameters is found, we can run an additional, more granular search
     in the vicinity of the candidate optimal configuration in order to further improve
     it.
+  id: totrans-139
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这两种情况下，增量是*π∕m*。例如，取*m* = 8是速度与精度之间的合理折衷。更重要的是，一旦找到最优的可调参数配置，我们可以在候选最优配置附近进行一次额外的、更细粒度的搜索，以进一步改进它。
 - en: The algorithm looks as follows. For the given configuration of R[Y] and R[Z]
     rotation angles drawn from the sets ([10.4.1](#x1-2120001)) and ([10.4.1](#x1-2120001)),
     we execute 100,000 runs of PQCs specified in Figures [10.6](#10.6), [10.7](#10.7),
     and [10.8](#10.8) on the Qiskit quantum simulator. This gives us the expectation
     values of X⊗Y, Y⊗Z, and Z⊗X for the quantum state ![|ψ ⟩](img/file1009.jpg) =
     ![|ψ1⟩](img/file1010.jpg)⊗![|ψ2 ⟩](img/file1011.jpg), where
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 算法如下所示。对于从集合([10.4.1](#x1-2120001))和([10.4.1](#x1-2120001))中提取的给定R[Y]和R[Z]旋转角度配置，我们在Qiskit量子模拟器上执行100,000次PQCs运行，如图[10.6](#10.6)、[10.7](#10.7)和[10.8](#10.8)所示。这将给出量子态![|ψ
+    ⟩](img/file1009.jpg) = ![|ψ1⟩](img/file1010.jpg)⊗![|ψ2 ⟩](img/file1011.jpg)的X⊗Y、Y⊗Z和Z⊗X的期望值，其中：
 - en: '![ ( 𝜃 ) ( 𝜃 ) |ψ1⟩ = cos -1 |0⟩+ ei𝜃2 sin -1 |1⟩ 2 2 ](img/file1012.jpg)'
+  id: totrans-141
   prefs: []
   type: TYPE_IMG
+  zh: '![ ( 𝜃 ) ( 𝜃 ) |ψ1⟩ = cos -1 |0⟩+ ei𝜃2 sin -1 |1⟩ 2 2 ](img/file1012.jpg)'
 - en: and
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 以及
 - en: '![ ( ) ( ) 𝜃3 i𝜃4 𝜃3 |ψ2⟩ = cos 2 |0⟩ + e sin 2 |1⟩. ](img/file1013.jpg)'
+  id: totrans-143
   prefs: []
   type: TYPE_IMG
+  zh: '![ ( ) ( ) 𝜃3 i𝜃4 𝜃3 |ψ2⟩ = cos 2 |0⟩ + e sin 2 |1⟩. ](img/file1013.jpg)'
 - en: We select the state ![|ψ ∗⟩](img/file1014.jpg) with the smallest value of ![⟨ℋ
     ⟩](img/file1015.jpg) given by ([10.3.2](#x1-2100002)), and denote the corresponding
     rotation angles *𝜃*[1]^∗*,…,𝜃*[4]^∗. After that, we perform a more refined search
     in the neighbourhood of ![|ψ ∗⟩](img/file1016.jpg). The new set values of the
     rotation angles are now
+  id: totrans-144
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们选择状态![|ψ ∗⟩](img/file1014.jpg)，其对应的![⟨ℋ ⟩](img/file1015.jpg)值最小，如（[10.3.2](#x1-2100002)）所示，并表示对应的旋转角度*𝜃*[1]^∗*,…,𝜃*[4]^∗。随后，我们在![|ψ
+    ∗⟩](img/file1016.jpg)的邻域内进行更精细的搜索。此时，旋转角度的新集合为：
 - en: '| ![{ } 𝜃∗i + (k-−-4)π- , i = 1,...,4, 4m k=0,...,m ](img/file1017.jpg) |  |'
+  id: totrans-145
   prefs: []
   type: TYPE_TB
+  zh: '| ![{ } 𝜃∗i + (k-−-4)π- , i = 1,...,4, 4m k=0,...,m ](img/file1017.jpg) |  |'
 - en: with increment *π∕*(4*m*). Again, we select the quantum state ![ ′ |ψ ⟩](img/file1018.jpg)
     with the smallest value of ![⟨ℋ ⟩](img/file1019.jpg) and denote the corresponding
     rotation angles *𝜃*′[1]*,…,𝜃*′[4].
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 增量为 *π∕*(4*m*)。我们再次选择量子态 ![ ′ |ψ ⟩](img/file1018.jpg)，其具有最小的 ![⟨ℋ ⟩](img/file1019.jpg)
+    值，并表示相应的旋转角度 *𝜃*′[1]*,…,𝜃*′[4]。
 - en: 'With *m* = 8, *a* = 4, *b* = 3, *c* = 2, we obtain the results in Table [10.1](#table10.1):'
+  id: totrans-147
   prefs: []
   type: TYPE_NORMAL
+  zh: 当 *m* = 8，*a* = 4，*b* = 3，*c* = 2 时，我们得到表[10.1](#table10.1)中的结果：
 - en: '| 1st search: | 𝜃[1]^∗ = 1.7671 | 𝜃[2]^∗ = 3.0434 | 𝜃[3]^∗ = 1.7671 | 𝜃[4]^∗
     = 1.4726 | ![Table 10.1: Optimal configurations of adjustable PQC parameters that
     minimise the expectation value of the Hamiltonian. ](img/file1020.jpg)[min] =
     −3.93 |'
+  id: totrans-148
   prefs: []
   type: TYPE_TB
+  zh: '| 第1次搜索：| 𝜃[1]^∗ = 1.7671 | 𝜃[2]^∗ = 3.0434 | 𝜃[3]^∗ = 1.7671 | 𝜃[4]^∗ = 1.4726
+    | ![表10.1：最小化哈密顿量期望值的可调PQC参数的最优配置。](img/file1020.jpg)[min] = −3.93 |'
 - en: '| 2nd search: | 𝜃′[1] = 1.5708 | 𝜃′[2] = 3.1416 | 𝜃′[3] = 1.5708 | 𝜃′[4] =
     1.5708 | ![Table 10.1: Optimal configurations of adjustable PQC parameters that
     minimise the expectation value of the Hamiltonian. ](img/file1020.jpg)[min] =
     −4.00 |'
+  id: totrans-149
   prefs: []
   type: TYPE_TB
+  zh: '| 第2次搜索：| 𝜃′[1] = 1.5708 | 𝜃′[2] = 3.1416 | 𝜃′[3] = 1.5708 | 𝜃′[4] = 1.5708
+    | ![表10.1：最小化哈密顿量期望值的可调PQC参数的最优配置。](img/file1020.jpg)[min] = −4.00 |'
 - en: 'Table 10.1: Optimal configurations of adjustable PQC parameters that minimise
     the expectation value of the Hamiltonian.'
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 表10.1：最小化哈密顿量期望值的可调PQC参数的最优配置。
 - en: In Table [10.1](#table10.1), the values of ![⟨ℋ ⟩](img/file1021.jpg) are in
     the units of coefficients *a*, *b*, and *c*, and the values of rotation angles
     are in radians. Note that 3*.*1416 = *π* and 1*.*5708 = *π∕*2\. Therefore, the
     optimal configuration of rotation angles that minimises ![⟨ℋ ⟩](img/file1022.jpg)
     is
+  id: totrans-151
   prefs: []
   type: TYPE_NORMAL
+  zh: 在表[10.1](#table10.1)中，![⟨ℋ ⟩](img/file1021.jpg) 的值是以系数 *a*、*b* 和 *c* 为单位，旋转角度的值是以弧度为单位。注意，3*.*1416
+    = *π* 和 1*.*5708 = *π∕*2。因此，最小化 ![⟨ℋ ⟩](img/file1022.jpg) 的旋转角度的最优配置是
 - en: '![𝜃′1 = 𝜃′3 = 𝜃′4 = π and 𝜃′2 = π. 2 ](img/file1023.jpg)'
+  id: totrans-152
   prefs: []
   type: TYPE_IMG
+  zh: '![𝜃′1 = 𝜃′3 = 𝜃′4 = π 和 𝜃′2 = π。2 ](img/file1023.jpg)'
 - en: The corresponding quantum states are
+  id: totrans-153
   prefs: []
   type: TYPE_NORMAL
+  zh: 相应的量子态为
 - en: '![|ψ ⟩ = √1--|0⟩ − √1--|1⟩, |ψ ⟩ = √1--|0⟩ + √i--|1⟩, 1 2 2 2 2 2 ](img/file1024.jpg)![
     1 i 1 i |ψ⟩ = |ψ1⟩⊗ |ψ2 ⟩ =--|00⟩+ -|01⟩− -|10⟩− --|11⟩. 2 2 2 2 ](img/file1025.jpg)'
+  id: totrans-154
   prefs: []
   type: TYPE_IMG
+  zh: '![|ψ ⟩ = √1--|0⟩ − √1--|1⟩, |ψ ⟩ = √1--|0⟩ + √i--|1⟩, 1 2 2 2 2 2 ](img/file1024.jpg)![
+    1 i 1 i |ψ⟩ = |ψ1⟩⊗ |ψ2 ⟩ =--|00⟩+ -|01⟩− -|10⟩− --|11⟩。2 2 2 2 ](img/file1025.jpg)'
 - en: 10.4.2 Analysis of the obtained results
+  id: totrans-155
   prefs:
   - PREF_H4
   type: TYPE_NORMAL
+  zh: 10.4.2 获得结果的分析
 - en: Do the obtained results make sense? Since the problem size is small and the
     circuit is not too deep, we can verify the results by direct manual calculations.
     First, we visualise the states ![|ψ1⟩](img/file1026.jpg) and ![|ψ2 ⟩](img/file1027.jpg).
@@ -768,66 +1172,102 @@
     at the intersection of the *y*-axis and the equator, which is reached from ![|0⟩](img/file1032.jpg)
     by performing a *π∕*2 radian rotation around the *y*-axis and then a *π∕*2 radian
     rotation around the *z*-axis.
+  id: totrans-156
   prefs: []
   type: TYPE_NORMAL
+  zh: 获得的结果合理吗？由于问题规模较小且电路不深，我们可以通过直接手工计算来验证结果。首先，我们可视化状态 ![|ψ1⟩](img/file1026.jpg)
+    和 ![|ψ2 ⟩](img/file1027.jpg)。图[10.4.2](#x1-2130002)展示了它们在布洛赫球上的位置。状态 ![|ψ ⟩ 1](img/file1028.jpg)
+    是 *x* 轴与赤道交点处的黑点。我们通过围绕 *y* 轴进行 *π∕*2 弧度旋转，再围绕 *z* 轴进行 *π* 弧度旋转，从状态 ![|0⟩](img/file1030.jpg)
+    得到状态 ![|ψ1 ⟩](img/file1029.jpg)。状态 ![|ψ2 ⟩](img/file1031.jpg) 是位于 *y* 轴与赤道交点处的灰点，它是通过围绕
+    *y* 轴进行 *π∕*2 弧度旋转，再围绕 *z* 轴进行 *π∕*2 弧度旋转，从状态 ![|0⟩](img/file1032.jpg) 得到的。
 - en: '![Figure 10.9: Visualisation of states |ψ1⟩ (black dot) and |ψ2⟩ (grey dot).
     ](img/file1035.jpg)'
+  id: totrans-157
   prefs: []
   type: TYPE_IMG
+  zh: '![图10.9：状态 |ψ1⟩（黑点）和 |ψ2⟩（灰点）的可视化](img/file1035.jpg)'
 - en: 'Figure 10.9: Visualisation of states ![|ψ1⟩](img/file1033.jpg) (black dot)
     and ![|ψ2⟩](img/file1034.jpg) (grey dot).'
+  id: totrans-158
   prefs: []
   type: TYPE_NORMAL
+  zh: 图10.9：状态 ![|ψ1⟩](img/file1033.jpg)（黑点）和 ![|ψ2⟩](img/file1034.jpg)（灰点）的可视化。
 - en: 'Consider the expectation ![⟨X⊗ Y⟩](img/file1036.jpg). The operator X acts on ![|ψ1⟩](img/file1037.jpg),
     which is one of its eigenstates in the *x*-basis:'
+  id: totrans-159
   prefs: []
   type: TYPE_NORMAL
+  zh: 考虑期望值 ![⟨X⊗ Y⟩](img/file1036.jpg)。算符 X作用在 ![|ψ1⟩](img/file1037.jpg) 上，后者是其在
+    *x* 基中的本征态之一：
 - en: '![ -1- -1- |ψ1⟩ = √2-|0⟩− √2--|1⟩ = |− ⟩, ](img/file1038.jpg)'
+  id: totrans-160
   prefs: []
   type: TYPE_IMG
+  zh: '![ -1- -1- |ψ1⟩ = √2-|0⟩− √2--|1⟩ = |− ⟩, ](img/file1038.jpg)'
 - en: 'and Y acts on ![|ψ2⟩](img/file1039.jpg), which is also one of its eigenstates
     in the *y*-basis:'
+  id: totrans-161
   prefs: []
   type: TYPE_NORMAL
+  zh: 并且 Y作用在 ![|ψ2⟩](img/file1039.jpg)上，后者也是其在 *y* 基中的本征态之一：
 - en: '![|ψ ⟩ = √1-|0⟩+ √-i-|1⟩ = |R ⟩. 2 2 2 ](img/file1040.jpg)'
+  id: totrans-162
   prefs: []
   type: TYPE_IMG
+  zh: '![|ψ ⟩ = √1-|0⟩+ √-i-|1⟩ = |R ⟩。2 2 2 ](img/file1040.jpg)'
 - en: We then perform measurements in the computational basis (*z*-basis). Before
     measurement, the Hadamard operator H will transform ![|ψ1⟩](img/file1041.jpg)
     = ![|− ⟩](img/file1042.jpg) into ![|1⟩](img/file1043.jpg), which is a basis state
     in the *z*-basis. Similarly, the operator G will transform ![|ψ2⟩](img/file1044.jpg)
     = ![|R ⟩](img/file1045.jpg) into ![|0⟩](img/file1046.jpg), which is also a basis
     state in the *z*-basis.
+  id: totrans-163
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们在计算基（*z*基）上进行测量。在测量前，Hadamard操作符H将![|ψ1⟩](img/file1041.jpg) = ![|− ⟩](img/file1042.jpg)变换为![|1⟩](img/file1043.jpg)，这是*z*基中的一个基态。同样，操作符G将![|ψ2⟩](img/file1044.jpg)
+    = ![|R ⟩](img/file1045.jpg)变换为![|0⟩](img/file1046.jpg)，这也是*z*基中的一个基态。
 - en: Thus, measurement in the *z*-basis will give us the state ![|1⟩](img/file1047.jpg)⊗![|0⟩](img/file1048.jpg)
     = ![|10⟩](img/file1049.jpg) with probability one. If we perform *N* measurements,
     we will obtain the state ![|10⟩](img/file1050.jpg) *N* times and the corresponding
     expectation value ![⟨X ⊗ Y⟩](img/file1051.jpg) will be
+  id: totrans-164
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，在*z*基上测量将给我们状态![|1⟩](img/file1047.jpg)⊗![|0⟩](img/file1048.jpg) = ![|10⟩](img/file1049.jpg)，其概率为1。如果我们进行*N*次测量，我们将得到状态![|10⟩](img/file1050.jpg)
+    *N*次，并且对应的期望值![⟨X ⊗ Y⟩](img/file1051.jpg)将为
 - en: '![⟨X ⊗ Y⟩ = n00 −-n01-−-n10 +-n11= 0−-0-−-N-+-0-= − 1\. N N ](img/file1052.jpg)'
+  id: totrans-165
   prefs: []
   type: TYPE_IMG
+  zh: '![⟨X ⊗ Y⟩ = n00 −-n01-−-n10 +-n11= 0−-0-−-N-+-0-= − 1\. N N ](img/file1052.jpg)'
 - en: The value of the coefficient *a* in front of the X⊗Y term was set equal to 4\.
     Therefore, the contribution of the first term to the expectation value of the
     Hamiltonian ([10.3.2](#x1-2100002)) is −4.
+  id: totrans-166
   prefs: []
   type: TYPE_NORMAL
+  zh: X⊗Y项前的系数*a*的值设为4。因此，第一项对哈密顿量期望值的贡献是−4（见[10.3.2](#x1-2100002)）。
 - en: The expectations ![⟨Y⊗ Z⟩](img/file1053.jpg) and ![⟨Z ⊗ X⟩](img/file1054.jpg)
     are equally straightforward to calculate. Let us start with ![⟨Y ⊗ Z⟩](img/file1055.jpg).
     The operator Y acts on the first qubit in the state ![|ψ1⟩](img/file1056.jpg).
     Since we measure the resulting state in the *z*-basis, we need to apply G before
     measurement. The operator G transforms ![|ψ1 ⟩](img/file1057.jpg) into the state
+  id: totrans-167
   prefs: []
   type: TYPE_NORMAL
+  zh: 期望值![⟨Y⊗ Z⟩](img/file1053.jpg)和![⟨Z ⊗ X⟩](img/file1054.jpg)的计算同样简单。我们从![⟨Y ⊗
+    Z⟩](img/file1055.jpg)开始。操作符Y作用于状态![|ψ1⟩](img/file1056.jpg)中的第一个量子比特。由于我们在*z*基上测量得到的状态，我们需要在测量前应用G操作符。操作符G将![|ψ1⟩](img/file1057.jpg)变换为
 - en: '![1+--i 1-−-i 2 |0⟩+ 2 |1⟩. ](img/file1058.jpg)'
+  id: totrans-168
   prefs: []
   type: TYPE_IMG
+  zh: '![1+--i 1-−-i 2 |0⟩+ 2 |1⟩. ](img/file1058.jpg)'
 - en: Measurement in the *z*-basis will result in ![|0⟩](img/file1059.jpg) and ![|1⟩](img/file1060.jpg)
     with equal probability 1*∕*2.
+  id: totrans-169
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*z*基上进行测量将以相等的概率1*∕*2得到![|0⟩](img/file1059.jpg)和![|1⟩](img/file1060.jpg)。
 - en: The operator Z acts on the second qubit in state ![|ψ2⟩](img/file1061.jpg).
     Since we measure the operator Z in the *z*-basis, we do not need to apply any
     gates. Measuring ![|ψ2⟩](img/file1062.jpg) in the *z*-basis will also result in
@@ -836,11 +1276,17 @@
     ![|01⟩](img/file1066.jpg), ![|10⟩](img/file1067.jpg), and ![|11 ⟩](img/file1068.jpg))
     with probability 1*∕*4, and, as *N* tends to infinity, the expectation value of
     ![⟨Y ⊗ Z⟩](img/file1069.jpg) in our experiment should converge to
+  id: totrans-170
   prefs: []
   type: TYPE_NORMAL
+  zh: 操作符Z作用于状态![|ψ2⟩](img/file1061.jpg)中的第二个量子比特。由于我们在*z*基上测量操作符Z，因此无需应用任何门。对![|ψ2⟩](img/file1062.jpg)在*z*基上进行测量也将以相等的概率1*∕*2得到![|0⟩](img/file1063.jpg)和![|1⟩](img/file1064.jpg)。因此，我们有相等的概率测量所有四个基态
+    (![|00⟩](img/file1065.jpg), ![|01⟩](img/file1066.jpg), ![|10⟩](img/file1067.jpg),
+    和![|11⟩](img/file1068.jpg))，概率为1*∕*4，并且，随着*N*趋近于无穷大，我们实验中![⟨Y ⊗ Z⟩](img/file1069.jpg)的期望值应收敛于
 - en: '![ n00 −-n01-−-n10 +-n11 14N-−--14N-−-14N--+-14N-- ⟨Y ⊗ Z⟩ = N = N = 0\. ](img/file1070.jpg)'
+  id: totrans-171
   prefs: []
   type: TYPE_IMG
+  zh: '![ n00 −-n01-−-n10 +-n11 14N-−--14N-−-14N--+-14N-- ⟨Y ⊗ Z⟩ = N = N = 0\. ](img/file1070.jpg)'
 - en: We are left now with ![⟨Z ⊗ X⟩](img/file1071.jpg). The operator Z acts on ![|ψ1⟩](img/file1072.jpg).
     The measurement is done in the *z*-basis, so no transformation is needed. The
     measurement will result in obtaining the states ![|0⟩](img/file1073.jpg) and ![|1⟩](img/file1074.jpg)
@@ -848,54 +1294,80 @@
     state ![|ψ2⟩](img/file1075.jpg). The measurement is performed in the *z*-basis,
     so we need to apply the Hadamard gate H before measurement. Applying the H gate
     to ![|ψ2⟩](img/file1076.jpg) transforms it into
+  id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在剩下的是![⟨Z ⊗ X⟩](img/file1071.jpg)。操作符Z作用于![|ψ1⟩](img/file1072.jpg)。测量在*z*基上进行，因此无需变换。测量将以相等的概率1*∕*2得到状态![|0⟩](img/file1073.jpg)和![|1⟩](img/file1074.jpg)。操作符X作用于状态![|ψ2⟩](img/file1075.jpg)中的第二个量子比特。测量在*z*基上进行，因此我们需要在测量前应用Hadamard门H。将H门应用于![|ψ2⟩](img/file1076.jpg)后，它将变为
 - en: '![1+ i 1 − i -----|0⟩+ -----|1⟩, 2 2 ](img/file1077.jpg)'
+  id: totrans-173
   prefs: []
   type: TYPE_IMG
+  zh: '![1+ i 1 − i -----|0⟩+ -----|1⟩, 2 2 ](img/file1077.jpg)'
 - en: 'with measurement in the *z*-basis producing outcomes ![|0⟩](img/file1078.jpg)
     and ![|1⟩](img/file1079.jpg) with probability 1*∕*2\. Thus, we find ourselves
     in the same situation as with ![⟨Y ⊗ Z⟩](img/file1080.jpg): all basis states are
     equally likely. As *N* tends to infinity, the expectation value of ![⟨Z ⊗ X⟩](img/file1081.jpg)
     should also converge to'
+  id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 在*z*基底测量中，产生的结果是 ![|0⟩](img/file1078.jpg) 和 ![|1⟩](img/file1079.jpg)，其概率为 1*∕*2。因此，我们发现自己处于与
+    ![⟨Y ⊗ Z⟩](img/file1080.jpg) 相同的情况：所有基态的概率是相等的。随着*N*趋于无穷大，期望值 ![⟨Z ⊗ X⟩](img/file1081.jpg)
+    也应趋于
 - en: '![ n00 −-n01-−-n10 +-n11 14N-−--14N-−-14N--+-14N-- ⟨Z ⊗ X⟩ = N = N = 0\. ](img/file1082.jpg)'
+  id: totrans-175
   prefs: []
   type: TYPE_IMG
+  zh: '![ n00 −-n01-−-n10 +-n11 14N-−--14N-−-14N--+-14N-- ⟨Z ⊗ X⟩ = N = N = 0\. ](img/file1082.jpg)'
 - en: This is exactly what we observed in our numerical experiment. The total contribution
     of all three terms of the Hamiltonian ℋ given by ([10.3.2](#x1-2100002)) with
     *a* = 4, *b* = 3, and *c* = 2 is equal to −4\. The X⊗Y term has the largest coefficient,
     therefore it makes sense that the ground state of ℋ is the one that minimises
     the expectation value ![⟨X⊗ Y⟩](img/file1083.jpg) (with expectation values ![⟨Y
     ⊗ Z⟩](img/file1084.jpg) and ![⟨Z⊗ X⟩](img/file1085.jpg) being zero).
+  id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 这正是我们在数值实验中观察到的结果。给定*ℋ*的所有三个项的总贡献，由([10.3.2](#x1-2100002))表示，且*a* = 4，*b* =
+    3，*c* = 2时，其值为−4。X⊗Y项具有最大的系数，因此可以理解为*ℋ*的基态是最小化期望值的状态 ![⟨X⊗ Y⟩](img/file1083.jpg)（期望值
+    ![⟨Y ⊗ Z⟩](img/file1084.jpg) 和 ![⟨Z⊗ X⟩](img/file1085.jpg) 为零）。
 - en: PQC can be used to construct the candidate states for the VQE algorithm. The
     selection and improvement of the candidate states is performed classically. This
     makes VQE a perfect example of a hybrid quantum-classical algorithm.
+  id: totrans-177
   prefs: []
   type: TYPE_NORMAL
+  zh: PQC 可用于构建 VQE 算法的候选状态。候选状态的选择和改进是通过经典方法进行的。这使得 VQE 成为混合量子-经典算法的完美示例。
 - en: 10.5 Discrete Portfolio Optimisation with VQE
+  id: totrans-178
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 10.5 使用 VQE 进行离散投资组合优化
 - en: 'In Chapter [3](Chapter_3.xhtml#x1-630003), we investigated quantum annealing
     for NP-hard discrete portfolio optimisation problems. The same type of QUBO problems
     can be solved on gate model quantum computers with the help of a hybrid VQE algorithm.
     The QUBO formulation of the discrete portfolio optimisation problem consists of
     minimising the cost function ([3.3.1](Chapter_3.xhtml#x1-750001)):'
+  id: totrans-179
   prefs: []
   type: TYPE_NORMAL
+  zh: 在第[3](Chapter_3.xhtml#x1-630003)章中，我们研究了量子退火在NP难离散投资组合优化问题中的应用。相同类型的 QUBO 问题可以借助混合
+    VQE 算法在门模型量子计算机上求解。离散投资组合优化问题的 QUBO 形式化包含了最小化成本函数 ([3.3.1](Chapter_3.xhtml#x1-750001))：
 - en: '| ![ N∑ ∑N ∑N L(q) = aiqi + bijqiqj, i=1 i=1j=i+1 ](img/file1086.jpg) |  |'
+  id: totrans-180
   prefs: []
   type: TYPE_TB
+  zh: '| ![ N∑ ∑N ∑N L(q) = aiqi + bijqiqj, i=1 i=1j=i+1 ](img/file1086.jpg) |  |'
 - en: 'where q := (*q*[1]*,…,q*[N]) is a vector of binary decision variables indicating
     which (equally weighted) assets are selected (from the universe of *N* investable
     assets): *q*[i] = 1 means that asset *i* is selected and *q*[i] = 0 means that
     asset *i* is not selected. The task is to find a configuration of q that minimises *L*(q).'
+  id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中 q := (*q*[1]*,…,q*[N]) 是一个二进制决策变量向量，用于指示从*N*个可投资资产中选择了哪些（等权重）资产：*q*[i] =
+    1表示资产*i*被选中，*q*[i] = 0表示资产*i*未被选中。任务是找到一个使*L*(q)最小化的q配置。
 - en: For each *i,j* = 1*,…N*, the coefficients *a*[i], *a*[j], and *b*[ij] reflect,
     respectively, the individual and joint attractiveness of assets *i* and *j*. For
     example, assets with larger expected returns and lower volatilities would be assigned
@@ -903,39 +1375,62 @@
     even negative correlation would be assigned negative values of *b* to reward diversification.
     Assets with lower expected returns, higher volatility, and strongly positively
     correlated with other assets would be penalised with positive values of *a* and *b*.
+  id: totrans-182
   prefs: []
   type: TYPE_NORMAL
+  zh: 对于每个 *i,j* = 1*,…N*，系数 *a*[i]、*a*[j] 和 *b*[ij] 分别反映了资产*i*和*j*的个别吸引力和联合吸引力。例如，具有较高预期回报和较低波动性的资产会被赋予较大的负值
+    *a*。类似地，具有低正相关或负相关的资产对会被赋予负值 *b*，以奖励多样化。预期回报较低、波动性较高并且与其他资产强相关的资产会被赋予正值 *a* 和
+    *b*，以进行惩罚。
 - en: Quantum annealers solve QUBO problems in their Ising model formulation where
     binary decision variables q := (*q*[1]*,…,q*[N]) are translated into spin variables
     s := (*s*[1]*,…,s*[N]) taking values {+1*,*−1} through the transformation *s*[i]
     = 2*q*[i] − 1\. We analyse the simplest case of an investable universe consisting
     of just two assets. In this case, the QUBO cost function reads
+  id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 量子退火器在其 Ising 模型公式化中求解 QUBO 问题，其中二进制决策变量 q := (*q*[1]*,…,q*[N]) 被转化为自旋变量 s :=
+    (*s*[1]*,…,s*[N])，其取值为 {+1,*−1}，通过变换 *s*[i] = 2*q*[i] − 1 进行。我们分析了一个包含仅两个资产的可投资宇宙的最简单情况。在这种情况下，QUBO
+    成本函数为：
 - en: '| ![L(q) = a1q1 + a2q2 + b12q1q2, ](img/file1087.jpg) |  |'
+  id: totrans-184
   prefs: []
   type: TYPE_TB
+  zh: '| ![L(q) = a1q1 + a2q2 + b12q1q2, ](img/file1087.jpg) |  |'
 - en: or, in the Ising model formulation,
+  id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 或者，在伊辛模型的表述中，
 - en: '| ![L (s) = g1s1 + g2s2 + J12s1s2 + const, ](img/file1088.jpg) |  |'
+  id: totrans-186
   prefs: []
   type: TYPE_TB
+  zh: '| ![L (s) = g1s1 + g2s2 + J12s1s2 + const, ](img/file1088.jpg) |  |'
 - en: where
+  id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中
 - en: '| ![ 1 1 1 1 1 g1 = -a1 + -b12, g2 = -a2 + -b12, J12 = -b12\. 2 4 2 4 4 ](img/file1089.jpg)
     |  |'
+  id: totrans-188
   prefs: []
   type: TYPE_TB
+  zh: '| ![ 1 1 1 1 1 g1 = -a1 + -b12, g2 = -a2 + -b12, J12 = -b12\. 2 4 2 4 4 ](img/file1089.jpg)
+    |  |'
 - en: The constant term in ([10.5](#x1-2140005)) does not depend on the decision variables *s*[1]
     and *s*[2] and can hence be ignored. The cost function we want to minimise thus
     becomes
+  id: totrans-189
   prefs: []
   type: TYPE_NORMAL
+  zh: ([10.5](#x1-2140005))中的常数项与决策变量*s*[1]和*s*[2]无关，因此可以忽略。我们要最小化的成本函数变为
 - en: '| ![L(s) = g1s1 + g2s2 + J12s1s2\. ](img/file1090.jpg) |  |'
+  id: totrans-190
   prefs: []
   type: TYPE_TB
+  zh: '| ![L(s) = g1s1 + g2s2 + J12s1s2\. ](img/file1090.jpg) |  |'
 - en: As we know from Chapter [2](Chapter_2.xhtml#x1-480002), transition from the
     classical to the quantum mechanical description of the system consists of replacing
     variables corresponding to physical observables by their respective operators.
@@ -943,167 +1438,261 @@
     classical spin variables with the corresponding Pauli operators *σ*[x], *σ*[y],
     and *σ*[z], which are represented in the quantum circuit by, respectively, the
     quantum gates X, Y, and Z.
+  id: totrans-191
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在第[2](Chapter_2.xhtml#x1-480002)章中所知，从经典描述到量子力学描述的过渡，意味着将对应物理可观察量的经典变量替换为其相应的算符。在QUBO问题的伊辛模型表述中，它意味着将经典自旋变量替换为相应的保利算符*σ*[x]、*σ*[y]和*σ*[z]，它们在量子电路中分别由量子门X、Y和Z表示。
 - en: 'As we remember from Chapter [3](Chapter_3.xhtml#x1-630003), the Ising cost
     function ([10.5](#x1-2140005)) corresponds to the following *final* Hamiltonian
     that encodes the same optimisation problem:'
+  id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如我们在第[3](Chapter_3.xhtml#x1-630003)章中记得的那样，伊辛成本函数([10.5](#x1-2140005))对应于以下*最终*哈密顿量，它编码了相同的优化问题：
 - en: '| ![ 1 2 1 2 ℋF = g1σ z + g2σz + J12σzσz. ](img/file1091.jpg) |  |'
+  id: totrans-193
   prefs: []
   type: TYPE_TB
+  zh: '| ![ 1 2 1 2 ℋF = g1σ z + g2σz + J12σzσz. ](img/file1091.jpg) |  |'
 - en: Here, the classical spin variables *s*[1] and *s*[2] are replaced by the *σ*[z]
     operators, and *σ*[z]¹ is the Z gate acting on qubit 1 while *σ*[z]² is the Z
     gate acting on qubit 2.
+  id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，经典自旋变量*s*[1]和*s*[2]被*σ*[z]算符替换，*σ*[z]¹是作用在量子比特1上的Z门，而*σ*[z]²是作用在量子比特2上的Z门。
 - en: 'Note that the mapping between the binary QUBO decision variables *q*, classical
     spin variables *s*, and the eigenstates of Z is as follows:'
+  id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 注意，二进制QUBO决策变量*q*、经典自旋变量*s*与Z的本征态之间的映射关系如下：
 - en: '| ![q = 0 → s = − 1 → &#124;1⟩ since Z &#124;1⟩ = − &#124;1⟩, ](img/file1092.jpg)
     |  |'
+  id: totrans-196
   prefs: []
   type: TYPE_TB
+  zh: '| ![q = 0 → s = − 1 → &#124;1⟩ since Z &#124;1⟩ = − &#124;1⟩, ](img/file1092.jpg)
+    |  |'
 - en: and
+  id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 和
 - en: '| ![q = 1 → s = +1 → &#124;0⟩ since Z &#124;0⟩ = &#124;0⟩. ](img/file1093.jpg)
     |  |'
+  id: totrans-198
   prefs: []
   type: TYPE_TB
+  zh: '| ![q = 1 → s = +1 → &#124;0⟩ since Z &#124;0⟩ = &#124;0⟩. ](img/file1093.jpg)
+    |  |'
 - en: We now solve the QUBO problem ([10.5](#x1-2140005)) with
+  id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们求解QUBO问题([10.5](#x1-2140005))，其表达式为
 - en: '| ![a1 = − 2, a2 = 3, b12 = − 2, ](img/file1094.jpg) |  |'
+  id: totrans-200
   prefs: []
   type: TYPE_TB
+  zh: '| ![a1 = − 2, a2 = 3, b12 = − 2, ](img/file1094.jpg) |  |'
 - en: using both the classical method (in this case a simple exhaustive search given
     that the solution space consists of just four possible solutions) and the VQE
     approach.
+  id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用经典方法（在这种情况下，由于解空间仅包含四个可能的解，因此是一个简单的穷举搜索）和变分量子算法（VQE）方法。
 - en: 'The classical exhaustive search results are straightforward to obtain via direct
     calculations and are summarised in Table [10.2](#x1-214002r2) with the optimal
     solution q^∗ = (1*,*0): asset 1 is selected, while asset 2 is not.'
+  id: totrans-202
   prefs: []
   type: TYPE_NORMAL
+  zh: 经典的穷举搜索结果可以通过直接计算轻松获得，并总结在表格[10.2](#x1-214002r2)中，最优解q^∗ = (1*,*0)：资产1被选择，而资产2未被选择。
 - en: '| q[1] | q[2] | L(q) |'
+  id: totrans-203
   prefs: []
   type: TYPE_TB
+  zh: '| q[1] | q[2] | L(q) |'
 - en: '| 0 | 0 | 0 |'
+  id: totrans-204
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | 0 | 0 |'
 - en: '| 0 | 1 | 3 |'
+  id: totrans-205
   prefs: []
   type: TYPE_TB
+  zh: '| 0 | 1 | 3 |'
 - en: '| 1 | 0 | -2 |'
+  id: totrans-206
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 0 | -2 |'
 - en: '| 1 | 1 | -1 |'
+  id: totrans-207
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | 1 | -1 |'
 - en: 'Table 10.2: Classical exhaustive search results.'
+  id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: 表格10.2：经典穷举搜索结果。
 - en: 'The VQE calculations are as follows. We first rewrite the Hamiltonian ([10.5](#x1-2140005))
     in the quantum gate form:'
+  id: totrans-209
   prefs: []
   type: TYPE_NORMAL
+  zh: VQE计算如下。我们首先将哈密顿量([10.5](#x1-2140005))重写为量子门形式：
 - en: '| ![ℋF = g1Z1 + g2Z2 + J12Z1 ⊗ Z2, ](img/file1095.jpg) |  |'
+  id: totrans-210
   prefs: []
   type: TYPE_TB
+  zh: '| ![ℋF = g1Z1 + g2Z2 + J12Z1 ⊗ Z2, ](img/file1095.jpg) |  |'
 - en: where Z¹ is the Z gate acting on qubit 1, Z² is the Z gate acting on qubit 2,
     and Z¹ ⊗Z² is the tensor product of the Z gates acting on qubits 1 and 2 respectively.
+  id: totrans-211
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中Z¹是作用在量子比特1上的Z门，Z²是作用在量子比特2上的Z门，Z¹ ⊗Z²是作用在量子比特1和2上的Z门的张量积。
 - en: 'The next step is to calculate the expectation values ![⟨Z⟩](img/file1096.jpg)
     and ![⟨Z ⊗ Z⟩](img/file1097.jpg). As we know, Z is a PHASE gate that flips the
     phase of a qubit:'
+  id: totrans-212
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是计算期望值![⟨Z⟩](img/file1096.jpg)和![⟨Z ⊗ Z⟩](img/file1097.jpg)。正如我们所知，Z是一个相位门，它会翻转量子比特的相位：
 - en: '![Z |0⟩ = |0⟩, Z |1⟩ = − |1⟩. ](img/file1098.jpg)'
+  id: totrans-213
   prefs: []
   type: TYPE_IMG
+  zh: '![Z |0⟩ = |0⟩, Z |1⟩ = − |1⟩. ](img/file1098.jpg)'
 - en: Therefore, we have
+  id: totrans-214
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们有
 - en: '| ![ ⟨0&#124;Z1 &#124;0⟩ = +1, ⟨1&#124;Z1 &#124;1⟩ = − 1, ⟨0&#124;Z2 &#124;0⟩
     = +1, ⟨1&#124;Z2 &#124;1⟩ = − 1, ⟨00&#124;Z1 ⊗ Z2 &#124;00⟩ = +1, ⟨01&#124;Z1
     ⊗ Z2 &#124;01 ⟩ = − 1, ⟨10&#124;Z1 ⊗ Z2 &#124;10⟩ = − 1, ⟨11&#124;Z1 ⊗ Z2 &#124;11
     ⟩ = +1\. ](img/file1099.jpg) |'
+  id: totrans-215
   prefs: []
   type: TYPE_TB
+  zh: '| ![ ⟨0&#124;Z1 &#124;0⟩ = +1, ⟨1&#124;Z1 &#124;1⟩ = − 1, ⟨0&#124;Z2 &#124;0⟩
+    = +1, ⟨1&#124;Z2 &#124;1⟩ = − 1, ⟨00&#124;Z1 ⊗ Z2 &#124;00⟩ = +1, ⟨01&#124;Z1
+    ⊗ Z2 &#124;01 ⟩ = − 1, ⟨10&#124;Z1 ⊗ Z2 &#124;10⟩ = − 1, ⟨11&#124;Z1 ⊗ Z2 &#124;11
+    ⟩ = +1\. ](img/file1099.jpg) |'
 - en: 'Here we calculated the expectation values of operators Z and Z⊗Z analytically
     but we would obtain exactly the same values if we were to calculate them using
     a quantum computer as described in Section [10.2](#x1-2040002). Now we need to
     calculate the values of the coefficients *g*[1], *g*[2], and *J*[12] using the
     transformation ([10.5](#x1-2140005)):'
+  id: totrans-216
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们通过解析方法计算了算符 Z 和 Z⊗Z 的期望值，但如果我们按照第 [10.2](#x1-2040002) 节的描述使用量子计算机计算，得到的结果将完全相同。现在我们需要通过变换
+    ([10.5](#x1-2140005)) 计算系数 *g*[1]、*g*[2] 和 *J*[12] 的值。
 - en: '![g1 = − 1.5, g2 = 1, J12 = − 0.5\. ](img/file1100.jpg)'
+  id: totrans-217
   prefs: []
   type: TYPE_IMG
+  zh: '![g1 = − 1.5, g2 = 1, J12 = − 0.5\. ](img/file1100.jpg)'
 - en: The expectation values of ℋ[F] in states ![|00⟩](img/file1101.jpg), ![|01⟩](img/file1102.jpg),
     ![|10⟩](img/file1103.jpg), ![|11⟩](img/file1104.jpg) can then be calculated as
+  id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: ℋ[F] 在态 ![|00⟩](img/file1101.jpg)、![|01⟩](img/file1102.jpg)、![|10⟩](img/file1103.jpg)、![|11⟩](img/file1104.jpg)
+    中的期望值可以计算为
 - en: '| ![&#124;00⟩](img/file1105.jpg) : | ![⟨ℋ⟩](img/file1106.jpg) = *g*[1] ⋅ (+1)
     + *g*[2] ⋅ (+1) + *J*[12] ⋅ (+1) = −1*,* |'
+  id: totrans-219
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;00⟩](img/file1105.jpg) : | ![⟨ℋ⟩](img/file1106.jpg) = *g*[1] ⋅ (+1)
+    + *g*[2] ⋅ (+1) + *J*[12] ⋅ (+1) = −1*,* |'
 - en: '| ![&#124;01⟩](img/file1107.jpg) : | ![⟨ℋ⟩](img/file1108.jpg) = *g*[1] ⋅ (+1)
     + *g*[2] ⋅ (−1) + *J*[12] ⋅ (−1) = −2*,* |'
+  id: totrans-220
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;01⟩](img/file1107.jpg) : | ![⟨ℋ⟩](img/file1108.jpg) = *g*[1] ⋅ (+1)
+    + *g*[2] ⋅ (−1) + *J*[12] ⋅ (−1) = −2*,* |'
 - en: '| ![&#124;10⟩](img/file1109.jpg) : | ![⟨ℋ⟩](img/file1110.jpg) = *g*[1] ⋅ (−1)
     + *g*[2] ⋅ (+1) + *J*[12] ⋅ (−1) = 3*,* |'
+  id: totrans-221
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;10⟩](img/file1109.jpg) : | ![⟨ℋ⟩](img/file1110.jpg) = *g*[1] ⋅ (−1)
+    + *g*[2] ⋅ (+1) + *J*[12] ⋅ (−1) = 3*,* |'
 - en: '| ![&#124;11⟩](img/file1111.jpg) : | ![⟨ℋ⟩](img/file1112.jpg) = *g*[1] ⋅ (−1)
     + *g*[2] ⋅ (−1) + *J*[12] ⋅ (+1) = 0*.* |'
+  id: totrans-222
   prefs: []
   type: TYPE_TB
+  zh: '| ![&#124;11⟩](img/file1111.jpg) : | ![⟨ℋ⟩](img/file1112.jpg) = *g*[1] ⋅ (−1)
+    + *g*[2] ⋅ (−1) + *J*[12] ⋅ (+1) = 0*.* |'
 - en: The best solution found using VQE is therefore ![|01⟩](img/file1113.jpg) = ![|0⟩](img/file1114.jpg)⊗![|1⟩](img/file1115.jpg),
     i.e., asset 1 is selected while asset 2 is not, which is the same as the best
     solution found by exhaustive search.
+  id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用 VQE 找到的最佳解是 ![|01⟩](img/file1113.jpg) = ![|0⟩](img/file1114.jpg)⊗![|1⟩](img/file1115.jpg)，即选中了资产
+    1 而未选中资产 2，这与穷举搜索得到的最佳解相同。
 - en: A VQE is a viable tool for solving finance-related NP-hard optimisation problems.
+  id: totrans-224
   prefs: []
   type: TYPE_NORMAL
+  zh: VQE 是解决与金融相关的 NP 难优化问题的可行工具。
 - en: Summary
+  id: totrans-225
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we introduced the Variational Quantum Eigensolver algorithm,
     a powerful QML model based on the variational approach that allows us to solve
     hard optimisation problems. We learned how to calculate expectation values using
     a quantum computer and how to construct a PQC, creating the candidate quantum
     states.
+  id: totrans-226
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们介绍了变分量子本征求解器（VQE）算法，这是一种基于变分方法的强大量子机器学习模型，能够帮助我们解决困难的优化问题。我们学习了如何使用量子计算机计算期望值，以及如何构建量子电路（PQC），从而创建候选量子态。
 - en: We also experimented with running the VQE model on a sample problem encoded
     in a two-qubit Hamiltonian and analysed and verified the results by performing
     manual calculations. Finally, we demonstrated the applicability of the VQE to
     finance-related optimisation problems, in particular to a stylised example of
     a discrete portfolio optimisation.
+  id: totrans-227
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还实验性地运行了 VQE 模型，针对一个编码为二量子比特哈密顿量的示例问题，并通过手动计算分析和验证了结果。最后，我们展示了 VQE 在与金融相关的优化问题中的应用，特别是离散投资组合优化的样例。
 - en: In the next chapter, we will introduce the Quantum Approximate Optimisation
     Algorithm, another example of a hybrid quantum-classical approach to solving hard
     optimisation problems.
+  id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我们将介绍量子近似优化算法（QAOA），这又是另一种混合量子经典方法，用于解决困难的优化问题。
 - en: Join our book’s Discord space
+  id: totrans-229
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 加入我们书籍的 Discord 空间
 - en: 'Join our Discord community to meet like-minded people and learn alongside more
     than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 加入我们的 Discord 社区，和志同道合的人一起学习，和超过 2000 名成员一起交流：[https://packt.link/quantum](https://packt.link/quantum)
 - en: '![PIC](img/file1.png)'
+  id: totrans-231
   prefs: []
   type: TYPE_IMG
+  zh: '![PIC](img/file1.png)'

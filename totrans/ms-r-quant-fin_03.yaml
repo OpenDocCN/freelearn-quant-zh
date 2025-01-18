@@ -1,31 +1,41 @@
 - en: Chapter 3. Forecasting Volume
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第三章：预测交易量
 - en: Price formation on stock exchanges has been the center of attention of many
     researchers for several decades now. As a result, there is an abundance of theories,
     models, and empirical evidence on the price, and although there are always new
     aspects to discover, we believe that the financial knowledge is fairly comprehensive
     on the subject. We understand the dynamics of the price reasonably well, and most
     of us agree that it is rather difficult to forecast.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 股市上的价格形成已经成为许多研究人员数十年来关注的核心。因此，关于价格的理论、模型和实证证据层出不穷，尽管总有新的方面可以探索，但我们认为在这个主题上，金融知识已经相当全面。我们对价格的动态有着相当清晰的理解，而且大多数人都同意，价格的预测相当困难。
 - en: In contrast, the trading volume, which is another fundamental measure of the
     trading process on stock exchanges, has been much less researched. The most common
     equilibrium models on price do not even include volume in their framework of explaining
     trading activities. It is only recently that researchers appear to be paying increasing
     attention to volume, and they have already found that its stylized facts allow
     for much better forecasts compared to price.
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 相比之下，交易量，作为股市交易过程中的另一项基本指标，研究较少。最常见的价格均衡模型甚至没有将交易量纳入其解释交易活动的框架中。直到最近，研究人员似乎才开始越来越关注交易量，并且他们已经发现，交易量的样式化事实相比价格能够提供更好的预测。
 - en: This chapter aims to introduce an intra-day forecasting model selected from
     the available literature, and to provide its implementation in R.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章旨在介绍从现有文献中选出的一个日内预测模型，并提供其在R语言中的实现。
 - en: Motivation
+  id: totrans-4
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 动机
 - en: The motivation behind gaining a better understanding of volume is not merely
     theoretical, but it equally has a great practical relevance. On order-driven markets,
     if a submitted buy (sell) market order is relatively large compared to the market,
@@ -34,8 +44,10 @@
     of order submission, and the submitter loses money. This phenomenon is often referred
     to as price impact, and it is well worth making an effort to avoid or at least
     minimize it.
+  id: totrans-5
   prefs: []
   type: TYPE_NORMAL
+  zh: 研究交易量背后的动机不仅仅是理论性的，它同样具有重要的实践意义。在订单驱动市场中，如果提交的买入（卖出）市价单相较于市场较大，它可能会扫除多个价格档位；因此，整个交易的平均成交价格会高于（低于）订单提交时的最佳价格档位，提交者将因此亏损。这一现象通常被称为价格冲击，它值得我们努力避免，或者至少最小化。
 - en: One way to do this is to perform order splitting, that is, splitting a market
     order into smaller chunks and submitting them gradually. Among the numerous logics
     behind splitting, a popular one is the **volume weighted average price** (**VWAP**)
@@ -53,12 +65,16 @@
     the forecasts are perfect) the VWAP will be reached regardless of the price evolution.
     For brokers, therefore, accurate volume forecasts are considered a valuable business
     asset that directly affects their profits.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 实现这一目标的一种方式是进行订单拆分，即将市场订单拆分成更小的部分并逐步提交。在众多拆单逻辑中，一种流行的策略是**成交量加权平均价格**（**VWAP**）策略，旨在获取每日加权平均价格，其中的权重由相对于当天总成交量的交易量决定。长期投资者通常会接受一个与每日VWAP相等的平均执行价格，因为它被认为是一个中性交易结果。然而，一些投资者发现，全天拆单的方式难以达到VWAP，因为VWAP只有在一天结束时才能计算出来，因此他们将这一问题委托给经纪商。经纪商保证按VWAP执行交易，并为此服务收取费用。这个费用也起到了跟踪误差的缓冲作用，这意味着，拥有最精确日成交量预测的经纪商将能够向客户收取最少的费用，因为他们只需要根据预测的比例拆分订单，然后（假设预测是完美的）VWAP就会在价格演变的过程中达成。因此，对于经纪商来说，准确的成交量预测被视为一种宝贵的商业资产，直接影响他们的利润。
 - en: The intensity of trading
+  id: totrans-7
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 交易强度
 - en: 'The intensity of trading activities can be measured in a number of ways. The
     most common measure in use is volume, which is simply the number of shares traded
     during a certain time interval. Given that the liquidity (which shows how easy
@@ -66,34 +82,47 @@
     is different, the volume expressed in percentage form is a more convenient choice
     for modeling purposes. This measure is called turnover, which is formally computed
     from volume, as follows:'
+  id: totrans-8
   prefs: []
   type: TYPE_NORMAL
+  zh: 交易活动的强度可以通过多种方式来衡量。最常用的衡量标准是成交量，它仅仅是指在某一特定时间区间内交易的股票数量。考虑到不同股票的流动性（即交易资产的容易程度），因此每只股票的绝对交易活动也不同，使用百分比形式表示的成交量是建模时更方便的选择。这个衡量标准被称为**换手率**，它是根据成交量计算出来的，计算公式如下：
 - en: '![The intensity of trading](img/2078OT_03_01.jpg)'
+  id: totrans-9
   prefs: []
   type: TYPE_IMG
+  zh: '![交易强度](img/2078OT_03_01.jpg)'
 - en: Here, *x* stands for turnover, *V* for volume, and *TSO* for the total shares
     outstanding; the latter indicates the total number of shares available for public
     trading. The index *i* indicates the actual stock, and index *t* indicates the
     time interval.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，*x* 代表换手率，*V* 代表成交量，*TSO* 代表流通股本；后者表示公开交易的股票总数。指数 *i* 表示实际的股票，指数 *t* 表示时间区间。
 - en: As mentioned earlier, there are several stylized facts documented in volume.
     An obvious one is that volume is non-negative, given that it measures the number
     of traded shares. This number is zero, if there are no trades at all, and positive
     otherwise. Another important stylized fact is the intra-daily U shape registered
     on several different markets (see *Hmaied, D. M., Sioud, O. B., and Grar, A. (2006)*
     and *Hussain, S. M. (2011)* for a good overview).
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前所述，成交量中有几个典型的事实。其中一个显而易见的事实是，成交量是非负的，因为它衡量的是成交的股票数量。当没有交易时，这个数字为零，否则为正。另一个重要的典型事实是，在多个不同市场上观察到的日内U形曲线（参见*Hmaied,
+    D. M., Sioud, O. B., 和 Grar, A. (2006)*以及*Hussain, S. M. (2011)*的综述）。
 - en: This means that the trading activity tends to be more intense after opening
     and before closure of the market, than during the rest of the day. There are several
     possible explanations for this phenomenon, but its existence is very clear.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，交易活动通常在市场开盘后和闭盘前更为活跃，而在白天的其他时间则相对较少。有多种可能的解释可以说明这一现象，但其存在性是非常明确的。
 - en: Note
+  id: totrans-13
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 注意
 - en: The enthusiastic reader might be interested in *Kaastra, I. and Boyd, M. S.
     (1995)* and *Lux, T. and Kaizoji, T. (2004)*, which propose volume-forecasting
     models using monthly and daily data respectively. *Brownlees, C. T., Cipollini,
@@ -102,524 +131,789 @@
     that the model detailed in the following section (proposed by *Bialkowski, J.,
     Darolles, S., and Le Fol, G. (2008)*) provides a more precise forecast, so merely
     due to length limitations, this chapter only elaborates on the latter.
+  id: totrans-14
   prefs: []
   type: TYPE_NORMAL
+  zh: 热心的读者可能对*Kaastra, I. 和 Boyd, M. S. (1995)*及*Lux, T. 和 Kaizoji, T. (2004)*感兴趣，这两者分别提出了使用月度和日度数据的成交量预测模型。*Brownlees,
+    C. T., Cipollini, F., 和 Gallo, G. M. (2011)*则为日内数据建立了成交量预测模型，这与本章直接相关。我们的实证研究发现，以下部分详细介绍的模型（由*Bialkowski,
+    J., Darolles, S., 和 Le Fol, G. (2008)*提出）提供了更为精准的预测，因此由于篇幅限制，本章仅详细阐述后者。
 - en: This chapter addresses the intra-day forecasting of stock volumes. There are
     a few models that can be found in the literature, among which we found that the
     one presented in *Bialkowski, J., Darolles, S., and Le Fol, G. (2008)* is the
     most accurate. The following section briefly summarizes the model, providing enough
     detail to understand the implementation later on.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章讨论的是股票成交量的日内预测。文献中有一些相关的模型，我们发现*Bialkowski, J., Darolles, S., 和 Le Fol, G.
+    (2008)*提出的模型最为准确。以下部分简要总结了该模型，并提供了足够的细节以便后续理解其实现。
 - en: The volume forecasting model
+  id: totrans-16
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 成交量预测模型
 - en: This section explains the intra-day volume forecasting model proposed by *Bialkowski,
     J., Darolles, S., and Le Fol, G. (2008)*.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 本节解释了*Bialkowski, J., Darolles, S., 和 Le Fol, G. (2008)*提出的日内成交量预测模型。
 - en: They use CAC40 data to test their model, including the turnover of every stock
     in the index as of September 2004\. Trades are aggregated into 20-minute time
     slots, resulting in 25 observations each day.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 他们使用CAC40数据来测试其模型，包括截至2004年9月的指数中每只股票的成交量。交易被汇总成20分钟的时间段，每天得到25个观测值。
 - en: Turnover is decomposed into two additive components. The first one is the seasonal
     component (the U shape) that represents the expected level of turnover on an average
     day for each stock. Given that every day is a little different from the average,
     there is a second one, the dynamic component, which shows the expected deviation
     from the average on a specific day.
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
+  zh: 成交量被分解为两个加性组件。第一个是季节性组件（U形），表示每只股票在平均日的预期成交量水平。由于每天与平均值略有不同，存在第二个动态组件，它显示特定日与平均值的预期偏差。
 - en: 'The decomposition is carried out using the factor model of *Bai, J. (2003)*.
     The initial problem is as follows:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 分解是使用*Bai, J. (2003)*的因子模型进行的。初始问题如下：
 - en: '![The volume forecasting model](img/2078OT_03_07.jpg)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![成交量预测模型](img/2078OT_03_07.jpg)'
 - en: Here, the ***X** (TxN)*-sized matrix contains the initial data, ***F** (Txr)*
     is the factor matrix, ***Λ'** (Nxr)* is the matrix of factor loadings, and ***e**
     (TxN)* is the error term. ***K*** stands for the common term, *T* stands for the
     number of observations, *N* stands for the number of stocks, and *r* stands for
     the number of factors.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，***X** (TxN)*大小的矩阵包含了初始数据，***F** (Txr)*是因子矩阵，***Λ'** (Nxr)*是因子负载矩阵，***e**
+    (TxN)*是误差项。***K***表示公共项，*T*表示观测值的数量，*N*表示股票的数量，*r*表示因子的数量。
 - en: 'The dimension of the ***XX''*** matrix is *(TxT)*. After determining its eigenvalues
     and eigenvectors, ***Eig*** contains the eigenvectors that are related to the
     *r* largest eigenvalues. The estimated factor matrix is then determined as:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: '***XX''***矩阵的维度是*(TxT)*。在确定其特征值和特征向量后，***Eig***包含与*r*个最大特征值相关的特征向量。然后，估计的因子矩阵确定为：'
 - en: '![The volume forecasting model](img/2078OT_03_19.jpg)'
+  id: totrans-24
   prefs: []
   type: TYPE_IMG
+  zh: '![成交量预测模型](img/2078OT_03_19.jpg)'
 - en: 'The transpose of the estimated loadings matrix is calculated as:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 估计的负载矩阵的转置计算为：
 - en: '![The volume forecasting model](img/2078OT_03_20.jpg)'
+  id: totrans-26
   prefs: []
   type: TYPE_IMG
+  zh: '![成交量预测模型](img/2078OT_03_20.jpg)'
 - en: 'Finally, the estimated common component will be:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 最终，估计的公共组件为：
 - en: '![The volume forecasting model](img/2078OT_03_21.jpg)'
+  id: totrans-28
   prefs: []
   type: TYPE_IMG
+  zh: '![成交量预测模型](img/2078OT_03_21.jpg)'
 - en: 'Given that the model is additive, the estimated dynamic component simply becomes:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于该模型是加性模型，估计的动态组件简单地变为：
 - en: '![The volume forecasting model](img/2078OT_03_22.jpg)'
+  id: totrans-30
   prefs: []
   type: TYPE_IMG
+  zh: '![成交量预测模型](img/2078OT_03_22.jpg)'
 - en: 'Now that the estimated common and dynamic components are both obtained, the
     next step is to generate their forecasts. The authors assume that the seasonal
     (U shape) component is constant throughout the 20-day estimation period (but differs
     among stocks), so they forecast it according to:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，估计的公共组件和动态组件都已获得，下一步是生成它们的预测。作者假设季节性（U形）组件在20天的估计期内是恒定的（但在不同的股票之间有所不同），因此他们根据以下公式进行预测：
 - en: '![The volume forecasting model](img/2078OT_03_23.jpg)'
+  id: totrans-32
   prefs: []
   type: TYPE_IMG
+  zh: '![交易量预测模型](img/2078OT_03_23.jpg)'
 - en: Knowing that 25 is the number of time slots (data points) each day, this means
     that for stock *i*, the forecast for the first time slot tomorrow will be the
     average of the first time slots during the last *L* days.
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 已知25是每天的时间段数（数据点），这意味着对于股票*i*，明天第一个时间段的预测值将是过去*L*天第一个时间段的平均值。
 - en: 'The forecast of the dynamic component is obtained in two different ways. One
     way is by fitting an AR(1) model, specified as follows:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 动态组件的预测有两种不同的方法。一种方法是拟合一个AR(1)模型，模型指定如下：
 - en: '![The volume forecasting model](img/2078OT_03_25.jpg)'
+  id: totrans-35
   prefs: []
   type: TYPE_IMG
+  zh: '![交易量预测模型](img/2078OT_03_25.jpg)'
 - en: 'Another way is by fitting a SETAR model, specified as:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 另一种方法是拟合一个SETAR模型，模型指定如下：
 - en: '![The volume forecasting model](img/2078OT_03_26_27.jpg)'
+  id: totrans-37
   prefs: []
   type: TYPE_IMG
+  zh: '![交易量预测模型](img/2078OT_03_26_27.jpg)'
 - en: 'Here, the indicator function is the following:'
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，指示函数如下所示：
 - en: '![The volume forecasting model](img/2078OT_03_28.jpg)'
+  id: totrans-39
   prefs: []
   type: TYPE_IMG
+  zh: '![交易量预测模型](img/2078OT_03_28.jpg)'
 - en: This means that if the previous observation does not exceed the ![The volume
     forecasting model](img/2078OT_03_29.jpg) threshold specified within the model,
     then the forecast is carried out by using one AR(1) model, and if it does, then
     the other AR(1) model is used.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 这意味着，如果前一个观测值没有超过模型中指定的![交易量预测模型](img/2078OT_03_29.jpg)阈值，那么将使用一个AR(1)模型进行预测；如果超过，则使用另一个AR(1)模型。
 - en: 'After having forecasted both the seasonal and the dynamic components, the forecasted
     turnover will be the sum of the two:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 在预测了季节性和动态组件之后，预测的成交量将是两者的总和：
 - en: '![The volume forecasting model](img/2078OT_03_30.jpg)'
+  id: totrans-42
   prefs: []
   type: TYPE_IMG
+  zh: '![交易量预测模型](img/2078OT_03_30.jpg)'
 - en: Note that we have forecasted the dynamic component in two different ways; therefore,
     we will have two different forecast results depending on which one we add to the
     forecast of the seasonal component.
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 请注意，我们以两种不同的方式预测动态组件；因此，依据添加到季节性组件预测中的方法不同，我们将得到两种不同的预测结果。
 - en: Implementation in R
+  id: totrans-44
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 在R中的实现
 - en: In this section, we show how to implement the model of *Bialkowski, J., Darolles,
     S., and Le Fol, G. (2008)* in R. We cover every detail, from loading the data
     to estimating the model parameters and producing the actual forecasts.
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们展示了如何在R中实现*Bialkowski, J., Darolles, S., 和 Le Fol, G. (2008)*的模型。我们涵盖了每个细节，从加载数据到估计模型参数并生成实际的预测。
 - en: The data
+  id: totrans-46
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 数据
 - en: The data we use consists of 10 different stocks from the Dow Jones Industrial
     Average index (see the next table for an overview). We use the 21 trading days
     between 06/01/2011 and 06/29/2011\. Trading on NYSE and NASDAQ is continuous between
     09:30 and 16:00\. After aggregating the data into 15-minute time slots, we receive
     26 observations every day, and a total of *26 * 21 = 546* observations overall.
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们使用的数据包含了来自道琼斯工业平均指数的10只不同股票（下表提供了概述）。我们使用了2011年06月01日至2011年06月29日之间的21个交易日数据。纽约证券交易所和纳斯达克的交易时间为09:30至16:00，交易是连续的。将数据聚合到15分钟的时间段后，我们每天获得26个观测值，总共获得*26
+    * 21 = 546*个观测值。
 - en: Tip
+  id: totrans-48
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 提示
 - en: We divided the trading day into 26 time slots, whereas the original article
     defined 25\. This is due to the difference in the opening hours of the different
     markets from where data was drawn. This only changes one single parameter in the
     model, but some attention must be paid to this detail.
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将交易日分为26个时间段，而原文中定义为25个。这是因为不同市场的开盘时间存在差异，而我们使用的数据来自不同的市场。这个变化只会影响模型中的一个参数，但需要注意这个细节。
 - en: All the used stocks are liquid enough to have positive turnover in each time
     slot throughout the observed period. However, it should be noted that since the
     model has an additive structure, zero turnover in some of the slots would not
     cause any difficulties.
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有使用的股票在观察期间的每个时间段都有足够的流动性，能够保持正向的成交量。然而，需要注意的是，由于模型具有加性结构，某些时间段的零成交量不会造成任何困难。
 - en: 'The following table is taken from the source [http://kibot.com/](http://kibot.com/):'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下表格来自来源[http://kibot.com/](http://kibot.com/)：
 - en: '|   | Ticker | Company | Industry | Sector | Exchange |'
+  id: totrans-52
   prefs: []
   type: TYPE_TB
+  zh: '|   | 股票代码 | 公司 | 行业 | 部门 | 交易所 |'
 - en: '| --- | --- | --- | --- | --- | --- |'
+  id: totrans-53
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- | --- | --- | --- |'
 - en: '| 1 | AA | Alcoa, Inc. | Aluminum | Basic Materials | NYSE |'
+  id: totrans-54
   prefs: []
   type: TYPE_TB
+  zh: '| 1 | AA | Alcoa公司 | 铝业 | 基础材料 | 纽约证券交易所 |'
 - en: '| 2 | AIG | American International Group, Inc. | Property and Casualty Insurance
     | Financial | NYSE |'
+  id: totrans-55
   prefs: []
   type: TYPE_TB
+  zh: '| 2 | AIG | 美国国际集团公司 | 财产与意外保险 | 金融 | 纽约证券交易所 |'
 - en: '| 3 | AXP | American Express Company | Credit Services | Financial | NYSE |'
+  id: totrans-56
   prefs: []
   type: TYPE_TB
+  zh: '| 3 | AXP | 美国运通公司 | 信用服务 | 金融 | 纽约证券交易所 |'
 - en: '| 4 | BA | Boeing Co. | Aerospace/Defense Products and Services | Industrial
     Goods | NYSE |'
+  id: totrans-57
   prefs: []
   type: TYPE_TB
+  zh: '| 4 | BA | 波音公司 | 航空航天/国防产品与服务 | 工业品 | 纽约证券交易所 |'
 - en: '| 5 | BAC | Bank of America | Regional - Mid-Atlantic Banks | Financial | NYSE
     |'
+  id: totrans-58
   prefs: []
   type: TYPE_TB
+  zh: '| 5 | BAC | 美国银行 | 区域 - 中大西洋地区银行 | 金融 | 纽约证券交易所 |'
 - en: '| 6 | C | Citigroup, Inc. | Money Center Banks | Financial | NYSE |'
+  id: totrans-59
   prefs: []
   type: TYPE_TB
+  zh: '| 6 | C | 花旗集团 | 资金中心银行 | 金融 | 纽约证券交易所 |'
 - en: '| 7 | CAT | Caterpillar, Inc. | Farm and Construction Machinery | Industrial
     Goods | NYSE |'
+  id: totrans-60
   prefs: []
   type: TYPE_TB
+  zh: '| 7 | CAT | 卡特彼勒公司 | 农业和建筑机械 | 工业品 | 纽约证券交易所 |'
 - en: '| 8 | CSCO | Cisco Systems, Inc. | Networking and Communication Devices | Technology
     | NASDAQ |'
+  id: totrans-61
   prefs: []
   type: TYPE_TB
+  zh: '| 8 | CSCO | 思科系统公司 | 网络与通信设备 | 技术 | 纳斯达克 |'
 - en: '| 9 | CVX | Chevron Corporation | Major Integrated Oil and Gas | Basic Materials
     | NYSE |'
+  id: totrans-62
   prefs: []
   type: TYPE_TB
+  zh: '| 9 | CVX | 雪佛龙公司 | 主要综合油气公司 | 基础材料 | 纽约证券交易所 |'
 - en: '| 10 | DD | E.I. Du Pont De Nemours and Company | Chemicals - Major Diversified
     | Basic Materials | NYSE |'
+  id: totrans-63
   prefs: []
   type: TYPE_TB
+  zh: '| 10 | DD | 杜邦公司 | 化学品 - 主要多元化 | 基础材料 | 纽约证券交易所 |'
 - en: Stocks included in the data set
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据集中的股票
 - en: Out of the 546 observations, we will use the first 520 (20 days) as the estimation
     period, and the last 26 (one day) as the forecast period. It is important to keep
     the actual data for the forecast period so that we can assess the precision of
     our forecast and compare it to the actual realizations.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 在546次观测中，我们将使用前520次（20天）作为估计期，最后26次（1天）作为预测期。保持预测期的实际数据非常重要，这样我们可以评估预测的精度，并将其与实际结果进行比较。
 - en: As an illustration of the data, see *Figure 3.1* that depicts the first five
     days (130 observations) of Alcoa.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 作为数据的示例，请参见*图 3.1*，该图展示了Alcoa的前五天（130次观测数据）。
 - en: '![The data](img/2078OT_03_32.jpg)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![数据](img/2078OT_03_32.jpg)'
 - en: 'Figure 3.1: First five days of Alcoa turnover'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 3.1：Alcoa营业额的前五天
 - en: Although every day is a little different, we can clearly see the five separate
     days indicated by the five U shapes in the turnover graph.
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管每天都有些许不同，但我们可以清楚地看到营业额图表中由五个U形曲线表示的五个不同的日子。
 - en: Loading the data
+  id: totrans-70
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 加载数据
 - en: 'We organized the data in a `.csv` file with the tickers in the header field.
     The dimension of the data matrix is 546 x 10\. The following code loads the data
     and prints the first five rows and six columns:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们将数据整理成了一个`.csv`文件，文件头包含股票代码。数据矩阵的维度为546 x 10。以下代码加载数据并打印前五行和六列：
 - en: '[PRE0]'
+  id: totrans-72
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: The output for the top-left segment of the data matrix is shown below. Given
     that our data shows turnover values (in a percentage form), and not volume, each
     value is below unity. We can see, for example, that within the first 15 minutes
     of the sample, 0.11 percent of the total shares outstanding of Alcoa were traded
     (see Equation (1)).
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据矩阵的左上角部分的输出如下所示。由于我们的数据展示的是营业额值（以百分比形式），而不是交易量，因此每个值都低于1。举例来说，在样本的前15分钟内，Alcoa公司总流通股的0.11%被交易（见方程式（1））。
 - en: '[PRE1]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: The following code plots the first day of Alcoa turnover. The graph is shown
     in *Figure 3.2*.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下代码绘制了Alcoa营业额的第一天数据。图表显示在*图 3.2*中。
 - en: '[PRE2]'
+  id: totrans-76
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: We can recognize the U shape of the first day, but we need to rely a little
     on our imagination at this point. This is because the U shape is a stylized fact
     that is only observed on a statistical basis.
+  id: totrans-77
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以识别出第一天的U形曲线，但此时我们需要稍微依靠我们的想象力。这是因为U形曲线是一种风格化的事实，仅在统计上被观察到。
 - en: '![Loading the data](img/2078OT_03_33.jpg)'
+  id: totrans-78
   prefs: []
   type: TYPE_IMG
+  zh: '![加载数据](img/2078OT_03_33.jpg)'
 - en: 'Figure 3.2: First day of Alcoa turnover'
+  id: totrans-79
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 3.2：Alcoa营业额的第一天
 - en: We therefore expect the U shape to be more definite on average. The following
     code plots the average Alcoa turnover throughout the 21 days of the sample. To
     this end, we transform the first column of the data matrix into a 26*21 matrix,
     and plot the row averages.
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
+  zh: 因此，我们预计U形曲线在平均值上会更加明确。以下代码绘制了样本中21天的Alcoa营业额的平均值。为此，我们将数据矩阵的第一列转换为一个26*21的矩阵，并绘制行平均值。
 - en: '[PRE3]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: The result is shown in *Figure 3.3*, where the U shape is very clearly drawn.
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果如*图 3.3*所示，U形曲线非常清晰地绘制出来。
 - en: '![Loading the data](img/2078OT_03_34.jpg)'
+  id: totrans-83
   prefs: []
   type: TYPE_IMG
+  zh: '![加载数据](img/2078OT_03_34.jpg)'
 - en: 'Figure 3.3: 21-day average of Alcoa turnover'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 3.3：Alcoa营业额的21天平均值
 - en: Now that the data is loaded, we are ready to implement the model.
+  id: totrans-85
   prefs: []
   type: TYPE_NORMAL
+  zh: 数据加载完毕后，我们可以开始实现模型。
 - en: The seasonal component
+  id: totrans-86
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 季节性成分
 - en: 'The first step is to determine the seasonal component. As mentioned earlier,
     we will use the first 520 observations for estimation. The following code creates
     the appropriate sample matrix from the data frame:'
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 第一步是确定季节性成分。如前所述，我们将使用前520个观测值进行估计。以下代码从数据框创建适当的样本矩阵：
 - en: '[PRE4]'
+  id: totrans-88
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Now, we can start the factor decomposition (see Equations (2) to (6)) of *Bai,
     J. (2003)*. After creating the ![The seasonal component](img/2078OT_03_35.jpg)
     matrix (of dimension 520 x 520), we find its eigenvalues and eigenvectors.
+  id: totrans-89
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们可以开始*Bai, J. (2003)*的因子分解（见公式（2）到（6））。在创建了![季节性成分](img/2078OT_03_35.jpg)矩阵（维度为520
+    x 520）之后，我们找到了它的特征值和特征向量。
 - en: '[PRE5]'
+  id: totrans-90
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'Next, we have to determine the number of factors to use (*r*). The following
     code plots the eigenvalues in diminishing order:'
+  id: totrans-91
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们需要确定使用的因子数量（*r*）。以下代码按降序绘制特征值图：
 - en: '[PRE6]'
+  id: totrans-92
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: The result is shown in *Figure 3.4*, where the first eigenvalue clearly dominates
     all the others. This means that the variance explained by the first eigenvector
     explains the majority of the variance, so we choose to use a single factor in
     our model (![The seasonal component](img/2078OT_03_36.jpg)). As a rule of thumb,
     we can use as many factors as the number of eigenvalues that are greater than
     one, but it always remains a subjective decision.
+  id: totrans-93
   prefs: []
   type: TYPE_NORMAL
+  zh: 结果如*图 3.4*所示，其中第一个特征值明显主导了所有其他特征值。这意味着第一个特征向量解释的方差占据了大部分方差，因此我们选择在模型中使用单一因子
+    (![季节性成分](img/2078OT_03_36.jpg))。作为经验法则，我们可以使用比1大的特征值个数作为因子的数量，但这始终是一个主观的决定。
 - en: '![The seasonal component](img/2078OT_03_37.jpg)'
+  id: totrans-94
   prefs: []
   type: TYPE_IMG
+  zh: '![季节性成分](img/2078OT_03_37.jpg)'
 - en: 'Figure 3.4: Eigenvalues of **XX**'''
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 3.4: **XX**'' 的特征值'
 - en: Using the eigenvector that corresponds to this largest eigenvalue, we can now
     compute the estimated factor matrix (see Equation (3)).
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用与此最大特征值对应的特征向量，我们现在可以计算估计的因子矩阵（见公式（3））。
 - en: '[PRE7]'
+  id: totrans-97
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: Then, we calculate the transpose of the estimated loadings matrix according
     to Equation (4), and the estimated common (seasonal) component according to Equation
     (5). Finally, the dynamic (idiosyncratic) component is also calculated (see Equation
     (6)).
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，我们根据公式（4）计算估计的加载矩阵的转置，并根据公式（5）计算估计的共同（季节性）成分。最后，还计算了动态（特有）成分（见公式（6））。
 - en: '[PRE8]'
+  id: totrans-99
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: The dynamic component will be forecasted in the following two subsections, but
     we still need to forecast the seasonal component here. This will be done according
     to Equation (7).
+  id: totrans-100
   prefs: []
   type: TYPE_NORMAL
+  zh: 动态成分将在接下来的两个小节中进行预测，但我们仍然需要在这里预测季节性成分。这将根据公式（7）完成。
 - en: '[PRE9]'
+  id: totrans-101
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: The previous code calculates 20-day averages for all 26 slots, dealing with
     one stock at a time, resulting in a 26 x 10 matrix, including one-day seasonal
     component forecasts for all 10 stocks.
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 之前的代码计算了所有26个位置的20天平均值，每次处理一个股票，结果是一个26 x 10的矩阵，包含所有10只股票的单日季节性成分预测。
 - en: 'Now, we have the forecasts of the dynamic component left, which will be done
     in two different ways: by fitting an AR(1) and a SETAR model.'
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们剩下的是动态成分的预测，这将通过两种不同的方式完成：通过拟合AR(1)模型和SETAR模型。
 - en: AR(1) estimation and forecasting
+  id: totrans-104
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: AR(1)估计和预测
 - en: 'In this subsection, we fit AR(1) models to the dynamic component. We will need
     to specify 10 models, one for each stock. The following code performs the parameter
     estimations:'
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本小节中，我们将AR(1)模型拟合到动态成分。我们需要为每只股票指定10个模型。以下代码执行参数估计：
 - en: '[PRE10]'
+  id: totrans-106
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'Coefficients are collected in the `coefs` variable and printed in the following
     output, rounded to 4 digits. Coefficients need not necessarily be saved (saving
     the model would be sufficient) because the `forecast` package has a built-in `forecast`
     function, and we will make use of this in the following example:'
+  id: totrans-107
   prefs: []
   type: TYPE_NORMAL
+  zh: 系数被收集在`coefs`变量中，并以四位小数的形式打印在以下输出中。系数不一定需要保存（保存模型即可），因为`forecast`包内置了`forecast`函数，我们将在以下示例中使用它：
 - en: '![AR(1) estimation and forecasting](img/2708OT_03_pg70.jpg)'
+  id: totrans-108
   prefs: []
   type: TYPE_IMG
+  zh: '![AR(1)估计和预测](img/2708OT_03_pg70.jpg)'
 - en: AR coefficients for each stock
+  id: totrans-109
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个股票的AR系数
 - en: Tip
+  id: totrans-110
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 提示
 - en: There are several ways to estimate an AR(1) model in R. Apart from the method
     mentioned earlier, which is suitable for any ARIMA model, the code below (using
     the example of Alcoa only) reproduces the same results, but with the use of a
     different package, which can only handle ARMA (and not ARIMA) models.
+  id: totrans-111
   prefs: []
   type: TYPE_NORMAL
+  zh: 在R中估计AR(1)模型有多种方法。除了之前提到的方法，适用于任何ARIMA模型外，下面的代码（仅使用Alcoa示例）通过使用不同的包来重现相同的结果，但该包只能处理ARMA（而不是ARIMA）模型。
 - en: '[PRE11]'
+  id: totrans-112
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'So the next step is to produce the forecasts for the next day, that is, for
     the next 26 time slots using the AR(1) models estimated previously. The following
     code performs this for us:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
+  zh: 所以，下一步是使用之前估计的AR(1)模型为第二天的26个时间段进行预测。以下代码将为我们执行此操作：
 - en: '[PRE12]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: In order to receive the complete forecasts (including both the seasonal and
     the dynamic components), we simply refer to Equation (11).
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了获得完整的预测（包括季节性和动态成分），我们只需参考公式（11）。
 - en: '[PRE13]'
+  id: totrans-116
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: The full forecasts are now stored in the `AR_result` variable.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 完整的预测结果现在存储在`AR_result`变量中。
 - en: SETAR estimation and forecasting
+  id: totrans-118
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: SETAR估计和预测
 - en: 'The second method for obtaining forecasts of the dynamic component is through
     a SETAR model. Again, we need 10 different models for each stock. There is also
     a package in R for SETAR estimation, so the code becomes as simple as this:'
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 获得动态成分预测的第二种方法是通过SETAR模型。同样，我们需要为每只股票建立10个不同的模型。在R中也有一个SETAR估计的包，因此代码变得非常简单：
 - en: '[PRE14]'
+  id: totrans-120
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'Unlike the AR model, we do have to save the coefficients explicitly for the
     forecast, which is also done by the previous code. The 4-digit rounded values
     are printed in the following output:'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 与AR模型不同，我们确实需要显式地保存系数用于预测，这一点也在之前的代码中完成。四位数字的四舍五入值将在以下输出中打印：
 - en: '![SETAR estimation and forecasting](img/2708OT_03_pg71.jpg)'
+  id: totrans-122
   prefs: []
   type: TYPE_IMG
+  zh: '![SETAR估计和预测](img/2708OT_03_pg71.jpg)'
 - en: SETAR coefficients for each stock
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 每只股票的SETAR系数
 - en: 'The five parameters from top to bottom are the following (see Equation (9)
     for details):'
+  id: totrans-124
   prefs: []
   type: TYPE_NORMAL
+  zh: 从上到下的五个参数如下（详见公式（9））：
 - en: Intercept (lower regime).
+  id: totrans-125
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 截距（下行区间）。
 - en: AR coefficient (lower regime).
+  id: totrans-126
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: AR系数（下行区间）。
 - en: Intercept (upper regime).
+  id: totrans-127
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 截距（上行区间）。
 - en: AR coefficient (upper regime).
+  id: totrans-128
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: AR系数（上行区间）。
 - en: Threshold.
+  id: totrans-129
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 阈值。
 - en: 'Now, all we have left to do is to forecast the dynamic component for the next
     26 time slots using the SETAR model we just described. This is done using the
     following code:'
+  id: totrans-130
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在，我们需要做的就是使用我们刚刚描述的SETAR模型，预测接下来的26个时间段的动态成分。这可以通过以下代码实现：
 - en: '[PRE15]'
+  id: totrans-131
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: Although we are looking to have forecasts for 26 time slots (that is, for one
     entire day) for each stock, the `SETARf` variable has 27 rows because we have
     to store the last known observation in the first one in order to be able to calculate
     recursively. Also, note that we calculate row-by-row here, that is, we calculate
     the next forecast for every stock at the same time, and only then do we move on
     to the next time slot.
+  id: totrans-132
   prefs: []
   type: TYPE_NORMAL
+  zh: 虽然我们希望为每只股票的26个时间段（即一天内的所有时间段）进行预测，但`SETARf`变量有27行，因为我们必须将最后已知的观察值存储在第一行，以便能够进行递归计算。此外，注意这里是逐行计算的，即我们同时为每只股票计算下一个预测值，只有在计算完后，我们才会进入下一个时间段。
 - en: 'Finally, referring to Equation (11) again, the full forecast for the turnover
     is as follows:'
+  id: totrans-133
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后，再次参考公式（11），完整的换手率预测如下：
 - en: '[PRE16]'
+  id: totrans-134
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: The full forecasts are now stored in the `SETAR_result` variable.
+  id: totrans-135
   prefs: []
   type: TYPE_NORMAL
+  zh: 完整的预测结果现在存储在`SETAR_result`变量中。
 - en: Interpreting the results
+  id: totrans-136
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结果解释
 - en: We have obtained the turnover forecasts of all 10 stocks for the next day based
     on the last 20 days. Depending on how we forecast the dynamic component, we have
     two different results for each stock.
+  id: totrans-137
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经根据过去20天的数据，得到了所有10只股票的第二天换手率预测。根据我们如何预测动态成分，每只股票会有两个不同的结果。
 - en: We excluded the last day of our data set from the estimation in order to be
     able to compare the actual values to the forecasts. The following code helps us
     do this by generating 10 different plots, one for every stock, using AR(1) for
     the dynamic component forecasts. The output is shown in *Figure 3.5*.
+  id: totrans-138
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们排除了数据集中的最后一天，以便能够将实际值与预测值进行比较。以下代码通过生成10个不同的图表来帮助我们完成此任务，每只股票一个，使用AR(1)模型进行动态成分预测。输出显示在*图3.5*中。
 - en: '[PRE17]'
+  id: totrans-139
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: On each plot, the black dotted line depicts the realized turnover of that specific
     stock, while the red solid line shows the forecasted turnover. As mentioned before,
     the actual realizations can notably deviate from the stylized fact of the U shape.
+  id: totrans-140
   prefs: []
   type: TYPE_NORMAL
+  zh: 在每个图中，黑色虚线表示该特定股票的实际换手率，而红色实线表示预测的换手率。如前所述，实际的换手率可能会显著偏离U形的典型事实。
 - en: '![Interpreting the results](img/2078OT_03_38.jpg)'
+  id: totrans-141
   prefs: []
   type: TYPE_IMG
+  zh: '![结果解释](img/2078OT_03_38.jpg)'
 - en: 'Figure 3.5: Turnover forecasts and realizations for the next day AR(1) is used
     on the dynamic component'
+  id: totrans-142
   prefs: []
   type: TYPE_NORMAL
+  zh: 图3.5：第二天的换手率预测与实际值，动态成分使用AR(1)模型进行预测
 - en: We can conclude that the forecasts appear fairly precise visually. When the
     realization resembles a more regular U shape, the forecasts can better approximate
     it (Alcoa, Caterpillar, Chevron, and Du Pont De Nemours), but the one-off large
@@ -628,36 +922,52 @@
     is, either the first few or the last few trades are much larger than the rest
     (American Express, Bank of America, and Citigroup), but even in those cases, the
     rest of the day is reasonably well approximated.
+  id: totrans-143
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以得出结论，从视觉上看，预测结果相当精确。当实际结果呈现出更规则的U形时，预测结果能够更好地拟合（如Alcoa、Caterpillar、Chevron和Du
+    Pont De Nemours），但单次的大幅波动总是难以预测（例如Chevron的第五个观测值）。当实际结果变得异常不对称时，预测表现较差；也就是说，前几笔或最后几笔交易远大于其余部分（如American
+    Express、Bank of America和Citigroup），但即便如此，全天的其余部分仍能得到合理的拟合。
 - en: Tip
+  id: totrans-144
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 提示
 - en: This time, we refrain from numerically evaluating the errors of the estimation
     because we will first need a benchmark to do it, and more importantly, because
     we only forecasted for one single day; therefore, the results will not be robust
     anyway.
+  id: totrans-145
   prefs: []
   type: TYPE_NORMAL
+  zh: 这次，我们不对估计误差进行数值评估，因为我们首先需要一个基准来进行评估，更重要的是，因为我们只预测了单一天的数据；因此，结果无论如何都不会具有很强的稳健性。
 - en: We can use some code similar to what we used earlier in order to plot the results
     of the SETAR-based estimation. The output is shown in *Figure 3.6*.
+  id: totrans-146
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用与之前类似的代码来绘制基于SETAR的估计结果。输出如*图3.6*所示。
 - en: '![Interpreting the results](img/2078OT_03_39.jpg)'
+  id: totrans-147
   prefs: []
   type: TYPE_IMG
+  zh: '![解释结果](img/2078OT_03_39.jpg)'
 - en: 'Figure 3.6: Turnover forecasts and realizations for the next day SETAR is used
     on the dynamic component'
+  id: totrans-148
   prefs: []
   type: TYPE_NORMAL
+  zh: 图3.6：下一天的交易量预测与实际结果，SETAR用于动态组件
 - en: At first glance, the results appear very similar to the previous case, which
     is understandable, because the forecast of the seasonal component is the same
     in both of them, and apparently, this dominates the forecast; the rest is merely
     due to individual deviations. The difference between the AR-based and SETAR-based
     forecasts is more pronounced towards the beginning of the day.
+  id: totrans-149
   prefs: []
   type: TYPE_NORMAL
+  zh: 乍一看，结果与前一个案例非常相似，这是可以理解的，因为两者的季节性组件预测相同，显然季节性组件主导了预测，其余部分仅仅是个别偏差所致。基于AR和基于SETAR的预测差异在一天的开始时更为明显。
 - en: If we observe the first and the last data points of the day in *Figures 3.5*
     and *Figure 3.6*, we can find a number of stocks (Alcoa, Bank of America, Citigroup,
     Caterpillar, Cisco, and Du Pont De Nemours) where the forecast for the last point
@@ -665,12 +975,18 @@
     is significantly larger in the case of SETAR. The most noticeable difference between
     the two forecasts is in the American International and Boeing stocks, where SETAR
     produces higher values throughout the day.
+  id: totrans-150
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们观察*图3.5*和*图3.6*中的一天的第一和最后一个数据点，我们可以发现一些股票（如Alcoa、Bank of America、Citigroup、Caterpillar、Cisco和Du
+    Pont De Nemours），在SETAR模型下，最后一个数据点（以及全天的大部分时间）预测结果相似，而第一点的预测值则明显更大。两种预测方法之间最显著的差异出现在American
+    International和Boeing的股票上，SETAR模型在全天的预测值普遍较高。
 - en: Summary
+  id: totrans-151
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we presented an intra-day volume forecasting model and its
     implementation in R using data from the DJIA index. Due to length limitations,
     we selected the one model from the literature that we believe is the most accurate
@@ -683,48 +999,66 @@
     proves the model to be better than a carefully selected benchmark, but we leave
     it to the reader to examine that, because we only used a short data set for illustration,
     which is not suitable to obtain robust results.
+  id: totrans-152
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们展示了一种基于DJIA指数数据的日内交易量预测模型及其在R中的实现。由于篇幅限制，我们从文献中选择了我们认为最准确的一个模型，用于预测股票交易量。该模型为了方便，使用了成交额而非交易量，并将季节性分量（U形）和动态分量分开，分别进行预测。动态分量使用两种不同方式进行预测，分别拟合AR(1)模型和SETAR模型。与原文相似，我们并未断言哪种模型更好，而是直观地展示结果并认为其准确度是可以接受的。原文通过有力的证据证明该模型优于精心选择的基准，但我们将此留给读者去检验，因为我们仅使用了一个短期数据集进行说明，无法获得稳健的结果。
 - en: References
+  id: totrans-153
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 参考文献
 - en: '**Bai, J. (2003)**: Inferential theory for factor models of large dimensions.
     Econometrica, 71:135-171.'
+  id: totrans-154
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Bai, J. (2003)**：大维度因子模型的推断理论。《计量经济学》，71:135-171。'
 - en: '**Bialkowski, J., Darolles, S., and Le Fol, G. (2008)**: Improving VWAP strategies:
     A dynamic volume approach. Journal of Banking & Finance, 32:1709-1722.'
+  id: totrans-155
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Bialkowski, J., Darolles, S., 和 Le Fol, G. (2008)**：改进VWAP策略：一种动态交易量方法。《银行与金融学报》，32:1709-1722。'
 - en: '**Brownlees, C. T., Cipollini, F., and Gallo, G. M. (2011)**: Intra-daily volume
     modeling and prediction for algorithmic trading. Journal of Financial Econometrics,
     9:489-518.'
+  id: totrans-156
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Brownlees, C. T., Cipollini, F., 和 Gallo, G. M. (2011)**：日内交易量建模与预测，用于算法交易。《金融计量经济学杂志》，9:489-518。'
 - en: '**Hmaied, D. M., Sioud, O. B., and Grar, A. (2006)**: Intra-daily and weekly
     patterns of bid-ask spreads, trading volume and volatility on the Tunisian Stock
     Exchange. Banque & Marchés, 84:35-44.'
+  id: totrans-157
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Hmaied, D. M., Sioud, O. B., 和 Grar, A. (2006)**：突尼斯证券交易所买卖价差、交易量和波动性的日内与周内模式。《银行与市场》，84:35-44。'
 - en: '**Hussain, S. M. (2011)**: The intraday behavior of bid-ask spreads, trading
     volume, and return volatility: Evidence from DAX30\. International Journal of
     Economics and Finance, 3:23-34.'
+  id: totrans-158
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Hussain, S. M. (2011)**：买卖价差、交易量和收益波动的日内行为：来自DAX30的证据。《国际经济与金融杂志》，3:23-34。'
 - en: '**Kaastra, I. and Boyd, M. S. (1995)**: Forecasting futures trading volume
     using neural networks. The Journal of Futures Markets, Vol. 15, No. 8,:953-970.'
+  id: totrans-159
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Kaastra, I. 和 Boyd, M. S. (1995)**：利用神经网络预测期货交易量。《期货市场杂志》，第15卷，第8期：953-970。'
 - en: '**Lux, T. and Kaizoji, T. (2004)**: Forecasting volatility and volume in the
     Tokyo stock market: The advantage of long memory models. Economics working paper,
     Christian-Albrechts-Universität Kiel, Department of Economics.'
+  id: totrans-160
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '**Lux, T. 和 Kaizoji, T. (2004)**：预测东京股市的波动性和交易量：长期记忆模型的优势。经济学工作论文，基尔大学经济学系。'
