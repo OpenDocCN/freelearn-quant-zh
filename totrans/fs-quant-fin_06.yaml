@@ -1,46 +1,66 @@
 - en: Chapter 6. Exploring Volatility
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第6章 探索波动率
 - en: In this chapter, you will learn about volatility and using numerical methods
     in F# to explore the properties of options. We'll solve for the intrinsic volatility,
     called implied volatility, in the Black-Scholes model using the code from the
     previous chapter and extending it with numerical methods covered in [Chapter 3](ch03.html
     "Chapter 3. Financial Mathematics and Numerical Analysis"), *Financial Mathematics
     and Numerical Analysis*.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，您将学习波动率以及如何使用F#中的数值方法来探索期权的特性。我们将使用上一章的代码，并结合第[3章](ch03.html "第3章. 财务数学与数值分析")中讲解的数值方法，来求解布莱克-舒尔斯模型中的内在波动率，即隐含波动率，*财务数学与数值分析*。
 - en: 'In this chapter you will learn:'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，您将学习：
 - en: Actual volatility and implied volatility
+  id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 实际波动率和隐含波动率
 - en: Using F# to calculate actual volatility
+  id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用F#计算实际波动率
 - en: Solving for implied volatility in Black-Scholes
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 在布莱克-舒尔斯模型中求解隐含波动率
 - en: Using numerical methods for options
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 使用数值方法分析期权
 - en: Delta hedging
+  id: totrans-7
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 德尔塔对冲
 - en: Briefly about volatility arbitrage
+  id: totrans-8
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 简要介绍波动率套利
 - en: Introduction to volatility
+  id: totrans-9
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 波动率介绍
 - en: In the previous chapter we looked at the basics behind Black-Scholes for European
     options. We'll continue to explore options in this chapter and look at volatility
     and how to use F# to help us out. Volatility measures changes in price as annualized
@@ -48,36 +68,50 @@
     fluctuates up or down. Higher volatility means larger dispersion and lower volatility
     means, of course, smaller dispersion. Volatility relates to variance and variance
     equals the square of the standard deviation, as covered previously.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章，我们回顾了布莱克-舒尔斯模型的基础，适用于欧洲期权。在本章中，我们将继续探讨期权，并研究波动率以及如何使用F#来帮助我们。波动率衡量的是价格变动的年化标准差，即金融工具价格波动的速率。较高的波动率意味着更大的分散，而较低的波动率则意味着更小的分散。波动率与方差相关，方差等于标准差的平方，正如之前所讲。
 - en: Black-Scholes assumes normal distributed movements in stock prices, which is
     not really the case in reality according to observations. In real life, the distribution
     is more fat-tailed, which means that negative price movements tend to be larger
     when they occur, but positive movements are more common, and smaller on average.
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
+  zh: 布莱克-舒尔斯模型假设股票价格的波动服从正态分布，但根据观察，现实中并非如此。实际情况中，分布更为厚尾，这意味着负向价格波动发生时往往较大，但正向波动更常见，且通常较小。
 - en: '![Introduction to volatility](img/4623OS_06_01.jpg)'
+  id: totrans-12
   prefs: []
   type: TYPE_IMG
+  zh: '![波动率介绍](img/4623OS_06_01.jpg)'
 - en: 'Figure 1: Courtesy of Yahoo! Finance. Shows S&P 500 Index with low volatility
     (9.5 % annualized) and Apple with high volatility (31 % annualized)'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 图1：由Yahoo! Finance提供。显示低波动率（9.5%年化）的标准普尔500指数和高波动率（31%年化）的苹果股票。
 - en: Actual volatility
+  id: totrans-14
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 实际波动率
 - en: Actual volatility is the current observed volatility over a specific period
     of time, typically the last month or year. Actual volatility uses the current
     market price and several previous observations. In simple terms, it is the standard
     deviation of the logarithmic returns of a series of today's and existing price
     data.
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 实际波动率是指在特定时间段内（通常为过去一个月或一年）观察到的波动率。实际波动率使用当前的市场价格和若干先前的观察数据。简而言之，它是当前和历史价格数据的对数收益率的标准差。
 - en: Implied volatility
+  id: totrans-16
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 隐含波动率
 - en: 'Implied volatility is the volatility encapsulated in option prices. If we use
     Black-Scholes, we need to provide several inputs: stock price, strike price, risk
     free interest rate, volatility, and time to expiration. This will output a theoretical
@@ -86,114 +120,173 @@
     from the market price of that option if it''s traded on an exchange as a fair
     market price. Doing so requires us to use a numerical method for root solving,
     which has been covered in the chapter about numerical analysis.'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 隐含波动率是包含在期权价格中的波动率。如果我们使用布莱克-舒尔斯模型，我们需要提供几个输入参数：股票价格、行权价格、无风险利率、波动率和到期时间。根据这些输入，模型将输出一个理论价格，基于所做的假设。我们可以通过逆向使用布莱克-舒尔斯模型来获取隐含波动率。这意味着，如果期权在交易所以公平市场价格进行交易，我们可以从该期权的市场价格中提取波动率。这样做需要使用数值方法求解根值，这部分内容已经在数值分析章节中讲解过。
 - en: Implied volatility using current prices will solve for implied volatility in
     the Black-Scholes model using a bisection solver, which we will study in a later
     section in this chapter.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用当前价格计算隐含波动性，将通过一个二分法求解器来解决Black-Scholes模型中的隐含波动性问题，我们将在本章的后续部分学习这一内容。
 - en: Exploring volatility in F#
+  id: totrans-19
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: F#中的波动性探索
 - en: 'Let''s look at a sample program in F# that will cover some aspects of volatility
     and how to calculate the volatility from real market data. We''ll look at some
     tech stocks from NASDAQ and calculate the annualized volatility for each of them.
     First, we need to define a function to do the calculations. Annualized volatility
     is defined as follows:'
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们来看一个F#示例程序，它将涵盖波动性的一些方面，以及如何从真实市场数据中计算波动性。我们将查看来自NASDAQ的一些科技股，并计算它们的年化波动率。首先，我们需要定义一个函数来进行计算。年化波动率定义如下：
 - en: '![Exploring volatility in F#](img/4623OS_06_02.jpg)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![F#中的波动性探索](img/4623OS_06_02.jpg)'
 - en: Where **P** is the time period in years, ![Exploring volatility in F#](img/4623OS_06_03.jpg)
     is the annualized volatility, and ![Exploring volatility in F#](img/4623OS_06_04.jpg)
     is the standard deviation during the time period **P**.
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中**P**是时间周期（以年为单位），![F#中的波动性探索](img/4623OS_06_03.jpg)是年化波动率，![F#中的波动性探索](img/4623OS_06_04.jpg)是时间周期**P**内的标准差。
 - en: 'Here we use **P** as ![Exploring volatility in F#](img/4623OS_06_05.jpg), this
     means we can rewrite the formula as:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里我们使用**P**表示 ![F#中的波动性探索](img/4623OS_06_05.jpg)，这意味着我们可以将公式重写为：
 - en: '![Exploring volatility in F#](img/4623OS_06_06.jpg)'
+  id: totrans-24
   prefs: []
   type: TYPE_IMG
+  zh: '![F#中的波动性探索](img/4623OS_06_06.jpg)'
 - en: 'We start by using the function to calculate the standard deviation as mentioned
     in [Chapter 3](ch03.html "Chapter 3. Financial Mathematics and Numerical Analysis"),
     *Financial Mathematics and Numerical Analysis*:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们首先使用计算标准差的函数，如[第3章](ch03.html "第3章. 金融数学与数值分析")所述，*金融数学与数值分析*：
 - en: '[PRE0]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: Then we need a function to calculate the logarithmic returns. This is done using
     the `Seq.pairwise` function, since we need a window of size 2\. This is the same
     as using the `Seq.windowed` function with a size of 2.
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后我们需要一个函数来计算对数收益。这是使用`Seq.pairwise`函数来完成的，因为我们需要一个大小为2的窗口。这与使用`Seq.windowed`函数并设置大小为2是相同的。
 - en: '[PRE1]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Last but not least, we have our function to calculate annualized volatility
     from the return series:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后但同样重要的是，我们有一个函数来从收益序列中计算年化波动率：
 - en: '[PRE2]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: This function uses the mathematical equation described previously, with the
     number of days squared and multiplied by the standard deviation for the return
     series. This can be interpreted as a scaling factor.
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 该函数使用之前描述的数学公式，将天数的平方与收益序列的标准差相乘。这可以解释为一个缩放因子。
 - en: 'These functions are the main building blocks we need to proceed with. The next
     step is to reuse the functionality to obtain prices from Yahoo! Finance, slightly
     modified to use the preceding functions. Next, we introduce two helper functions.
     The first is to format a number as a string with a leading zero if the number
     is smaller than ten. The second function is to help us construct the URL needed
     to request data from Yahoo! Finance:'
+  id: totrans-32
   prefs: []
   type: TYPE_NORMAL
+  zh: 这些函数是我们需要进行的主要构建块。下一步是重用这些功能以从Yahoo! Finance获取价格，稍作修改以使用前面的函数。接下来，我们介绍两个辅助函数。第一个是将数字格式化为字符串，如果数字小于十，则前面加上零。第二个函数是帮助我们构造需要从Yahoo!
+    Finance请求数据的URL：
 - en: '[PRE3]'
+  id: totrans-33
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'Let''s try it out with a few stocks from NASDAQ using F# Interactive:'
+  id: totrans-34
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们尝试使用F# Interactive对来自NASDAQ的几只股票进行操作：
 - en: '[PRE4]'
+  id: totrans-35
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'The result of the preceding code can be summarized in the following table:'
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 上述代码的结果可以总结在以下表格中：
 - en: '| Symbol | Name | Annualized volatility |'
+  id: totrans-37
   prefs: []
   type: TYPE_TB
+  zh: '| 股票代码 | 公司名称 | 年化波动率 |'
 - en: '| --- | --- | --- |'
+  id: totrans-38
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| MSFT | Microsoft Corp. | 21.30 percent |'
+  id: totrans-39
   prefs: []
   type: TYPE_TB
+  zh: '| MSFT | 微软公司 | 21.30 百分比 |'
 - en: '| ORCL | Oracle | 20.44 percent |'
+  id: totrans-40
   prefs: []
   type: TYPE_TB
+  zh: '| ORCL | 甲骨文公司 | 20.44 百分比 |'
 - en: '| GOOG | Google Inc. | 14.80 percent |'
+  id: totrans-41
   prefs: []
   type: TYPE_TB
+  zh: '| GOOG | 谷歌公司 | 14.80 百分比 |'
 - en: '| EBAY | eBay | 20.82 percent |'
+  id: totrans-42
   prefs: []
   type: TYPE_TB
+  zh: '| EBAY | eBay | 20.82 百分比 |'
 - en: '| AAPL | Apple Computer | 25.16 percent |'
+  id: totrans-43
   prefs: []
   type: TYPE_TB
+  zh: '| AAPL | 苹果公司 | 25.16 百分比 |'
 - en: '| AMZN | Amazon | 21.10 percent |'
+  id: totrans-44
   prefs: []
   type: TYPE_TB
+  zh: '| AMZN | 亚马逊 | 21.10 百分比 |'
 - en: '| ^GSPC | S&P 500 | 9.15 percent |'
+  id: totrans-45
   prefs: []
   type: TYPE_TB
+  zh: '| ^GSPC | 标准普尔500指数 | 9.15 百分比 |'
 - en: From the preceding table, we can see and compare annualized volatility for the
     selected stocks and the S&P 500 index. It's clear from the data which one has
     the highest respectability and the lowest volatility. AAPL and ^GSPC are compared
@@ -201,122 +294,180 @@
     you something about the risk involved in investing in that particular instrument.
     But keep in mind that this data is historical and will not interpret the future
     price movements of an instrument.
+  id: totrans-46
   prefs: []
   type: TYPE_NORMAL
+  zh: 从前面的表格中，我们可以看到并比较所选股票和S&P 500指数的年化波动性。从数据中可以清楚地看出，哪一只股票的尊重度最高，波动性最低。AAPL和^GSPC在本章介绍的*图1*中进行了比较。有时，波动性能告诉你某个工具的投资风险。但请记住，这些数据是历史数据，无法解读该工具未来的价格变动。
 - en: The complete application
+  id: totrans-47
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 完整应用程序
 - en: 'Following is the code listing for the entire program used earlier. You can
     modify the parameters to the Yahoo! Finance web service that returns CSV data.
     The parameters are a, b, c for the `from-date` parameter and d, e, f for the `to-date`
     parameter together with the symbol of the stock, see the following table:'
+  id: totrans-48
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下是前面程序的完整代码清单。你可以修改参数，以便连接Yahoo! Finance的Web服务，返回CSV数据。这些参数包括a、b、c作为`from-date`参数，以及d、e、f作为`to-date`参数，外加股票的符号，见下表：
 - en: '| Parameter | Description | Example |'
+  id: totrans-49
   prefs: []
   type: TYPE_TB
+  zh: '| 参数 | 描述 | 示例 |'
 - en: '| --- | --- | --- |'
+  id: totrans-50
   prefs: []
   type: TYPE_TB
+  zh: '| --- | --- | --- |'
 - en: '| s | Stock symbol | MSFT |'
+  id: totrans-51
   prefs: []
   type: TYPE_TB
+  zh: '| s | 股票符号 | MSFT |'
 - en: '| d | To month of year | 07 |'
+  id: totrans-52
   prefs: []
   type: TYPE_TB
+  zh: '| d | 到月份 | 07 |'
 - en: '| e | To day of month | 29 |'
+  id: totrans-53
   prefs: []
   type: TYPE_TB
+  zh: '| e | 到日 | 29 |'
 - en: '| f | To year | 2013 |'
+  id: totrans-54
   prefs: []
   type: TYPE_TB
+  zh: '| f | 到年份 | 2013 |'
 - en: '| a | From month of year | 00 |'
+  id: totrans-55
   prefs: []
   type: TYPE_TB
+  zh: '| a | 从月份 | 00 |'
 - en: '| b | To day of month | 1 |'
+  id: totrans-56
   prefs: []
   type: TYPE_TB
+  zh: '| b | 到日 | 1 |'
 - en: '| c | To year | 2013 |'
+  id: totrans-57
   prefs: []
   type: TYPE_TB
+  zh: '| c | 到年份 | 2013 |'
 - en: 'Let''s have a look at an example where we downloaded data from Yahoo! for a
     couple of stocks listed on NASDAQ as well as the S&P500 index. We''ll look at
     a timespan from January 01, 2013 to August 2, 2013:'
+  id: totrans-58
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看一个示例，其中我们从Yahoo!下载了几只在NASDAQ上市的股票以及S&P500指数的数据。我们将查看2013年1月1日到2013年8月2日的时间跨度：
 - en: '[PRE5]'
+  id: totrans-59
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: In this section we looked at actual volatility for some instruments using data
     from Yahoo! Finance. In the next section we'll look into implied volatility and
     how to extract that information from the Black-Scholes formula.
+  id: totrans-60
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本节中，我们使用来自Yahoo!财经的数据查看了一些工具的实际波动性。在下一节中，我们将讨论隐含波动性以及如何从Black-Scholes公式中提取这些信息。
 - en: Learning about implied volatility
+  id: totrans-61
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 学习隐含波动性
 - en: Here we'll use the bisection method introduced in [Chapter 3](ch03.html "Chapter 3. Financial
     Mathematics and Numerical Analysis"), *Financial Mathematics and Numerical Analysis*.
     This is a numerical method for finding roots. The implied volatility is the root
     where the function value is zero for the Black-Scholes function for different
     input parameters. The volatility of an underlying instrument is the input to Black-Scholes
     which gives the same price as the current price of the option.
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们将使用[第3章](ch03.html "第3章：金融数学与数值分析")中介绍的二分法，*金融数学与数值分析*。这是一种寻找根的方法。隐含波动性是根，函数值为零，适用于Black-Scholes公式的不同输入参数。标的工具的波动性是Black-Scholes的输入，给出的期权当前价格与实际市场价格相同。
 - en: '**Vega** tells us about the sensitivity in the option price for the changes
     in the volatility of the underlying asset. Look at Yahoo! Finance and find the
     option data. Take that option data into the following solve function:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
+  zh: '**Vega**告诉我们期权价格对标的资产波动性变化的敏感度。查看Yahoo! Finance并找到期权数据。将这些期权数据带入以下求解函数：'
 - en: '![Learning about implied volatility](img/4623OS_06_07.jpg)'
+  id: totrans-64
   prefs: []
   type: TYPE_IMG
+  zh: '![学习隐含波动性](img/4623OS_06_07.jpg)'
 - en: 'Figure 2: The VIX-index for the S&P500 index options from 2000-01-01 to 2013-11-01'
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
+  zh: 图2：2000年1月1日到2013年11月1日S&P500指数期权的VIX指数
 - en: The VIX-index, as seen in the preceding screenshot, is an index which combines
     the implied volatility of S&P 500 index options. This can be interpreted as an
     indication of future volatility.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 如前面的截图所示，VIX指数是一个结合了S&P 500指数期权隐含波动性的指数。它可以被解读为未来波动性的指示。
 - en: Solving for implied volatility
+  id: totrans-67
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 求解隐含波动性
 - en: Next we'll use a method for solving for implied volatility for European options.
     This can be done by numerically solving for the root using the bisection method.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将使用一种方法来求解欧洲期权的隐含波动性。这可以通过使用二分法数值解法来求解根。
 - en: 'To be able to understand why we use the bisection solver to find the root of
     the Black-Scholes equation, we need some tools. First we recapture the definition
     of the call and put price as a function of the estimated volatility and a set
     of parameters (denoted):'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了理解为什么我们使用二分法求解Black-Scholes方程的根值，我们需要一些工具。首先，我们重新回顾一下看涨期权和看跌期权价格作为估算波动率和一组参数（记作）函数的定义：
 - en: '![Solving for implied volatility](img/4623OS_06_08.jpg)'
+  id: totrans-70
   prefs: []
   type: TYPE_IMG
+  zh: '![求解隐含波动率](img/4623OS_06_08.jpg)'
 - en: 'To extract the implied volatility, we need an inverse function of the Black-Scholes
     formula. Unfortunately, there is no analytical inverse of that function. Instead,
     we can say that the Black-Scholes formula, with the implied volatility minus the
     current market price of that option, has a call option in this case of zero. Following
     ![Solving for implied volatility](img/4623OS_06_09.jpg) is the current market
     price for the call option studied in this section:'
+  id: totrans-71
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了提取隐含波动率，我们需要Black-Scholes公式的反函数。不幸的是，这个函数没有解析的反函数。相反，我们可以说，Black-Scholes公式减去当前期权市场价格的隐含波动率，在此情况下的看涨期权价格为零。以下是![求解隐含波动率](img/4623OS_06_09.jpg)，这是本节中研究的看涨期权的当前市场价格：
 - en: '![Solving for implied volatility](img/4623OS_06_10.jpg)'
+  id: totrans-72
   prefs: []
   type: TYPE_IMG
+  zh: '![求解隐含波动率](img/4623OS_06_10.jpg)'
 - en: This enables us to use a numerical root solver to find the implied volatility.
     Following is an implementation of the bisection solver in F#. We'll also use the
     earlier Black-Scholes implementation
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 这使我们能够使用数值根求解器来找到隐含波动率。以下是F#中二分法求解器的实现。我们还将使用先前的Black-Scholes实现。
 - en: '[PRE6]'
+  id: totrans-74
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: Running the preceding code will result in an implied volatility of 0.3408203125,
     approximately 34.1 percent volatility. Note that we have to subtract for the current
     market price of the option (`1.2753`) as well, because we are solving for roots.
@@ -325,199 +476,293 @@
     to be 0.001, which is 0.1 percent. A simple way to test whether the values are
     correct is to first use the Black-Scholes formula using an actual volatility to
     get a theoretical price for that option.
+  id: totrans-75
   prefs: []
   type: TYPE_NORMAL
+  zh: 运行前面的代码将得到隐含波动率为0.3408203125，约为34.1%的波动率。请注意，我们还必须减去当前期权的市场价格（`1.2753`），因为我们是在求解根值。最后三个输入是起始值和停止值，`0.0`和`1.0`分别表示波动率的0%和100%。步长设置为0.001，即0.1%。测试这些值是否正确的一个简单方法是，首先使用实际波动率通过Black-Scholes公式计算期权的理论价格。
 - en: 'Let''s assume we have a call option with a strike of $75.00, stock price of
     $73.00, 20 days to maturity (approximately 0.05475 years), a volatility of 15
     percent, and a fixed rate of 0.01 percent; this will result in an option price
     of:'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设我们有一个执行价为75.00美元、股票价格为73.00美元、到期时间为20天（约0.05475年）、波动率为15%、固定利率为0.01%的看涨期权，这将导致期权价格为：
 - en: '[PRE7]'
+  id: totrans-77
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'We can now use this price to see if the bisection method works and solve for
     the implied volatility. In this case we can expect an implied volatility to be
     exactly the same as the volatility we put into the Black-Scholes formula; that
     is 15 percent:'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们现在可以使用这个价格来查看二分法是否有效，并求解隐含波动率。在这种情况下，我们可以预期隐含波动率将与我们输入到Black-Scholes公式中的波动率完全相同；即15%：
 - en: '[PRE8]'
+  id: totrans-79
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Delta hedging using Black-Scholes
+  id: totrans-80
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 使用Black-Scholes进行Delta对冲
 - en: A delta neutral portfolio is constructed by an option and the underlying instrument.
     The portfolio will, in theory, be immune against small changes in the underlying
     price. When talking about delta hedging, the hedge ratio of a derivative is used
     to define the amount of underlying price needed for each option. Delta hedging
     is the trading strategy that maintains a delta neutral portfolio for small changes
     in the underlying price.
+  id: totrans-81
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个Delta中性组合是由期权和基础工具构成的。理论上，该组合对基础价格的小幅变动免疫。在谈到Delta对冲时，衍生品的对冲比率用于定义每个期权所需的基础价格量。Delta对冲是一种交易策略，通过维持Delta中性组合来应对基础价格的小幅变化。
 - en: 'Briefly, let''s look at how to do this in practice. Suppose we have N derivatives.
     This needs to be hedged to protect against price movements. We then need to buy
     the underlying stock to create the hedge. The whole procedure can be described
     in three steps:'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
+  zh: 简单来说，我们来看一下如何在实践中操作。假设我们有N个衍生品。这需要进行对冲以防止价格波动。然后，我们需要购买基础股票以创建对冲。整个过程可以分为三个步骤：
 - en: N derivatives need to be delta hedged
+  id: totrans-83
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: N个衍生品需要进行Delta对冲
 - en: Buy underlying stock to protect derivatives
+  id: totrans-84
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 购买基础股票以保护衍生品
 - en: Rebalance hedge position on a regular basis
+  id: totrans-85
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 定期重新平衡对冲头寸
 - en: To determine how many stocks we need, we use the delta of the option, Δ. This
     tells us how much the option price changes for a change in price of the underlying
     price. The portfolio uses ![Delta hedging using Black-Scholes](img/Image1673.jpg)
     shares to be delta neutral; often there are 100 shares for each options contract.
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了确定我们需要多少股票，我们使用期权的 delta（Δ）。这告诉我们标的资产价格变化时，期权价格变化的幅度。投资组合使用 ![使用布莱克-斯科尔斯的
+    delta 对冲](img/Image1673.jpg) 股票来实现 delta 中性；通常每个期权合约对应 100 股股票。
 - en: The price of the underlying stock is constantly fluctuating, which leads to
     changes in the option prices. This means we also have to rebalance our portfolio.
     This is due to the time value of options and the change in the underlying price.
+  id: totrans-87
   prefs: []
   type: TYPE_NORMAL
+  zh: 标的股票的价格不断波动，这导致期权价格的变化。这意味着我们还必须重新平衡我们的投资组合。这是由于期权的时间价值和标的价格的变化。
 - en: 'Let''s use F# to calculate the number of stocks we need for a particular option
     to delta hedge:'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们使用 F# 来计算为某个特定期权进行 delta 对冲所需的股票数量：
 - en: '[PRE9]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: If we evaluate the last row, we'll obtain the number of shares needed to create
     a delta neutral hedge with 100 calls.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们评估最后一行，我们将得到创建 delta 中性对冲所需的股票数量，使用 100 个看涨期权。
 - en: '[PRE10]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: The answer is approximately 4880 shares needed to hedge the call options.
+  id: totrans-92
   prefs: []
   type: TYPE_NORMAL
+  zh: 答案是大约需要 4880 股股票来对冲这些看涨期权。
 - en: Exploring the volatility smile
+  id: totrans-93
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 探索波动率微笑
 - en: The volatility smile is a phenomenon frequently observed in the markets. This
     phenomenon is mostly explained by the assumptions made in the Black-Scholes formula.
     Black-Scholes assumes constant volatility throughout the life of an option. If
     the Black-Scholes formula was corrected for this behavior, by taking into account
     the nature of volatility being non-constant, we would end up with a flat volatility
     surface.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
+  zh: 波动率微笑是市场中常见的现象。这个现象通常可以通过布莱克-斯科尔斯公式中的假设来解释。布莱克-斯科尔斯假设期权生命周期内的波动率是恒定的。如果修正布莱克-斯科尔斯公式，考虑到波动率并非恒定，我们将得到一个平坦的波动率曲面。
 - en: Further, the volatility smile describes the volatility for a certain price of
     the option relative to the strike price of the same. The volatility surface is
     often referring to a three-dimensional graph of the volatility smile, where time
     to maturity and moneyness.
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
+  zh: 此外，波动率微笑描述的是期权某一价格相对于相同行权价的波动率。波动率曲面通常指的是波动率微笑的三维图表，其中包括到期时间和内在价值。
 - en: 'Moneyness is the ratio between the spot price of the underlying asset, S, and
     the strike price of the option, K:'
+  id: totrans-96
   prefs: []
   type: TYPE_NORMAL
+  zh: 内在价值是标的资产现货价格 S 和期权行权价格 K 之间的比率：
 - en: '![Exploring the volatility smile](img/4623OS_06_11.jpg)'
+  id: totrans-97
   prefs: []
   type: TYPE_IMG
+  zh: '![探索波动率微笑](img/4623OS_06_11.jpg)'
 - en: Next, we'll look at how to use F# to provide a graph for us where the volatility
     smile is computed from parametric regression from real market data.
+  id: totrans-98
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我们将看看如何使用 F# 提供一个图表，其中波动率微笑是通过从真实市场数据的参数回归计算得出的。
 - en: 'The following data is from Ericsson B options, from the OMX exchange in Sweden:'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下数据来自瑞典 OMX 交易所的爱立信 B 类期权：
 - en: '![Exploring the volatility smile](img/4623OS_06_12.jpg)'
+  id: totrans-100
   prefs: []
   type: TYPE_IMG
+  zh: '![探索波动率微笑](img/4623OS_06_12.jpg)'
 - en: 'Figure 3: Volatility smile for a warrant'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 3：认购权证的波动率微笑
 - en: 'As you can see in the following screenshot, the smile comes from the different
     implied volatility for the strike prices:'
+  id: totrans-102
   prefs: []
   type: TYPE_NORMAL
+  zh: 正如你在下面的截图中看到的，微笑曲线来源于不同的执行价格隐含波动率：
 - en: '![Exploring the volatility smile](img/4623OS_06_13.jpg)'
+  id: totrans-103
   prefs: []
   type: TYPE_IMG
+  zh: '![探索波动率微笑](img/4623OS_06_13.jpg)'
 - en: 'Figure 4: Volatility smile as points from market data'
+  id: totrans-104
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 4：来自市场数据的波动率微笑点
 - en: We can use polynomial regression to estimate the volatility smile from the points
     in the graph. This method was introduced in [Chapter 3](ch03.html "Chapter 3. Financial
     Mathematics and Numerical Analysis"), *Financial Mathematics and Numerical Analysis*;
     we'll build on the code from there. The polynomial will be of order two, which
     means a second degree polynomial, that will describe the expected volatility smile
     well.
+  id: totrans-105
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以使用多项式回归从图表中的点估算波动率微笑。这种方法在[第 3 章](ch03.html "第 3 章：金融数学与数值分析")《金融数学与数值分析》中介绍；我们将在那里构建的代码基础上进行扩展。该多项式的阶数为二，即二次多项式，将很好地描述预期的波动率微笑。
 - en: 'Let''s look at an application that will produce the plot in *Figure 5* using
     Math.NET and FSharpChart:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们看看一个应用程序，它将使用 Math.NET 和 FSharpChart 生成 *图 5* 中的图形：
 - en: '[PRE11]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'Now that we have our data in a tuple, we''ll use the spot price of the underlying
     price, which was 83.2 at the time the data was collected. The mlist is the list
     of the converted tuples with moneyness calculated for each one:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们已经将数据存储在一个元组中，我们将使用基础资产的现货价格，该价格在数据收集时为83.2。mlist是一个包含已计算每个元组的平值度的转换后元组列表：
 - en: '[PRE12]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'If you want to reproduce the previous plot, you can run the following line
     in F# Interactive:'
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你想重现之前的图表，可以在F# Interactive中运行以下代码行：
 - en: '[PRE13]'
+  id: totrans-111
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'The final step is to calculate the regression coefficients and use these to
     calculate the points for our curve. Then we will use a combined plot with the
     points and the fitted curve:'
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
+  zh: 最后的步骤是计算回归系数，并利用这些系数计算曲线上的点。然后我们将使用包含这些点和拟合曲线的组合图表：
 - en: '[PRE14]'
+  id: totrans-113
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'This is the code line to produce the combined plot with a title. The result
     will look as shown in the following screenshot:'
+  id: totrans-114
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是生成带标题的组合图表的代码行。结果将如以下截图所示：
 - en: '[PRE15]'
+  id: totrans-115
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: '![Exploring the volatility smile](img/4623OS_06_14.jpg)'
+  id: totrans-116
   prefs: []
   type: TYPE_IMG
+  zh: '![探索波动率微笑](img/4623OS_06_14.jpg)'
 - en: 'Figure 5: Volatility smile with polynomial regression curve'
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
+  zh: 图5：带有多项式回归曲线的波动率微笑
 - en: Summary
+  id: totrans-118
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we looked into using F# for investigating different aspects
     of volatility. Volatility is an interesting dimension of finance where you quickly
     dive into complex theories and models. Here it's very much helpful to have a powerful
     tool such as F# and F# Interactive. We've just scratched the surface of options
     and volatility in this chapter. There is a lot more to cover, but that's outside
     the scope of this book.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们探讨了如何使用F#来研究波动率的不同方面。波动率是金融学中一个有趣的维度，您可以快速深入到复杂的理论和模型中。在这里，拥有一个强大的工具，如F#和F#
+    Interactive，非常有帮助。我们在本章中只是稍微触及了期权和波动率的表面。还有很多内容需要讨论，但超出了本书的范围。
 - en: 'Most of the content here will be used in the trading system that we will develop
     in the following chapters of this book. In the next chapter, we''ll begin to look
     at the first pragmatic building blocks of our trading system: orders and order
     types. We''ll also cover some aspects of pre-trade risk and how F# can help us
     model these.'
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章中的大部分内容将用于我们将在接下来的章节中开发的交易系统。在下一章中，我们将开始研究我们交易系统的第一个务实构建模块：订单和订单类型。我们还将涵盖一些关于交易前风险的方面，以及F#如何帮助我们建模这些内容。
