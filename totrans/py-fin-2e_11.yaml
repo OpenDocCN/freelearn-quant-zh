@@ -1,0 +1,1056 @@
+- en: Chapter 11. Value at Risk
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In finance, implicitly or explicitly, rational investors always consider a
+    trade-off between risk and returns. Usually, there is no ambiguity to measure
+    returns. However, in terms of risk, we have numerous different measures such as
+    using variance and standard deviation of returns to measure the total risk, individual
+    stocks'' beta, or portfolio beta to measure market risk. In the previous chapters,
+    we know that the total risk has two components: market risk and firm-specific
+    risks. To balance between the benefit of return and the cost of risk, many measures
+    can be applied, such as the Sharpe ratio, Treynor ratio, Sortino ratio, and M2
+    performance measure (Modigliani and Modigliani performance measure). All of those
+    risk measures or ratios have a common format: a trade-off between benefits expressed
+    as risk-premium and risk expressed as a standard deviation, or beta, or **Lower
+    Partial Standard Deviation** (**LPSD**). On the other hand, those measures do
+    not consider a probability distribution. In this chapter, a new risk measure called
+    **Value at Risk** (**VaR**) will be introduced and applied by using real-world
+    data. In particular, the following topics will be covered:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Introduction to VaR
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Review of density and cumulative functions of a normal distribution
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Method I—Estimating VaR based on the normality assumption
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Conversion from 1-day risk to n-day risk, one-day VaR versus n-day VaR
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Normality tests
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Impact of skewness and kurtosis
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modified VaR measure by using including skewness and kurtosis
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Method II—Estimating a VaR based on historical returns
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Linking two methods by using Monte Carlo simulation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Backtesting and stress testing
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Introduction to VaR
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Up to now, we have several ways to evaluate risk for an individual stock or
+    a portfolio, such as variance, standard deviation of returns to measure the total
+    risk, or beta to measure the market risk of a portfolio or individual stocks.
+    On the other hand, many CEOs prefer a simple measure called **Value at Risk**
+    (**VaR**), which has the simple definition given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*"The maximum loss with a confidence level over a predetermined period."*'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'From the preceding definition, it has three explicit factors plus one implied
+    one. The implied factor or variable is our current position, or the value of our
+    current portfolio or individual stock(s). The preceding statement offers the maximum
+    possible loss in the future and this is the first factor. The second one is over
+    a specific time period. Those two factors are quite common. However, the last
+    factor is quite unique: with a confidence level or probability. Here are a few
+    examples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Example #1**: On February 7, 2017, we own 300 shares of International Business
+    Machine''s stocks worth $52,911\. The maximum loss tomorrow, that is, February
+    8, 2017, is $ 1,951 with a 99% confidence level.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Example #2**: Our mutual fund has a value of $10 million today. The maximum
+    loss over the next 3 months is $0.5 million at a 95% confidence level.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Example #3**: The value of our bank is $200 million. The VaR of our bank
+    is $10m with a 1% probability over the next 6 months.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Usually, there are two methods to estimate a VaR. The first method is based
+    on the assumption that our security or portfolio returns follow a normal distribution,
+    while the second method depends on the ranking of the historical returns. Before
+    discussing the first method, let''s review the concepts with respect to a normal
+    distribution. The density of a normal distribution is defined here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *f(x)* is the density function, *x* is an input variable, *μ* is the
+    mean and *σ* is the standard deviation. One function called `spicy.stats.norm.pdf()`
+    could be used to estimate the density. The function has three input values: *x*,
+    *μ*, and *σ*. The following code calls this function and verifies the results
+    manually according to the preceding formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the preceding code, we import the `sqrt()`, `exp()` functions plus pi to
+    make our code simpler. Setting μ=0, and σ=1, the preceding general normal distribution
+    density function collapses to a standard normal distribution; see its corresponding
+    density function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The default values for the second and third input values for the `spicy.stats.norm.pdf()`
+    function are zero and 1, respectively. In other words, with just one input value,
+    it represents a standard normal distribution; see the following code and how to
+    manually verify it:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following code generates a graph for a standard normal distribution where
+    the `spicy.stats.norm.pdf()` function takes just one input:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The graph is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For the VaR estimation, usually we would choose two confidence levels of 95%
+    and 99%. For the 95% (99%) confidence level, we actually look at the left tail
+    with a 5% (1%) probability. The following graph illustrates the concept of VaR
+    based on a standard normal distribution with a 95% confidence level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To generate a graph, three functions are applied. The purpose of the `matplotlib.pyplot.annotate()`
+    function is used to generate a text or an arrow with a text description at the
+    end of the arrow. The `str()` function will convert a number into a string. `matplotlib.pyplot.fill_between()`
+    will fill the specified area. The output graph is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Based on the assumption of normality, we have the following general form to
+    estimate VaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *VaR* is our value at risk, *position* is the current market value of
+    our portfolio, *μperiod* is the expected period return, *z* is a cut-off point
+    depending on the confidence level, and σ is the volatility of our portfolio. For
+    a normal distribution, *z*=2.33 for a 99% confidence level, and z=1.64 for a 95%
+    confidence level. Since we could use `scipy.stats.norm.ppf()` to get the z value,
+    the preceding equation could be rewritten as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Compare the preceding two equations. A careful reader should notice that the
+    signs in front of z are different. For the preceding equation, it has a positive
+    sign instead of the negative one shown in the previous equation. The reason is
+    that the z value estimated by applying `scipy.stats.norm.ppf()` would be negative;
+    see the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'When the time period is short, such as 1 day, we could ignore the impact of
+    *μperiod*. Therefore, we have the following simplest form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following program shows the 5% VaR of a hypothetical profit-and-loss probability
+    density function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The related graph is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here is the simplest example to estimate the maximum loss tomorrow. Assume
+    that we have 1,000 shares of IBM''s stock on February 7, 2017\. What is the maximum
+    loss tomorrow with a confidence level of 99%? To estimate the standard deviation
+    of daily returns, we use the last 5 years'' data. Actually, this is a decision
+    variable. We could use 1-year data or multiple-year data. Each approach has its
+    advantages and disadvantages. The standard deviation estimated based on a longer
+    period would be more stable because we have a much larger sample size. However,
+    some information in the remote past would definitely be outdated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The objective of printing the first line of the data is to show the closing
+    price is indeed on 2/7/2017\. The value of our holding is $168,543 and its 1-day
+    VaR is $4,604\. The second example is about the VaR over a 10-day period. To convert
+    a variance (standard deviation) on daily returns to an n-day variance (standard
+    deviation), we have the following formulas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For example, the annual volatility is equal to the daily volatility times the
+    square root of 252 ![Introduction to VaR](img/B06175_11_35.jpg). In order to convert
+    a daily mean return to an n-day mean return, we have the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Based on daily returns, we have the following general formulas for VaR with
+    a confidence level to estimate an n-day VaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Introduction to VaR](img/B06175_11_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following code shows the VaR for holding 50 shares of Wal-Mart stocks,
+    on the last day of 2016, over a 10-day period with a confidence level of 99%:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On December 31, 2016, the value of our holding is $2,650\. Our maximum loss
+    is $205 in the next 10 days with a confidence level of 99%. In the preceding program,
+    based on daily returns, we estimate both daily mean return and the standard deviation.
+    Then we convert them into a 10-day mean return and 10-day volatility. On the other
+    hand, actually we could calculate a 10-day return directly. After 10-day returns
+    available, the `scipy.mean()` and `scipy.std()` functions could be applied directly.
+    In other words, we don''t need to convert a daily mean and daily standard deviation
+    into a 10-day mean and 10-day standard deviation. The related code is given here.
+    To save space, the first 11 lines are not repeated:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our new result shows that the VaR is $209.11 compared with $205.03\. The percentage
+    of the underestimation is -0.01951126, about -2%. The following code estimate
+    the VaR for the Fama-French five value-weighted industry portfolios with a monthly
+    frequency. The dataset is available at the author''s website, [http://canisius.edu/~yany/python/ff5VWindustryMonthly.pkl](http://canisius.edu/~yany/python/ff5VWindustryMonthly.pkl).
+    Those five industries are Consumer, Manufacture, High Tech, Health, and Other.
+    The first and last several lines are shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following program estimates their VaR with $1,000 invested in each industry
+    portfolio with a 99% confidence level over the next period. Since the frequency
+    is monthly, the fixed period will be the next month:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: The VaR for those five industries are $122.95, $128.58, $129.92, $130.02, and
+    $149.85, respectively, for an equal holding of $1,000 invested in each industry.
+    Comparing those values, we could see that the Consumer industry has the lowest
+    risk while the industry defined as Other would have the highest maximum possible
+    loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Normality tests
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The first method to estimate VaR is based on a vital assumption that individual
+    stock or portfolio returns follow a normal distribution. However, in the real
+    world, we know that stock returns or portfolio returns do not necessarily follow
+    a normal distribution. The following program tests whether Microsoft returns satisfy
+    this assumption by using 5-year daily data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our null hypothesis is that Microsoft stock daily returns following a normal
+    distribution. Based on the preceding result, the null hypothesis is rejected since
+    the F-value is much higher than the critical value of 1.089 if we choose a 1%
+    significance level. Even if we reject the hypothesis based on just one stock,
+    some might argue that portfolio returns might satisfy this assumption. The next
+    program tests whether S&P500 daily returns follow a normal distribution. The ticker
+    symbol for S&P500 from Yahoo!Finance is `^GSPC`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: From the preceding results, we reject the normality assumption for S&P500\.
+    In other words, the market index, represented by S&P500 daily returns, does not
+    follow a normal distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Skewness and kurtosis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Based on the normality assumption, a VaR estimation considers only the first
+    two moments: mean and variance. If stock returns truly follow a normal distribution,
+    those two moments would fully define their probability distribution. From the
+    preceding sections, we know that this is not true. The first remedy is to include
+    other higher moments in addition to the first two moments. The third and fourth
+    moments are called skewness and kurtosis. For a stock or portfolio with n returns,
+    skewness is estimated by the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Skewness and kurtosis](img/B06175_11_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *skewness* is the skewness, *Ri* is the *i*th return, ![Skewness and
+    kurtosis](img/B06175_11_36.jpg) is the mean return, *n* is the number of returns,
+    and σ is the standard deviation of returns. The kurtosis reflects the impact of
+    extreme values because a power of 4 is very high. The kurtosis is usually estimated
+    by the following formula is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Skewness and kurtosis](img/B06175_11_14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For a standard moral distribution, it has a zero mean, unit variance, zero
+    skewness, and its kurtosis is 3\. Because of this, sometimes kurtosis is defined
+    as the preceding equation minus 3:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Skewness and kurtosis](img/B06175_11_15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Some textbooks distinguish those two definitions as kurtosis and excess kurtosis.
+    However, others simply label the preceding formula as kurtosis as well. Thus,
+    when we conduct a test to see whether the kurtosis of a time series is zero, we
+    have to know which benchmark is used. The following program generates 5 million
+    random numbers from a standard deviation and applies four functions to estimate
+    those four moments, that is, mean, standard deviation, skewness, and kurtosis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Since the kurtosis is close to zero for random numbers drawn from a standard
+    normal distribution, the `scipy.stats.kurtosis()` function should be based on
+    *Equation (11)* instead of *Equation (10)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modified VaR
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'From the previous discussion, we know that based on the assumption, that stock
+    returns follow a normal distribution. Because of this, the skewness and kurtosis
+    of returns are both assumed to be zero. However, in the real world, skewness and
+    excess kurtosis of many stock returns are not zero. As a consequence, the modified
+    VaR was developed to utilize those four moments instead of just two; see the following
+    definition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Modified VaR](img/B06175_11_16.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *z* is the value based on a normal distribution, *S* is the skewness,
+    *K* is kurtosis, *t* is an intermediate variable, and the `scipy.stats.ppf()`
+    function would offer a z-value for a given confidence level. The following program
+    offers two VaRs based on the normality assumption and based on the preceding formula,
+    that is, using all four moments. The number of shares is 500 at the end of year
+    2016\. The stock tested is **Walmart** (**WMT**). The confidence level is 99%
+    for a 1-day VaR:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: Based on the last two lines, we have a VaR of $876.84 based on the normality
+    and the modified VaR has a value of $1,500\. The percentage difference of those
+    two is 42%. This result suggests that ignoring the skewness and kurtosis would
+    understate VaR enormously.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VaR based on sorted historical returns
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We know that stock returns do not necessarily follow a normal distribution.
+    An alternative is to use sorted returns to evaluate a VaR. This method is called
+    VaR based on historical returns. Assume that we have a daily return vector called
+    *ret*. We sort it from the smallest to the highest. Let''s call the sorted return
+    vector *sorted_ret*. For a given confidence level, the one-period VaR is given
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR based on sorted historical returns](img/B06175_11_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *position* is our wealth (value of our portfolio), *confidence* is the
+    confidence level and n is the number of returns. The `len()` function shows the
+    number of observations and the `int()` function takes the integer part of an input
+    value. For example, if the length of the return vector is 200 and the confidence
+    level is 99%, then the second value (200*0.01) of the sorted returns, from the
+    smallest to the highest, times our wealth, will be our VaR. Obviously, if we have
+    a longer time series, that is, more return observations, our final VaR would be
+    more accurate. For owning 500 shares of Walmart, what is the maximum loss with
+    a 99% confidence level the next day? First, let''s look at several ways to sort
+    our data. The first one uses the `numpy.sort()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here is the second way to sort by using Python''s `pandas` module:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For an easy comparison, those three datasets are put side by side. The left
+    panel shows the original dataset. The middle one shows the result sorted by column
+    `A` first in ascending order, then by column `B` in descending order. The right
+    panel shows the result sorted by columns `A` then `B`, both in ascending order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR based on sorted historical returns](img/B06175_11_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The next two programs compare two methods used to estimate VaR: based on the
+    normality and based on sorting. To make our programs easier to understand, the
+    time period is just 1 day:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The formula used in the preceding program is *VaR=position*z*sigma*. The result
+    tells us that the holding is $26,503 and its 1-day VaR is $648 with a 99% confidence
+    level. The following program estimates the VaR for the same stock based on sorting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result shows that the 1-day VaR is $817\. Recall that the VaR based on
+    the normality is $648\. If the second method is more accurate, the first method
+    underestimates our potential loss by 20%. This is a huge number in terms of risk
+    evaluation! The following codes are for an n-day period based on sorting:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: There are two tricks in the preceding program. The first one is the summation
+    of a daily log return will be a 10-day log return. Then we convert a log return
+    to a percentage return. The second trick is how to generate a 10-day return. First,
+    we generate groups by using the `int()` function, that is, `int(i/nDays)`. Since
+    `nDays` has a value of 10, `int(i/10)` would generate 10 zeros, ten ones, ten
+    twos, and so on. The VaRs based on the three methods are $2,788, $2,223, and $1,301,
+    respectively. Obviously, there are some issues with method 3\. One of the concerns
+    is that for n-day periods, we have only 428 observations, that is, the size of
+    our sample might be too small. If we choose a 99% confidence interval, we have
+    to choose the fourth lowest return in our calculation. This would definitely cause
+    some issues here.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simulation and VaR
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In the previous sections, we have learned that there are two ways to estimate
+    VaR for an individual stock or for a portfolio. The first method depends on the
+    assumption that stock returns follow a normal distribution. The second one uses
+    the sorted historical returns. What is the link between those two methods? Actually,
+    Monte Carlo simulation could be served as a link. First, let's look at the first
+    method based on the normality assumption. We have 500 Walmart shares on the last
+    day of 2016\. What is the VaR tomorrow if the confidence level is 99%?
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The VaR is $641.29 for tomorrow with a confidence level of 99%. Here is how
+    Monte Carlo simulation works. First, we calculate the mean and standard deviation
+    based on daily returns. Since stock returns are assumed to follow a normal distribution,
+    we could generate 5,000 returns with the same mean and standard deviation. If
+    our confidence level is 99%, then the 50th return from the lowest sorted returns
+    would be our cut-off point, *5000*0.01=50*. The code is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: Monte Carlo Simulation offers a quite similar value of $627.34 compared with
+    $641.29 based on the formula.
+  prefs: []
+  type: TYPE_NORMAL
+- en: VaR for portfolios
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In [Chapter 9](ch09.html "Chapter 9. Portfolio Theory"), *Portfolio Theory*,
+    it was shown that when putting many stocks in our portfolio, we could reduce or
+    eliminate firm-specific risk. The formula to estimate an n-stock portfolio return
+    is given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR for portfolios](img/B06175_11_18.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here *Rp,t* is the portfolio return at time *t*, *wi* is the weight for stock
+    *i*, and *Ri*, *t* is the return at time *t* for stock *i*. When talking about
+    the expected return or mean, we have a quite similar formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR for portfolios](img/B06175_11_19.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, ![VaR for portfolios](img/B06175_11_37.jpg) is the mean or expected portfolio
+    return, ![VaR for portfolios](img/B06175_11_38.jpg) is the mean or expected return
+    for stock *i*. The variance of such an n-stock portfolio is given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR for portfolios](img/B06175_11_20.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, ![VaR for portfolios](img/B06175_11_39.jpg) is the portfolio variance,
+    σi,j is covariance between stocks i and j; see the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR for portfolios](img/B06175_11_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The correlation between stocks *i* and *j*, *ρi,j*, is defined here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VaR for portfolios](img/B06175_11_22.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'When stocks are not positively perfectively correlated, combining stocks would
+    reduce our portfolio risk. The following program shows that the VaR of the portfolio
+    is not simply the summation or weighted VaR of individual stocks within the portfolio:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: The VaR for our current portfolio of $5 million is $109,356\. However, the summation
+    of the VaR for those three stocks based on our weights is $147,190\. This result
+    verifies the diversification effect by choosing different stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Backtesting and stress testing
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In finance, a stress test could be viewed as an analysis or simulation designed
+    to determine the ability of a given financial instrument, such as a VaR to deal
+    with an economic crisis. Since the first method to estimate a VaR is based on
+    the assumption that stock returns following a normal distribution, its accuracy
+    depends how far, in the real world, stock returns deviate from this assumption.
+    A key component to the implementation of model-based risk management is model
+    validation. That is, we need some way to determine whether the model chosen is
+    accurate and performs consistently. This step is quite important both to firms
+    and their regulators. According to Lopez (2000), we have the following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Name | Objectives | Methods |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Backtesting | Compare observed outcomes with a model''s expected output |
+    Forecast evaluation established empirical issue with a large academic literature
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Stress testing | Examples a model''s expected outcomes under extreme conditions
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Projection analysis
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Outlier analysis
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Scenario analysis and case studies
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '|'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table 11.1 Backtesting versus stress testing
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'Assume that we use just 1 year''s data to estimate 1-day VaR with a 99% confidence
+    level for holding 1,000 shares of IBM on February 7, 2017\. The program is shown
+    here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Based on the preceding result, our holding is $122,599 and the maximum loss
+    next day is $3,187\. Remember that the confidence level is 99% and it means that
+    during this 1-year period, we should expect about 2.5 violations (0.01*252). The
+    value of 252 is the number of trading days within 1 year. The following program
+    shows the number of violations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Again, we expect to see 2.5 violations based on our model. However, we have
+    four. Based on a 99% confidence level, we expected that returns worse than -2.599%
+    should be around 1%. Unfortunately, based on 1 year's data, this ratio is 1.58%.
+    If based on 55 years' historical data for this specific stock, the frequency of
+    worse returns than this ratio is more than double, 3.66% versus 1%. This indicates
+    that the underlying model underestimates the potential maximum loss.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Expected shortfall
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In the previous sections, we have discussed many issues related to VaR, such
+    as its definition and how to estimate it. However, one major concern with VaR
+    is that it depends on the shape of the distribution of the underlying security
+    or portfolio. If the assumption of normality is close to hold, then VaR is a reasonable
+    measure. Otherwise, we might underestimate the maximum loss (risk) if we observe
+    a fat tail. Another problem is that the shape of the distribution after a VaR
+    is hit is ignored. If we have a fatter left tail than a normal distribution describes,
+    then our VaR would underestimate the true risk. The opposite is true: if the left
+    tail is thinner than the normal distribution, our VaR would overestimate the true
+    risk. **Expected shortfall** (**ES**) is the expected loss if a VaR is hit, and
+    it is defined here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Expected shortfall](img/B06175_11_23.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *ES* is the expected shortfall and α is our significant level, such as
+    1% or 5%. Based on the assumption of normality, for our Python presentation, we
+    have the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Expected shortfall](img/B06175_11_24.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The expected shortfall could be estimated in the following way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Expected shortfall](img/B06175_11_25.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following program shows how to generate returns from a normal distribution,
+    then estimates both the VaR and ES:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Similarly, we could derive the formula to estimate the expected shortfall based
+    on historical returns. In a sense, the expected shortfall is the average loss
+    based on returns with a lower value than the VaR threshold. Assume that we have
+    n return observations. The expected shortfall could be defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Expected shortfall](img/B06175_11_26.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *ES* is the expected shortfall, *position* is the value of our portfolio,
+    *m* is the number of observations which are worse than our cut-off point specified
+    by the given confidence level, *Ii* is a dummy variable which takes a value of
+    1 for returns less than *Rcutoff* and zero otherwise, *Ri* is the *i*th return,
+    *Rcutoff* is the cutoff return determined by a given confidence level, n is the
+    number of total return observations, m is the number of returns less than the
+    cutoff return. For example, if we have 1,000 observations and the confidence level
+    is 99%, then the cutoff return will be the 10th observation of the returns sorted
+    from the lowest to the highest. The expected shortfall will be the average loss
+    of those 10 worst scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Assume that on the last day of 2016, we own 500 shares of Walmart stocks. Assume
+    that we care about the next day''s maximum loss with a confidence level of 99%.
+    Based on the ranking of historical returns, what is the VaR and the expected shortfall?
+    The following code offers an answer:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Since there are 11 returns are less the 12th returns, the expected shortfall
+    will be the average of those 12 returns times our portfolio market value on the
+    evaluation day:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'There are three objectives of this dataset:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Understand the concepts and methodology related to a VaR
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Estimate a VaR for individual stocks
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Estimate a VaR for a portfolio
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The question is: What are your VaRs for each stock and for an equal-weighted
+    portfolio over 10 days for a 99% confidence interval? Assume that the data period
+    is from February 7, 2012 to February 7, 2017 and you have a $1m investment (position
+    in Equation 1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| i | Company name | Ticker | Industry |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | Microsoft Corporation | MSFT | Application software |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | Apple Inc. | AAPL | Personal computer |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | Home Depot, Inc. | HD | Home improvement services |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | Citigroup Inc. | C | Money Center Banks |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | Wal-Mart Stores, Inc. | WMT | Discount, variety stores |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 6 | General Electric Corporation | GE | Technology |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The concrete steps are given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Retrieve the daily data from Yahoo! Finance.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Estimate the daily returns.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Apply the following formula to estimate the VaR:![Appendix A – data case 7 –
+    VaR estimation for individual stocks and a portfolio](img/B06175_11_27.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Estimate the VaR based on sorted historical returns.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If possible, use VBA, R, SAS, or Matlab to automate the process.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'The most commonly used parameters for the VaR are 1% and 5% probabilities (99%
+    and 95% confidence levels) and 1-day and 2-week horizons. Based on the assumption
+    of normality, we have the following general form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_28.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *position* is the current market value of our portfolio, *µperiod* is
+    the expected period return, *z* is the cut-off point depending on a confidence
+    level, and σ is the volatility. For a normal distribution, z=2.33 for a 99% confidence
+    level and z=1.64 for a 95% confidence level. When the time period is short, such
+    as 1 day, we could ignore the impact of *µperiod*. Thus, we have the simplest
+    form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_29.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Estimate the VaR based on the normality assumption.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If the underlying security follows a normal distribution, the VaR formula will
+    be as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_30.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For 99% and 95% confidence levels, *Equation (5)* becomes the following formulas:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Confidence level | Formula |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 99% | ![Appendix A – data case 7 – VaR estimation for individual stocks and
+    a portfolio](img/B06175_11_40.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 95% | ![Appendix A – data case 7 – VaR estimation for individual stocks and
+    a portfolio](img/B06175_11_41.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Estimation of an n-day VaR depends on how to calculate the n-day return and
+    standard deviation. Transformations are based on the following equation between
+    the variances of different frequencies:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_31.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For example, the annual volatility is equal to the daily volatility times the
+    square root of 252 ![Appendix A – data case 7 – VaR estimation for individual
+    stocks and a portfolio](img/B06175_11_42.jpg). Based on the daily return, we have
+    the following general formulas for the VaR with a 99% or a 95% confidence level:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_32.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, ![Appendix A – data case 7 – VaR estimation for individual stocks and
+    a portfolio](img/B06175_11_43.jpg) is the expected daily returns, n is the number
+    of days, ![Appendix A – data case 7 – VaR estimation for individual stocks and
+    a portfolio](img/B06175_11_44.jpg) is the daily volatility, ![Appendix A – data
+    case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_45.jpg)
+    is an n-day volatility, confident is the confidence level, such as 99% or 95%,
+    and p is the position. If we don''t know the expected returns and we assume the
+    expected mean return is the same as the realized mean return, then we have the
+    following formulas instead:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_33.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'For the confidence levels of 99% and 95%, we have the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Appendix A – data case 7 – VaR estimation for individual stocks and a portfolio](img/B06175_11_34.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Please refer to the following articles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Jorion, Philippe, Value at Risk, 2nd edition, McGraw-Hill, 2001*'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Lopez, Jose A., 2000, An Academic Perspective on Backtesting and Stress-Testing
+    Presentation for Credit Risk Models and the Future of Capital Management, Federal
+    Reserve Bank of San Francisco*, [http://www.frbsf.org/economic-research/files/lopezbktesting.pdf](http://www.frbsf.org/economic-research/files/lopezbktesting.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Wikiperia*, *Value at Risk*, [https://en.wikipedia.org/wiki/Value_at_risk](https://en.wikipedia.org/wiki/Value_at_risk)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Exercises
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: What is the simplest definition of a VaR? What are the differences between a
+    VaR and variance and standard deviation and beta?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Assume that we have a plan to form a two-stock portfolio. The confidence level
+    is 99% and number of period is 10 days. If the VaR for the first stock is x while
+    the VaR for the second stock is y, is the portfolio VaR the weighted individual
+    stock's VaR, that is, *VaR(portfolio) = wA*x + wB*y*, where *WA* is the weight
+    for stock *A* while *wB* is the weight for stock B? Explain.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Do IBM's returns follow a normal distribution? Are their skewness and kurtosis
+    zero and 3 (excess kurtosis is zero)?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: What are the values of skewness and kurtosis for a normal distribution? Generate
+    n random numbers by using `rnorm()` to support your conclusion.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a Python function to estimate mean, standard deviation, skewness, and
+    kurtosis of a given ticker; for example, `moments4("ticker",begdate,enddate)`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Assuming that we own 134 shares of Microsoft; what is the total value today?
+    What is the maximum loss tomorrow with a 95% confidence level? What is the value
+    if our holding period is 1 month instead of 1 day?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Repeating the last question of 11.4 by using a monthly return instead of a daily
+    return, is the answer different from that in 11.4?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Our portfolio has 100 shares of IBM, and 300 shares of Microsoft. What is the
+    VaR with a 99% confidence level for our 1-day holding period?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To estimate a VaR for Dell over 1 month, we could convert the daily VaR to a
+    monthly VaR or calculate the VaR from the monthly data directly. Are they different?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: When we estimate a VaR, we could use different time periods, such as over the
+    past year or past 5 years. Does this make a difference? Use a few tickers to explore
+    and comment on your results.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Comment on the different VaR approaches, such as those based on the normality
+    assumption, historical returns, and the modified VaR.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If a fund has a 10% invested in IBM, 12% with Google, and the rest with Walmart,
+    what is the volatility of the portfolio?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the weights are 10% for IBM stocks, 12% for Dell, 20% for Walmart, and the
+    rest of them for a long-term Treasury 10-year bond, what is the volatility of
+    the portfolio?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Based on 11.11, if the portfolio value is $10 million, what is the VaR with
+    a 99% confidence level over the next 6 months?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Use a 99% confidence level and 10 trading days as your holding period to estimate
+    a VaR based on the historical returns method: 100 shares IBM, 200 shares Citigroup,
+    200 shares Microsoft, and 400 shares Walmart.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Is it true that a VaR based on a normality assumption is usually less than a
+    VaR based on historical returns?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_IND
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: You could use a rolling window to a stock to show your result (answer). Alternatively,
+    you could use several stocks.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Based on the code for the skewness, write a Python function for kurtosis. Compare
+    your function with the function of `scipy.stats.kurtosis()`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If our holding period is not 1 day, what is the format (formulas) to estimate
+    a VaR based on our historical returns?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If the holding period is 2 weeks (10 trading days), how do you estimate a VaR
+    based on the historical return data?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: What is the maximum possible loss (VaR) if our holdings for IBM, Dell, and Walmart
+    stocks are 100, 200, and 500 shares, respectively? The confidence level is 99%
+    and the holding period is 2 weeks.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a Python program to generate a VaR using historical value. The structure
+    of the function will be `VaR_historical(ticker, confidence_level, n_days)`.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter, an important risk measure called the **Value at Risk** (**VaR**)
+    was discussed in detail. To estimate the VaR for individual stocks or portfolios,
+    the two most popular methods are explained: based on the normality assumption
+    and based on the sorting of historical returns. In addition, we have discussed
+    the modified VaR method which considers the third and fourth moments in addition
+    to the first two moments of returns. In [Chapter 12](ch12.html "Chapter 12. Monte
+    Carlo Simulation"), *Monte Carlo Simulation*, we explain how to apply simulation
+    to finance, such as simulating stock price movements and returns, replicating
+    the Black-Scholes-Merton options model, and pricing some exotic options.'
+  prefs: []
+  type: TYPE_NORMAL

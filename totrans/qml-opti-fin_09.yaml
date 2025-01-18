@@ -1,0 +1,1109 @@
+- en: '10'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Variational Quantum Eigensolver
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Parameterised quantum circuits can find many possible applications outside
+    the quantum machine learning use cases considered in the previous chapters. They
+    can be used to solve problems as diverse as portfolio optimisation   [[168](Biblography.xhtml#XKolotouros2021)]
+    and protein folding  [[248](Biblography.xhtml#XRobert2019)]. However, one aspect
+    remains the same regardless of the specifics of the particular algorithm: the
+    construction of a quantum state with desired characteristics through an optimal
+    PQC configuration (ansatz) and an optimal set of adjustable PQC parameters. This,
+    in turn, is done through the minimisation of some cost function – it can be a
+    classification error in the case of a QNN-based classifier or a distance between
+    two distributions in the case of QCBM.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Variational Quantum Eigensolver (VQE) is a PQC-based algorithm that aims
+    to find the smallest eigenvalue (the lowest energy) of a problem Hamiltonian.
+    As we know from Chapter [3](Chapter_3.xhtml#x1-630003), the objective functions
+    of many NP-hard combinatorial optimisation problems can be encoded in the Hamiltonians
+    of quantum systems – thus finding the ground state of the Hamiltonian gives us
+    the minimum of the objective function. The VQE was originally proposed in  [[231](Biblography.xhtml#XPeruzzo2014)]
+    and quickly became one of the most popular tools for experimenting with the wide
+    range of optimisation problems solvable on NISQ devices  [[153](Biblography.xhtml#XKandala2017), [215](Biblography.xhtml#XMoll2018)].
+    The variational part of the algorithm refers to the systematic search for the
+    best possible approximation of the ground state by trying various PQC ansätze
+    and configurations of adjustable PQC parameters – the variational approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.1 The Variational Approach
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let us start with recollecting the details of training discriminative (QNN)
+    and generative (QCBM) models. In both cases our task was to find an optimal configuration
+    of PQC parameters (e.g., rotation angles of adjustable one-qubit gates) such that
+    the resulting quantum state had the desired properties: we could either sample
+    from the encoded probability distribution (generative model) or obtain a class
+    label for the given sample (discriminative model). The process of finding an optimal
+    configuration of PQC parameters is called *learning* when we are dealing with
+    QML use cases. This learning can be done either in a differentiable or in a non-differentiable
+    way, but it always consists of the minimisation of some cost function through
+    varying the adjustable circuit parameters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: What if the cost function we want to minimise is encoded in the problem Hamiltonian
+    and the task is formulated as finding its ground state? In Chapter [3](Chapter_3.xhtml#x1-630003),
+    we saw how this problem can be solved on a quantum annealer. But it is also possible
+    to find the lowest energy state of a quantum system (or at least a good approximation)
+    using a gate model quantum computer within the PQC framework.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The characteristic equation for the Hamiltonian ℋ reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ &#124;ψi⟩ = Ei &#124;ψi⟩, ](img/file840.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where ![|ψi⟩](img/file841.jpg) is an eigenstate associated with the eigenvalue
+    *E*[i]. The objective is to find the smallest eigenvalue *E*[0] (the lowest energy)
+    of ℋ corresponding to the ground state (the lowest energy state) ![|ψ0 ⟩](img/file842.jpg).
+    This would be a straightforward task if the latter was known since the eigenvalue
+    (energy) of ℋ is simply the expectation of ℋ:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨ψi&#124;ℋ &#124;ψi⟩ = ⟨ψi&#124;Ei &#124;ψi⟩ = Ei ⟨ψi&#124;ψi⟩ = Ei. ](img/file843.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: We will explain below how this expectation is calculated on a quantum computer.
+    However, in most cases the ground state is not known. In fact, the task is to
+    find the ground state that encodes the solution to the optimisation problem by
+    searching for the state that minimises the expectation value of ℋ. What we can
+    do is to construct a progressively better approximation of the ground state, yielding
+    a tighter and tighter upper bound for the ground state energy *E*[0].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The variational approach is motivated by the spectral theorem introduced in
+    Chapter [1](Chapter_1.xhtml#x1-220001), which allows us to expand the Hermitian
+    Hamiltonian ℋ as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ ℋ = Ei &#124;ψi⟩⟨ψi&#124;. i ](img/file844.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Assume that we constructed a state ![|ψ⟩](img/file845.jpg), which is an approximation
+    of the true ground state ![|ψ0 ⟩](img/file846.jpg). As we know from Chapter [1](Chapter_1.xhtml#x1-220001),
+    the expectation value of ℋ in state ![|ψ ⟩](img/file847.jpg) is ⟨*ψ*|ℋ![|ψ⟩](img/file848.jpg).
+    Substituting ℋ given by ([10.1](#x1-2030001)) into this, we obtain, by linearity,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ∑ ⟨ψ&#124;ℋ &#124;ψ⟩ = ⟨ψ&#124; Ei &#124;ψi⟩⟨ψi&#124; &#124;ψ⟩ ∑ i
+    ∑ = Ei ⟨ψ&#124;ψi⟩⟨ψi&#124;ψ ⟩ = Ei&#124;⟨ψ,ψi⟩&#124;2 . i i ](img/file849.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Expression ([10.1](#x1-2030001)) shows that the expectation of ℋ on any state ![|ψ⟩](img/file850.jpg)
+    can be expressed as a linear combination of the eigenvalues of ℋ with all weights
+    greater than or equal to zero, since |![⟨ψ, ψ ⟩ i](img/file851.jpg)|² ≥ 0 for
+    each *i*. Therefore, we obtain
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨ψ&#124;ℋ &#124;ψ ⟩ ≥ E0, ](img/file852.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: since *E*[0] is the smallest eigenvalue of ℋ and all coefficients (weights)
+    in the linear combination ([10.1](#x1-2030001)) are non-negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The role of PQC is to produce the candidate state ![|ψ ⟩](img/file853.jpg).
+    The *variational* part of the algorithm consists of iterative improvements of
+    the candidate state (iterative updates of the adjustable parameters). This is
+    something that can be done as a classical part of the hybrid quantum-classical
+    protocol. The quantum part of the algorithm consists of running the PQC and then
+    measuring ℋ on the constructed quantum state in order to obtain the expectation
+    value of ℋ.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The variational approach allows us to solve hard optimisation problems encoded
+    in the Hamiltonian on the digital gate model quantum computer – an alternative
+    to adiabatic quantum computing since not all optimisation problems can be efficiently
+    formulated in a QUBO format.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.2 Calculating Expectations on a Quantum Computer
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The key element of the VQE algorithm is the calculation of the expectation value.
+    We now show how this can be performed on a quantum computer. We start with the
+    one-qubit case and then generalise the proposed approach to the two-qubit and
+    multi-qubit cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.2.1 The one-qubit case
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Consider the simplest case of a one-qubit system. Since any 2 × 2 unitary and
+    Hermitian matrix can always be decomposed into a sum of the Pauli matrices X,
+    Y, Z and an identity matrix I (more on this in Section [10.2.3](#x1-2070003)),
+    we can represent any one-qubit Hamiltonian as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ = aX + bY+ cZ + dI, ](img/file854.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where *a*, *b*, *c*, and *d* are some real coefficients. For a given state ![|ψ
+    ⟩](img/file855.jpg), the expectation value of the Hamiltonian ([10.2.1](#x1-2050001))
+    is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨ℋ ⟩ ≡ ⟨ψ &#124;ℋ &#124;ψ ⟩ = a ⟨ψ&#124;X &#124;ψ ⟩+ b⟨ψ &#124;Y &#124;ψ⟩
+    + c⟨ψ&#124;Z &#124;ψ ⟩+ d⟨ψ &#124;I &#124;ψ⟩ . ](img/file856.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The expectation value of ℋ is computed by adding the expectation values of all
+    its terms, which means that we can compute the expectation values of the Pauli
+    terms independently and then sum them up to obtain ![⟨ℋ ⟩](img/file857.jpg). We
+    can do it by first constructing the state ![|ψ ⟩](img/file858.jpg) with the help
+    of a PQC and then by performing measurement in the computational basis. The cycle
+    of constructing the state and performing measurement should be repeated a sufficient
+    number of times in order to obtain accurate statistics. Let us go through the
+    terms of the Hamiltonian ([10.2.1](#x1-2050001)) one by one to see how it can
+    be done.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We start with the last term, which is the identity operator I multiplied by
+    the coefficient *d*. This is a trivial case and we do not even need to run a quantum
+    circuit to compute its expectation value, since the expectation value of I is
+    1:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨ψ&#124;I &#124;ψ⟩ = ⟨ψ &#124;ψ ⟩ = 1, ](img/file859.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: so that this term will contribute *d* to ![⟨ℋ ⟩](img/file860.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We move now to the next term, *c*Z. The measurement is performed in the computational
+    basis, which is the *z*-basis. In this basis, ![|ψ⟩](img/file861.jpg) can be represented
+    as a superposition of the basis states ![|0⟩](img/file862.jpg) and ![|1⟩](img/file863.jpg)
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ ⟩ = αz &#124;0⟩+ βz &#124;1⟩, ](img/file864.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with *α*[z]*,β*[z] ∈ℂ. The expectation ⟨*ψ*|Z![|ψ⟩](img/file865.jpg) is then
+    calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ⟨*ψ*&#124;Z![&#124;ψ ⟩](img/file866.jpg) | = &#124;*α*[z]&#124;² ⟨0&#124;Z![&#124;0⟩](img/file867.jpg)
+    + *α* [z]^∗*β* [z] ⟨0&#124;Z![&#124;1⟩](img/file868.jpg) + *α*[z]*β*[z]^∗⟨1&#124;Z![&#124;0⟩](img/file869.jpg)
+    + &#124;*β* [z]&#124;² ⟨1&#124;Z![&#124;1⟩](img/file870.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = &#124;*α*[z]&#124;²![⟨0&#124;0⟩](img/file871.jpg)− *α* [z]^∗*β* [z]![⟨0&#124;1⟩](img/file872.jpg)
+    + *α*[z]*β*[z]^∗![⟨1&#124;0⟩](img/file873.jpg)−&#124;*β* [z]&#124;²![⟨1&#124;1⟩](img/file874.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = &#124;*α*[z]&#124;² −&#124;*β* [z]&#124;²*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: using the definition of the Z-gate (Chapter [6](Chapter_6.xhtml#x1-1190006))
+    and orthogonality of the basis states.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By definition, |*α*[z]|² and |*β*[z]|² are the probabilities that after the
+    *z*-basis measurement, the quantum state ![|ψ ⟩](img/file875.jpg) will become
+    ![|0⟩](img/file876.jpg) or ![|1⟩](img/file877.jpg) respectively. In order to find
+    that value, we should run the quantum circuit (to construct state ![|ψ⟩](img/file878.jpg))
+    and then perform measurement *N* times. The probability of finding a qubit in
+    state ![|0⟩](img/file879.jpg) is then estimated as *n*[0]*∕N*, where *n*[0] is
+    the number of state ![|0⟩](img/file880.jpg) measurements. Similarly, the probability
+    of finding a qubit in state ![|1⟩](img/file881.jpg) can be estimated as *n*[1]*∕N*,
+    where *n*[1] is the number of state ![|1⟩](img/file882.jpg) measurements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Therefore, the contribution of the Z-term to ![⟨ℋ ⟩](img/file883.jpg) is given
+    by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![c⟨ψ&#124;Z &#124;ψ⟩ = cn0 −-n1-. N ](img/file884.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Now we can move to the first two terms on the right side of ([10.2.1](#x1-2050001)).
+    Recall that ![|0⟩](img/file885.jpg) and ![|1⟩](img/file886.jpg) are the eigenstates
+    of Z with corresponding eigenvalues +1 and −1, namely
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Z &#124;0⟩ = &#124;0⟩ and Z &#124;1⟩ = − &#124;1⟩. ](img/file887.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Furthermore, the eigenstates of X are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ &#124;0⟩+ &#124;1⟩ &#124;0⟩− &#124;1⟩ &#124;+ ⟩ = --√----- and &#124;−
+    ⟩ =---√----, 2 2 ](img/file888.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and the eigenstates of Y are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ &#124;0⟩+ i &#124;1⟩ &#124;0⟩− i &#124;1⟩ &#124;R⟩ = ---√----- and &#124;L⟩
+    = ---√-----. 2 2 ](img/file889.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Their corresponding eigenvalues also are +1 and −1, so that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![X &#124;+ ⟩ = &#124;+ ⟩, X &#124;− ⟩ = − &#124;− ⟩, Y &#124;R ⟩ = &#124;R⟩
+    , Y &#124;L⟩ = − &#124;L⟩. ](img/file890.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Therefore, the quantum state ![|ψ ⟩](img/file891.jpg) can also be decomposed
+    into the superposition of the basis states {![|R ⟩](img/file892.jpg)*,*![|L⟩](img/file893.jpg)}
+    (*y*-basis) and {![|+⟩](img/file894.jpg)*,*![|− ⟩](img/file895.jpg)} (*x*-basis):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ ⟩ = αx &#124;+⟩ + βx &#124;− ⟩ = αy &#124;R⟩+ βy &#124;L⟩. ](img/file896.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: If we can perform measurement in the *x*-basis and the *y*-basis, the expectations
+    ⟨*ψ*|X![|ψ⟩](img/file897.jpg) and ⟨*ψ*|Y![|ψ ⟩](img/file898.jpg) can be calculated
+    in exactly the same way as the expectation ⟨*ψ*|Z![|ψ⟩](img/file899.jpg), namely
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![a ⟨ψ&#124;X &#124;ψ ⟩ = a n+-−-n−-, b⟨ψ&#124;Y &#124;ψ ⟩ = b nR-−-nL. N
+    N ](img/file900.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, *n*[+] and *n*[−] are the numbers of measurements in the *x*-basis that
+    correspond, respectively, to the ![|+ ⟩](img/file901.jpg) and ![|− ⟩](img/file902.jpg)
+    outcomes, and *n*[R] and *n*[L] are the numbers of measurements in the *y*-basis
+    that correspond, respectively, to ![|R⟩](img/file903.jpg) and ![|L ⟩](img/file904.jpg)
+    outcomes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, it may be the case that we can only perform measurement in the *z*-basis.
+    In this case, we need to apply some additional gates to ![|ψ⟩](img/file905.jpg)
+    before the measurement, such that the probability of measuring ![|0⟩](img/file906.jpg)
+    in the *z*-basis is the same as the probability of measuring ![|+ ⟩](img/file907.jpg)
+    in the *x*-basis if we are calculating ⟨*ψ*|X![|ψ⟩](img/file908.jpg), or the probability
+    of measuring ![|0⟩](img/file909.jpg) in the *z*-basis is the same as the probability
+    of measuring ![|R⟩](img/file910.jpg) in the *y*-basis if we are calculating ⟨*ψ*|Y![|ψ⟩](img/file911.jpg).
+    Denoting these gates H and G, we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![H &#124;ψ⟩ = H(αx &#124;+ ⟩+ βx &#124;− ⟩) = αx &#124;0⟩ + βx &#124;1⟩,
+    ](img/file912.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with H![|+ ⟩](img/file913.jpg) = ![|0⟩](img/file914.jpg) and H![|− ⟩](img/file915.jpg)
+    = ![|1⟩](img/file916.jpg) and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![G &#124;ψ⟩ = G(αy &#124;R⟩ + βy &#124;L⟩) = αy &#124;0⟩+ βy &#124;1⟩, ](img/file917.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with G![|R ⟩](img/file918.jpg) = ![|0 ⟩](img/file919.jpg) and G![|L ⟩](img/file920.jpg)
+    = ![|1⟩](img/file921.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The operators H (which is simply the Hadamard operator) and G admit the matrix
+    representations
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ⌋ ⌊ ⌋ -1- 1 1 -1- 1 − i H = √2--⌈ ⌉ and G = √2-⌈ ⌉ . 1 − 1 1 i ](img/file922.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 10.2.2 The two-qubit case
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'What if the problem Hamiltonian has terms involving more than a single qubit?
+    Consider a Hamiltonian with terms consisting of tensor products of Pauli matrices
+    such as X⊗Y, Y⊗Z, etc. The general approach remains the same: the expectation
+    value of the Hamiltonian consists of the sum of expectation values of all its
+    terms. Thus, we need to know how to calculate the expectation value of the product
+    of Pauli matrices. Without loss of generality, consider the X⊗Y term – as the
+    very same logic applies to all other Pauli tensor products.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Recall that X⊗Y is the tensor product of the two Pauli operators X and Y, each
+    acting on their own qubits, not a sequential application of gates X and Y to the
+    same qubit. Indeed, given for two unitary operators U[1] and U[2], the tensor
+    product U[1] ⊗U[2] acts on the state of a two-qubit system as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ( ) (U1 ⊗ U2) &#124;ψ1⟩ ⊗ &#124;ψ2 ⟩ = U1 &#124;ψ1⟩ ⊗ U2 &#124;ψ2
+    ⟩ . ](img/file923.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: We immediately see from ([10.2.2](#x1-2060002)) that the tensor product of eigenvectors
+    of X and Y is an eigenvector of X⊗Y. Indeed, if U![|ψU ⟩](img/file924.jpg) = *E*[U]![|ψU⟩](img/file925.jpg)
+    with *E*[U] ∈ℂ, for U ∈{X*,*Y}, then
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![(X⊗ Y) |ψX⟩⊗ |ψY⟩ = X |ψX⟩⊗ Y |ψY ⟩ = EX |ψX⟩⊗ EY |ψY⟩ = EXEY |ψX ⟩⊗ |ψY
+    ⟩. ](img/file926.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We also remember that all eigenvectors of Pauli operators have eigenvalues equal
+    to either +1 or −1 (as detailed in ([10.2.1](#x1-2050001)) and ([10.2.1](#x1-2050001))).
+    Now, for the X⊗Y Pauli term, the eigenvectors with eigenvalue +1 are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|+ ⟩⊗ |R⟩ = |+R ⟩ and |− ⟩ ⊗ |L⟩ = |− L⟩, ](img/file927.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and the eigenvectors with eigenvalue −1 are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|+ ⟩⊗ |L⟩ = |+L ⟩ and |− ⟩⊗ |R ⟩ = |− R⟩, ](img/file928.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: which follow directly from the computations
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![(X⊗ Y) &#124;+R ⟩ = (X⊗ Y) &#124;+⟩⊗ &#124;R ⟩ = X &#124;+⟩ ⊗ Y &#124;R
+    ⟩ = &#124;+ ⟩⊗ &#124;R⟩ = &#124;+R ⟩, (X⊗ Y) &#124;+L ⟩ = (X⊗ Y) &#124;+ ⟩⊗ &#124;L⟩
+    = X &#124;+ ⟩⊗ Y &#124;L⟩ = &#124;+ ⟩⊗ (− &#124;L⟩) = − &#124;+L ⟩, (X⊗ Y) &#124;−
+    R⟩ = (X⊗ Y) &#124;− ⟩⊗ &#124;R ⟩ = X &#124;− ⟩ ⊗ Y &#124;R ⟩ = (− &#124;− ⟩)⊗
+    &#124;R ⟩ = − &#124;− R⟩ , (X⊗ Y) &#124;− L⟩ = (X⊗ Y) &#124;− ⟩⊗ &#124;L⟩ = X
+    &#124;− ⟩⊗ Y &#124;L⟩ = (− &#124;− ⟩) ⊗ (− &#124;L ⟩) = &#124;− L⟩. ](img/file929.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Let us write down the representation of a quantum state of the two-qubit system
+    ![|ψ ⟩](img/file930.jpg) = ![|ψ1⟩](img/file931.jpg)⊗![|ψ2 ⟩](img/file932.jpg)
+    in the basis of X⊗Y eigenvectors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ⟩ = &#124;ψ1⟩⊗ &#124;ψ2⟩ = (αx &#124;+ ⟩+ βx &#124;− ⟩)⊗ (αy &#124;R
+    ⟩+ βy &#124;L⟩) = αxαy &#124;+R ⟩+ αxβy &#124;+L ⟩+ βxαy &#124;− R ⟩+ βxβy &#124;−
+    L ⟩, ](img/file933.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'with (*α*[x]*,β*[x]*,α*[y]*,β*[y]) ∈ℂ⁴. We want to apply an operator allowing
+    us to perform measurements in the *z*-basis such that the probability amplitudes
+    of the corresponding states remain the same. It is easy to see that this operator
+    is a tensor product of the H and G gates:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| (H⊗G)![&#124;ψ⟩](img/file934.jpg) | = (H⊗G)![(αx αy &#124;+R ⟩ + αxβy &#124;+L
+    ⟩+ βxαy &#124;− R⟩ + βxβy &#124;− L⟩)](img/file935.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = *α*[x]*α*[y](H⊗G)![&#124;+ ⟩](img/file936.jpg)⊗![&#124;R ⟩](img/file937.jpg)
+    + *α*[x]*β*[y](H⊗G)![&#124;+ ⟩](img/file938.jpg)⊗![&#124;L ⟩](img/file939.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | + *β*[x]*α*[y](H⊗G)![&#124;− ⟩](img/file940.jpg)⊗![&#124;R⟩](img/file941.jpg)
+    + *β*[x]*β*[y](H⊗G)![&#124;− ⟩](img/file942.jpg)⊗![&#124;L⟩](img/file943.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = *α*[x]*α*[y](H![&#124;+ ⟩](img/file944.jpg)⊗G![&#124;R⟩](img/file945.jpg))
+    + *α*[x]*β*[y](H![&#124;+ ⟩](img/file946.jpg)⊗G![&#124;L ⟩](img/file947.jpg))
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | + *β*[x]*α*[y](H![&#124;− ⟩](img/file948.jpg)⊗G![&#124;R⟩](img/file949.jpg))
+    + *β*[x]*β*[y](H![&#124;− ⟩](img/file950.jpg)⊗G![&#124;L⟩](img/file951.jpg)) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = *α*[x]*α*[y](![&#124;0⟩](img/file952.jpg)⊗![&#124;0⟩](img/file953.jpg))
+    + *α*[x]*β*[y](![&#124;0⟩](img/file954.jpg)⊗![&#124;1⟩](img/file955.jpg)) + *β*[x]*α*[y](![&#124;1⟩](img/file956.jpg)⊗![&#124;0⟩](img/file957.jpg))
+    + *β*[x]*β*[y](![&#124;1⟩](img/file958.jpg)⊗![&#124;1⟩](img/file959.jpg)) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = *α*[x]*α*[y]![&#124;00⟩](img/file960.jpg) + *α*[x]*β*[y]![&#124;01⟩](img/file961.jpg)
+    + *β*[x]*α*[y]![&#124;10⟩](img/file962.jpg) + *β*[x]*β*[y]![&#124;11⟩](img/file963.jpg)*.*
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The eigenvalues of Z⊗Z corresponding to the eigenstates {![|00⟩](img/file964.jpg)*,*![|01
+    ⟩](img/file965.jpg)*,*![|10⟩](img/file966.jpg)*,*![|11⟩](img/file967.jpg)} are
+    the same as the eigenvalues of X⊗Y corresponding to the eigenstates {![|+R ⟩](img/file968.jpg)*,*![|+L
+    ⟩](img/file969.jpg)*,*![|− R⟩](img/file970.jpg)*,*![|− L⟩](img/file971.jpg)}:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![(Z⊗ Z) &#124;00⟩ = (Z⊗ Z ) &#124;0⟩⊗ &#124;0⟩ = Z &#124;0⟩⊗ Z &#124;0⟩
+    = &#124;0⟩⊗ &#124;0⟩ = &#124;00⟩ , (Z⊗ Z) &#124;01⟩ = (Z⊗ Z ) &#124;0⟩⊗ &#124;1⟩
+    = Z &#124;0⟩⊗ Z &#124;1⟩ = &#124;0⟩⊗ (− &#124;1⟩) = − &#124;01⟩, (Z⊗ Z) &#124;10⟩
+    = (Z⊗ Z ) &#124;1⟩⊗ &#124;0⟩ = Z &#124;1⟩⊗ Z &#124;0⟩ = (− &#124;1⟩) ⊗ &#124;0⟩
+    = − &#124;10⟩, (Z⊗ Z) &#124;11⟩ = (Z⊗ Z ) &#124;1⟩⊗ &#124;1⟩ = Z &#124;1⟩⊗ Z &#124;1⟩
+    = (− &#124;1⟩) ⊗ (− &#124;1⟩) = &#124;11⟩. ](img/file972.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Therefore, the expectation ⟨*ϕ*|Z⊗Z![|ϕ⟩](img/file973.jpg), with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ϕ⟩ = αxαy &#124;00⟩ + αxβy &#124;01 ⟩+ βxαy &#124;10⟩+ βxβy &#124;11
+    ⟩, ](img/file974.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: in the *z*-basis is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;α α &#124;2 − &#124;α β &#124;2 − &#124;β α &#124;2 + &#124;β β &#124;2\.
+    x y x y x y x y ](img/file975.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The values of the probabilities |*α*[x]*α*[y]|², |*α*[x]*β*[y]|², |*β*[x]*α*[y]|²,
+    and |*β*[x]*β*[y]|² can be found using quantum computers in exactly the same way
+    we found probabilities in the one-qubit case. By counting the numbers *n*[ij]
+    of outcomes ![|ij⟩](img/file976.jpg) (for *i,j* ∈{0*,*1}, with ∑ [i,j∈{0,1}]*n*[ij]
+    = *N*), the expectation value of X⊗Y is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨X ⊗ Y⟩ = n00 −-n01-−-n10 +-n11\. N ](img/file977.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 10.2.3 The multi-qubit case
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: It is straightforward to scale this approach to more complex Pauli products
+    and larger Hamiltonians since any Hamiltonian may be written as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ i i ∑ ij i j ℋ = hα σα + hαβσ ασβ + ... iα ijαβ ](img/file978.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for real *h*, where the superscripts *i,j,…* identify the subsystem (qubit)
+    on which the operator acts, and the subscripts *α,β,…* identify the Pauli operator.
+    For example, *i* = 1, *α* = *x*, and *σ*[x]¹ = X acting on qubit 1\. No assumption
+    about the dimension or structure of the Hermitian Hamiltonian is needed for this
+    expansion to be valid  [[231](Biblography.xhtml#XPeruzzo2014)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We have already used the linearity of quantum observables that allows us to
+    calculate the expectation of the Hamiltonian as a sum of expectations of the individual
+    terms:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ i⟨ i⟩ ∑ ij ⟨ i j⟩ ⟨ℋ⟩ = h α σα + hαβ σασβ + ... iα ijαβ ](img/file979.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: As long as we consider Hamiltonians that can be written as a polynomial number
+    of terms with respect to the system size, the evaluation of ![⟨ℋ⟩](img/file980.jpg)
+    is reduced to the sum of a polynomial number of expectation values of simple Pauli
+    operators for some quantum state ![|ψ ⟩](img/file981.jpg), multiplied by some
+    real constants. As we have seen above, a quantum computer can efficiently evaluate
+    the expectation value of a tensor product of an arbitrary number of simple Pauli
+    operators  [[227](Biblography.xhtml#XOrtiz2001)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum computers can be used to efficiently calculate expectation values of
+    Hamiltonians consisting of tensor products of Pauli operators. Any Hamiltonian
+    may be represented as a sum of tensor products of Pauli operators (X, Y, Z, and
+    I gates).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.3 Constructing the PQC
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The question of how to construct a high-quality candidate state used to calculate
+    expectations is of fundamental importance. Unless we have some prior knowledge
+    about the ground state and where to search for it in the Hilbert space of the
+    *n*-qubit system, the first task would be to generate a range of candidate states
+    that will cover the whole Hilbert space without being heavily concentrated in
+    any one region. Let us see how this can be done for the single-qubit and multi-qubit
+    systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.3.1 One-qubit ansatz
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We return to the Bloch sphere that visualises the possible states of a one-qubit
+    system. Figure [10.1](#10.1) shows how the qubit state can change from its initial
+    state ![|0⟩](img/file982.jpg) to the intermediate state ![|ψi⟩](img/file983.jpg)
+    and then to the final state ![|ψf⟩](img/file984.jpg) through a rotation around
+    the *y*-axis followed by a rotation around the *z*-axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.1: Bloch sphere: visualisation of one-qubit rotations. ](img/file985.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.1: Bloch sphere: visualisation of one-qubit rotations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is possible to reach any point on the Bloch sphere starting from ![|0⟩](img/file986.jpg)
+    with just two rotations around any two orthogonal axes. The corresponding circuit
+    is shown in Figure [10.2](#10.2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.2: PQC for a one-qubit system. ](img/file987.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.2: PQC for a one-qubit system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The PQC shown in Figure [10.2](#10.2) is everything we need in the one-qubit
+    case if we only have the Z and I terms in the problem Hamiltonian. If we want
+    to calculate the expectation value of the X term, we have to add an H gate to
+    the circuit as shown in Figure [10.3](#10.3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.3: PQC with H gate to calculate ⟨X⟩. ](img/file989.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.3: PQC with H gate to calculate ![⟨X⟩](img/file988.jpg).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similarly, if we want to calculate the expectation value of the Y term, we
+    have to add a G gate to the circuit as shown below:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.4: PQC with G gate to calculate ⟨Y⟩. ](img/file991.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.4: PQC with G gate to calculate ![⟨Y⟩](img/file990.jpg).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.3.2 Multi-qubit ansatz
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We now look at the multi-qubit case, and assume that the optimisation problem
+    is encoded in the two-qubit Hamiltonian
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ = aX ⊗ Y+ bY ⊗ Z+ cZ ⊗ X, ](img/file992.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'for some coefficients *a,b,c* ∈ℝ. As we know, the expectation value of the
+    Hamiltonian ([10.3.2](#x1-2100002)) is given by the sum of expectation values
+    of individual terms:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨ℋ ⟩ ≡ ⟨ψ &#124;ℋ &#124;ψ⟩ = a⟨ψ &#124;X ⊗ Y &#124;ψ ⟩+ b⟨ψ &#124;Y⊗ Z
+    &#124;ψ ⟩+ c⟨ψ &#124;Z⊗ X &#124;ψ⟩. ](img/file993.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'We need to calculate all these expectations for the same quantum state ![|ψ⟩](img/file994.jpg).
+    To do so, we need to construct a quantum circuit with sufficiently flexible adjustable
+    gates to support a wide range of possible candidate states. Since the problem
+    Hamiltonian operates on two-qubit states, the PQC that constructs the candidate
+    states may look like the one shown in Figure [10.5](#10.5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.5: PQC for the construction of candidate states. ](img/file995.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.5: PQC for the construction of candidate states.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the PQC shown in Figure [10.5](#10.5), the parameters (rotation angles) *𝜃*[1]
+    and *𝜃*[2] uniquely specify state ![|ψ1⟩](img/file996.jpg) of the first qubit,
+    and the parameters *𝜃*[3] and *𝜃*[4] uniquely specify state ![|ψ2⟩](img/file997.jpg)
+    of the second qubit. The full quantum circuit for the calculation of the expectation
+    value ![⟨X ⊗ Y⟩](img/file998.jpg) is shown in Figure [10.6](#10.6), where the
+    gates H (first quantum register) and G (second quantum register) form the change
+    of basis layer before the measurement in the computational basis. Figures [10.7](#10.7)
+    and [10.8](#10.8) display the PQCs for the calculation of ![⟨Y ⊗ Z⟩](img/file999.jpg)
+    and ![⟨Z ⊗ X⟩](img/file1000.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.6: PQC for the calculation of the ⟨X ⊗ Y⟩ term. ](img/file1002.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.6: PQC for the calculation of the ![⟨X ⊗ Y⟩](img/file1001.jpg) term.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.7: PQC for the calculation of the ⟨Y ⊗ Z⟩ term. ](img/file1004.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.7: PQC for the calculation of the ![⟨Y ⊗ Z⟩](img/file1003.jpg) term.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.8: PQC for the calculation of the ⟨Z ⊗ X⟩ term. ](img/file1006.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.8: PQC for the calculation of the ![⟨Z ⊗ X⟩](img/file1005.jpg) term.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note that the state construction circuits shown in Figures [10.6](#10.6)-[10.8](#10.8)
+    consist of one-qubit gates and do not contain two-qubit gates that would create
+    entanglement. Adding two-qubit gates, such as CNOT and CPHASE, would help explore
+    a wider range of possible quantum states and should be done as a matter of course
+    as we know from the previous chapters. However, our task here is to illustrate
+    the general principle and compare the results obtained by running the PQC with
+    the calculations done "by hand", as we shall see in the next section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.4 Running the PQC
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We now run some numerical experiments for the optimisation problem encoded in
+    the Hamiltonian ([10.3.2](#x1-2100002)) and compare the obtained results with
+    direct calculations to better understand the mechanics of the algorithm and to
+    build intuition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.4.1 Experimenting with the two-qubit ansatz
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In line with the variational approach and taking into account the PQC architecture
+    specified in Figure [10.5](#10.5), we need to build the candidate states controlled
+    by the four adjustable parameters *𝜃*[1], *𝜃*[2], *𝜃*[3], and *𝜃*[4]. In Chapters [8](Chapter_8.xhtml#x1-1620008)
+    and [9](Chapter_9.xhtml#x1-1850009), we considered two possible approaches to
+    train the PQC: differentiable and non-differentiable learning. Both methods have
+    their strong and weak points and can be used to find an optimal set of adjustable
+    parameters for the PQC of arbitrary size. However, the PQC shown in Figure [10.5](#10.5)
+    is only two-layer deep and two-quantum register wide – it is perfectly feasible
+    in this case to apply the brute force method.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The brute force method consists of discretising the range of possible values
+    of the rotation angles with the elementary step (increment) kept reasonably small.
+    The parameters *𝜃*[1] and *𝜃*[3] are rotation angles around the *y*-axis and are
+    defined on the interval [0*,π*], which we discretise as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![{ } (2k +-1-)π , 2m k=0,...,m−1 ](img/file1007.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some integer *m*. Similarly, *𝜃*[2] and *𝜃*[4] are rotation angles around
+    the *z*-axis defined on [0*,*2*π*], with range
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![{ (2k + 1)π} --------- . 2m k=0,...,2m− 1 ](img/file1008.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: In both cases the increment is *π∕m*. Taking, for example, *m* = 8 is a sensible
+    compromise between speed and accuracy. What is more, once the optimal configuration
+    of adjustable parameters is found, we can run an additional, more granular search
+    in the vicinity of the candidate optimal configuration in order to further improve
+    it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The algorithm looks as follows. For the given configuration of R[Y] and R[Z]
+    rotation angles drawn from the sets ([10.4.1](#x1-2120001)) and ([10.4.1](#x1-2120001)),
+    we execute 100,000 runs of PQCs specified in Figures [10.6](#10.6), [10.7](#10.7),
+    and [10.8](#10.8) on the Qiskit quantum simulator. This gives us the expectation
+    values of X⊗Y, Y⊗Z, and Z⊗X for the quantum state ![|ψ ⟩](img/file1009.jpg) =
+    ![|ψ1⟩](img/file1010.jpg)⊗![|ψ2 ⟩](img/file1011.jpg), where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( 𝜃 ) ( 𝜃 ) |ψ1⟩ = cos -1 |0⟩+ ei𝜃2 sin -1 |1⟩ 2 2 ](img/file1012.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) ( ) 𝜃3 i𝜃4 𝜃3 |ψ2⟩ = cos 2 |0⟩ + e sin 2 |1⟩. ](img/file1013.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We select the state ![|ψ ∗⟩](img/file1014.jpg) with the smallest value of ![⟨ℋ
+    ⟩](img/file1015.jpg) given by ([10.3.2](#x1-2100002)), and denote the corresponding
+    rotation angles *𝜃*[1]^∗*,…,𝜃*[4]^∗. After that, we perform a more refined search
+    in the neighbourhood of ![|ψ ∗⟩](img/file1016.jpg). The new set values of the
+    rotation angles are now
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![{ } 𝜃∗i + (k-−-4)π- , i = 1,...,4, 4m k=0,...,m ](img/file1017.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with increment *π∕*(4*m*). Again, we select the quantum state ![ ′ |ψ ⟩](img/file1018.jpg)
+    with the smallest value of ![⟨ℋ ⟩](img/file1019.jpg) and denote the corresponding
+    rotation angles *𝜃*′[1]*,…,𝜃*′[4].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With *m* = 8, *a* = 4, *b* = 3, *c* = 2, we obtain the results in Table [10.1](#table10.1):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| 1st search: | 𝜃[1]^∗ = 1.7671 | 𝜃[2]^∗ = 3.0434 | 𝜃[3]^∗ = 1.7671 | 𝜃[4]^∗
+    = 1.4726 | ![Table 10.1: Optimal configurations of adjustable PQC parameters that
+    minimise the expectation value of the Hamiltonian. ](img/file1020.jpg)[min] =
+    −3.93 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2nd search: | 𝜃′[1] = 1.5708 | 𝜃′[2] = 3.1416 | 𝜃′[3] = 1.5708 | 𝜃′[4] =
+    1.5708 | ![Table 10.1: Optimal configurations of adjustable PQC parameters that
+    minimise the expectation value of the Hamiltonian. ](img/file1020.jpg)[min] =
+    −4.00 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 10.1: Optimal configurations of adjustable PQC parameters that minimise
+    the expectation value of the Hamiltonian.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Table [10.1](#table10.1), the values of ![⟨ℋ ⟩](img/file1021.jpg) are in
+    the units of coefficients *a*, *b*, and *c*, and the values of rotation angles
+    are in radians. Note that 3*.*1416 = *π* and 1*.*5708 = *π∕*2\. Therefore, the
+    optimal configuration of rotation angles that minimises ![⟨ℋ ⟩](img/file1022.jpg)
+    is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![𝜃′1 = 𝜃′3 = 𝜃′4 = π and 𝜃′2 = π. 2 ](img/file1023.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The corresponding quantum states are
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|ψ ⟩ = √1--|0⟩ − √1--|1⟩, |ψ ⟩ = √1--|0⟩ + √i--|1⟩, 1 2 2 2 2 2 ](img/file1024.jpg)![
+    1 i 1 i |ψ⟩ = |ψ1⟩⊗ |ψ2 ⟩ =--|00⟩+ -|01⟩− -|10⟩− --|11⟩. 2 2 2 2 ](img/file1025.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 10.4.2 Analysis of the obtained results
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Do the obtained results make sense? Since the problem size is small and the
+    circuit is not too deep, we can verify the results by direct manual calculations.
+    First, we visualise the states ![|ψ1⟩](img/file1026.jpg) and ![|ψ2 ⟩](img/file1027.jpg).
+    Figure [10.4.2](#x1-2130002) shows their positions on the Bloch sphere. State ![|ψ
+    ⟩ 1](img/file1028.jpg) is the black dot at the intersection of the *x*-axis and
+    the equator. We get to ![|ψ1 ⟩](img/file1029.jpg) from state ![|0⟩](img/file1030.jpg)
+    by performing a *π∕*2 radian rotation around the *y*-axis and then a *π* radian
+    rotation around the *z*-axis. State ![|ψ2 ⟩](img/file1031.jpg) is the gray dot
+    at the intersection of the *y*-axis and the equator, which is reached from ![|0⟩](img/file1032.jpg)
+    by performing a *π∕*2 radian rotation around the *y*-axis and then a *π∕*2 radian
+    rotation around the *z*-axis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 10.9: Visualisation of states |ψ1⟩ (black dot) and |ψ2⟩ (grey dot).
+    ](img/file1035.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 10.9: Visualisation of states ![|ψ1⟩](img/file1033.jpg) (black dot)
+    and ![|ψ2⟩](img/file1034.jpg) (grey dot).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider the expectation ![⟨X⊗ Y⟩](img/file1036.jpg). The operator X acts on ![|ψ1⟩](img/file1037.jpg),
+    which is one of its eigenstates in the *x*-basis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ -1- -1- |ψ1⟩ = √2-|0⟩− √2--|1⟩ = |− ⟩, ](img/file1038.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'and Y acts on ![|ψ2⟩](img/file1039.jpg), which is also one of its eigenstates
+    in the *y*-basis:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|ψ ⟩ = √1-|0⟩+ √-i-|1⟩ = |R ⟩. 2 2 2 ](img/file1040.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We then perform measurements in the computational basis (*z*-basis). Before
+    measurement, the Hadamard operator H will transform ![|ψ1⟩](img/file1041.jpg)
+    = ![|− ⟩](img/file1042.jpg) into ![|1⟩](img/file1043.jpg), which is a basis state
+    in the *z*-basis. Similarly, the operator G will transform ![|ψ2⟩](img/file1044.jpg)
+    = ![|R ⟩](img/file1045.jpg) into ![|0⟩](img/file1046.jpg), which is also a basis
+    state in the *z*-basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thus, measurement in the *z*-basis will give us the state ![|1⟩](img/file1047.jpg)⊗![|0⟩](img/file1048.jpg)
+    = ![|10⟩](img/file1049.jpg) with probability one. If we perform *N* measurements,
+    we will obtain the state ![|10⟩](img/file1050.jpg) *N* times and the corresponding
+    expectation value ![⟨X ⊗ Y⟩](img/file1051.jpg) will be
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![⟨X ⊗ Y⟩ = n00 −-n01-−-n10 +-n11= 0−-0-−-N-+-0-= − 1\. N N ](img/file1052.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The value of the coefficient *a* in front of the X⊗Y term was set equal to 4\.
+    Therefore, the contribution of the first term to the expectation value of the
+    Hamiltonian ([10.3.2](#x1-2100002)) is −4.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The expectations ![⟨Y⊗ Z⟩](img/file1053.jpg) and ![⟨Z ⊗ X⟩](img/file1054.jpg)
+    are equally straightforward to calculate. Let us start with ![⟨Y ⊗ Z⟩](img/file1055.jpg).
+    The operator Y acts on the first qubit in the state ![|ψ1⟩](img/file1056.jpg).
+    Since we measure the resulting state in the *z*-basis, we need to apply G before
+    measurement. The operator G transforms ![|ψ1 ⟩](img/file1057.jpg) into the state
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![1+--i 1-−-i 2 |0⟩+ 2 |1⟩. ](img/file1058.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Measurement in the *z*-basis will result in ![|0⟩](img/file1059.jpg) and ![|1⟩](img/file1060.jpg)
+    with equal probability 1*∕*2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The operator Z acts on the second qubit in state ![|ψ2⟩](img/file1061.jpg).
+    Since we measure the operator Z in the *z*-basis, we do not need to apply any
+    gates. Measuring ![|ψ2⟩](img/file1062.jpg) in the *z*-basis will also result in
+    obtaining ![|0⟩](img/file1063.jpg) and ![|1⟩](img/file1064.jpg) with equal probability 1*∕*2\.
+    Therefore, we are equally likely to measure all four basis states (![|00⟩](img/file1065.jpg),
+    ![|01⟩](img/file1066.jpg), ![|10⟩](img/file1067.jpg), and ![|11 ⟩](img/file1068.jpg))
+    with probability 1*∕*4, and, as *N* tends to infinity, the expectation value of
+    ![⟨Y ⊗ Z⟩](img/file1069.jpg) in our experiment should converge to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ n00 −-n01-−-n10 +-n11 14N-−--14N-−-14N--+-14N-- ⟨Y ⊗ Z⟩ = N = N = 0\. ](img/file1070.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We are left now with ![⟨Z ⊗ X⟩](img/file1071.jpg). The operator Z acts on ![|ψ1⟩](img/file1072.jpg).
+    The measurement is done in the *z*-basis, so no transformation is needed. The
+    measurement will result in obtaining the states ![|0⟩](img/file1073.jpg) and ![|1⟩](img/file1074.jpg)
+    with equal probability 1*∕*2\. The operator X acts on the second qubit in the
+    state ![|ψ2⟩](img/file1075.jpg). The measurement is performed in the *z*-basis,
+    so we need to apply the Hadamard gate H before measurement. Applying the H gate
+    to ![|ψ2⟩](img/file1076.jpg) transforms it into
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![1+ i 1 − i -----|0⟩+ -----|1⟩, 2 2 ](img/file1077.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'with measurement in the *z*-basis producing outcomes ![|0⟩](img/file1078.jpg)
+    and ![|1⟩](img/file1079.jpg) with probability 1*∕*2\. Thus, we find ourselves
+    in the same situation as with ![⟨Y ⊗ Z⟩](img/file1080.jpg): all basis states are
+    equally likely. As *N* tends to infinity, the expectation value of ![⟨Z ⊗ X⟩](img/file1081.jpg)
+    should also converge to'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ n00 −-n01-−-n10 +-n11 14N-−--14N-−-14N--+-14N-- ⟨Z ⊗ X⟩ = N = N = 0\. ](img/file1082.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This is exactly what we observed in our numerical experiment. The total contribution
+    of all three terms of the Hamiltonian ℋ given by ([10.3.2](#x1-2100002)) with
+    *a* = 4, *b* = 3, and *c* = 2 is equal to −4\. The X⊗Y term has the largest coefficient,
+    therefore it makes sense that the ground state of ℋ is the one that minimises
+    the expectation value ![⟨X⊗ Y⟩](img/file1083.jpg) (with expectation values ![⟨Y
+    ⊗ Z⟩](img/file1084.jpg) and ![⟨Z⊗ X⟩](img/file1085.jpg) being zero).
+  prefs: []
+  type: TYPE_NORMAL
+- en: PQC can be used to construct the candidate states for the VQE algorithm. The
+    selection and improvement of the candidate states is performed classically. This
+    makes VQE a perfect example of a hybrid quantum-classical algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 10.5 Discrete Portfolio Optimisation with VQE
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In Chapter [3](Chapter_3.xhtml#x1-630003), we investigated quantum annealing
+    for NP-hard discrete portfolio optimisation problems. The same type of QUBO problems
+    can be solved on gate model quantum computers with the help of a hybrid VQE algorithm.
+    The QUBO formulation of the discrete portfolio optimisation problem consists of
+    minimising the cost function ([3.3.1](Chapter_3.xhtml#x1-750001)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N∑ ∑N ∑N L(q) = aiqi + bijqiqj, i=1 i=1j=i+1 ](img/file1086.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where q := (*q*[1]*,…,q*[N]) is a vector of binary decision variables indicating
+    which (equally weighted) assets are selected (from the universe of *N* investable
+    assets): *q*[i] = 1 means that asset *i* is selected and *q*[i] = 0 means that
+    asset *i* is not selected. The task is to find a configuration of q that minimises *L*(q).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: For each *i,j* = 1*,…N*, the coefficients *a*[i], *a*[j], and *b*[ij] reflect,
+    respectively, the individual and joint attractiveness of assets *i* and *j*. For
+    example, assets with larger expected returns and lower volatilities would be assigned
+    large negative values of *a*. Similarly, pairs of assets with low positive or
+    even negative correlation would be assigned negative values of *b* to reward diversification.
+    Assets with lower expected returns, higher volatility, and strongly positively
+    correlated with other assets would be penalised with positive values of *a* and *b*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum annealers solve QUBO problems in their Ising model formulation where
+    binary decision variables q := (*q*[1]*,…,q*[N]) are translated into spin variables
+    s := (*s*[1]*,…,s*[N]) taking values {+1*,*−1} through the transformation *s*[i]
+    = 2*q*[i] − 1\. We analyse the simplest case of an investable universe consisting
+    of just two assets. In this case, the QUBO cost function reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![L(q) = a1q1 + a2q2 + b12q1q2, ](img/file1087.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: or, in the Ising model formulation,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![L (s) = g1s1 + g2s2 + J12s1s2 + const, ](img/file1088.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 1 1 1 1 g1 = -a1 + -b12, g2 = -a2 + -b12, J12 = -b12\. 2 4 2 4 4 ](img/file1089.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The constant term in ([10.5](#x1-2140005)) does not depend on the decision variables *s*[1]
+    and *s*[2] and can hence be ignored. The cost function we want to minimise thus
+    becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![L(s) = g1s1 + g2s2 + J12s1s2\. ](img/file1090.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: As we know from Chapter [2](Chapter_2.xhtml#x1-480002), transition from the
+    classical to the quantum mechanical description of the system consists of replacing
+    variables corresponding to physical observables by their respective operators.
+    In the case of the QUBO problem in its Ising model formulation, it means replacing
+    classical spin variables with the corresponding Pauli operators *σ*[x], *σ*[y],
+    and *σ*[z], which are represented in the quantum circuit by, respectively, the
+    quantum gates X, Y, and Z.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we remember from Chapter [3](Chapter_3.xhtml#x1-630003), the Ising cost
+    function ([10.5](#x1-2140005)) corresponds to the following *final* Hamiltonian
+    that encodes the same optimisation problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 2 1 2 ℋF = g1σ z + g2σz + J12σzσz. ](img/file1091.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, the classical spin variables *s*[1] and *s*[2] are replaced by the *σ*[z]
+    operators, and *σ*[z]¹ is the Z gate acting on qubit 1 while *σ*[z]² is the Z
+    gate acting on qubit 2.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Note that the mapping between the binary QUBO decision variables *q*, classical
+    spin variables *s*, and the eigenstates of Z is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![q = 0 → s = − 1 → &#124;1⟩ since Z &#124;1⟩ = − &#124;1⟩, ](img/file1092.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![q = 1 → s = +1 → &#124;0⟩ since Z &#124;0⟩ = &#124;0⟩. ](img/file1093.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: We now solve the QUBO problem ([10.5](#x1-2140005)) with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![a1 = − 2, a2 = 3, b12 = − 2, ](img/file1094.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: using both the classical method (in this case a simple exhaustive search given
+    that the solution space consists of just four possible solutions) and the VQE
+    approach.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The classical exhaustive search results are straightforward to obtain via direct
+    calculations and are summarised in Table [10.2](#x1-214002r2) with the optimal
+    solution q^∗ = (1*,*0): asset 1 is selected, while asset 2 is not.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| q[1] | q[2] | L(q) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 0 | 0 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 0 | 1 | 3 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 0 | -2 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | 1 | -1 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 10.2: Classical exhaustive search results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The VQE calculations are as follows. We first rewrite the Hamiltonian ([10.5](#x1-2140005))
+    in the quantum gate form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋF = g1Z1 + g2Z2 + J12Z1 ⊗ Z2, ](img/file1095.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where Z¹ is the Z gate acting on qubit 1, Z² is the Z gate acting on qubit 2,
+    and Z¹ ⊗Z² is the tensor product of the Z gates acting on qubits 1 and 2 respectively.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The next step is to calculate the expectation values ![⟨Z⟩](img/file1096.jpg)
+    and ![⟨Z ⊗ Z⟩](img/file1097.jpg). As we know, Z is a PHASE gate that flips the
+    phase of a qubit:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Z |0⟩ = |0⟩, Z |1⟩ = − |1⟩. ](img/file1098.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Therefore, we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⟨0&#124;Z1 &#124;0⟩ = +1, ⟨1&#124;Z1 &#124;1⟩ = − 1, ⟨0&#124;Z2 &#124;0⟩
+    = +1, ⟨1&#124;Z2 &#124;1⟩ = − 1, ⟨00&#124;Z1 ⊗ Z2 &#124;00⟩ = +1, ⟨01&#124;Z1
+    ⊗ Z2 &#124;01 ⟩ = − 1, ⟨10&#124;Z1 ⊗ Z2 &#124;10⟩ = − 1, ⟨11&#124;Z1 ⊗ Z2 &#124;11
+    ⟩ = +1\. ](img/file1099.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here we calculated the expectation values of operators Z and Z⊗Z analytically
+    but we would obtain exactly the same values if we were to calculate them using
+    a quantum computer as described in Section [10.2](#x1-2040002). Now we need to
+    calculate the values of the coefficients *g*[1], *g*[2], and *J*[12] using the
+    transformation ([10.5](#x1-2140005)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![g1 = − 1.5, g2 = 1, J12 = − 0.5\. ](img/file1100.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The expectation values of ℋ[F] in states ![|00⟩](img/file1101.jpg), ![|01⟩](img/file1102.jpg),
+    ![|10⟩](img/file1103.jpg), ![|11⟩](img/file1104.jpg) can then be calculated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;00⟩](img/file1105.jpg) : | ![⟨ℋ⟩](img/file1106.jpg) = *g*[1] ⋅ (+1)
+    + *g*[2] ⋅ (+1) + *J*[12] ⋅ (+1) = −1*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![&#124;01⟩](img/file1107.jpg) : | ![⟨ℋ⟩](img/file1108.jpg) = *g*[1] ⋅ (+1)
+    + *g*[2] ⋅ (−1) + *J*[12] ⋅ (−1) = −2*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![&#124;10⟩](img/file1109.jpg) : | ![⟨ℋ⟩](img/file1110.jpg) = *g*[1] ⋅ (−1)
+    + *g*[2] ⋅ (+1) + *J*[12] ⋅ (−1) = 3*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![&#124;11⟩](img/file1111.jpg) : | ![⟨ℋ⟩](img/file1112.jpg) = *g*[1] ⋅ (−1)
+    + *g*[2] ⋅ (−1) + *J*[12] ⋅ (+1) = 0*.* |'
+  prefs: []
+  type: TYPE_TB
+- en: The best solution found using VQE is therefore ![|01⟩](img/file1113.jpg) = ![|0⟩](img/file1114.jpg)⊗![|1⟩](img/file1115.jpg),
+    i.e., asset 1 is selected while asset 2 is not, which is the same as the best
+    solution found by exhaustive search.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A VQE is a viable tool for solving finance-related NP-hard optimisation problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we introduced the Variational Quantum Eigensolver algorithm,
+    a powerful QML model based on the variational approach that allows us to solve
+    hard optimisation problems. We learned how to calculate expectation values using
+    a quantum computer and how to construct a PQC, creating the candidate quantum
+    states.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also experimented with running the VQE model on a sample problem encoded
+    in a two-qubit Hamiltonian and analysed and verified the results by performing
+    manual calculations. Finally, we demonstrated the applicability of the VQE to
+    finance-related optimisation problems, in particular to a stylised example of
+    a discrete portfolio optimisation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will introduce the Quantum Approximate Optimisation
+    Algorithm, another example of a hybrid quantum-classical approach to solving hard
+    optimisation problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join our book’s Discord space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Join our Discord community to meet like-minded people and learn alongside more
+    than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![PIC](img/file1.png)'
+  prefs: []
+  type: TYPE_IMG

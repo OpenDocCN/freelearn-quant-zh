@@ -1,0 +1,1077 @@
+- en: Chapter 7. Exotic Options
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'All derivatives are financial contracts, and in these contracts, there are
+    far more features that can be agreed on than a simple right to buy or to sell.
+    Complex payout structures can be engineered based on what-if scenarios; thus,
+    the final payout of an exotic contract can be dependent on a whole set of circumstances.
+    Often, even the path of the underlying has a serious influence on the final payout.
+    Compared to these derivatives, the good old call and put options were soon seen
+    simple, earning them a not too impressive nickname: plain vanilla.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vanilla call and put options are like plain vanilla ice-creams, the simplest
+    possible ice-cream without any fancy optional toppings. The expression "plain
+    vanilla" is so strongly embedded in finance that it is even used in the bond market,
+    where a vanilla bond is the simplest possible coupon-paying bond.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Any option that has some extras over the basic plain vanilla options belong
+    to a very numerous group called exotic options. Exotic options are popular because
+    sell-side bankers are in fierce competition to offer tailor-made products for
+    the clients. Another reason behind the fact that exotics are widely spread is
+    that, interestingly enough, most of the time, quoting a price on an exotic structure
+    is not a much more difficult task for market makers than quoting vanilla prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A general pricing approach
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Exotic or not, there is one intrinsic feature that is always the same in every
+    derivative product, that is, it is a function of other instruments, hence the
+    name derivative. Thus, the price of a derivative is not independently developed
+    as the outcome of a direct supply and demand; rather, it is given as an estimated
+    construction cost. For example, the one month forward dollar price of a euro is
+    highly dependent on the spot dollar price of the euro; the forward price is just
+    the function of the spot price (and the interest rates).
+  prefs: []
+  type: TYPE_NORMAL
+- en: If exactly the same benefits that are granted by holding a derivative can be
+    constructed by a trading strategy that involves less complex instruments, then
+    the derivative can be replicated. Derivatives are not like unique paintings; the
+    forgery of a derivative has the very same value, while replicas are as good as
+    the original. By using the no-arbitrage argument, *Black and Scholes (1973)* and
+    *Merton (1973)* showed that the price of a derivative should be equal to the expected
+    sum of expenses that arise during the proper implementation of the dynamic replication
+    strategy. *Taleb (1997)* extensively describes that implementing a proper replication
+    strategy under real market circumstances could often be really tricky.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The role of dynamic hedging
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Most of the time, replication is a dynamic strategy. You should do more or less
+    trading almost continuously during the lifetime of the derivatives. *Haug (2007b)*
+    shows that the hedging error of non-continuous hedging could be significant even
+    for plain vanilla options. Anyway, continuous hedging is a huge effort, which
+    is often not seen explicitly in the pricing formulas; however, most pricing functions
+    are based on the assumption that dynamic hedging should be done in the background
+    properly all the time. This is also the case whenever we talk about risk-neutral
+    world or the risk-neutral pricing. For further references, see *Wilmott (2006)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Luckily, no matter how hard dynamic hedging could be, running an option book
+    is at least a scalable business; hedging thousands of options is not much more
+    difficult than hedging just a couple of them. All options can be decomposed into
+    certain sensitivities, the so-called Greek letters (or simply Greeks). This nickname
+    came from the fact that some crucial sensitivity was named with a letter from
+    the Greek alphabet (delta, gamma, rho, and theta). They are partial derivatives
+    and thus they are additive. Summing up the deltas of the individual options gives
+    the delta of the portfolio and so on. This works not only for the plain vanillas
+    but for the exotics too, thus creating a very strong link between the vanillas
+    and the exotics.
+  prefs: []
+  type: TYPE_NORMAL
+- en: How R can help a lot
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We start this chapter by showing some examples for exotic options, giving one
+    possible classification. We will show examples from the `fExoticOptions` package
+    and how the so-called Black-Scholes surface can be created for any derivative-pricing
+    function. Afterwards, we will focus on the numerical estimation of the Greeks
+    of any exotic derivative. Next, we will show the pricing of an exotic option that
+    is not yet included in the `fExoticOptions` package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have chosen the **Double-no-touch (DNT)** binary option mainly because of
+    its popularity on the foreign exchange (**FX**) markets and the many conclusions
+    that are relevant even for other exotics. We will use AUDUSD as underlying because
+    at the time of writing this chapter, there is a significant interest differential
+    between the AUD and the USD interest rates, and we can show how to put these rates
+    into the pricing functions. We will show a second way of calculating the price
+    of a DNT by using static option replication arguments. We will show a real-life
+    example of a DNT, and in a simulation, we will show a way to estimate the survivorship
+    probability of a DNT. Using this, we can discuss the relationship of real-world
+    and risk-neutral probabilities and the role of risk premium. Finally, we will
+    show some practical fine-tuning tricks to embed exotic options into structured
+    products.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Besides seeing examples to implement complex exotic option-pricing functions
+    and simulations in R, as a side effect, understanding the Greeks as links between
+    exotics and vanillas will be the learning outcome of this chapter. We will use
+    the same terminology that was introduced in [Chapter 5](ch05.html "Chapter 5. FX
+    Derivatives"), *FX Derivatives*, which also includes much more about currencies
+    and plain vanilla options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A glance beyond vanillas
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '*Haug (2007a)* comprehensively covers the collection of pricing formulas for
+    around 100 exotic derivatives. The `fOptions` and `fExoticOptions` packages are
+    based on this book. *Wilmott (2006)*, *Taleb (1997)*, and *DeRosa (2011)* describe
+    a lot of practical issues about them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first impression could be that there are way too many exotic options. There
+    are many ways of classification. Market makers talk about different generations
+    of exotics, such as first generation, second generation, and so on. Their approach
+    is from a hedging point of view. We will use a slightly different angle, the end-user
+    approach, and classify the options based on their main exotic feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Asian type exotics are about the average. It could be an average rate or an
+    average strike, and it could also be an arithmetic or geometric average. These
+    options are path dependent; that is, their value at expiry is not purely a function
+    of the underlying price at expiry but the total path. Asian options are cheaper
+    than the vanillas since the volatility of the average price is lower than the
+    volatility of the price itself:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Barrier type exotics are also path-dependent options. There could be one or
+    two barriers. Each barrier could be either **knock-in (KI)** or **knock-out (KO)**.
+    During the lifetime of the option, the price of the underlying is monitored, and
+    if it is traded at or over the barrier, there will be a knock event. Options with
+    KI barriers become exercisable if the knock event occurs. Options with KO barriers
+    start their life as exercisable options, however, they become non-exercisable
+    if the knock event occurs. If there are two barriers, both of them could be the
+    same type: **double-knock-out (DKO)** and **double-knock-in (DKI)**, or it could
+    be a **knock-in-knock-out (KIKO)** type.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If all other parameters are set to be the same, then the following equation
+    holds:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*KI + KO = vanilla.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is because in this case, KI and KO options are mutually exclusive, but
+    one of them will be exercisable for sure. The first parameters `cuo` and `cui`
+    are flags for call-up-and-out and call-up-and-in. Next, we check for the following
+    condition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*vanilla - KO - KI = 0.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code illustrates the preceding condition:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Based on the same logic of *DKO + DKI = vanilla*, we can even state that *KO
+    - DKO = KIKO*. So, the KIKO options start as non-exercisable, and as long as both
+    the short DKO and the long KO are alive, they neutralize each other. Should the
+    short DKO die and the long KO survive, then it is a KI event for the KIKO option.
+    However, the KIKO can still die even after being knocked-in. Naturally, the KIKO
+    + DKO = KO approach leads to the same conclusion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Also, there are some important convergence features among barrier options. Based
+    on the KO + KI= vanilla equation, the KO converges into vanilla as we push the
+    barrier further from the spot, since KI converges into zero if we push the barrier
+    further from the spot. The next chart will to demonstrate this feature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following output is the result of the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A glance beyond vanillas](img/2078OT_07_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Similarly, double barrier options converge into single barrier ones if one of
+    the barriers starts to get unimportant and converges towards plain vanillas if
+    both the barriers are getting unimportant.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Thanks to the preceding mentioned parities, most of the time, finding pricing
+    formulas for KO options is enough. Although this is of huge help, often, pricing
+    a KO could be still very tricky. Replicating the KO event is based on a technique
+    that tries to build a portfolio made of vanillas that have exactly zero worth
+    when the knock event occurs, so at that point, they can be closed for free. There
+    are two famous methods for this, explained by *Derman-Ergener-Kani (1995)* and
+    *Carr-Ellis-Gupta (1998)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The so-called Black-Scholes surface is a 3D chart where the option price can
+    be shown as a function of time to maturity and the underlying price. Since some
+    of the exotic pricing functions can go crazy under extreme input circumstances,
+    it is advisable to use our financial knowledge that an option price can never
+    go below zero.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the code for the Black-Scholes surface:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code yields the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A glance beyond vanillas](img/2078OT_07_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'First, we prepared the Black-Scholes surface of a plain vanilla call option.
+    However, the `BS_surface` code can be used for many more purposes. Just like the
+    fact that the concept of the Black-Scholes surface can be used for any kind of
+    single underlying dependent derivative, if we have a pricing function, it can
+    be used as the `FUN` argument:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following screenshot is the result of the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A glance beyond vanillas](img/2078OT_07_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It is easy to see that compared to the plain vanilla call, the up-and-out call
+    option has a limited value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On [page 156], we use this same function to chart the BS Surface for a Double-no-touch
+    option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Binary options are exotics that have a fixed contingent payout. The name comes
+    from the feature that they have only two possible outcomes: either pay a fixed
+    amount or don''t pay at all. They have the 0-1 relationship in the options world.
+    Binary features could be mixed with the barrier feature; thus, they become path
+    dependent. A One-Touch (OT) option pays only if a knock event occurred during
+    its lifetime, while a No-Touch pays only if no knock event occurred.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There could be two barriers associated with the binaries, thus getting the
+    Double-One-Touch and Double-No-Touch options. Based on no arbitrage arguments,
+    the following equations must hold:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*NT + OT = T-Bill*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*DNT + DOT = T-Bill*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Convergence can be seen here too, similar to the cases we have shown for the
+    barriers. A DNT converges to an NT if one of the barriers is far enough, and converges
+    to a T-Bill if both the barriers are far enough. A pricing function for a DNT
+    is the Jack-of-all-trades of the binaries, similar to the DKO option for the barrier
+    type.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Lookback options are also path dependent. The lookback feature is very convenient.
+    At expiry, the holder of the position can look back and choose the best price
+    from the path of the underlying. For a floating rate lookback, the option holder
+    can look back for the strike price. For a fixed rate lookback, the holder can
+    exercise the option against any price on which the underlying was traded during
+    the lifetime of the option. *Taleb (1997)* shows how lookbacks can be replicated
+    by an infinite chain of KIKO options. In this sense, this is at least second generation
+    exotic, since we need exotics as building blocks to be able to replicate a lookback.
+  prefs: []
+  type: TYPE_NORMAL
+- en: More than one underlying is also a common exotic feature. Two examples have
+    already been discussed in the *exchange options* and *quanto options* sections
+    of [Chapter 5](ch05.html "Chapter 5. FX Derivatives"), *FX Derivatives*. However,
+    there are plenty more. Best-of and worst-of (also called rainbow) options are
+    give the best or the worst performing underlying from a basket. The spread option
+    is very similar to a vanilla option with the twist that the underlying of this
+    option is the difference of two assets. These are just a few examples, which are
+    enough to show that not surprisingly, in all of these cases, correlation plays
+    an important role. Also, these features can be mixed with barrier or lookback
+    or Asian features that result in an almost endless number of combinations. In
+    this chapter, we will not be discussing these types any further.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Greeks – the link back to the vanilla world
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'As we explained in the introductory part of this chapter, Greeks are partial
+    derivatives. Some important Greeks are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**delta**: This denotes the DvalueDspot, which is the change of the option
+    price with respect to the change of the underlying spot price'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**gamma**: This denotes the DdeltaDspot'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**vega**: This denotes the DvalueDvolatility'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**theta**: This denotes the DvalueDtime'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**rho**: This denotes the DvalueDinterest rate'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In some simple cases, these partial derivatives can be found analytically. For
+    example, the `fOptions` package includes the `GBSGreeks` function that gives the
+    Greeks for vanillas.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analytical Greeks are convenient; however, there are two problems with them.
+    The first problem is that market-traded parameters are not changing in infinitesimal
+    small increments. For example, on the New York Stock Exchange, the smallest possible
+    change in the stock price is one cent. The stock price either changes at least
+    one cent or there is no change at all. On the OTC (over-the-counter), FX market
+    traders are quoting volatility as an integer multiple of 0.0005\. The second problem
+    with analytical Greeks comes from the fact that for many exotics, we have no closed
+    formula. We still need to know the Greeks anyway, because we would like to sum
+    them up to get the Greeks for the portfolio. Adding up analytical Greeks and numerical
+    ones can lead to errors, so using numerical Greeks is a much safer way.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `GetGreeks` function calculates any Greeks for any pricing function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: OTC market makers do not quote FX volatility in any quantities, but normally,
+    as an integer multiple of 0.0005, a typical quote for AUDUSD at-the-money volatility
+    is 5.95 percent/6.05 percent. Of course, for exchange-traded derivatives that
+    are quoted in price instead of volatility, the price-change-implied volatility
+    change could be smaller than 0.0005.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So when we calculate vega numerically, we should set epsilon to 0.0005 as a
+    market consistent smallest possible change; for example, to calculate a delta
+    of an AUDUSD option, we can set epsilon as 0.0001 (one pip), or for a stock, we
+    can set epsilon as 0.01 (one cent). It is also useful to adjust epsilon to 1/365
+    (one day) for theta, and to 0.0001 (one basis point) for rho.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code plots the delta, vega theta, and rho for a `FloatingStrikeLookbackOption`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code gives the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Greeks – the link back to the vanilla world](img/2078OT_07_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Pricing the Double-no-touch option
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: A Double-no-touch (DNT) option is a binary option that pays a fixed amount of
+    cash at expiry. Unfortunately, the `fExoticOptions` package does not contain a
+    formula for this option at present. We will show two different ways to price DNTs
+    that incorporate two different pricing approaches. In this section, we will call
+    the function `dnt1`, and for the second approach, we will use `dnt2` as the name
+    for the function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Hui (1996)* showed how a one-touch double barrier binary option can be priced.
+    In his terminology, "one-touch" means that a single trade is enough to trigger
+    the knock-out event, and "double barrier" binary means that there are two barriers
+    and this is a binary option. We call this DNT as it is commonly used on the FX
+    markets. This is a good example for the fact that many popular exotic options
+    are running under more than one name. In *Haug (2007a)*, the Hui-formula is already
+    translated into the generalized framework. *S*, *r*, *b*, *σ*, and *T* have the
+    same meaning as in [Chapter 5](ch05.html "Chapter 5. FX Derivatives"), *FX Derivatives*.
+    K means the payout (dollar amount) while L and U are the lower and upper barriers.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Where, ![Pricing the Double-no-touch option](img/2078OT_07_06.jpg), ![Pricing
+    the Double-no-touch option](img/2078OT_07_07.jpg), ![Pricing the Double-no-touch
+    option](img/2078OT_07_08.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Implementing the *Hui (1996)* function to R starts with a big question mark:
+    what should we do with an infinite sum? How high a number should we substitute
+    as infinity? Interestingly, for practical purposes, small number like 5 or 10
+    could often play the role of infinity rather well. *Hui (1996)* states that convergence
+    is fast most of the time. We are a bit skeptical about this since α will be used
+    as an exponent. If b is negative and sigma is small enough, the *(S/L)^α* part
+    in the formula could turn out to be a problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'First, we will try with normal parameters and see how quick the convergence
+    is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following screenshot shows the result of the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The Formula Error chart shows that after the seventh step, additional steps
+    were not influencing the result. This means that for practical purposes, the infinite
+    sum can be quickly estimated by calculating only the first seven steps. This looks
+    like a very quick convergence indeed. However, this could be pure luck or coincidence.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'What about decreasing the volatility down to 3 percent? We have to set N as
+    50 to see the convergence:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding command gives the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Not so impressive? 50 steps are still not that bad. What about decreasing the
+    volatility even lower? At 1 percent, the formula with these parameters simply
+    blows up. First, this looks catastrophic; however, the price of a DNT was already
+    98.75 percent of the payout when we used 3 percent volatility. Logic says that
+    the DNT price should be a monotone-decreasing function of volatility, so we already
+    know that the price of the DNT should be worth at least 98.75 percent if volatility
+    is below 3 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another issue is that if we choose an extreme high U or extreme low L, calculation
+    errors emerge. However, similar to the problem with volatility, common sense helps
+    here too; the price of a DNT should increase if we make U higher or L lower.
+  prefs: []
+  type: TYPE_NORMAL
+- en: There is still another trick. Since all the problem comes from the α parameter,
+    we can try setting b as 0, which will make α equal to 0.5\. If we also set r to
+    0, the price of a DNT converges into 100 percent as the volatility drops.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Anyway, whenever we substitute an infinite sum by a finite sum, it is always
+    good to know when it will work and when it will not. We made a new code that takes
+    into consideration that convergence is not always quick. The trick is that the
+    function calculates the next step as long as the last step made any significant
+    change. This is still not good for all the parameters as there is no cure for
+    very low volatility, except that we accept the fact that if implied volatilities
+    are below 1 percent, than this is an extreme market situation in which case DNT
+    options should not be priced by this formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now that we have a nice formula, it is possible to draw some DNT-related charts
+    to get more familiar with this option. Later, we will use a particular AUDUSD
+    DNT option with the following parameters: L equal to 0.9200, U equal to 0.9600,
+    K (payout) equal to USD 1 million, T equal to 0.25 years, volatility equal to
+    6 percent, r_AUD equal to 2.75 percent, r_USD equal to 0.25 percent, and b equal
+    to -2.5 percent. We will calculate and plot all the possible values of this DNT
+    from 0.9200 to 0.9600; each step will be one pip (0.0001), so we will use 2,000
+    steps.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following code plots a graph of price of underlying:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following output is the result of the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It can be clearly seen that even a small change in volatility can have a huge
+    impact on the price of a DNT. Looking at this chart is an intuitive way to find
+    that vega must be negative. Interestingly enough even just taking a quick look
+    at this chart can convince us that the absolute value of vega is decreasing if
+    we are getting closer to the barriers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Most end users think that the biggest risk is when the spot is getting close
+    to the trigger. This is because end users really think about binary options in
+    a binary way. As long as the DNT is alive, they focus on the positive outcome.
+    However, for a dynamic hedger, the risk of a DNT is not that interesting when
+    the value of the DNT is already small.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is also very interesting that since the T-Bill price is independent of the
+    volatility and since the DNT + DOT = T-Bill equation holds, an increasing volatility
+    will decrease the price of the DNT by the exact same amount just like it will
+    increase the price of the DOT. It is not surprising that the vega of the DOT should
+    be the exact mirror of the DNT.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can use the `GetGreeks` function to estimate vega, gamma, delta, and theta.
+    For gamma we can use the GetGreeks function in the following way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following chart is the result of the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'After having a look at the value chart, the delta of a DNT is also very close
+    to intuitions; if we are coming close to the higher barrier, our delta gets negative,
+    and if we are coming closer to the lower barrier, the delta gets positive as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This is really a non-convex situation; if we would like to do a dynamic delta
+    hedge, we will lose money for sure. If the spot price goes up, the delta of the
+    DNT decreases, so we should buy some AUDUSD as a hedge. However, if the spot price
+    goes down, we should sell some AUDUSD. Imagine a scenario where AUDUSD goes up
+    20 pips in the morning and then goes down 20 pips in the afternoon. For a dynamic
+    hedger, this means buying some AUDUSD after the price moved up and selling this
+    very same amount after the price comes down.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The changing of the delta can be described by the gamma as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Negative gamma means that if the spot goes up, our delta is decreasing, but
+    if the spot goes down, our delta is increasing. This doesn't sound great. For
+    this inconvenient non-convex situation, there is some compensation, that is, the
+    value of theta is positive. If nothing happens, but one day passes, the DNT will
+    automatically worth more.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, we use theta as minus 1 times the partial derivative, since if (T-t)
+    is the time left, we check how the value changes as t increases by one day:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The more negative the gamma, the more positive our theta. This is how time compensates
+    for the potential losses generated by the negative gamma.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Risk-neutral pricing also implicates that negative gamma should be compensated
+    by a positive theta. This is the main message of the Black-Scholes framework for
+    vanilla options, but this is also true for exotics. See *Taleb (1997)* and *Wilmott
+    (2006)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We already introduced the Black-Scholes surface before; now, we can go into
+    more detail. This surface is also a nice interpretation of how theta and delta
+    work. It shows the price of an option for different spot prices and times to maturity,
+    so the slope of this surface is the theta for one direction and delta for the
+    other. The code for this is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The preceding code gives the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing the Double-no-touch option](img/2078OT_07_16.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We can see what was already suspected; DNT likes when time is passing and the
+    spot is moving to the middle of the (L,U) interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another way to price the Double-no-touch option
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Static replication is always the most elegant way of pricing. The no-arbitrage
+    argument will let us say that if, at some time in the future, two portfolios have
+    the same value for sure, then their price should be equal any time before this.
+    We will show how double-knock-out (DKO) options could be used to build a DNT.
+    We will need to use a trick; the strike price could be the same as one of the
+    barriers. For a DKO call, the strike price should be lower than the upper barrier
+    because if the strike price is not lower than the upper barrier, the DKO call
+    would be knocked out before it could become in-the-money, so in this case, the
+    option would be worthless as nobody can ever exercise it in-the-money. However,
+    we can choose the strike price to be equal to the lower barrier. For a put, the
+    strike price should be higher than the lower barrier, so why not make it equal
+    to the upper barrier. This way, the DKO call and DKO put option will have a very
+    convenient feature; if they are still alive, they will both expiry in-the-money.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, we are almost done. We just have to add the DKO prices, and we will get
+    a DNT that has a payout of (U-L) dollars. Since DNT prices are linear in the payout,
+    we only have to multiply the result by K*(U-L):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now, we have two functions for which we can compare the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: For a DNT with a USD 1 million contingent payout and an initial market value
+    of over 48,000 dollars, it is very nice to see that the difference in the prices
+    is only 14 cents. Technically, however, having a second pricing function is not
+    a big help since low volatility is also an issue for `dnt2`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We will use `dnt1` for the rest of the chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The life of a Double-no-touch option – a simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'How has the DNT price been evolving during the second quarter of 2014? We have
+    the open-high-low-close type time series with five minute frequency for AUDUSD,
+    so we know all the extreme prices:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following is the output for the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The life of a Double-no-touch option – a simulation](img/2078OT_07_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The price of a DNT is shown in red on the right axis (divided by 1000), and
+    the actual AUDUSD price is shown in grey on the left axis. The green lines are
+    the barriers of 0.9200 and 0.9600\. The chart shows that in 2014 Q2, the AUDUSD
+    currency pair was traded inside the (0.9200; 0.9600) interval; thus, the payout
+    of the DNT would have been USD 1 million. This DNT looks like a very good investment;
+    however, reality is just one trajectory out of an *a priori* almost infinite set.
+    It could have happened differently. For example, on May 02, 2014, there were still
+    59 days left until expiry, and AUDUSD was traded at 0.9203, just three pips away
+    from the lower barrier. At this point, the price of this DNT was only USD 5,302
+    dollars which is shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Compare this USD 5,302 to the initial USD 48,564 option price!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following simulation, we will show some different trajectories. All
+    of them start from the same 0.9266 AUDUSD spot price as it was on the dawn of
+    April 01, and we will see how many of them stayed inside the (0.9200; 0.9600)
+    interval. To make it simple, we will simulate geometric Brown motions by using
+    the same 6 percent volatility as we used to price the DNT:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following is the output for the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The life of a Double-no-touch option – a simulation](img/2078OT_07_18.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, the only surviving trajectory is the red one; in all other cases, the
+    DNT hits either the higher or the lower barrier. The line `set.seed(214)` grants
+    that this simulation will look the same anytime we run this. One out of five is
+    still not that bad; it would suggest that for an end user or gambler who does
+    no dynamic hedging, this option has an approximate value of 20 percent of the
+    payout (especially since the interest rates are low, the time value of money is
+    not important).
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, five trajectories are still too few to jump to such conclusions. We
+    should check the DNT survivorship ratio for a much higher number of trajectories.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ratio of the surviving trajectories could be a good estimator of the a priori
+    real-world survivorship probability of this DNT; thus, the end user value of it.
+    Before increasing N rapidly, we should keep in mind how much time this simulation
+    took. For my computer, it took 50.75 seconds for N = 5, and 153.11 seconds for
+    N = 15.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the output for N = 15:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The life of a Double-no-touch option – a simulation](img/2078OT_07_19.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now, 3 out of 15 survived, so the estimated survivorship ratio is still 3/15,
+    which is equal to 20 percent. Looks like this is a very nice product; the price
+    is around 5 percent of the payout, while 20 percent is the estimated survivorship
+    ratio. Just out of curiosity, run the simulation for N equal to 200\. This should
+    take about 30 minutes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following is the output for N = 200:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The life of a Double-no-touch option – a simulation](img/2078OT_07_20.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The results are shocking; now, only 12 out of 200 survive, and the ratio is
+    only 6 percent! So to get a better picture, we should run the simulation for a
+    larger N.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The movie *Whatever Works* by *Woody Allen* (starring Larry David) is 92 minutes
+    long; in simulation time, that is N = 541\. For this N = 541, there are only 38
+    surviving trajectories, resulting in a survivorship ratio of 7 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The life of a Double-no-touch option – a simulation](img/2078OT_07_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: What is the real expected survivorship ratio? Is it 20 percent, 6 percent, or
+    7 percent? We simply don't know at this point. Mathematicians warn us that the
+    law of large numbers requires large numbers, where large is much more than 541,
+    so it would be advisable to run this simulation for as large an N as time allows.
+    Of course, getting a better computer also helps to do more N during the same time.
+    Anyway, from this point of view, *Hui's (1996)* relatively fast converging DNT
+    pricing formula gets some respect.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So far, we have used the very same stochastic process for pricing that we used
+    for the simulation. Common sense says that in some cases, market-implied volatility
+    could be biased as either higher or lower than the expected volatility. Not surprisingly,
+    running the simulation for these two conditions, N = 200 and sigma = 5.5 percent,
+    results in more surviving trajectories, 15 for this seed. Running the simulation
+    for N = 200 and sigma = 6.5 percent results in fewer surviving trajectories: nine
+    for this seed. This again shows the high impact of vega in a very intuitive way.
+    The number of surviving trajectories, which can be 9, 12, or 15, mostly depends
+    on the volatility of the process. Survivorship rates are 4.5 percent, 6 percent,
+    or 7.5 percent. This also raises a more philosophical question: what about risk
+    premium? If the market needs vega, it could happen that we can purchase a DNT
+    based on 6 percent volatility even if we expect 5.5 percent volatility. In some
+    tense circumstances, the market could be really vega-thirsty. In these cases,
+    risk premium is included.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Derivative pricing always assumes dynamic hedging because we are looking for
+    the marginal cost of producing such an instrument then we use the no-arbitrage
+    argument. Some market players are actually trying to play this strategy and become
+    providers for the derivatives, like a factory. They are willing to take any side
+    of a deal, since they will eliminate almost all of their risks by almost continuous
+    dynamic hedging. They are the market makers. However, not all market players are
+    derivative factories; there are many of them who deliberately seek sensitivities;
+    thus, they are not hedging their derivative position. This second group is called
+    the market takers or end users. Some of them are looking for sensitivities because
+    they already have some and they want to decrease those (natural hedgers). Some
+    others don't have any sensitivities at the beginning, but would like to make a
+    financial bet (speculators).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interestingly, there could be a significant difference between the price of
+    the derivative and its value for the end user. By purchasing a DNT, an end-user
+    can make a bet and eventually either get nothing, or win much more than the initial
+    price. Is there any risk premium for this bet, or is it similar to a casino? Is
+    the real-life expected value of a DNT higher than the risk-neutral expected value
+    (which equals the price)? The value in use or the "user experience" could be different
+    because the market maker will quote a price based on the implied volatilities.
+    In the case of a tense market situation, the demand for vega could push its price
+    (that is, the implied volatility) higher than the expected volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this case, anyone who can still sell volatility will get a premium. In the
+    case of DNT, getting a premium means that its price will be lower than the real
+    life expected value of its payout.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What about a **Double-one-touch (DOT)**? Since the Treasury Bill can be seen
+    as the sum of a DNT and a DOT, if the DNT is too cheap, then the DOT must be too
+    expensive. Thus, these exotic options are easy bets on volatilities; if a speculator
+    thinks volatility will be significantly lower than the implied, purchasing a DNT
+    is a straightforward bet. If the speculator expects higher volatility than the
+    implied, a DOT is the proper bet.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this sense, DNT is similar to a short straddle and DOT is to a long straddle;
+    however, binary options are much easier to calibrate to the desired size. A long
+    straddle is a long call and long put in the same size, strike price, and expiry.
+    A short straddle is the mirror picture: short call and short put. A strangle is
+    very similar to a straddle; the only difference is that the strike price of a
+    call is not equal but higher than the strike price of the put. Compared to a short
+    straddle or a short strangle, betting on volatility is much more convenient by
+    purchasing a DNT, because holding a long DNT option position requires no further
+    collateral adjustment. DNT is a highly-leveraged product; however, the total amount
+    that can be lost is already paid upfront, so it fits to the menu of online trading
+    platforms where the typical client is a small retail speculator.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Based on this logic, the risk premium goes only to players who are willing to
+    take a position that is less favorable by other market players. If there is an
+    extra demand for volatility, then DNTS will include risk premium, but if there
+    is an extra supply for volatility then DOTs will include risk premium. It could
+    also happen that the market is in a stable equilibrium and neither DNTs nor DOTs
+    include any risk premium.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exotic options embedded in structured products
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Most of the time, exotic options are traded in camouflage; they are embedded
+    in structured bonds or certificates. The exotic behavior is translated into a
+    much more user-friendly language that is easier to understand by an everyday investor.
+    For example, a binary payout can be calculated into a coupon yield; the investor
+    gets a higher coupon if the circumstances let the binary option give its payout.
+    A structure that includes a knock-out option could be called an airbag certificate,
+    since as far as a long KO option is not knocked-out, it gives some protection
+    against market losses, similar to an airbag that protects the driver in case of
+    a less serious accident.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another example is a turbo certificate, which, most of the time, is just a securitized
+    form of a knock-out option with a deep in-the-money strike and a KO close to the
+    strike. Lookback options can be found in capital guarantee products with coupons
+    linked to the extreme values of stock indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As a numerical example, let's take a look at a three-month maturity certificate
+    of deposit (CD) that either pays a 3 percent coupon or 0 percent, conditionally
+    on the FX market behavior. This capital-guaranteed product can be seen as a portfolio
+    of a T-Bill and a binary option. If the 3-month T-bill can be purchased at 99.75
+    percent, then there is 0.25 cent on each dollar that can be spent on a binary
+    option. The capital at maturity will be granted by the T-Bill part, while the
+    binary option will be responsible for the contingent 3 percent coupon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'At this point, any binary option would do the trick; purchasing a DNT would
+    work too, but there are way too many parameters. Banks must fine-tune all the
+    parameters to make the whole construction attractive. In the risk-neutral world
+    from the market makers'' point of view, a lower trigger of L=0.9200 with a 3-month
+    maturity is almost the same as L=0.9195, with a bit more than a 3-month maturity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: This is a very common feature among options, including knock-out events; some
+    extra time can most of the time compensate for pushing the barrier a bit further
+    from the spot. In the risk-neutral world, the S/L distance is always divided by
+    a factor of ![Exotic options embedded in structured products](img/2078OT_07_22.jpg),
+    so there is a trade-off; we can make L lower, but in return, we should increase
+    the maturity. In the real world, the expectations of end users are driven by their
+    subjective or perceived probabilities. Provided that we are not planning to dynamically
+    hedge our DNT, we would prefer L = 0.9195 and T = 94 days over L = 0.9200 and
+    T = 90 days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: That is why L, U, and T should be set in a way that helps the product look attractive
+    to end users. Also, if the exotic option is embedded into a structure, the structure
+    itself should be easy to sell. At the end, most of the structures will be cut
+    into smaller, retail-sized pieces, like 1000 USD notional. Of course, each slice
+    of the cake will be the same, so for the bank, it can be seen as one huge product.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Coming back to setting L, U, and T, it is easy to see that the price of a DNT
+    is strictly a monotone function of L, U, and T (and also a monotone for volatility).
+    Under certain market conditions (S, r, b, and volatility), we set, say, L = 0.9195
+    and T = 94 days. Now, we can ask the following inverse pricing question: for what
+    U will the price of the DNT be 33 percent of the payout?'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This will be the implied upper barrier, implied in a sense that the price is
+    already given. Here comes a strange answer: it is not certain that such an implied
+    U exists! This is because if we start increasing the upper barrier, the DNT price
+    will converge to the price of a No-Touch (NT) option. If this NT is worth less
+    than 33 percent, no U will make our DNT worth 33 percent. We use the `BinaryBarrierOption`
+    function from the `fExoticOptions` package to price the No-Touch option which
+    is depicted in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the risk-neutral world, if we push U 1000 pips higher, it will become almost
+    completely irrelevant, so DNT behaves like an NT.
+  prefs: []
+  type: TYPE_NORMAL
+- en: So, in this case, if we want the DNT to cost 33 percent, we should choose an
+    L that is lower than 0.9195\. Next, we set L = 0.9095 and find a U that makes
+    the DNT worth 33 percent. At the end of this part, we will show a way to find
+    an implied U by using the `implied_U_DNT` function which is shown in the following
+    code. Now, suppose we use U = 0.9745 for other reasons.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: This DNT costs only 31.44 percent of the payout, so there will still be some
+    room for the bank to have some profit for all the hard work of structuring. Suppose
+    the bank can sell a total of USD 100 million of this CD, then 3 months later,
+    the bank has to pay to the clients either USD 100 million (0 percent per annum)
+    or USD 100.75 million (approximately 3 percent per annum). This contingent promise
+    can be hedged by purchasing T-Bills in 100 million USD notional and DNT options
+    with 0.75 million USD payout. At the beginning, these instruments cost the bank
+    *99.75%*100.000.000+31.44338%*750.000 = USD 99.985.825,35*; thus, the bank makes
+    a profit of 14,174.65 USD.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In other cases, the implied time to maturity could be an interesting question.
+    Under certain market conditions (where S, r, b, and volatility are given) for
+    a given (L,U) pair, what is the T that makes the DNT cost, say, 50 percent? Even
+    for a very tight (L-U) interval, we can find a T small enough to make the DNT
+    price go up to 50 percent; this is also true the other way round; even a very
+    wide (L,U) pair will make a DNT worth only 50 percent if there is enough time.
+    See *implied_T_DNT* at the end of this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Unlike L, U, or T, we cannot choose the volatility parameter deliberately; however,
+    calculating the implied volatility could be useful to price other derivatives.
+    This is a key pricing concept; risk-neutral pricing is based on comparison. If
+    we know the price (and all other parameters) of a DNT, we can find out what volatility
+    was used for pricing. See *implied_vol_DNT* at the end of this section.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Next, we will show a lot of implied functions and finally draw the implied
+    charts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following is the output for the preceding code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Exotic options embedded in structured products](img/2078OT_07_23.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: We started this chapter by introducing exotic options. In a brief theoretical
+    summary, we explained how exotics and plain vanillas are linked together. There
+    are many types of exotics. We showed one possible way of classification that is
+    consistent with the `fExoticOptions` package. We showed how the Black-Scholes
+    surface (a 3D chart that contains the price of a derivative dependent on time
+    and the underlying price) can be constructed for any pricing function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pricing of exotic options is just the first step. Market makers keep thousands
+    of different options in their trading books. This is possible only because each
+    option can be decomposed into certain sensitivities, the so-called Greeks. Being
+    partial derivatives, Greeks are additive; thus, the portfolio of derivatives has
+    the sum of the Greeks of its elements. The next step was estimating Greeks for
+    any derivative-pricing functions. Our numerical method can be calibrated to the
+    real market conditions; for many parameters, we already know what the smallest
+    possible change is. For example, the smallest change for an interbank AUDUSD fx
+    rate is 0.0001\. Even multiple partial derivatives such as gamma or vanna can
+    be calculated with this numerical method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the second half of this chapter, we focused on one particular exotic option:
+    the Double-No-Touch (DNT) binary option. The reason behind this focus is based
+    on the popularity of DNT options and also because there are many tricks that can
+    be shown on DNTs with conclusions relevant to many other exotic options. We showed
+    two different ways to price DNT options. First, we implemented the *Hui (1996)*
+    closed form solution, where the price is a result of an infinite sum. The speed
+    of convergence is often very quick; however, this is not always the case. We showed
+    a practical way of how convergence issues can be handled without wasting too much
+    computing time. Another way to price a DNT is a static replication from one DKO
+    call and one DKO put option. To price these DKO options, we used the `fExoticOptions`
+    package. We found very little difference between the results of the two DNT pricing
+    methods.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We showed how the DNT option behaves on real-life data by using 5 minutes frequency
+    open-low-high-close type time series of AUDUSD fx rates from the second quarter
+    of 2014\. We estimated the survivorship probability of a DNT by simulation to
+    show how risk premium can be included in DNTs or DOTs based on the supply-demand
+    tensions for volatility. Finally, we showed some practical fine-tuning methods
+    to find missing parameters for DNT with a certain price in the case of building
+    a structured product by introducing functions to find implied parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Black, F. and Scholes, M. [1973]**: *The Pricing of Options and Corporate
+    Liabilities*, The Journal of Political Economy, 81(3), pp. 637-654'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Carr, P., Ellis, K. and Gupta, V. [1998]**: *Static hedging of exotic options*,
+    Journal of Finance, 53, 1165-1190'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Derman, E., Ergener, D. and Kani, I. [1995]**: *Static Options Replication*,
+    Journal of Derivatives, 2 (4), 78-95'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**DeRosa, D. F. [2011]**: *Options on Foreign Exchange*. Wiley Finance'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Haug, E. G. [2007a]**: *The Complete Guide to Option Pricing Formulas*, 2nd
+    edition. The McGraw-Hill Companies'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Haug, E. G. [2007b]**: *Derivatives Models on Models*. John Wiley & Sons'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Hui, C. H. [1996]**: One-touch Double Barrier Binary Option Values, Applied
+    Financial Economics, 1996, 6, pp. 343-346'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Merton, R. [1973]**: *Theory of Rational Option Pricing*, The Bell Journal
+    of Economics and Management Science, 4(1), pp. 141-183'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Taleb, N. N., [1997]**: *Dynamic Hedging*. John Wiley & Sons'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Wilmott, P., [2006]**: *Quantitative Finance*, 2nd edition. John Wiley &
+    Sons'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

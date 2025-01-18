@@ -1,0 +1,757 @@
+- en: Chapter 5. FX Derivatives
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'FX derivatives (or foreign exchange derivatives) are financial derivative products
+    whose payoff is a function of the exchange rate of two (or more) currencies. Like
+    derivatives in general, FX derivatives can be grouped in three main categories:
+    futures, swaps, and options. In this chapter, we will only deal with option-type
+    derivatives. We will start with a straightforward generalization of the basic
+    Black-Scholes model, and will show how to price a simple European call or put
+    currency option. Afterwards, we will discuss the pricing of exchange options and
+    quanto options.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Throughout this chapter, we will assume that you have some basic knowledge about
+    derivative pricing, especially the Black-Scholes model and risk-neutral valuation.
+    Occasionally, we will refer to some mathematic relationships often used in quantitative
+    finance (such as Itô's lemma or Girsanov theorem), but a deep understanding of
+    these theorems is not essential for this chapter. However, those interested in
+    the pure mathematical background of this topic can check out *Medvegyev (2007)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Terminology and notations
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'As we will work with FX rates, it is important to clarify some related terms.
+    Generally, we will denote spot FX rates by *S*, which measures the price of one
+    currency (called base currency) in terms of another currency (called variable
+    or quote currency). In other words, one unit of the base currency is equivalent
+    to *S* unit of the variable currency. It is also important to understand how to
+    read FX market quotes. An FX quote on a currency pair is denoted by the abbreviations
+    of the two currencies: a three-letter code for the base currency, followed by
+    another three-letter code for the variable currency. For example, EURUSD=1.25
+    means that 1 euro is worth 1.25 dollars. This is equivalent to the quote USDEUR=0.8,
+    which means that 1 dollar is worth 0.8 euros. Usually, it depends on historical
+    market conventions that decide which currency is treated as the base currency
+    in a given FX-pair.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In [Chapter 4](ch04.html "Chapter 4. Big Data – Advanced Analytics"), *Big Data
+    – Advanced Analytics*, we have already seen how to download currency rates from
+    the Internet, so we can use what we have learned to check this on real data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This short code plots the EURUSD and USDEUR rates to the same plot window:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we can see the result in the following image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Terminology and notations](img/2078OT_05_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We can also check out the first few lines of the data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we have to say something about notations. So far, we have denoted FX
+    rates by *S*. However, the price of the underlying asset in derivatives pricing
+    is generally denoted by *S*, regardless of whether it is a stock or a currency.
+    On the other hand, FX rates are usually denoted by *X* or sometimes by *E* (both
+    come from the word "exchange"). Furthermore, the strike or exercise price of an
+    option is also abbreviated by *X* or *E*. Now, as the reader, you may have some
+    idea about how challenging it is to use a consistent notation system in this chapter,
+    where the underlying might be a stock or a currency as well, and where stock prices,
+    FX rates, and strike prices might appear at the same time. We decided to adopt
+    the notations of R-functions as much as possible, so in this chapter, the notations
+    we will follow are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The price of the underlying will always be *S*, but if it is not necessarily
+    a currency, we will use numeric or alphabetic indices such as *S[1]* or *S[A]*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The strike price will always be *X*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The expected value operator will be denoted by *E*
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We strongly recommend that you be careful when reading other literature on this
+    topic, because their notation might differ from ours.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Currency options
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: European currency options grant the holder the right to buy (call option) or
+    sell (put option) currency at a predetermined exchange rate (strike price or exercise
+    price, *X*), on a specified date (maturity, *T*). These financial assets are also
+    called foreign exchange options (or FX options), but to avoid confusion with the
+    term "exchange option", we prefer the "currency option" terminology.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A basic assumption of the original Black-Scholes model (*Black and Sholes, 1973*,
+    see also *Merton, 1973*) is that the underlying is a stock that pays no dividend.
+    More generally, the results of the model are held only if the underlying does
+    not grant any kind of yield and does not generate any kind of cost either. However,
+    this assumption might be relaxed easily, and an extended version of the Black-Scholes
+    formula is valid for currency options as well, while all the logic and argumentation
+    of the model is unchanged.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The closed form formula for the price of a European currency call option (*c[0]*)
+    is the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Currency options](img/2078OT_05_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In the preceding formula, the values of d[1] and d[2] are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Currency options](img/2078OT_05_03.jpg) and ![Currency options](img/2078OT_05_04.jpg).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the preceding formulas, *S[0]* is the spot FX rate (the price of one unit
+    of the base currency, expressed in the variable currency), *X* is the strike price,
+    *T* is the time to maturity of the option (in years), *σ* is the volatility of
+    the FX-rate, *r* and *q* are the risk-free log returns of the variable and the
+    base currency respectively, and *N* denotes the cumulative distribution function
+    of the standard normal distribution. It is easy to see from put-call parity that
+    the price of a European currency put option (*p[0]*) with the same parameters
+    is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Currency options](img/2078OT_05_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The Black-Scholes formula and other option pricing models are available in the
+    `fOptions` package. We can use the `BlackScholesOption` or the `GBSOption` function,
+    both of which are practically the same, and the latter is a shorthand alias for
+    the prior function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: Here, `TypeFlag` is either the character `c`, which stands for call or `p` (put).
+    `S` is the current price and `sigma` is the volatility of the underlying. `X`
+    is the strike price and `Time` is the time to maturity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The other two parameters are a bit tricky because `r` and `b` are the risk-free
+    rates, but the second one is meaningless when pricing options for stocks with
+    the original BS model. This indicates that we must set `b = r` to get the BS stock
+    option model, and set `b = r-q` to get the currency option model or the stock
+    option model with continuous dividend yield. The other parameters of the function
+    are optional and we do not need them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To see how it works, let''s say we have an option for EUR with five years''
+    maturity, and the strike price is 0.7\. The USD risk-free rate is `r = 3%` and
+    the EUR risk-free rate is `q = 2%.` 1 USD is currently 0.7450 EUR, so this is
+    the spot price of the underlying. Let the EUR volatility be 20 percent. If we
+    call the `BlackSholesOption` function with the given parameters, we will get the
+    following result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can also check out the price of the put option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Then, we can also check the consistency with the put-call parity, which takes
+    the following form for the currency options:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Substituting the data, on the left hand-side we have:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'On the right-hand side, we have:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Prices of options are rounded to eight digits, so there is a slight difference.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important to mention that pricing a currency option is equivalent to pricing
+    an option with any kind of underlying asset that grants continuous yield. For
+    example, if the underlying is a stock or stock index with dividend yield *q* per
+    annum, then the pricing formulas are the same as mentioned earlier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Exchange options
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Exchange options grant the holder the right to exchange one risky asset to another
+    risky asset at maturity. It is easy to see that simple options are special forms
+    of exchange options where one of the risky assets is a constant amount of money
+    (the strike price).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The pricing formula of an exchange option was first derived by *Margrabe, 1978*.
+    The model assumptions, the pricing principles, and the resultant formula of `Margrabe`
+    are very similar to (more precisely, the generalization of) those of Black, Scholes,
+    and Merton. Now we will show how to determine the value of an exchange option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let's denote the spot prices of the two risky assets at time *t* by *S[1t]*
+    and *S[2t]*. We assume that these prices under the risk neutral probability measure
+    (*Q*) follow geometric Brownian motion with drifts equal to the risk-free rate
+    (*r*), shown as ![Exchange options](img/2078OT_05_06.jpg) and ![Exchange options](img/2078OT_05_07.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, *W[1]* and *W[2]* are standard Wiener processes under *Q*, with correlation
+    *ρ*. You may observe that here, the assets have no yield (for example, stocks
+    that pay no dividend). It is well known (and easy to see with Itô's lemma) that
+    the solutions of the earlier mentioned stochastic differential equations are ![Exchange
+    options](img/2078OT_05_08.jpg) and ![Exchange options](img/2078OT_05_09.jpg) (1)
+  prefs: []
+  type: TYPE_NORMAL
+- en: We assume that you are familiar with the basics of stochastic processes in one
+    dimension. However, in the case of exchange options, we have a two-dimensional
+    Wiener process, so it is useful to illustrate how this looks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Two-dimensional Wiener processes
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The 2D Wiener process is like a random walk in two dimensions and continuous
+    time. We can easily generate such a process with a few lines of code when the
+    coordinates are independent Wiener processes (not bothering ourselves with scaling
+    the process because it looks the same).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'If we call this function, the output is something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we can see the result in the following image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Two-dimensional Wiener processes](img/2078OT_05_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Correlation between the Wiener processes changes the picture dramatically. In
+    the case of positive correlation, the two Wiener processes look like they are
+    moving in the same direction; in the case of negative correlation, they look like
+    they are moving in the opposite direction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can modify our function to get correlated Wiener processes. It is easy to
+    see that the following code does the job:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result depends on the generated random numbers, but it is pretty much like
+    this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we can see the result in the following image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Two-dimensional Wiener processes](img/2078OT_05_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In the previous example, we set the correlation coefficient to 0.6\. Now, let''s
+    see what happens when it is -0.7:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we can see the result in the following image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Two-dimensional Wiener processes](img/2078OT_05_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We can clearly see the difference between the processes with different correlations.
+    Now, let's turn our attention back to exchange options.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Margrabe formula
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The payoff *H[T]* of the exchange option at maturity is defined by ![The Margrabe
+    formula](img/2078OT_05_13.jpg). According to the basic risk-neutral pricing principle,
+    the value of this payoff (or equivalently, the price of the exchange option, denoted
+    by *π(H[T])*) is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_14.jpg)![The Margrabe formula](img/2078OT_05_15.jpg)![The
+    Margrabe formula](img/2078OT_05_16.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In Equation (2), *S[t]* (without number 1 or 2 in the index) is defined as the
+    *S[1t]/S[2t]* quotient. In other words, *S* is the price of *S[1]* in terms of
+    *S[2]*. If the two risky assets are two currencies, then *S* is an FX rate, and
+    that is why we use this notation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To calculate the earlier mentioned expected value, we need to introduce a new
+    measure (*R*), defined by the following Radon-Nikodym derivative:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, the right-hand side of the earlier equation comes from Equation (1) for
+    *S[2]*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Then, the price of the exchange option will take the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_18.jpg)![The Margrabe formula](img/2078OT_05_19.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Now, we have to determine what kind of process *S* follows under *R*. From
+    Girsanov''s theorem, we know that ![The Margrabe formula](img/2078OT_05_20.jpg)
+    and ![The Margrabe formula](img/2078OT_05_21.jpg) are Wiener processes under *R*,
+    and their correlation is still *ρ*. Let''s introduce the following two notations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_22.jpg)![The Margrabe formula](img/2078OT_05_23.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'From Lévy''s characterisation, we know that *W* is a Wiener process under *R*.
+    Now we can determine the equation of *S*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_24.jpg)![The Margrabe formula](img/2078OT_05_25.jpg)![The
+    Margrabe formula](img/2078OT_05_26.jpg)![The Margrabe formula](img/2078OT_05_27.jpg)![The
+    Margrabe formula](img/2078OT_05_28.jpg)![The Margrabe formula](img/2078OT_05_29.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This means that *S* under *R* is a geometric Brownian motion with zero drift,
+    that is ![The Margrabe formula](img/2078OT_05_30.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, if you remember, in Equation (3), we had the following equation for the
+    price of the exchange option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_31.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Using this relationship for *S*, the expected value at the right-hand side is
+    the value of a simple call option with an underlying asset *S*, *r* is equal to
+    0, and *X* is equal to 1\. Let's denote the price of this call option simply with
+    *c[0]*. Then ![The Margrabe formula](img/2078OT_05_32.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, *c[0]* might be determined with the help of the basic Black-Scholes formula,
+    substituting the parameters we just discussed:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_33.jpg)![The Margrabe formula](img/2078OT_05_34.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Hence ![The Margrabe formula](img/2078OT_05_35.jpg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: where ![The Margrabe formula](img/2078OT_05_36.jpg) and ![The Margrabe formula](img/2078OT_05_37.jpg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The previously mentioned formula for *π(H[T])*, which is the pricing formula
+    for the exchange option, is called the Margrabe formula. Continuous dividend yields,
+    if applicable, might be inserted into the formula as simply as in the case of
+    the Black-Scholes formula. Without repeating the calculations, we give only the
+    results for this case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'So, let''s assume that the risky assets to be exchanged have positive continuous
+    dividend yields denoted by *δ[1]* and *δ[2]* respectively. In this case, the processes
+    of their prices under measure *Q* are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_38.jpg) and ![The Margrabe formula](img/2078OT_05_39.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In this case, the Margrabe formula will take the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Margrabe formula](img/2078OT_05_40.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![The Margrabe formula](img/2078OT_05_41.jpg) and ![The Margrabe formula](img/2078OT_05_42.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Application in R
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'R has no built-in function for the Margrabe formula. However, it is much more
+    difficult to understand the complex theory behind it than implement the result.
+    Here, we present the `Margrabe` function only in a few lines, which calculates
+    the price of the exchange option based on the parameters shown in the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This is the core body of the function. If we are more demanding or want to
+    develop a user-friendly application, we need to catch possible errors and exceptions.
+    For example, we should include something like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: The execution should also be stopped when volatility is negative, but user-experience
+    and related software design are beyond the scope of this book. We can use this
+    function with valid parameters to see an example of how it works. Let's say we
+    have two risky assets that pay no dividend, one with a price of 100 USD and 20
+    percent volatility, and the other with a price of 120 USD and 30 percent volatility,
+    and the maturity is two years. At first, let the correlation be 15 percent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We simply call the `Margrabe` function with the given parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result is 12 USD. Now, let''s see what happens if one of the assets is
+    riskless, that is, its volatility is 0\. Let''s call the function with the following
+    parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'What does this mean? This product grants us the right to change the first risky
+    asset, which is a stock that costs 100 USD with 20 percent volatility, to the
+    second "risky" asset, which has a price of 120 USD, pays a 3 percent dividend,
+    and has 0 volatility, (so it is a fixed cash amount) with 3 percent interest.
+    Practically, in two years, it would be the right to buy the stock for 120 USD
+    when the risk-free rate is 3 percent. Let''s compare the price to the BS price
+    of this call option:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Yes, they are indeed the same. If we set the volatility of the first asset to
+    0, this practically means that we have a put option for the second asset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result of the BS formula is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: In both cases, there is only a numeric error from the fifth digit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can also use the Margrabe formula to get the price of the currency option
+    we discussed in the section *Currency Options*. We can check whether the BS formula
+    provided the same price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The last thing we need to discuss is how correlation affects the price of the
+    option. To illustrate this, we calculate the Margrabe price of the option for
+    different values of correlation. This can be done with a few lines of code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we can see the result in the following image:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Application in R](img/2078OT_05_43.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The result is not surprising. When correlation is high, we have the right to
+    switch between identical stocks, which, clearly, is worth nothing. When the correlation
+    is high on the negative side, we have better chances to make a good deal with
+    the option if things go wrong (which means that if our asset decreases, the higher
+    the negative correlation, the higher the chance that the price of the other asset
+    increases and saves us from loss). In other words, in this case, the option is
+    for insurance rather than speculation; we do not have to bear the risk from the
+    price change of the other asset. This is why the option is more valuable when
+    correlation is negative.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quanto options
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The term "**quanto**" is the abbreviation of **quantity adjusting option**.
+    The payoff of quanto derivatives is determined by an asset denominated in one
+    currency, but is paid in another currency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The best way to understand a quanto product (or any kind of derivative) is
+    to examine its payoff function. It is well known that assuming the underlying
+    asset is a stock that pays no dividend, the payoff of a European call option is
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Quanto options](img/2078OT_05_44.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *S[A]* is the price of the stock and *X* is the strike price. Here, *c*,
+    *S[AT]*, and *X* are denominated in the same currency; let's call it domestic
+    currency.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The payoff of a European call quanto is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Quanto options](img/2078OT_05_45.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *S* is a foreign exchange rate. Thus, a call quanto pays the same "quantity"
+    of money as a simple call option, but in another currency—let's call it foreign
+    currency. So, this quantity paid has to be multiplied by an FX rate so that we
+    get the payoff's value in domestic currency. Of course, *S* has to be the price
+    of the foreign currency in terms of domestic currency. In other words, in the
+    quotation of *S*, the base currency is the foreign one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pricing formula for a call quanto
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Pricing a call quanto means determining the value of the earlier payoff. As
+    usual, we will assume that the price of the underlying asset under the risk neutral
+    measure (*Q*) follows geometric Brownian motion with drift equal to the risk-free
+    domestic rate (*r*), that is:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_46.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Furthermore, we assume that the FX rate follows a similar process:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_47.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In these equations, *W[1]* and *W[2]* are standard Wiener processes under *Q*,
+    with correlation *ρ*. Let *q* denote the risk-free foreign rate. This means that
+    the value of one unit of foreign bank deposit at time *t* is *exp(qt)*. In terms
+    of the domestic currency, this value is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_48.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Supposing that this is a traded product in the domestic market, its discounted
+    value has to be a martingale under *Q*. Let''s calculate this discounted value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_49.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This process is martingale only if ![Pricing formula for a call quanto](img/2078OT_05_50.jpg),
+    which is under *Q*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_51.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now, we will calculate the *SS[A]* product, which we will denote by *Y*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_52.jpg)![Pricing formula
+    for a call quanto](img/2078OT_05_53.jpg)![Pricing formula for a call quanto](img/2078OT_05_54.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![Pricing formula for a call quanto](img/2078OT_05_55.jpg) and ![Pricing
+    formula for a call quanto](img/2078OT_05_56.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The correlation ![Pricing formula for a call quanto](img/2078OT_05_57.jpg) between
+    *W[2]* and *W[3]* is ![Pricing formula for a call quanto](img/2078OT_05_58.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consequently, ![Pricing formula for a call quanto](img/2078OT_05_59.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, it is important to notice that the call quanto is a special exchange option,
+    and hence, might be priced with Margrabe''s formula. We only have to identify
+    the two risky assets to be exchanged upon exercising the option, and the related
+    parameters. From the payoff function of the quanto, it is easy to see that the
+    first risky asset is *SS[A] = Y*, while the second one is *XS* (both expressed
+    in domestic currency). Since the drift components of these processes under *Q*
+    are not simply the risk-free domestic rate, we have to use the `Margrabe` formula
+    with dividend yields. From the earlier calculations, we can see that the *Y* process
+    should be handled as if the dividend yield was ![Pricing formula for a call quanto](img/2078OT_05_71.jpg),
+    while in case of *XS*, it is simply *q*. The only remaining parameter to be determined
+    is *σ*. With straightforward substitutions, we have the following calculation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_60.jpg)![Pricing formula
+    for a call quanto](img/2078OT_05_61.jpg)![Pricing formula for a call quanto](img/2078OT_05_62.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Summarizing all these results, we have to use the `Margrabe` formula (given
+    in Equation (4)) with the substitutions ![Pricing formula for a call quanto](img/2078OT_05_63.jpg),
+    ![Pricing formula for a call quanto](img/2078OT_05_64.jpg), ![Pricing formula
+    for a call quanto](img/2078OT_05_65.jpg), ![Pricing formula for a call quanto](img/2078OT_05_66.jpg),
+    and ![Pricing formula for a call quanto](img/2078OT_05_67.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Hence, the price of the call quanto is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_68.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In the earlier equation, d[1] and d[2] were as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Pricing formula for a call quanto](img/2078OT_05_69.jpg) and ![Pricing formula
+    for a call quanto](img/2078OT_05_70.jpg).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Pricing a call quanto in R
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let's see an example to price a call quanto in R. Our favorite stock is priced
+    at 100 USD and 20 percent volatility. We need a call option with 90 USD, which
+    is paid in EURs in three years. The USD risk-free rate is `r = 2%` and the EUR
+    risk-free rate is `q = 3%`. Currently, 1 USD is equal to 0.7467 EUR. The EUR volatility
+    is 15%, and the correlation between the stock price and the USDEUR exchange rate
+    is 10%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If in three years the price of the stock is higher than 90 USD, the difference
+    is paid in EUR. If, for instance, the price is 110 USD in 3 years, we will get
+    20 EURs. On the current FX rate, it is `20*0.7467 = 26.78093 USD`, but if the
+    EURUSD exchange rate is different in three years, for example, USDEUR is equal
+    to 0.7, this equals 28.57143 USD. So the payoff can be different in USD, but we
+    eliminated the FX rate risk if we want to be paid in EUR.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This seems complicated, but fortunately, we can use the Margrabe formula and
+    our `Margrabe` function to calculate the price of the option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: We need these substitutions ![Pricing a call quanto in R](img/2078OT_05_63.jpg),
+    ![Pricing a call quanto in R](img/2078OT_05_64.jpg), ![Pricing a call quanto in
+    R](img/2078OT_05_65.jpg), ![Pricing a call quanto in R](img/2078OT_05_66.jpg),
+    and ![Pricing a call quanto in R](img/2078OT_05_67.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '`S1` is the stock price in EUR, and `S2` is the strike price in EUR. `delta1`
+    and `delta2` can be calculated easily: `delta1 = 0.03-0.02-0.2*0.15*0.1` and `delta2
+    = 0.03`. The only problem is that we need to set `sigma = sigma1`, but `sigma`
+    is not a parameter of the Margrabe function; it is calculated inside the function
+    body. Consider the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: To get the *sigma = sigma1* result, we need to set *sigma2 = rho = 0*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, we can call the `Margrabe` function with the given parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result is 16.23\. This is the price of the quanto.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter, we met the challenge of discussing one of the most beautiful
+    and most difficult parts of financial math: derivative pricing. We learned in
+    theory and in practice about generalizations of the Black-Scholes model for related
+    problems. We learned how to use R and the Black-Scholes formula for currency options.
+    We saw how easy it is to implement our own code for the Margrabe formula, which
+    is an extension of the Black-Scholes model. We used this formula to price stock
+    options, currency options, and exchange options. Finally, we discussed quanto
+    options and realized that quantos can also be priced with the Margrabe formula.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: If you found this chapter exciting, you will be enthusiastic about the next
+    one, which is about a related topic, that is, interest rate derivatives.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Black, F. and Scholes, M. (1973)**: The Pricing of Options and Corporate
+    Liabilities. *The Journal of Political Economy*, 81(3), pp. 637-654.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Margrabe, W. (1978)**: The Value of an Option to Exchange One Asset for Another.
+    *Journal of Finance*, 33(1), pp. 177-186.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Medvegyev, Péter (2007)**: *Stochastic Integration Theory*. Oxford University
+    Press.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Merton, R. (1973)**: Theory of Rational Option Pricing. *The Bell Journal
+    of Economics and Management Science*, 4(1), pp. 141-183.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

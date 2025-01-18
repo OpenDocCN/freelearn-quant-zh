@@ -1,0 +1,1293 @@
+- en: Chapter 12. Monte Carlo Simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Monte Carlo Simulation is an extremely useful tool in finance. For example,
+    because we can simulate stock price by drawing random numbers from a lognormal
+    distribution, the famous **Black-Scholes-Merton option** model can be replicated.
+    From [Chapter 9](ch09.html "Chapter 9. Portfolio Theory"), *Portfolio Theory*,
+    we have learnt that by adding more stocks into a portfolio, the firm specific
+    risk could be reduced or eliminated. Via simulation, we can see the diversification
+    effect much clearly since we can randomly select 50 stocks from 5,000 stocks repeatedly.
+    For capital budgeting, we can simulate over several dozen variables with uncertain
+    future values. For those cases, simulation can be applied to generate many possible
+    future outcomes, events, and various types of combinations. In this chapter, the
+    following topics will be covered:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating random numbers drawn from a normal, uniform, and Poisson distributions
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Estimating π value by using Monte Carlo simulation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Simulate stock price movement with a lognormal distribution
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Constructing efficient portfolios and an efficient frontier
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Replicating the Black-Scholes-Merton option model by simulation
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pricing several exotic options, such as lookback options with floating strikes
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Bootstrapping with/without replacements
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Long term expected return forecast
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Efficiency, Quasi Monte Carlo simulation, and Sobol sequence
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Importance of Monte Carlo Simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Monte Carlo Simulation**, or simulation, plays a quite important role in
+    finance with many applications. Assume that we intend to estimate **Net Present
+    Value** (**NPV**) of a project. There are many uncertainties in the future, such
+    as borrowing cost, price of our final products, raw materials, and so on. For
+    just a few variables, we still could manage the task easily. However, if we face
+    two dozen variables with uncertain future values, it is a headache to find a solution.
+    Fortunately, Monte Carlo Simulation can be applied here. In [Chapter 10](ch10.html
+    "Chapter 10. Options and Futures"), *Options and Futures*, we have learnt that
+    the logic behind the Black-Scholes-Merton option models is the normality assumption
+    for stock returns. Because of this, their closed-firm solution could be replicated
+    by simulation. Another example is to randomly choose 50 stocks from 4,500 available
+    stocks. Unlike vanilla options, such as the Black-Scholes-Merton model, there
+    are no closed-form solutions for exotic options. Fortunately, we can use simulation
+    to price some of them.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating random numbers from a standard normal distribution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Normal distributions play a central role in finance. A major reason is that
+    many finance theories, such as option theory and their related applications, are
+    based on the assumption that stock returns follow a normal distribution. The second
+    reason is that if our econometric models are well designed, the error terms from
+    the models should follow a zero-mean normal distribution. It is a common task
+    that we need to generate n random numbers from a standard normal distribution.
+    For this purpose, we have the following three lines of code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The basic random numbers in SciPy/NumPy are created by Mersenne Twister PRNG
+    in the `numpy.random` function. The random numbers for distributions in `numpy.random`
+    are in cython/pyrex and are pretty fast. There is no chance that readers would
+    get the same `10` random numbers shown here. We will explain how to generate the
+    same set of random numbers pretty soon. Alternatively, we can use the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This program is equivalent to the following one:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The first input is for mean, the second input is for standard deviation, and
+    the last one is for the number of random numbers, that is, the size of our desired
+    dataset. Comparing the previous two programs, obviously the default settings for
+    mean and standard deviations are `0` and `1`. We can use the `help()` function
+    to find out the names of those three input variables. To save space, only the
+    first few lines are shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: Drawing random samples from a normal distribution
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The probability density function of the normal distribution, first derived
+    by De Moivre and 200 years later by both Gauss and Laplace independently, is often
+    called the bell curve because of its characteristic shape; refer to the following
+    graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Drawing random samples from a normal distribution](img/B06175_12_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The density function for a standard normal distribution is given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Drawing random samples from a normal distribution](img/B06175_12_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *f(x)* is the density function for a standard normal distribution, *x*
+    is an input value, *e* is the exponential function, and *π* is *3.1415926*. Here
+    is the code to generate the preceding bell curve:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generating random numbers with a seed
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Quite often, users want to produce the same set of random numbers repeatedly.
+    For example, when a professor is explaining how to estimate the mean, standard
+    deviation, skewness, and kurtosis of a set of random numbers, it is a good idea
+    that students could generate exactly the same values as their instructor. Another
+    example would be that when we are debugging our Python program to simulate a stock''s
+    movements, we might prefer to have the same intermediate results. For such cases,
+    we use the `scipy.random.seed()` function as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, `12345` is a seed. The value of the seed is not important. The key is
+    that the same seed leads to the same set of random values. The formula for a more
+    general normal distribution is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Generating random numbers with a seed](img/B06175_12_18.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *f(x)* is the density function for a normal distribution, *x* is an input
+    value, *e* is the exponential function, μ is the mean, σ is the standard deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Random numbers from a normal distribution
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'To generate *n* random numbers from a normal distribution, we have the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The difference between this program and the previous one is that the mean is
+    `0.05` instead of `0`, while the standard deviation is `0.1` instead of `1`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Histogram for a normal distribution
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'A histogram is used intensively in the process of analyzing the properties
+    of datasets. To generate a histogram for a set of random values drawn from a normal
+    distribution with specified mean and standard deviation, we have the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resultant graph is presented as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Histogram for a normal distribution](img/B06175_12_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Graphical presentation of a lognormal distribution
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'When stock returns follow a normal distribution, then its prices should follow
+    a lognormal distribution. The definition of a lognormal distribution is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Graphical presentation of a lognormal distribution](img/B06175_12_19.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *f(x;μ,σ)* is the density of a lognormal distribution, `ln()` is the
+    natural log function. The following code shows three different lognormal distributions
+    with three pairs of parameters, such as (0, 0.25), (0, 0.5), and (0, 1.0). The
+    first parameter is for mean (μ), while the second one is for standard deviation,
+    see the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The graph is shown here. Obviously, unlike a density of a normal distribution,
+    the density function of a lognormal distribution is not symmetric:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Graphical presentation of a lognormal distribution](img/B06175_12_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Generating random numbers from a uniform distribution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'When randomly choosing m stocks from *n* available stocks, we can draw a set
+    of random numbers from a uniform distribution. To generate 10 random numbers between
+    1 and 100 from a uniform distribution, we have the following code. To guarantee
+    for the same set of numbers, the `seed()` function is used:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Again, low, high, and size are the three input names. The first one specifies
+    the minimum, the second one specifies the high end, while the size gives the number
+    of the random numbers we intend to generate. The first five numbers are shown
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next program randomly roll a dice with a value from 1, 2, and up to 6:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the previous program, the `random.seed()` function is applied. Thus, any
+    reader should get the same results shown by the last line.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using simulation to estimate the pi value
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'It is a good exercise to estimate π value by simulation. Let''s draw a square
+    with 2R as its side. If putting the largest circle inside the square, its radius
+    will be R, described by the following equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using simulation to estimate the pi value](img/B06175_12_20.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'On the other hand, the square is the product of its sides:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using simulation to estimate the pi value](img/B06175_12_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Dividing *Equation (4)* by *Equation (5)*, we have the following result:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using simulation to estimate the pi value](img/B06175_12_22.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Reorganize it; we end up with the following equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using simulation to estimate the pi value](img/B06175_12_23.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In other words, the value of π will be *4* Scircle/Square*. When running the
+    simulation, we generate *n* pairs of *x* and *y* from a uniform distribution with
+    a range of zero and 0.5\. Then we estimate a distance that is the square root
+    of the summation of the squared *x* and *y*, that is, ![Using simulation to estimate
+    the pi value](img/B06175_12_41.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Obviously, when *d* is less than 0.5 (value of R), it will fall into the circle.
+    We can imagine throwing a dart that falls into the circle. The value of the pi
+    will take the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using simulation to estimate the pi value](img/B06175_12_24.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following graph illustrates these random points within a circle and within
+    a square:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Using simulation to estimate the pi value](img/B06175_12_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The Python program to estimate the value of pi is presented as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The estimated pi value would change whenever we run the previous code, as shown
+    in the following code, and the accuracy of its estimation depends on the number
+    of trials, that is, *n*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Generating random numbers from a Poisson distribution
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'To investigate the impact of private information, Easley, Kiefer, O''Hara,
+    and Paperman (1996) designed a **Probability of informed** (**PIN**) trading measure
+    that is derived based on the daily number of buyer-initiated trades and the number
+    of seller-initiated trades. The fundamental aspect of their model is to assume
+    that order arrivals follow a Poisson distribution. The following code shows how
+    to generate *n* random numbers from a Poisson distribution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The graph is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Generating random numbers from a Poisson distribution](img/B06175_12_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Selecting m stocks randomly from n given stocks
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Based on the preceding program, we could easily choose 20 stocks from 500 available
+    securities. This is an important step if we intend to investigate the impact of
+    the number of randomly selected stocks on the portfolio volatility, as shown in
+    the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In the preceding program, we select 20 numbers from 500 numbers. Since we have
+    to choose integers, we might end up with less than 20 values, that is, some integers
+    appear more than once after we convert real numbers into integers. One solution
+    is to pick more than we need. Then choose the first 20 integers. An alternative
+    is to use the `randrange()` and `randint()` functions. In the next program, we
+    choose *n* stocks from all available stocks. First, we download a dataset from
+    [http://canisius.edu/~yany/python/yanMonthly.pkl](http://canisius.edu/~yany/python/yanMonthly.pkl).
+    Assume that the dataset is located under `C:/temp/`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the preceding program, we remove non-stock data items. These non-stock items
+    are a part of data items. First, we load a dataset called `yanMonthly.pickle`
+    that includes over 200 stocks, gold price, GDP, unemployment rate, **Small Minus
+    Big** (**SMB**), **High Minus Low** (**HML**), risk-free rate, price rate, market
+    excess rate, and Russell indices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One type of output formats from pandas is with a `.pkl` `.png`. Since `x.index`
+    would present all indices for each observation, we need to use the `unique()`
+    function to select all unique IDs. Since we only consider stocks to form our portfolio,
+    we have to move all market indices and other non-stock securities, such as HML
+    and `US_DEBT`. Because all stock market indices start with a carat (^), we use
+    less than ZZZZ to remove them. For other IDs that are between A and Z, we have
+    to remove them one after another. For this purpose, we use the `.remove()` function
+    available for a list variable. The final output is shown as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Selecting m stocks randomly from n given stocks](img/B06175_12_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: With/without replacements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Assume that we have the historical data, such as price and return, for a stock.
+    Obviously, we could estimate their mean, standard deviation, and other related
+    statistics. What are their expected annual mean and risk next year? The simplest,
+    maybe naïve way is to use the historical mean and standard deviation. A better
+    way is to construct the distribution of annual return and risk. This means that
+    we have to find a way to use historical data more effectively to predict the future.
+    In such cases, we could apply the bootstrapping methodology. For example, for
+    one stock, we have its last 20-year monthly returns, that is, 240 observations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To estimate next year''s 12 monthly returns, we need to construct a return
+    distribution. First, we choose 12 returns randomly from the historical return
+    set without replacements and estimate their mean and standard deviations. We repeat
+    this procedure 5,000 times. The final output will be our return-standard distribution.
+    Based on such a distribution, we can estimate other properties as well. Similarly,
+    we can do so with replacements. One of the useful functions present in NumPy is
+    called `numpy.random.permutation()`. Assume that we have 10 numbers from one to
+    10 (inclusive of one and 10). We can call the `numpy.random.permutation()` function
+    to reshuffle them as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of this code is shown as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![With/without replacements](img/B06175_12_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Based on the `numpy.random.permutation()` function, we can define a function
+    with three input variables: data, number of observations we plan to choose from
+    the data randomly, and whether we choose to bootstrap with or without replacement,
+    as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: The constraint specified in the previous program is that the number of given
+    observations should be larger than the number of random returns we plan to pick
+    up. This is true for the bootstrapping without the replacement method. For the
+    bootstrapping with the replacement method, we could relax this constraint; refer
+    to the related exercise.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Distribution of annual returns
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'It is a good application to estimate annualized return distribution and represent
+    it as a graph. To make our exercise more meaningful, we download Microsoft''s
+    daily price data. Then, we estimate its daily returns and convert them into annual
+    ones. Based on those annual returns, we generate its distribution by applying
+    bootstrapping with replacements 5,000 times, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The corresponding graph is shown as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Distribution of annual returns](img/B06175_12_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Simulation of stock price movements
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'We mentioned in the previous sections that in finance, returns are assumed
+    to follow a normal distribution, whereas prices follow a lognormal distribution.
+    The stock price at time *t+1* is a function of the stock price at *t*, mean, standard
+    deviation, and the time interval, as shown in the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Simulation of stock price movements](img/B06175_12_25.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In this formula, *St + 1* is the stock price at *t+1*, *ˆ μ* is the expected
+    stock return, *t _* is the time interval (*T t n_=* ), *T* is the time (in years),
+    *n* is the number of steps, *ε* is the distribution term with a zero mean, and
+    *σ* is the volatility of the underlying stock. With a simple manipulation, equation
+    (4) can lead to the following equation that we will use in our programs:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Simulation of stock price movements](img/B06175_12_26.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'In a risk-neutral work, no investors require compensation for bearing risk.
+    In other words, in such a world, the expected return on any security (investment)
+    is the risk-free rate. Thus, in a risk-neutral world, the previous equation becomes
+    the following equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Simulation of stock price movements](img/B06175_12_27.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'If you want to learn more about the risk-neutral probability, refer to *Options,
+    Futures and Other Derivatives, 7th edition, John Hull, Pearson, 2009*. The Python
+    code to simulate a stock''s movement (path) is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To make our graph more readable, we deliberately choose just five simulations.
+    Since the `scipy.random.seed()` function is applied, you can replicate the following
+    graph by running the previous code. The graph is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Simulation of stock price movements](img/B06175_12_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Graphical presentation of stock prices at options' maturity dates
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Up to now, we have discussed that options are really path-independent, which
+    means the option prices depend on terminal values. Thus, before pricing such an
+    option, we need to know the terminal stock prices. To extend the previous program,
+    we have the following code to estimate the terminal stock prices for a given set
+    of values: `S0` (initial stock price), `n_simulation` (number of terminal prices),
+    `T` (maturity date in years), `n_steps` (number of steps), `mu` (expected annual
+    stock returns), and `sigma` (volatility):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The histogram of our simulated terminal prices is shown as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Graphical presentation of stock prices at options'' maturity dates](img/B06175_12_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'As we mentioned in [Chapter 9](ch09.html "Chapter 9. Portfolio Theory"), *Portfolio
+    Theory*, in order to generate two correlated random number time series, there
+    are two step involved: generate two random time series *x1* and *x2* with a zero-correlation;
+    and then apply the following formulae:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Graphical presentation of stock prices at options'' maturity dates](img/B06175_12_33.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, ρ is the predetermined correlation between those two time series. Now,
+    `y1` and `y2` are correlated with a predetermined correlation. The following Python
+    program will implement the preceding approach:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Replicating a Black-Scholes-Merton call using simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'After knowing the terminal prices, we can estimate the payoff for a call if
+    the exercise price is given. The mean of those discounted payoffs using the risk-free
+    rate as our discount rate will be our call price. The following code helps us
+    estimate the call price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: The estimated call price is $2.748\. The same logic applies to pricing a put
+    option.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Exotic option #1 – using the Monte Carlo Simulation to price average'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Up to now, we have discussed European and American options in [Chapter 9](ch09.html
+    "Chapter 9. Portfolio Theory"), *Portfolio Theory*. The Black- Scholes-Merton
+    Option Model, which is also called a vanilla option. One of the characters is
+    path independent. On the other hand, exotic options are more complex since they
+    might have several triggers relating to the determination of their payoffs. For
+    example, a refinery is worried about the oil, its major raw material, and price
+    movement in the next three months. They plan to hedge the potential price jumps
+    in crude oil. The company could buy a call option. However, since the firm consumes
+    a huge amount of crude oil every day, naturally it cares more about the average
+    price instead of just the terminal price on which a vanilla call option depends.
+    For such cases, average options will be more effective. Average options are a
+    type of Asian options. For an average option, its payoff is determined by the
+    average underlying prices over some preset period of time. There are two types
+    of averages: arithmetic average and geometric average. The payoff function of
+    an Asian call (average price) is given as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Exotic option #1 – using the Monte Carlo Simulation to price average](img/B06175_12_29.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The payoff function of an Asian put (average price) is given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Exotic option #1 – using the Monte Carlo Simulation to price average](img/B06175_12_30.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Asian options are one of the basic forms of exotic options. Another advantage
+    of Asian options is that their costs are cheaper compared to European and American
+    vanilla options since the variation of an average will be much smaller than a
+    terminal price. The following Python program is for an Asian option with an arithmetic
+    average price:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: Based on the preceding result, the call premium for this average price call
+    is $1.70.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Exotic option #2 – pricing barrier options using the Monte Carlo Simulation'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Unlike the Black-Scholes-Merton option model''s call and put options, which
+    are path-independent, a barrier option is path-dependent. A barrier option is
+    similar in many ways to an ordinary option except a trigger exists. An `in` option
+    starts its life worthless unless the underlying stock reaches a predetermined
+    knock-in barrier. On the contrary, an `out` barrier option starts its life active
+    and turns useless when a knock-out barrier price is breached. In addition, if
+    a barrier option expires inactive, it may be worthless, or there may be a cash
+    rebate paid out as a fraction of the premium. The four types of barrier options
+    are given as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Up-and-out**: In this barrier option, the price starts from down a barrier
+    level. If it reaches the barrier, it is knocked out.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Down-and-out**: In this barrier option, the price starts from higher a barrier.
+    If it reaches the barrier, it is knocked out.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Up-and-in**: In this barrier option, the price starts down a barrier and
+    has to reach the barrier to be activated.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Down-and-in**: In this barrier option, the price starts higher a barrier
+    and has to reach the barrier to be activated.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The next Python program is for an up-and-out barrier option with a European
+    call:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The basic design is that we simulate the stock movement *n* times, such as
+    100 times. For each simulation, we have 100 steps. Whenever the stock price reaches
+    the barrier, the payoff will be zero. Otherwise, the payoff will be a vanilla
+    European call. The final value will be the summation of all call prices that are
+    not knocked out, divided by the number of simulations, as shown in the following
+    code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: Based on the preceding result, we know that the call price for this up and out-call
+    is $0.94.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Liking two methods for VaR using simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In the previous chapter, [Chapter 11](ch11.html "Chapter 11. Value at Risk"),
+    *Value at Risk*, we learnt that we could apply two methods to estimate a VaR for
+    an individual stock or for a portfolio: it depends on the normality assumption
+    and based on the ranking of historical returns. Monte Carlo Simulation could link
+    those two methods, see the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Monte Carlo Simulation offers a result of $386,113 compared with $385,270 based
+    on the formula for a $1 million of portfolio value today.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Capital budgeting with Monte Carlo Simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'As we mentioned at the beginning of this chapter, we can use Monte Carlo Simulation
+    to capital budgeting when the number of variables has many different values. Our
+    objective is to estimate the NPV for a given budget by discounting all of its
+    future free cash flow:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Capital budgeting with Monte Carlo Simulation](img/B06175_12_31.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *NPV* is the Net Present Value of one proposal, *FCF0* will be the free
+    cash flow at time zero, *FCFt* will be free cash flow at the end of year *I*,
+    *R* is the discount rate. The formula to calculate free cash flows at the end
+    of year *t* is given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Capital budgeting with Monte Carlo Simulation](img/B06175_12_32.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *FCTt* is Free Cash Flow at year *t*, *Dt* is depreciation of year *t*,
+    *CaptExt* is the net capital expenditure at year *t*, *NWC* is for Net working
+    capital, which is the current asset minus current liability, Δ means change. Let''s
+    look at a simple one. Assume that the company buys one price of long term equivalent
+    with a total cost of 0.5 million with a life of five years:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Items | 0 | 1 | 2 | 3 | 4 | 5 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Price | 0 | 28 | 28 | 28 | 28 | 28 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Unit | 0 | 100000 | 100000 | 100000 | 100000 | 100000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Sales | 0 | 2800000 | 2800000 | 2800000 | 2800000 | 2800000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Cost of goods sold | 0 | 840000 | 840000 | 840000 | 840000 | 840000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Other costs | 0 | 100000 | 100000 | 100000 | 100000 | 100000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Selling, general and adm | 15000 | 15000 | 15000 | 15000 | 15000 | 15000
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| R&D | 20000 |   |   |   |   |   |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Depreciation |   | 1000000 | 1000000 | 1000000 | 1000000 | 1000000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| EBIT | -35000 | 845000 | 845000 | 845000 | 845000 | 845000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Tax 35% | -12250 | 295750 | 295750 | 295750 | 295750 | 295750 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NI | -47250 | 1140750 | 1140750 | 1140750 | 1140750 | 1140750 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Add depreciation | -47250 | 2140750 | 2140750 | 2140750 | 2140750 | 2140750
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Table 12.1 Cash flows every year
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'We have the following equivalent code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The NPV of this project is $1,848,477\. Since it is positive, we should accept
+    that the proposal if our criterion is based on the NPV rule. Now, let''s add some
+    uncertainty. Assume that we have three uncertainties: price, unit of products
+    expected to sell, and discount rates, see the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The histogram of the NPV distribution is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Capital budgeting with Monte Carlo Simulation](img/B06175_12_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Python SimPy module
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'SimPy is a process-based discrete-event simulation framework based on standard
+    Python. Its event dispatcher is based on Python''s generators and can also be
+    used for asynchronous networking or to implement multi-agent systems (with both
+    simulated and real communication). Processes in SimPy are simple Python generator
+    functions and are used to model active components such as customers, vehicles,
+    or agents. SimPy also provides various types of shared resources to model limited
+    capacity congestion points (such as servers, checkout counters, and tunnels).
+    From version 3.1, it will also provide monitoring capabilities to aid in gathering
+    statistics about resources and processes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Comparison between two social policies – basic income and basic job
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This example is borrowed from Stucchhio (2013). Over the development of the
+    past several decades, the wealth of each nation is continuously commutative. This
+    is especially true for the developed countries. One of the basic arguments supporting
+    equity is that each citizen should have their basic standard of living. Based
+    on this argument, many countries offer huge benefits to their citizens, such as
+    universal healthcare, free education, and the like. One policy suggestion is basic
+    income, under which each citizen receives a basic income annually with no strings
+    attached. For example, if we assume that the basic hourly rate is $7.50, 40 hours
+    per week and 50 weeks per year, then the basic income should be $15,000\. Zhong
+    (2017) reports that India is considering fighting poverty with a universal basic
+    income plan. The obvious advantage is that the administration cost will be quite
+    small. In addition, it is less likely that corruption would eat the lions share
+    of government release funds for the poor. In 2017, Finland launched a pilot project,
+    and local authorities in Canada and the Netherlands have also announced experiments.
+    In 2016, voters in Switzerland rejected a minimum income proposal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'One alternative is a so-called basic job in which the government guarantees
+    a low-paid job to anyone who cannot find a decent one. Each of these methods has
+    its advantages and disadvantages. Based on a set of assumptions, such as hourly
+    pay, number of working hours per week, number of working weeks per year, population,
+    workforce, and the like, Stucchhio (2013) compares the cost and benefits of these
+    two proposals. Several uncertainties exist; see the list in the following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Policy | Command | Description |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Basic income** | `unitAdmCost = norm(250,75)` | Administration cost for
+    each person |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `binom(nNonWorkers,tiny).rvs()` | A random number from a binomial distribution
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `nonWorkerMultiplier = uniform(-0.10, 0.15).rvs()` | Multiplier for none
+    workers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| **Basic job** | `unitAdmCost4disabled= norm(500,150).rvs()` | Administration
+    cost for each disabled adult |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `unitAdmCost4worker = norm(5000, 1500).rvs()` | Administration cost for each
+    worker |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `nonWorkerMultiplier = uniform(-0.20, 0.25).rvs()` | Multiplier for none
+    workers |'
+  prefs: []
+  type: TYPE_TB
+- en: '| `hourlyProductivity = uniform(0.0,hourlyPay).rvs()` | Hourly productivity
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 12.2: Costs and benefits of the two proposals'
+  prefs:
+  - PREF_BQ
+  type: TYPE_NORMAL
+- en: 'The program uses three distributions: normal, uniform, and binomial. The `uniform(a,b).rvs()`
+    command generates a random number uniformly distributed between *a* and *b*. The
+    `norm(mean,std).rvs()` command generates a random number generated from a normal
+    distribution with specified mean and standard deviation. The `binom(n,k).rvs()`
+    command generates a random number from a binomial distribution with a pair of
+    input values of `n` and `k`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Stucchhio''s Python program, with a few minor modifications, is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Based on the graph shown here, he concludes that the cost of basic job proposal
+    is lower than the basic income proposal. To save space, we will not elaborate
+    on the program. For more detailed explanation and related assumption, please read
+    the blog posted by Stucchhio (2013):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Comparison between two social policies – basic income and basic job](img/B06175_12_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Finding an efficient frontier based on two stocks by using simulation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The following program aims at generating an efficient frontier based on two
+    stocks with known means, standard deviations, and correlation. We have just six
+    input values: two means, two standard deviations, the correlation (ρ), and the
+    number of simulations. To generate the correlated *y1* and *y2* time series, we
+    generate the uncorrelated *x1* and *x2* series first. Then, we apply the following
+    formulae:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Finding an efficient frontier based on two stocks by using simulation](img/B06175_12_33.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Another important issue is how to construct an objective function to minimize.
+    Our objective function is the standard deviation of the portfolio in addition
+    to a penalty that is defined as the scaled absolute deviation from our target
+    portfolio mean.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In other words, we minimize both the risk of the portfolio and the deviation
+    of our portfolio return from our target return, as shown in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Finding an efficient frontier based on two stocks by using simulation](img/B06175_12_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Constructing an efficient frontier with n stocks
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'When the number of stocks, *n*, increases, the correlation between each pair
+    of stocks increases dramatically. For *n* stocks, we have *n*(n-1)/2* correlations.
+    For example, if *n* is 10, we have 45 correlations. Because of this, it is not
+    a good idea to manually input those values. Instead, we generate means, standard
+    deviations, and correlations by drawing random numbers from several uniform distributions.
+    To produce correlated returns, first we generate *n* uncorrelated stock return
+    time series and then apply Cholesky decomposition as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The graph is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Constructing an efficient frontier with n stocks](img/B06175_12_14.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'It is difficult to simulate an n-stock portfolio when n is a huge number. The
+    reason is that it is time consuming to generate a variance-covariance matrix,
+    see the number of covariances (correlations) here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Constructing an efficient frontier with n stocks](img/B06175_12_34.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Assume that we have 500 stocks in our portfolio. Then we have to estimate 124,750
+    pairs of correlations. To simplify this calculation, we could apply CAPM, see
+    the following formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Constructing an efficient frontier with n stocks](img/B06175_12_35.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here *R*[*i,t*] is the return for stock *i* at time *t*, *α[*i*]*, and *β[i]*
+    are the intercept and slope for stock *i*, *R*[*M,t*] is the a market index return
+    at time *t*, *e*[*i*], *t*, is the error term at time *t*. Since the total risk
+    of individual stock has two components: systematic risk and firm specific risk.
+    Thus, the variance of stock *i* is associated with the market index in the following
+    way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Constructing an efficient frontier with n stocks](img/B06175_12_36.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The covariance between stocks *i* and *j* is given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Constructing an efficient frontier with n stocks](img/B06175_12_37.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Because of this, we can reduce our estimation from 124,750 to just 1,000\.
+    Estimate 500 βs first. Then we apply the preceding formula to estimate the covariance.
+    Similarly, the formula to estimate the correlation between stock *i* and *j* is
+    given here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Constructing an efficient frontier with n stocks](img/B06175_12_38.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Long-term return forecasting
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Many researchers and practitioners argue that a long-term return forecast would
+    be overestimated if it is based on the arithmetic mean of the past returns and
+    underestimated based on a geometric mean. Using 80 years'' historical returns
+    to forecast the next 25-year future return, Jacquier, Kane, and Marcus (2003)
+    suggest the following weighted scheme:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Long-term return forecasting](img/B06175_12_39.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following program reflects the preceding equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Long-term return forecasting](img/B06175_12_15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Efficiency, Quasi-Monte Carlo, and Sobol sequences
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'When applying the Monte Carlo simulation to solve various finance-related problems,
+    a set of random numbers is generated. When the accuracy is very high, we have
+    to draw a huge amount of such random numbers. For example, when pricing options,
+    we use very small intervals or a large number of steps to increase the accuracy
+    of our solutions. Thus, the efficiency of our Monte Carlo simulation would be
+    a vital issue in terms of computational time and costs. This is especially true
+    if several thousand options are to be priced. One way to increase the efficiency
+    is to apply a better algorithm, that is, optimize our codes. Another way is to
+    use some special types of random numbers that are more evenly distributed. This
+    is called Quasi-Monte Carlo Simulation. A typical example is a so-called Sobol
+    sequence. Sobol sequences belong to the so-called low-discrepancy sequences, which
+    satisfy the properties of random numbers, but are distributed more evenly:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The related graph is shown on the left panel:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Efficiency, Quasi-Monte Carlo, and Sobol sequences](img/B06175_12_16.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'On the other hand, if we use the Sobol sequence, the distribution of those
+    random numbers would be more even; see the preceding right panel. The related
+    code is shown here:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: For a similar example, but with more complex Python codes, see [http://betatim.github.io/posts/quasi-random-numbers/](http://betatim.github.io/posts/quasi-random-numbers/).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Appendix A – data case #8 - Monte Carlo Simulation and blackjack'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Blackjack is a two-player game, with a dealer and a player. Here, we assume
+    that you are the player.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Rule #1: Cards 2 to 10 have their face value, while Jack, Quenn, and King are
+    worth 10 points, and Ace is worth either 1 or 11 points (player''s choice).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Terminology:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Blackjack**: One A plus any card worth 10 points'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Lose**: The player''s bet is taken by the dealer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Win**: The player wins as much as he bets'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Blackjack (natural)**: The player wins 1.5 times the bet'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Push**: The player keeps his bet, neither winning nor losing money'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Step 1**: The dealer draws two cards, one face up, while the player draws
+    two cards (face up)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Step 2**: The player could draw the third card'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Win or lose**: If the sum of your cards is less than 21 and is bigger than
+    the dealer''s, you win. Take a look at [http://www.pagat.com/banking/ blackjack.html](http://www.pagat.com/banking/%20blackjack.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Please refer to the following articles:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Bruno, Giuseppe*, *Monte Carlo Simulation for Pricing European and American
+    Basket* *option*, *Bank of Italy*, [https://www.r-project.org/conferences/ useR-2010/abstracts/Bruno.pdf](https://www.r-project.org/conferences/%20useR-2010/abstracts/Bruno.pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Easley, D., Kiefer, N.M., O''Hara, M., Paperman, J.B., 1996*, *Liquidity,
+    information, and infrequently traded stocks*, *Journal of Finance 51, 1405–1436*,
+    [http://www.defaultrisk.com/pa_liqty_03.htm](http://www.defaultrisk.com/pa_liqty_03.htm)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Jacquier, Eric, Alex Kane, and Alan J. Marcus,2003*, *Geometric or Arithmetic
+    Me**an: A Reconsideration*, [https://www2.bc.edu/alan-marcus/papers/FAJ_2003.
+    pdf](https://www2.bc.edu/alan-marcus/papers/FAJ_2003.%20pdf)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Stucchio, Chris, 2013, Modelling a Basic Income with Python and M**onte Carlo
+    Simulation*, [https://www.chrisstucchio.com/blog/2013/basic_income_ vs_basic_job.html](https://www.chrisstucchio.com/blog/2013/basic_income_%20vs_basic_job.html)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Zhong, Raymond, 2017, India Considers Fighting Poverty With a Universal Basic
+    Income**, Wall Street Journal*, [http://blogs.wsj.com/ indiarealtime/2017/01/31/india-considers-fighting-poverty-witha-
+    universal-basic-income/](http://blogs.wsj.com/%20indiarealtime/2017/01/31/india-considers-fighting-poverty-witha-%20universal-basic-income/)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Exercises
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '[http://finance.yahoo.com](http://finance.yahoo.com)), download the last five
+    years of price data for a few companies, such as IBM, WMT, and C (City Group).
+    Test whether their daily returns follow a normal distribution.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a Python program to use the `scipy.permutation()` function to select 12
+    monthly returns randomly from the past five-year data without replacement. To
+    test the program, you can use Citigroup and the time period from January 2, 2012
+    to December 31, 2016 from Yahoo! Finance.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a Python program to run bootstrapping with *n* given returns. For each
+    time, we select *m* returns where *m>n*.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: To convert random numbers from a uniform distribution to a normal distribution,
+    we have the following formula:![Exercises](img/B06175_12_40.jpg)
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Based on the formula, generate 5,000 normally distributed random numbers; estimate
+    their mean, standard deviation, and test it.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Assume that the current stock price is $10.25, the mean value in the past five
+    years is $9.35, and the standard deviation is 4.24\. Write a Python program to
+    generate 1,000 future prices.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Download the price data for 10 stocks over the last 10 years. Form an equal-weighted
+    portfolio and conduct a Shapiro-Wilk test on its portfolio daily returns:'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '| Company name | Ticker | Dell company | DELL |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| International Business Machine | IBM | General Electric | GE |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| Microsoft | MSFT | Google | GOOG |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| Family Dollar Stores | FDO | Apple | AAPL |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| Wal-Mart Stores | WMT | eBay | EBAY |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| McDonald''s | MCD |   |   |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: Go to Yahoo! Finance to find out today's IBM price and then download its historical-prices
+    information to estimate its mean and standard deviation for the past five years.
+    Generate predictions for one-year daily prices in the future.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For 20 tickers, download and save their daily price as 20 different CSV files.
+    Write a Python program to randomly select five stocks and estimate their equal-weighted
+    portfolio returns and risk.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Repeat the previous program, but save it as one file instead of 20 separate
+    CSV files.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_IND
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Generate an extra variable called ticker.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: There are 30 students in a class. Write a program to select seven of them randomly.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Test the time difference between retrieving `ffMonthly.pkl`, `ffDaily.pkl`,
+    or `ffMonthly.csv`, `ffDaily.csv` and conduct some tests.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Usually we observe the negative relationship between the portfolio's volatility
+    and the number of stocks in the portfolio. Write a program to show the relationship
+    between the variance of a portfolio and the number of stock in it.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'What is the probability for picking up 1, 2, 3, and 4 from 10 balls marked
+    from 1 to 10? Use two methods: a. Use the formula. b. Write a program to generate
+    a set of five random numbers.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Write a program to generate 176 million sets of combinations in terms of the
+    Mega Millions game. What is the chance to win (1, 2, 3, 4, 5) and (1)?
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: For the Powerball games, we choose five white balls from 59 white balls numbered
+    from 1 to 59 and one red ball from 39 red balls numbered from 1 to 39\. Write
+    a program to choose those six balls randomly.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Retrieving seven stocks from 20 stocks, what is the probability of choosing
+    the first seven stocks? Use simulation to prove your result.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter, we discussed several types of distribution: normal, standard
+    normal, lognormal, and Poisson. Since the assumption that stocks follow a lognormal
+    distribution and returns follow a normal distribution is the cornerstone for option
+    theory, the Monte Carlo simulation is used to price European options. Under certain
+    scenarios, Asian options might be more effective in terms of hedging. Exotic options
+    are more complex than the vanilla options since the former have no closed-form
+    solution, while the latter could be priced by the Black-Scholes-Merton option
+    model. One way to price these exotic options is to use the Monte Carlo simulation.
+    The Python programs to price an Asian option and lookback options were also discussed.'
+  prefs: []
+  type: TYPE_NORMAL

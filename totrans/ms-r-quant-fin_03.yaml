@@ -1,0 +1,730 @@
+- en: Chapter 3. Forecasting Volume
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Price formation on stock exchanges has been the center of attention of many
+    researchers for several decades now. As a result, there is an abundance of theories,
+    models, and empirical evidence on the price, and although there are always new
+    aspects to discover, we believe that the financial knowledge is fairly comprehensive
+    on the subject. We understand the dynamics of the price reasonably well, and most
+    of us agree that it is rather difficult to forecast.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast, the trading volume, which is another fundamental measure of the
+    trading process on stock exchanges, has been much less researched. The most common
+    equilibrium models on price do not even include volume in their framework of explaining
+    trading activities. It is only recently that researchers appear to be paying increasing
+    attention to volume, and they have already found that its stylized facts allow
+    for much better forecasts compared to price.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter aims to introduce an intra-day forecasting model selected from
+    the available literature, and to provide its implementation in R.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Motivation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The motivation behind gaining a better understanding of volume is not merely
+    theoretical, but it equally has a great practical relevance. On order-driven markets,
+    if a submitted buy (sell) market order is relatively large compared to the market,
+    it will possibly swipe out several price levels; thus, the achieved average price
+    on the entire trade will be higher (lower) than the best price level at the moment
+    of order submission, and the submitter loses money. This phenomenon is often referred
+    to as price impact, and it is well worth making an effort to avoid or at least
+    minimize it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: One way to do this is to perform order splitting, that is, splitting a market
+    order into smaller chunks and submitting them gradually. Among the numerous logics
+    behind splitting, a popular one is the **volume weighted average price** (**VWAP**)
+    strategy that aims to obtain the daily weighted average price where weights are
+    determined by the volume transacted relative to the total daily volume. Long-term
+    investors would happily settle for an average execution price equal to the daily
+    VWAP, which is considered to be a neutral trading result. However, some investors
+    find it tricky to split their trades throughout the day in a fashion that results
+    in reaching the VWAP, which can only be calculated at the end of the day, so they
+    delegate the problem to brokers. Brokers guarantee to trade on the VWAP, and are
+    paid a fee for this service. This fee also serves as a buffer for tracking errors,
+    which means that the broker that has the most precise forecast of the daily volumes
+    will be the one who can charge the clients the least, because all they have to
+    do is split their trades in similar proportions to their forecasts, and then (assuming
+    the forecasts are perfect) the VWAP will be reached regardless of the price evolution.
+    For brokers, therefore, accurate volume forecasts are considered a valuable business
+    asset that directly affects their profits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The intensity of trading
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'The intensity of trading activities can be measured in a number of ways. The
+    most common measure in use is volume, which is simply the number of shares traded
+    during a certain time interval. Given that the liquidity (which shows how easy
+    it is to trade an asset) and therefore the absolute trading activity in each stock
+    is different, the volume expressed in percentage form is a more convenient choice
+    for modeling purposes. This measure is called turnover, which is formally computed
+    from volume, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The intensity of trading](img/2078OT_03_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, *x* stands for turnover, *V* for volume, and *TSO* for the total shares
+    outstanding; the latter indicates the total number of shares available for public
+    trading. The index *i* indicates the actual stock, and index *t* indicates the
+    time interval.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As mentioned earlier, there are several stylized facts documented in volume.
+    An obvious one is that volume is non-negative, given that it measures the number
+    of traded shares. This number is zero, if there are no trades at all, and positive
+    otherwise. Another important stylized fact is the intra-daily U shape registered
+    on several different markets (see *Hmaied, D. M., Sioud, O. B., and Grar, A. (2006)*
+    and *Hussain, S. M. (2011)* for a good overview).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This means that the trading activity tends to be more intense after opening
+    and before closure of the market, than during the rest of the day. There are several
+    possible explanations for this phenomenon, but its existence is very clear.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Note
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The enthusiastic reader might be interested in *Kaastra, I. and Boyd, M. S.
+    (1995)* and *Lux, T. and Kaizoji, T. (2004)*, which propose volume-forecasting
+    models using monthly and daily data respectively. *Brownlees, C. T., Cipollini,
+    F., and Gallo, G. M. (2011)* builds a volume forecasting model for intra-day data,
+    which is of direct relevance to this chapter. Our empirical investigations found
+    that the model detailed in the following section (proposed by *Bialkowski, J.,
+    Darolles, S., and Le Fol, G. (2008)*) provides a more precise forecast, so merely
+    due to length limitations, this chapter only elaborates on the latter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter addresses the intra-day forecasting of stock volumes. There are
+    a few models that can be found in the literature, among which we found that the
+    one presented in *Bialkowski, J., Darolles, S., and Le Fol, G. (2008)* is the
+    most accurate. The following section briefly summarizes the model, providing enough
+    detail to understand the implementation later on.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The volume forecasting model
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This section explains the intra-day volume forecasting model proposed by *Bialkowski,
+    J., Darolles, S., and Le Fol, G. (2008)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: They use CAC40 data to test their model, including the turnover of every stock
+    in the index as of September 2004\. Trades are aggregated into 20-minute time
+    slots, resulting in 25 observations each day.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Turnover is decomposed into two additive components. The first one is the seasonal
+    component (the U shape) that represents the expected level of turnover on an average
+    day for each stock. Given that every day is a little different from the average,
+    there is a second one, the dynamic component, which shows the expected deviation
+    from the average on a specific day.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The decomposition is carried out using the factor model of *Bai, J. (2003)*.
+    The initial problem is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, the ***X** (TxN)*-sized matrix contains the initial data, ***F** (Txr)*
+    is the factor matrix, ***Λ'** (Nxr)* is the matrix of factor loadings, and ***e**
+    (TxN)* is the error term. ***K*** stands for the common term, *T* stands for the
+    number of observations, *N* stands for the number of stocks, and *r* stands for
+    the number of factors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The dimension of the ***XX''*** matrix is *(TxT)*. After determining its eigenvalues
+    and eigenvectors, ***Eig*** contains the eigenvectors that are related to the
+    *r* largest eigenvalues. The estimated factor matrix is then determined as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_19.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The transpose of the estimated loadings matrix is calculated as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_20.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Finally, the estimated common component will be:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Given that the model is additive, the estimated dynamic component simply becomes:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_22.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Now that the estimated common and dynamic components are both obtained, the
+    next step is to generate their forecasts. The authors assume that the seasonal
+    (U shape) component is constant throughout the 20-day estimation period (but differs
+    among stocks), so they forecast it according to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_23.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Knowing that 25 is the number of time slots (data points) each day, this means
+    that for stock *i*, the forecast for the first time slot tomorrow will be the
+    average of the first time slots during the last *L* days.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The forecast of the dynamic component is obtained in two different ways. One
+    way is by fitting an AR(1) model, specified as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_25.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Another way is by fitting a SETAR model, specified as:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_26_27.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, the indicator function is the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_28.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This means that if the previous observation does not exceed the ![The volume
+    forecasting model](img/2078OT_03_29.jpg) threshold specified within the model,
+    then the forecast is carried out by using one AR(1) model, and if it does, then
+    the other AR(1) model is used.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'After having forecasted both the seasonal and the dynamic components, the forecasted
+    turnover will be the sum of the two:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The volume forecasting model](img/2078OT_03_30.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Note that we have forecasted the dynamic component in two different ways; therefore,
+    we will have two different forecast results depending on which one we add to the
+    forecast of the seasonal component.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Implementation in R
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this section, we show how to implement the model of *Bialkowski, J., Darolles,
+    S., and Le Fol, G. (2008)* in R. We cover every detail, from loading the data
+    to estimating the model parameters and producing the actual forecasts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: The data we use consists of 10 different stocks from the Dow Jones Industrial
+    Average index (see the next table for an overview). We use the 21 trading days
+    between 06/01/2011 and 06/29/2011\. Trading on NYSE and NASDAQ is continuous between
+    09:30 and 16:00\. After aggregating the data into 15-minute time slots, we receive
+    26 observations every day, and a total of *26 * 21 = 546* observations overall.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We divided the trading day into 26 time slots, whereas the original article
+    defined 25\. This is due to the difference in the opening hours of the different
+    markets from where data was drawn. This only changes one single parameter in the
+    model, but some attention must be paid to this detail.
+  prefs: []
+  type: TYPE_NORMAL
+- en: All the used stocks are liquid enough to have positive turnover in each time
+    slot throughout the observed period. However, it should be noted that since the
+    model has an additive structure, zero turnover in some of the slots would not
+    cause any difficulties.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following table is taken from the source [http://kibot.com/](http://kibot.com/):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|   | Ticker | Company | Industry | Sector | Exchange |'
+  prefs: []
+  type: TYPE_TB
+- en: '| --- | --- | --- | --- | --- | --- |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1 | AA | Alcoa, Inc. | Aluminum | Basic Materials | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 2 | AIG | American International Group, Inc. | Property and Casualty Insurance
+    | Financial | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 3 | AXP | American Express Company | Credit Services | Financial | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 4 | BA | Boeing Co. | Aerospace/Defense Products and Services | Industrial
+    Goods | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 5 | BAC | Bank of America | Regional - Mid-Atlantic Banks | Financial | NYSE
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 6 | C | Citigroup, Inc. | Money Center Banks | Financial | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 7 | CAT | Caterpillar, Inc. | Farm and Construction Machinery | Industrial
+    Goods | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 8 | CSCO | Cisco Systems, Inc. | Networking and Communication Devices | Technology
+    | NASDAQ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 9 | CVX | Chevron Corporation | Major Integrated Oil and Gas | Basic Materials
+    | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 10 | DD | E.I. Du Pont De Nemours and Company | Chemicals - Major Diversified
+    | Basic Materials | NYSE |'
+  prefs: []
+  type: TYPE_TB
+- en: Stocks included in the data set
+  prefs: []
+  type: TYPE_NORMAL
+- en: Out of the 546 observations, we will use the first 520 (20 days) as the estimation
+    period, and the last 26 (one day) as the forecast period. It is important to keep
+    the actual data for the forecast period so that we can assess the precision of
+    our forecast and compare it to the actual realizations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As an illustration of the data, see *Figure 3.1* that depicts the first five
+    days (130 observations) of Alcoa.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The data](img/2078OT_03_32.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3.1: First five days of Alcoa turnover'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Although every day is a little different, we can clearly see the five separate
+    days indicated by the five U shapes in the turnover graph.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Loading the data
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We organized the data in a `.csv` file with the tickers in the header field.
+    The dimension of the data matrix is 546 x 10\. The following code loads the data
+    and prints the first five rows and six columns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: The output for the top-left segment of the data matrix is shown below. Given
+    that our data shows turnover values (in a percentage form), and not volume, each
+    value is below unity. We can see, for example, that within the first 15 minutes
+    of the sample, 0.11 percent of the total shares outstanding of Alcoa were traded
+    (see Equation (1)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: The following code plots the first day of Alcoa turnover. The graph is shown
+    in *Figure 3.2*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: We can recognize the U shape of the first day, but we need to rely a little
+    on our imagination at this point. This is because the U shape is a stylized fact
+    that is only observed on a statistical basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Loading the data](img/2078OT_03_33.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3.2: First day of Alcoa turnover'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We therefore expect the U shape to be more definite on average. The following
+    code plots the average Alcoa turnover throughout the 21 days of the sample. To
+    this end, we transform the first column of the data matrix into a 26*21 matrix,
+    and plot the row averages.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result is shown in *Figure 3.3*, where the U shape is very clearly drawn.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Loading the data](img/2078OT_03_34.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3.3: 21-day average of Alcoa turnover'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now that the data is loaded, we are ready to implement the model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The seasonal component
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The first step is to determine the seasonal component. As mentioned earlier,
+    we will use the first 520 observations for estimation. The following code creates
+    the appropriate sample matrix from the data frame:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, we can start the factor decomposition (see Equations (2) to (6)) of *Bai,
+    J. (2003)*. After creating the ![The seasonal component](img/2078OT_03_35.jpg)
+    matrix (of dimension 520 x 520), we find its eigenvalues and eigenvectors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Next, we have to determine the number of factors to use (*r*). The following
+    code plots the eigenvalues in diminishing order:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: The result is shown in *Figure 3.4*, where the first eigenvalue clearly dominates
+    all the others. This means that the variance explained by the first eigenvector
+    explains the majority of the variance, so we choose to use a single factor in
+    our model (![The seasonal component](img/2078OT_03_36.jpg)). As a rule of thumb,
+    we can use as many factors as the number of eigenvalues that are greater than
+    one, but it always remains a subjective decision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The seasonal component](img/2078OT_03_37.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3.4: Eigenvalues of **XX**'''
+  prefs: []
+  type: TYPE_NORMAL
+- en: Using the eigenvector that corresponds to this largest eigenvalue, we can now
+    compute the estimated factor matrix (see Equation (3)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: Then, we calculate the transpose of the estimated loadings matrix according
+    to Equation (4), and the estimated common (seasonal) component according to Equation
+    (5). Finally, the dynamic (idiosyncratic) component is also calculated (see Equation
+    (6)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: The dynamic component will be forecasted in the following two subsections, but
+    we still need to forecast the seasonal component here. This will be done according
+    to Equation (7).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: The previous code calculates 20-day averages for all 26 slots, dealing with
+    one stock at a time, resulting in a 26 x 10 matrix, including one-day seasonal
+    component forecasts for all 10 stocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, we have the forecasts of the dynamic component left, which will be done
+    in two different ways: by fitting an AR(1) and a SETAR model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: AR(1) estimation and forecasting
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In this subsection, we fit AR(1) models to the dynamic component. We will need
+    to specify 10 models, one for each stock. The following code performs the parameter
+    estimations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Coefficients are collected in the `coefs` variable and printed in the following
+    output, rounded to 4 digits. Coefficients need not necessarily be saved (saving
+    the model would be sufficient) because the `forecast` package has a built-in `forecast`
+    function, and we will make use of this in the following example:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![AR(1) estimation and forecasting](img/2708OT_03_pg70.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: AR coefficients for each stock
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: There are several ways to estimate an AR(1) model in R. Apart from the method
+    mentioned earlier, which is suitable for any ARIMA model, the code below (using
+    the example of Alcoa only) reproduces the same results, but with the use of a
+    different package, which can only handle ARMA (and not ARIMA) models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'So the next step is to produce the forecasts for the next day, that is, for
+    the next 26 time slots using the AR(1) models estimated previously. The following
+    code performs this for us:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: In order to receive the complete forecasts (including both the seasonal and
+    the dynamic components), we simply refer to Equation (11).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: The full forecasts are now stored in the `AR_result` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: SETAR estimation and forecasting
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The second method for obtaining forecasts of the dynamic component is through
+    a SETAR model. Again, we need 10 different models for each stock. There is also
+    a package in R for SETAR estimation, so the code becomes as simple as this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Unlike the AR model, we do have to save the coefficients explicitly for the
+    forecast, which is also done by the previous code. The 4-digit rounded values
+    are printed in the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![SETAR estimation and forecasting](img/2708OT_03_pg71.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: SETAR coefficients for each stock
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The five parameters from top to bottom are the following (see Equation (9)
+    for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Intercept (lower regime).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: AR coefficient (lower regime).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Intercept (upper regime).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: AR coefficient (upper regime).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Threshold.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Now, all we have left to do is to forecast the dynamic component for the next
+    26 time slots using the SETAR model we just described. This is done using the
+    following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: Although we are looking to have forecasts for 26 time slots (that is, for one
+    entire day) for each stock, the `SETARf` variable has 27 rows because we have
+    to store the last known observation in the first one in order to be able to calculate
+    recursively. Also, note that we calculate row-by-row here, that is, we calculate
+    the next forecast for every stock at the same time, and only then do we move on
+    to the next time slot.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, referring to Equation (11) again, the full forecast for the turnover
+    is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The full forecasts are now stored in the `SETAR_result` variable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interpreting the results
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We have obtained the turnover forecasts of all 10 stocks for the next day based
+    on the last 20 days. Depending on how we forecast the dynamic component, we have
+    two different results for each stock.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We excluded the last day of our data set from the estimation in order to be
+    able to compare the actual values to the forecasts. The following code helps us
+    do this by generating 10 different plots, one for every stock, using AR(1) for
+    the dynamic component forecasts. The output is shown in *Figure 3.5*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: On each plot, the black dotted line depicts the realized turnover of that specific
+    stock, while the red solid line shows the forecasted turnover. As mentioned before,
+    the actual realizations can notably deviate from the stylized fact of the U shape.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interpreting the results](img/2078OT_03_38.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3.5: Turnover forecasts and realizations for the next day AR(1) is used
+    on the dynamic component'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can conclude that the forecasts appear fairly precise visually. When the
+    realization resembles a more regular U shape, the forecasts can better approximate
+    it (Alcoa, Caterpillar, Chevron, and Du Pont De Nemours), but the one-off large
+    values will always be unpredictable (like the fifth observation in Chevron). The
+    forecasts perform poorly when the realization becomes unusually asymmetric; that
+    is, either the first few or the last few trades are much larger than the rest
+    (American Express, Bank of America, and Citigroup), but even in those cases, the
+    rest of the day is reasonably well approximated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: This time, we refrain from numerically evaluating the errors of the estimation
+    because we will first need a benchmark to do it, and more importantly, because
+    we only forecasted for one single day; therefore, the results will not be robust
+    anyway.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can use some code similar to what we used earlier in order to plot the results
+    of the SETAR-based estimation. The output is shown in *Figure 3.6*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interpreting the results](img/2078OT_03_39.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 3.6: Turnover forecasts and realizations for the next day SETAR is used
+    on the dynamic component'
+  prefs: []
+  type: TYPE_NORMAL
+- en: At first glance, the results appear very similar to the previous case, which
+    is understandable, because the forecast of the seasonal component is the same
+    in both of them, and apparently, this dominates the forecast; the rest is merely
+    due to individual deviations. The difference between the AR-based and SETAR-based
+    forecasts is more pronounced towards the beginning of the day.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If we observe the first and the last data points of the day in *Figures 3.5*
+    and *Figure 3.6*, we can find a number of stocks (Alcoa, Bank of America, Citigroup,
+    Caterpillar, Cisco, and Du Pont De Nemours) where the forecast for the last point
+    (and mostly throughout the day) is similar, while the forecast for the first point
+    is significantly larger in the case of SETAR. The most noticeable difference between
+    the two forecasts is in the American International and Boeing stocks, where SETAR
+    produces higher values throughout the day.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we presented an intra-day volume forecasting model and its
+    implementation in R using data from the DJIA index. Due to length limitations,
+    we selected the one model from the literature that we believe is the most accurate
+    when used to predict stock volumes. The model uses turnover instead of volume
+    for convenience, and separates a seasonal component (U shape) and a dynamic component,
+    and forecasts these two separately. The dynamic component is forecasted in two
+    different ways, fitting an AR(1) and a SETAR model. Similarly to the original
+    article, we do not declare one to be better than the other, but we visually show
+    the results and find them to be acceptably accurate. The original article convincingly
+    proves the model to be better than a carefully selected benchmark, but we leave
+    it to the reader to examine that, because we only used a short data set for illustration,
+    which is not suitable to obtain robust results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Bai, J. (2003)**: Inferential theory for factor models of large dimensions.
+    Econometrica, 71:135-171.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Bialkowski, J., Darolles, S., and Le Fol, G. (2008)**: Improving VWAP strategies:
+    A dynamic volume approach. Journal of Banking & Finance, 32:1709-1722.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Brownlees, C. T., Cipollini, F., and Gallo, G. M. (2011)**: Intra-daily volume
+    modeling and prediction for algorithmic trading. Journal of Financial Econometrics,
+    9:489-518.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Hmaied, D. M., Sioud, O. B., and Grar, A. (2006)**: Intra-daily and weekly
+    patterns of bid-ask spreads, trading volume and volatility on the Tunisian Stock
+    Exchange. Banque & Marchés, 84:35-44.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Hussain, S. M. (2011)**: The intraday behavior of bid-ask spreads, trading
+    volume, and return volatility: Evidence from DAX30\. International Journal of
+    Economics and Finance, 3:23-34.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Kaastra, I. and Boyd, M. S. (1995)**: Forecasting futures trading volume
+    using neural networks. The Journal of Futures Markets, Vol. 15, No. 8,:953-970.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Lux, T. and Kaizoji, T. (2004)**: Forecasting volatility and volume in the
+    Tokyo stock market: The advantage of long memory models. Economics working paper,
+    Christian-Albrechts-Universität Kiel, Department of Economics.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

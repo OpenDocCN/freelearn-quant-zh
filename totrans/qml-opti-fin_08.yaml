@@ -1,0 +1,1022 @@
+- en: '9'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Quantum Circuit Born Machine
+  prefs: []
+  type: TYPE_NORMAL
+- en: The arrival of the new computational paradigm of quantum computing and the progress
+    achieved in developing quantum computing hardware prompted intensive research
+    in exploring the capabilities of quantum machine learning models and, more specifically,
+    quantum generative models that can be viewed as quantum counterparts of the classical
+    RBMs introduced in Chapter [5](Chapter_5.xhtml#x1-960005). Classical generative
+    models form one of the most important classes of unsupervised machine learning
+    techniques with numerous applications in finance, such as the generation of synthetic
+    market data  [[48](Biblography.xhtml#XBuehler2020), [173](Biblography.xhtml#XKS2020)],
+    the development of systematic trading strategies  [[176](Biblography.xhtml#Xkoshiyama2021generative)]
+    or data anonymisation   [[174](Biblography.xhtml#XKSH2020)], to name just a few.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum generative models have all the necessary qualities needed to establish
+    quantum advantage on NISQ devices. Probably the most well known example of such
+    models is the Quantum Circuit Born Machine (QCBM), which consists of several layers
+    of adjustable and fixed gates followed by measurement operators. The input is
+    a quantum state where all qubits are initialised as |0⟩ in the computational basis.
+    The output is a bitstring, which is a sample from the probability distribution
+    encoded in the final state constructed by the application of adjustable and fixed
+    gates to the initial state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The expectation of experimental proof of the quantum advantage is motivated
+    by the following observations: First, QCBMs have strictly larger expressive power
+    than classical RBMs when only a polynomial number of parameters is allowed (the
+    number of qubits in QCBM or the number of visible activation units in RBM)  [[88](Biblography.xhtml#XDu2018)].
+    Second, generating an independent sample from the learned distribution can be
+    done in a single run of the quantum circuit in the case of QCBM – this compares
+    favorably with up to 10³-10⁴ forward and backward passes through the network in
+    the case of RBM, which are needed to achieve the state of thermal equilibrium  [[173](Biblography.xhtml#XKS2020)].
+    This points towards material quantum speedup. Third, quantum generative models
+    can be used to load data into a quantum state, thus facilitating realisations
+    of many promising quantum algorithms  [[314](Biblography.xhtml#XZoufal2019)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.1 Constructing QCBM
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As we have seen in Chapter [8](Chapter_8.xhtml#x1-1620008), the art of building
+    a QML model that can be run on a NISQ computer consists of finding an optimal
+    PQC architecture that can be embedded into the chosen QPU graph. In this section,
+    we show how it can be done for the QCBM compatible with IBM’s Melbourne and Rochester
+    systems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.1.1 QCBM architecture
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: QCBM is a parameterised quantum circuit where a layer of adjustable one-qubit
+    gates is followed by a layer of fixed two-qubit gates. Such a pattern can be repeated
+    any number of times, building a progressively deeper circuit. The input is a quantum
+    state where all qubits are initialised as |0⟩ in the computational basis. The
+    final layer consists of measurement operators producing a bitstring sample from
+    the learned distribution. Therefore, to specify the QCBM architecture means to
+    specify the number of layers, the type of adjustable gates, and the type of fixed
+    gates for each layer. Since the theory of PQC is still being developed  [[29](Biblography.xhtml#XBenedetti2019)],
+    we can rely on similarities and analogies between PQCs and classical neural networks
+    to come up with some initial guesses about the possible QCBM architecture.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.1: QCBM(12, 7). ](img/file808.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.1: QCBM(12, 7).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure [9.1](#9.1) displays a 12-qubit QCBM with two layers of controlled rotation
+    gates R = R[G](*ϕ*) for G ∈{X*,*Y*,*Z} and *ϕ* ∈ [−*π,π*], where G and *ϕ* are
+    fixed, and three layers of one-qubit gates R[X](*𝜃*) and R[Z](*𝜃*) with a total
+    of seven adjustable gates per quantum register. The circuit is wide enough and
+    deep enough to learn a complex distribution of a continuous random variable while
+    remaining implementable on existing NISQ devices: the 12-digit binary representation
+    of a continuous random variable provides sufficient precision and seven adjustable
+    parameters (rotation angles) per qubit provide sufficient flexibility. At the
+    same time, the circuit is not too deep to be compromised by the gate fidelity
+    achievable in existing quantum hardware  [[46](Biblography.xhtml#XBruzewicz2019), [164](Biblography.xhtml#XKjaergaard2019)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.1.2 QCBM embedding
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The chosen QCBM architecture is compatible with the limited connectivity observed
+    in the current generation of quantum processors. For example, the proposed circuit
+    requires sequential qubit connectivity where qubit *n* is directly connected with
+    qubits *n*− 1 and *n* + 1 but does not have to be directly connected with other
+    qubits. This architecture can for example be supported by IBM’s Melbourne system  [[208](Biblography.xhtml#XMelbourne2019)]
+    in Figure [9.2](#9.2), where the 12 shaded qubits correspond to the 12 quantum
+    registers in Figure [9.1](#9.1). The thick lines represent connections used in
+    the QCBM ansatz while the thin lines represent all other available qubit connections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.2: IBM’s Melbourne system. ](img/file809.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.2: IBM’s Melbourne system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The 53-qubit Rochester device  [[208](Biblography.xhtml#XMelbourne2019)] in
+    Figure [9.3](#9.3) can also be used to implement this QCBM architecture. Here,
+    we have several choices for embedding the QCBM circuit (12 linearly connected
+    qubits forming a closed loop); shaded qubits show one such possibility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.3: IBM’s Rochester system. ](img/file810.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.3: IBM’s Rochester system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: IBM systems, such as Melbourne and Rochester, are based on superconducting qubits.
+    The choice of the underlying technology means that there is a set of native gates
+    – the quantum gates derived directly from the types of interactions that occur
+    in the given technical realisation of the quantum chip.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of IBM devices, the cross resonance gate generates the ZX interaction
+    that leads to a CNOT gate. When it comes to single-qubit gates, we note that R[Z]
+    is a diagonal gate given by ([6.3.3](Chapter_6.xhtml#x1-130014r3)) and can be
+    implemented virtually in hardware via frame change (at zero error and duration)  [[239](Biblography.xhtml#XQiskitRZGate)].
+    Therefore, it is sufficient to have just an X drive to rotate the qubit on the
+    Bloch sphere (one can move a qubit between two arbitrary points on the Bloch sphere
+    with the help of just two gates, R[X] and R[Z]).
+  prefs: []
+  type: TYPE_NORMAL
+- en: This means that we can introduce the concept of a *hardware-efficient* architecture
+    not only in terms of connectivity but also in terms of the choice of one-qubit
+    and two-qubit gates. Taking into account the CNOT and CPHASE gate decomposition
+    shown in Figures [6.19](Chapter_6.xhtml#6.19) and [6.20](Chapter_6.xhtml#6.20),
+    the hardware-efficient QCBM architecture for the Melbourne and Rochester systems
+    would consist of a combination of R[X] and R[Z] adjustable single-qubit gates
+    and CNOT and CPHASE fixed two-qubit gates  [[153](Biblography.xhtml#XKandala2017), [30](Biblography.xhtml#XBenedetti2021)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: QCBM is a PQC trained as a generative ML model. QCBM operating on *N* quantum
+    registers transforms the initial quantum state ![|0 ⟩](img/file811.jpg)^(⊗N) into
+    the quantum state encoding the learned probability distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.2 Differentiable Learning of QCBM
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The output of a QCBM circuit is a bitstring that represents a sample from the
+    probability distribution encoded in the quantum state. The circuit itself is,
+    essentially, a mechanism of transforming an initial state |0⟩^(⊗n) into a final
+    state from which a sample is generated by means of measuring the qubits in the
+    computational basis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Different configurations of one-qubit and multi-qubit gates encode different
+    probability distributions – the training of QCBM consists of finding an optimal
+    circuit configuration (ansatz) and an optimal set of adjustable parameters that
+    minimise the distance between the probability distribution encoded in the final
+    quantum state (before measurement, or "before sampling") and the probability distribution
+    of the training dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Following the structure we adopted in Chapter [8](Chapter_8.xhtml#x1-1620008),
+    we start with the differentiable learning approach, before moving to the non-differentiable
+    learning method based on a different kind of evolutionary search heuristic – Genetic
+    Algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.2.1 Sample encoding
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'In the most general case, a training dataset consists of samples containing
+    continuous, integer and categorical features. However, QCBM operates on binary
+    variables. Therefore, we need to design a method to convert continuous features
+    into binary ones and a method for converting generated binary QCBM output (sampling)
+    into continuous variables. The integer and binary features can be treated as special
+    cases of continuous features and categorical features can be first converted into
+    binary features through one-hot encoding. Such a method can be realised as a two-step
+    routine (Algorithm [6](#x1-190006r6)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversion of a continuous variable into the corresponding integer variable.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Conversion of the integer variable into the corresponding binary variable.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: 'Given the generated binary output, the same routine can be used in reverse
+    mode to produce continuous samples (Algorithm  [7](#x1-190009r7)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Conversion of the generated binary QCBM output into integer samples.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Conversion of integer samples into the corresponding continuous samples.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- Algorithm
+    6: Continuous to integer to binary transformation (training phase) ---------------------------------------------------------------------
+    Result: Conversion of continuous variables into M -digit binary features. ( (n)
+    ) Input: Xreal(l) l=1,...,Nsamples;n=1,...,Nvariables – continuous data sample.
+    for n = 1,...,Nvariables do ( ) | X (mni)n ← minl=1,...,Nsamples X (rnea)l(l)
+    − 𝜀(nm)in, for 𝜀(nm)in ≥ 0 | (n) ( (n) ) (n) (n) | X max ← maxl=1,...,Nsamples
+    X real(l) + 𝜀max, for 𝜀max ≥ 0 | | for l = 1,...,Nsamples do ( ) | | (n) ( M )
+    X (nre)al(l)− X (mni)n | | X integer(l) ← int 2 − 1 ---(n)-----(n)- | | X max
+    − X min | | (n) ( (n) ) | | Xbinary(l) ← bin X integer(l) | | end end Each data
+    sample is represented by an M -digit binary number with every digit becoming a
+    separate feature. The total number of features is M × Nvariables. ---------------------------------------------------------------------
+    ](img/file812.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![--------------------------------------------------------------------- Algorithm
+    7: Binary to integer to continuous transformation (sampling phase) ---------------------------------------------------------------------
+    Result: Conversion of the generated M -digit binary sample into continuous sample.
+    ( ^ (n)) Input: X[m] m=0,...,M −1;n=1,...,Nvariables – generated M -digit binary
+    sample. for n = 1,...,Nvariables do | (n) M∑−1 (n) | X^integer := 2m X^[M −1−m
+    ] | m=0 | (n) (n) 1 (n) ( (n)) | ^X real ← X min +-M----X^integer Xm(na)x − X
+    min | 2 − 1 end ---------------------------------------------------------------------
+    ](img/file813.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Algorithms [6](#x1-190006r6) and [7](#x1-190009r7) describe the transformations
+    of continuous variables into *M*-digit binary variables and then back into continuous
+    variables  [[173](Biblography.xhtml#XKS2020)]. It is important to note the role
+    of the parameters *𝜀*[min] and *𝜀*[max]. They are non-negative and expand the
+    interval on which the variables are defined. In the case where *𝜀*[min] = *𝜀*[max]
+    = 0, this interval is determined by the minimum and maximum values of the variable
+    as observed in the training dataset. By allowing *𝜀*[min] and *𝜀*[max] to take
+    positive values, we expand the interval of possible values the variable can take.
+    This allows the model to generate a wider range of possible scenarios: with some
+    (small) probability the generated values can fall outside the interval given by
+    the samples from the training dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The precision of the binary representation is feature specific. More important
+    features can have more granular representation. The right choice of precision
+    is important for NISQ devices that operate with a limited number of quantum registers.
+    For example, the QCBM ansatz shown in Figure [9.1](#9.1) can be used to encode
+    two continuous variables with 6-digit binary precision each. Alternatively, the
+    more important variable can be encoded with, e.g., 8-digit binary precision and
+    the less important one with only 4-digit binary precision.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure [9.2](#9.4) illustrates how the readout from 12 quantum registers can
+    be translated into a sample consisting of two continuous variables: the value
+    of the first one is encoded as a 7-digit binary number and the value of the second
+    one is encoded as a 5-digit binary number. In this example, we assume that both
+    variables take values in the interval [−1*,*1].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.4: Sample QCBM readout and data transformation for two continuous
+    variables taking values in the interval [−1,1] and where we set 𝜀min = 𝜀max =
+    0\. ](img/file814.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.4: Sample QCBM readout and data transformation for two continuous
+    variables taking values in the interval [−1,1] and where we set 𝜀[min] = 𝜀[max]
+    = 0\.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.2.2 Choosing the right cost function
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The differentiable learning of QCBM follows the same principles as that of
+    training the quantum neural networks outlined in Chapter [8](Chapter_8.xhtml#x1-1620008):
+    minimisation of the cost function with the gradient descent method. The main difference
+    is the form of the cost function. In the case of a QNN-based classifier, the cost
+    function represents the classification error while the cost function for QCBM
+    represents the distance between two probability distributions: the distribution
+    of samples in the training dataset and the distribution of samples in the generated
+    dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let 𝜃 denote the set of adjustable QCBM parameters, *p*[𝜃](⋅) the QCBM distribution,
+    and *π*(⋅) the data distribution. Then we can define the cost function *L*(𝜃)
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ L (𝜃 ) := &#124;p𝜃(x )− π(x)&#124;, x ](img/file815.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where the sum goes over all samples x in the dataset. This cost function is
+    a strong metric but may not be the easiest to deal with  [[73](Biblography.xhtml#XCoyle2019)].
+    An efficient alternative choice of the cost function is the *maximum mean* *discrepancy*  [[189](Biblography.xhtml#XLiuWang2018)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![L(𝜃) := 𝔼 [K (x,y)]− 2 𝔼 [K (x,y)]+ 𝔼 [K (x,y)], x∼p𝜃,y∼p𝜃 x∼p𝜃,y∼π x∼π,y∼π
+    ](img/file816.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where *K*(⋅*,*⋅) is a *kernel function*, i.e., a measure of similarity between
+    points in the sample space. A popular choice of kernel function is the Gaussian
+    mixture:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ c ( 2) K (x,y) = 1- exp − ∥x−-y2∥-- , c i=1 2σi ](img/file817.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some *c* ∈ℕ and where (*σ*[i])[i=1,…,c] are the bandwidth parameters of
+    each Gaussian kernel and ∥⋅∥ is the *L*[2] norm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can also explore the possibility of using *quantum kernels*. Quantum kernels
+    can provide an advantage over classical methods for kernels that are difficult
+    to compute on a classical device. For example, we can consider a non-variational
+    quantum kernel method  [[232](Biblography.xhtml#XPeters2021)], which uses a quantum
+    circuit U(x) to map real data into a quantum state |*ϕ*⟩ via a *feature map*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ϕ(x)⟩ = U(x) &#124;0⟩⊗n . ](img/file818.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The kernel function is then defined as the squared inner product
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![K (x,y ) = &#124;⟨ϕ(x)&#124;ϕ (y )⟩ &#124;2\. ](img/file819.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: This quantum kernel is evaluated on a quantum computer and is hard to compute
+    on a classical one  [[129](Biblography.xhtml#XHavlicek2019)]. We investigate the
+    question of expressive power of various models in Chapter [12](Chapter_12.xhtml#x1-22500012)
+    and provide a detailed analysis of the quantum kernel approach in Chapter [13](Chapter_13.xhtml#x1-23600013).
+    Taking into account the mapping ([9.2.2](#x1-1910002)) and denoting ![|0⟩](img/file820.jpg)
+    = ![|0⟩](img/file821.jpg)^(⊗n), the kernel becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ † 2 K (x,y) = &#124;⟨0&#124;U (x )U(y) &#124;0 ⟩&#124;, ](img/file822.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: which is the probability of measuring the all-zero outcome. It can be calculated
+    by measuring, in the computational basis, the state which results from running
+    the circuit given by U(y), followed by that of U^†(x).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.3 Non-Differentiable Learning of QCBM
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The hardware-efficient ansatz we proposed for the QCBM architecture, while simple
+    and intuitive, may be vulnerable to barren plateaus, or regions of exponentially
+    vanishing gradient magnitudes that make training untenable  [[54](Biblography.xhtml#XCerezo2021), [139](Biblography.xhtml#XHolmes2021), [299](Biblography.xhtml#XWang2020)].
+    This provides a strong motivation for exploring a non-differentiable learning
+    alternative such as Genetic Algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.3.1 The principles of Genetic Algorithm
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: GA is a powerful evolutionary search heuristic  [[214](Biblography.xhtml#XMitchell1998)]
+    that was introduced in Chapter [3](Chapter_3.xhtml#x1-630003). It performs a multi-directional
+    search by maintaining a population of proposed solutions (chromosomes) for a given
+    problem. Each solution is represented in a fixed alphabet with an established
+    meaning (genes). The population undergoes a simulated evolution with relatively
+    good solutions producing offspring, which subsequently replace the worse ones,
+    and the quality of a solution is estimated with some objective function (environment).
+    GAs have found applications is such diverse fields as quantitative finance (for
+    portfolio optimisation problems  [[172](Biblography.xhtml#XKondratyev2017)]) and
+    experiments with adiabatic quantum computing (as a classical benchmark  [[296](Biblography.xhtml#XVenturelli2019)]).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The simulation cycle is performed in three basic steps. During the selection
+    step, a new population is formed by stochastic sampling (with replacement). Then,
+    some of the members of the newly selected populations recombine. Finally, all
+    new individuals are re-evaluated. The mating process (recombination) is based
+    on the application of two operators: mutation and crossover. Mutation introduces
+    random variability into the population, and crossover exchanges random pieces
+    of two chromosomes in the hope of propagating partial solutions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The training of the QCBM specified in Figure [9.1](#9.1) consists of finding
+    an optimal configuration of the rotation angles (*𝜃*[i]^j)[i=1,…,12; j=1,…,7]
+    that would minimise a chosen cost function given a particular choice of the fixed
+    2-qubit gates. Since we only deal with 84 adjustable parameters (rather than tens
+    of thousands), we do not need to implement the crossover mechanism and can rely
+    on parameter mutations to achieve GA convergence to the minimum of the cost function.
+    This significantly simplifies the algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.3.2 Training QCBM with a Genetic Algorithm
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Algorithm [8](#x1-194004r8) outlines the proposed approach. However, before
+    we provide a formal description of the algorithm, we have to specify the main
+    individual components.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Solution.** The solution is a 12 × 7 matrix of rotation angles:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ 1 7⌋ &#124; 𝜃1 ... 𝜃1&#124; 𝜃 = &#124; ... ... ...&#124; . ⌈ ⌉ 𝜃112
+    ... 𝜃712 ](img/file823.jpg) |  |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: In GA language, the matrix 𝜃 plays the role of a chromosome and its components
+    *𝜃*[i]^j play the roles of individual genes.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '**Mutation.** The genes can mutate from generation to generation. The mutation
+    rate can be either constant or time dependent. For example, the mutation rate
+    can start at some large value and then decrease exponentially such that it halves
+    after each *κ* generations. In Algorithm [8](#x1-194004r8), we adopt the following
+    mutation dynamics:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A rotation angle (gene) can mutate to any of the allowed discrete values with
+    equal probability.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mutation is controlled by a single global parameter *α* ∈ (0*,*1], which can
+    be either constant or exponentially decreasing at some fixed rate *β* ≥ 0.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Mutations happen independently for each column in 𝜃.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: For each column in 𝜃, at each generation, a single rotation angle mutation happens
+    with probability *α*. All rotation angles are equally likely to mutate. After
+    that, one more mutation can happen with probability *α∕*2\. Again, all rotation
+    angles are equally likely to mutate. This ensures that we can have scenarios where
+    two rotation angles within the same column can mutate simultaneously.
+  prefs:
+  - PREF_IND
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Search Space.** The rotation angles *𝜃*[i]^j are defined in [−*π,π*], which
+    we split into 2^m equal subintervals, so that the possible values for *𝜃*[i]^j
+    are (−*π* + *nπ∕*2^(m−1))[n=0,…,2^m−1]. A rotation angle can mutate into any of
+    these values. The search space can quickly become enormous even for the relatively
+    small values of *m*. For example, for *m* = 7 we have 128 possible values for
+    each rotation angle making the total number of possible configurations ∼ 10^(177).
+    The GA can only explore a tiny fraction of the search space. But due to the GA’s
+    ability to propagate best solutions and to avoid being trapped in local minima,
+    the algorithm can achieve reasonably fast convergence to the solution in the vicinity
+    of the global minimum. For a detailed analysis of the rate of convergence of genetic
+    algorithms, we refer the interested reader to  [[130](Biblography.xhtml#XHe1999), [264](Biblography.xhtml#XSharapov2006)].'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Cost Function.** A cost function is a measure of how far the distribution
+    of generated samples is from the distribution of original samples provided by
+    the training dataset. Let u := (*u*[1]*,…,u*[K]) be a sample from the training
+    dataset and v(𝜃) := (*v*[1](𝜃)*,…,v*[K](𝜃)) a sample from the QCBM generated dataset
+    that corresponds to a particular configuration of rotation angles 𝜃. Let us order
+    these samples from the smallest to the largest with any suitable sort(⋅) function:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| ![-- -- u = sort(u), v(𝜃) = sort(v(𝜃 )). ](img/file824.jpg) |  |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: The cost function *L*(⋅) can then be defined as
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '| ![ K∑ -- -- 2 L (𝜃 ) := (uk − vk(𝜃 )) . k=1 ](img/file825.jpg) |  |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: The sort(⋅) function in ([9.3.2](#x1-1940002)) can be, e.g., quicksort  [[137](Biblography.xhtml#XHoare1961)]
+    or mergesort  [[166](Biblography.xhtml#XKnuth1998)], which belong to the class
+    of divide-and-conquer algorithms. Alternatively, it can be, e.g., heapsort  [[303](Biblography.xhtml#XWilliams1964)]
+    – a comparison-based sorting algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---8:-Genetic
+    Algorithm------------------------------------ Result: Optimal con figuration of
+    the set of QCBM parameters 𝜃∗ minimising the cost function. Input: • u ∈ ℝK :
+    vector of sample training dataset; • L: number of iterations (generations); •
+    M : number of best solutions in the given generation, chosen for further mutation;
+    • N : number of solutions in each generation (N = DM , D ∈ ℕ); • α, β: mutation
+    parameters; • m: search space parameter. ( The poss)ible values of rotation angles
+    are − π + -νπ-- . 2m− 1 ν=0,...,2m− 1 Initialise and evaluate the first generation
+    of solutions: for n = 1,...,N do | Generate a configuration 𝜃 (0;n ) by randomly
+    drawing each | rotation angle 𝜃j(0;n ) from the uniform distribution on the set
+    | i | of possible values of rotation angles given by m. | | for k = 1,...,K do
+    | | Run the quantum circuit with con figuration 𝜃(0;n) and | | generate new sample
+    v (𝜃(0;n)). | k | end | Evaluate the cost function L(𝜃(0;n)). end Order solutions
+    from best (minimum of cost function) to worst (maximum of cost function ). 𝜃∗
+    ← con figuration corresponding to the minimum of cost function. ---------------------------------------------------------------------
+    ](img/file826.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![--------------------------------------------------------------------- ---------------------------------------------------------------------
+    Iterations: for l = 1,...,L do | −β | α ← αe | | Select M best solutions from
+    generation l − 1 and generate new | | solutions (𝜃(l;n ))n=1,...,N by mutating
+    the rotation angles using | the updated mutation rate α. Each of the M best solutions
+    is | | used to produce D new solutions. | | for n = 1,...,N do | | for k = 1,...,K
+    do | | | | | | Run the quantum circuit with 𝜃(l;n ) and generate new | | | sample
+    vk(𝜃 (l;n)). | | end | | | | | Evaluate the cost function L(𝜃(l;n)). | end | |
+    Order solutions from best (minimum of the cost function) to | | worst (maximum
+    of the cost function). | | 𝜃∗(l) ← configuration corresponding to the minimum
+    of the cost | | function (l-th generation). | | if L(𝜃∗(l)) < L(𝜃∗) then | 𝜃 ∗
+    ← 𝜃∗(l) | end end ---------------------------------------------------------------------
+    ](img/file827.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Having described the training algorithm, we now specify the classical benchmark
+    before comparing the results obtained by the quantum and the classical generative
+    models on the sample datasets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.4 Classical Benchmark
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'There is a deep connection between QCBM and its classical counterpart – Restricted
+    Boltzmann Machine  [[60](Biblography.xhtml#XCheng2017)]. RBM, introduced and discussed
+    in Chapter [5](Chapter_5.xhtml#x1-960005) in the context of quantum annealing,
+    is a generative model inspired by statistical physics, where the probability of
+    a particular data sample, v, is given by the Boltzmann distribution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 − E(v) ℙ(v) = Ze . ](img/file828.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here, *E*(v) is the (positive) *energy* of the data sample (data samples with
+    lower energy have higher probabilities) and *Z* is the partition function, namely
+    the normalisation factor of the probability density:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ Z = e−E(v). v ](img/file829.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Alternatively, we can use the inherent probabilistic nature of quantum mechanics
+    that allows us to model the probability distribution using a quantum state ![|ψ⟩](img/file830.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℙ(v) = ⟨ψ&#124;𝒫†v𝒫v &#124;ψ ⟩, ](img/file831.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where 𝒫[v] is the measurement operator introduced in Section [1.2.3](Chapter_1.xhtml#x1-380003)
+    and, since the quantum state ![|ψ ⟩](img/file832.jpg) is a unit vector, we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨ψ &#124;ψ ⟩ = 1\. ](img/file833.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: We realise this approach in the Quantum Circuit Born Machine, where generative
+    modelling of probability density is translated into learning a quantum state.
+    The sole purpose of QCBM’s parameterised circuit is to create the quantum state
+    ![|ψ ⟩](img/file834.jpg) that encodes the desired probability distribution starting
+    from the initial state |0⟩^(⊗n), with sampling performed by applying the measurement
+    operators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Therefore, providing a classical benchmark for QCBM consists in finding a suitable
+    RBM configuration that will allow us to compare two methods generating the probability
+    distribution ℙ(v): one given by ([9.4](#x1-1950004)) for RBM and another one given
+    by ([9.4](#x1-1950004)) for QCBM  [[170](Biblography.xhtml#XKondratyev2020)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [9.5](#9.5) shows an RBM with 12 stochastic binary visible activation
+    units and 7 stochastic binary hidden activation units, where (*a*[i])[i=1,…,12],
+    (*b*[j])[j=1,…,7], and (*w*[ij])[i=1,…,12; j=1,…,7] denote, respectively, the
+    biases for the visible and hidden layers and the network weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This network architecture makes RBM equivalent to QCBM as described in Section [9.1](#x1-1860001)
+    in the sense that both generative models have the same number of adjustable parameters
+    (the number of RBM weights is equal to the number of adjustable rotation angles
+    in QCBM) and the number of visible activation units is equal to the number of
+    quantum registers. The latter ensures that both generative models can learn the
+    empirical distribution of a continuous random variable with the same precision
+    (12-digit binary representation).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.5: RBM(12, 7). ](img/file835.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.5: RBM(12, 7).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: QCBM performance should be compared against the performance of its classical
+    counterpart, the Restricted Boltzmann Machine. Both models operate on the binary
+    representation of the dataset and have a comparable number of adjustable parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.5 QCBM as a Market Generator
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The most obvious financial application of QCBM is as a market generator. An
+    efficient generation of realistic market scenarios, for example sampling from
+    the joint distribution of risk factors, is one of the most important and challenging
+    problems in quantitative finance today. We thus need to investigate how well QCBM
+    can execute this task, and compare it to classical benchmarks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.5.1 Non-parametric modelling of market risk factors
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Historically, the problem of producing reliable synthetic market scenarios was
+    solved through sampling from some easy-to-calibrate parametric models, such as
+    the multivariate Normal distribution of risk factor log-returns (equities) or
+    a Gaussian copula combining the multivariate Normal dependence structure with
+    heavy-tailed univariate marginal distributions of individual risk factors (credit).
+    However, there are well-known issues with this approach that often outweigh the
+    benefits provided by simplicity and transparency  [[217](Biblography.xhtml#XMorini2009)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A parametric model is often a poor approximation of reality. To be useful,
+    it has to be relatively simple: one should be able to describe the key features
+    of the risk factor distribution with a handful of parameters achieving the best
+    possible fit to either the empirical distribution derived from historical data
+    or from prices of traded instruments observed in the market at the time of model
+    calibration. Making the parametric model too complex would lead to overfitting
+    and poor generalisation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is even more difficult to model a realistic dependence structure. A typical
+    parametric approach used in most Monte Carlo risk engines starts with modelling
+    the dynamics of various risk factors independently, and then imposes a dependence
+    structure by correlating the corresponding stochastic drivers. These are, almost
+    invariably, Brownian motions, and the linear correlations between them are supposed
+    to be sufficient to construct the joint distribution of risk factors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An alternative approach is to use non-parametric modelling, where the joint
+    and marginal distributions of risk factors are learned directly from the available
+    datasets. Classically, we can realise this approach with the help of a Restricted
+    Boltzmann Machine – the classical benchmark of choice described in the previous
+    section and successfully applied to a number of financial use cases  [[173](Biblography.xhtml#XKS2020), [174](Biblography.xhtml#XKSH2020)].
+    Another possibility is to use the Generative Adversarial Network (GAN) framework,
+    where the distribution learned from the dataset by a generative neural network
+    is tested by a discriminative neural network trying to judge whether samples are
+    coming from the true distribution (data) or from the reconstructed distribution
+    (generated samples)  [[114](Biblography.xhtml#XGoodfellow2014)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Chapter [12](Chapter_12.xhtml#x1-22500012) explores the question of the larger
+    expressive power of QCBM in comparison with classical neural networks (RBM). However,
+    the first step should be an experimental verification of their performance characteristics.
+    With this in mind, we would like to test the ability of both QCBM and RBM to learn
+    relatively complex probability distributions and then efficiently sample from
+    them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.5.2 Sampling from the learned probability distributions
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We are going to test the performance of QCBM and RBM on two datasets:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Dataset A.** A heavy-tailed distribution of daily S&P 500 index returns observed
+    between 5 January 2009 and 22 February 2011 (UCI Machine Learning Repository  [[10](Biblography.xhtml#XAkbilgic2013), [9](Biblography.xhtml#XUCI_SP)]).
+    The dataset consists of 536 samples.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Dataset B.** A specially constructed distribution of a continuous random
+    variable with a highly spiky probability density function (pdf) modelled as a
+    mixture of Normal distributions. The dataset consists of 5,000 generated samples
+    from a mixture of four Normal distributions with the following means, standard
+    deviations, and weights:'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '| Mean | Standard deviation | Weight |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| −3 | 0.3 | 0.1 |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| −1 | 0.3 | 0.2 |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| 1 | 0.3 | 0.3 |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| 3 | 0.3 | 0.4 |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: 'Table 9.1: Parameters of the mixture of standard Normal distributions.'
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: 'In both cases, we convert the continuous samples into the corresponding 12-digit
+    binary representation as per Algorithm [6](#x1-190006r6). Once the networks are
+    trained (QCBM with Algorithm [8](#x1-194004r8) and RBM with Algorithm [2](Chapter_5.xhtml#x1-106003r2)),
+    we generate new samples: 536 new samples for Dataset A and 5,000 new samples for
+    Dataset B. This allows us to visualise the quality of the generated samples (once
+    they are converted into the corresponding continuous representation as per Algorithm
+    [7](#x1-190009r7)) by producing the empirical pdf and the QQ-plots as shown in
+    Figures [9.6](#9.6) and [9.7](#9.7), which display sample simulation results for
+    the fully trained models. We can see that both QCBM(12, 7) and RBM(12, 7) can
+    successfully learn complex empirical distributions (heavy-tailed in the case of
+    Dataset A and light-tailed with spiky pdf in the case of Dataset B). We have chosen CX
+    for the fixed gates in QCBM and used the Qiskit quantum simulator to simulate
+    the quantum parts of the training and sampling algorithms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following sets of hyperparameters were used to train the models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Genetic Algorithm for training QCBM (Algorithm **[**8**](#x1-194004r8)**)**
+    *N* = 1000, *M* = 25, *m* = 7, *α* = 1*.*0, *β* = 0*.*013863, *κ* = 50, *L* =
+    200\. The value of *β* ensures that mutation rate halves after each *κ* generations.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Contrastive Divergence algorithm for training RBM** (`sklearn.neural_network.BernoulliRBM`)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: n_components = 7 – number of hidden activation units for RBM(12, 7) learning_rate
+    = 0.0005 – learning rate *η* in Algorithm [2](Chapter_5.xhtml#x1-106003r2) batch_size
+    = 10 – size of the training minibatches *S* in Algorithm [2](Chapter_5.xhtml#x1-106003r2)
+    n_iter = 40000 – number of iterations
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Although a visual inspection of the pdf and QQ-plots in Figures [9.6](#9.6)
+    and [9.7](#9.7) suggests that both QCBM and RBM are doing a good job in generating
+    high-quality samples from the learned empirical distributions encoded in model
+    parameters, we would like to have a more objective measure of the model performance.
+    This is especially important since we deal with generative models and very little
+    can be concluded from a single model run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Running the quantum circuit multiple times for a particular configuration of
+    model parameters (e.g., an optimal set of rotation angles found with the help
+    of GA) results in the distribution of objective function values. This gives us
+    an idea of what metrics can be used to measure the performance of QCBM and RBM  [[170](Biblography.xhtml#XKondratyev2020)].
+    The cost function ([9.3.2](#x1-1940002)) we used for training QCBM can be calculated
+    on the samples generated by RBM. In other words, we can compare the performance
+    of QCBM and RBM by comparing the distributions of the cost function values calculated
+    for the samples generated by these models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [9.2](#x1-198004r2) shows the means and standard deviations of the cost
+    functions calculated for 100 runs of QCBM(12, 7) and RBM(12, 7). Each run generated
+    5,000 samples from the learned empirical distribution (the models were trained
+    on Dataset B, which consists of 5,000 samples from the mixture of four Normal
+    distributions).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Model | Mean | Standard deviation |'
+  prefs: []
+  type: TYPE_TB
+- en: '| QCBM(12, 7) | 30.5 | 23.6 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RBM(12, 7) | 39.6 | 30.8 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 9.2: Cost function statistics for the models trained on Dataset B.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is clear from Table [9.2](#x1-198004r2) that QCBM(12, 7) with a weakly optimised
+    set of hyperparameters performs better than RBM(12, 7) trained with equally weakly
+    optimised hyperparameters (a small learning rate combined with a large number
+    of iterations and the small size of the minibatches  [[134](Biblography.xhtml#XHinton2010)]).
+    Although this cannot be seen as proper evidence of quantum advantage, this nevertheless
+    opens the gate to promising further research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.6: Mixture of Normal distributions. ](img/file836.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.6: Mixture of Normal distributions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.7: Distribution of S&P 500 index returns. ](img/file837.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.7: Distribution of S&P 500 index returns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let us now turn our attention to Dataset A. The dataset consists of just 536
+    samples and, as we can see in Figure [9.7](#9.7), the empirical pdf displays pronounced
+    heavy tails which are also clearly seen in the QQ-plot against the Normal distribution.
+    The relatively small number of samples means that we have to deal with a substantial
+    amount of noise. Therefore, we need to use a robust statistical test to compare
+    QCBM and RBM. Since we are working with a univariate distribution, we can estimate
+    the quality of generated samples with the Kolmogorov-Smirnov test  [[233](Biblography.xhtml#XPfaffenberger1987)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Table [9.3](#x1-198011r3) provides the p-values and Kolmogorov-Smirnov statistics
+    for the RBM and the QCBM generated samples as well as a Normal distribution fitted
+    to the original dataset (by matching the first two moments). The p-value represents
+    the probability of obtaining test results supporting the null hypothesis of the
+    two datasets coming from the same distribution. In the context of our numerical
+    experiments, the larger the p-value the more likely the generated samples were
+    drawn from the correct distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Distribution | p-value | K-S statistic |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Normal | 0.004 ± 0.009 | 0.121 ± 0.017 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| RBM generated samples | 0.46 ± 0.23 | 0.055 ± 0.011 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| QCBM generated samples | 0.46 ± 0.11 | 0.053 ± 0.005 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 9.3: p-value and K-S statistic for Normal, RBM and QCBM generated samples
+    in the format: mean ± standard deviation. Number of Normal, RBM and QCBM generated
+    datasets: 20\. Number of samples in each generated dataset: 536 (equal to the
+    number of samples in the original dataset).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The K-S statistic takes the largest absolute difference between the two distribution
+    functions across all values of the random variable. The larger the K-S statistic
+    the less likely the generated samples were drawn from the correct distribution.
+    The K-S statistic can be compared with the critical values calculated for the
+    given confidence level and number of samples. For example, the critical value
+    corresponding to the 95th percentile confidence level and 536 samples in both
+    datasets is 0*.*0587\. If the K-S statistic is larger then, with 95% certainty,
+    we can reject the null hypothesis that 536 generated samples were drawn from the
+    right distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first observation is that we can definitely reject the null hypothesis
+    that the daily S&P 500 index returns are Normally distributed. The corresponding
+    p-value is much smaller than 1, and the K-S statistic is twice the critical value.
+    More importantly, QCBM performs at par with RBM in terms of both the p-value and
+    the K-S statistic: we therefore cannot reject the null hypothesis that QCBM and
+    RBM generated samples were drawn from the same distribution as the original dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 9.5.3 Training algorithm convergence and hyperparameter optimisation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Next, we would like to explore the GA behaviour for various model configurations.
+    In particular, it is interesting to investigate the algorithm convergence for
+    different types of fixed gates, not just CX, and for different choices of the
+    mutation rate. The charts in Figure [9.8](#9.8) confirm our intuition about CX
+    being the best choice of fixed gate given the configuration of one-qubit gates
+    (Figure [9.1](#9.1)) and the exponentially decreasing mutation rate performing
+    better than the constant mutation rates. Here, we continue working with Dataset B.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we can see in Figure [9.1](#9.1), the fixed gates are flanked by one-qubit
+    gates performing rotations around the *z*-axis. Therefore, adding another rotation
+    around the *z*-axis by *ϕ* = *π* (Z = R[Z](*π*)) may not offer the same flexibility
+    as rotation around the *x*-axis by *ϕ* = *π* (X = R[X](*π*)). Controlled rotations
+    around the *z*-axis by an angle *ϕ < π* are likely to perform even worse. This
+    is exactly what we see in Figure [9.8](#9.8) (left chart) for three different
+    types of fixed gates: CX, CZ, and CR[Z](*π∕*4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our intuition about the optimal choice of mutation rate suggests that it should
+    be productive to start the algorithm with a really large mutation rate in order
+    to explore the search space as broadly as possible (the "exploration" phase).
+    Then, as the algorithm finds progressively better solutions, it should be useful
+    to reduce the mutation rate in order to perform a more detailed search in the
+    vicinity of the best solutions found so far (the "exploitation" phase). As the
+    algorithm converges, we may want to perform more and more refined searches by
+    only mutating one or two parameters. Figure [9.8](#9.8) (right chart) shows that
+    this is indeed the case. Here, the maximum value of the mutation rate is *α* =
+    1*.*0 and the minimum value is *α* = 0*.*0625 – the value reached after *L* =
+    200 algorithm iterations when the algorithm is run with the initial value of mutation
+    rate *α* = 1*.*0 and exponential decay factor *β* = 0*.*013863.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.8: Left: GA convergence as a function of fixed gate type. Right:
+    GA convergence as a function of mutation rate for CX fixed gates. Dots indicate
+    mean values and error bars indicate the 10th and the 90th percentiles. GA parameters:
+    N = 1000, M = 25, m = 7, 20 GA runs. ](img/file838.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.8: Left: GA convergence as a function of fixed gate type. Right: GA
+    convergence as a function of mutation rate for CX fixed gates. Dots indicate mean
+    values and error bars indicate the 10th and the 90th percentiles. GA parameters:
+    N = 1000, M = 25, m = 7, 20 GA runs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we need to investigate the convergence of the algorithm as a function
+    of the rotation angle discretisation scheme. In principle, an arbitrary rotation
+    poses a problem as it must be approximated by a sequence of discrete gates because
+    only discrete sets of gates can be implemented fault-tolerantly  [[180](Biblography.xhtml#XKudrow2013)].
+    Since a GA operates on a discrete set of rotation angles, we face a trade-off
+    between higher accuracy achieved through a finer discretisation scheme and implementation
+    efficiency in the case of a less granular set of rotation angles. Additionally,
+    all rotation gates can be executed with finite precision and the discretisation
+    scheme should take this into account. Hence, in order to facilitate the efficient
+    implementation of the rotation gates R[X](*𝜃*) and R[Z](*𝜃*), the GA operates
+    on the rotation angles *𝜃* that take discrete values (−*π* + *νπ∕*2^(m−1))[ν=0,…,2^m−1],
+    thus splitting the [−*π,π*] interval into 2^m equal subintervals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Therefore, we must answer the question of GA convergence for various values
+    of *m*. Figure [9.9](#9.9) shows the minimum values of the objective function ([9.3.2](#x1-1940002))
+    as a function of the number of algorithm iterations for three different values
+    of *m*:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*m* = 3, rotation angle step Δ*𝜃* = *π∕*4;'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*m* = 5, rotation angle step Δ*𝜃* = *π∕*16;'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*m* = 7, rotation angle step Δ*𝜃* = *π∕*64.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We can see that the GA performance improves only marginally for *m >* 5\. This
+    is good news suggesting that it may be sufficient to operate with rotation angle
+    step Δ*𝜃* = *π∕*16 to achieve the desired precision in learning the target distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 9.9: GA convergence as a function of the rotation angle discretisation
+    scheme for CX fixed gates and exponentially decreasing mutation rate. Dots indicate
+    mean values and error bars indicate the 10th and the 90th percentiles. GA parameters:
+    N = 1000, M = 25, α = 1.0, β = 0.013863, 20 GA runs. ](img/file839.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 9.9: GA convergence as a function of the rotation angle discretisation
+    scheme for CX fixed gates and exponentially decreasing mutation rate. Dots indicate
+    mean values and error bars indicate the 10th and the 90th percentiles. GA parameters:
+    N = 1000, M = 25, α = 1.0, β = 0.013863, 20 GA runs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The non-differentiable learning of QCBM with Genetic Algorithm is a viable approach
+    to the training of PQCs. QCBM trained with GA performs at least as well as an
+    equivalent classical neural network (RBM). The performance of QCBM and its classical
+    counterpart were tested on two different datasets (heavy-tail distributed samples
+    derived from the financial time series and light-tail distributed samples drawn
+    from the specially constructed distribution with spiky pdf) and in both cases
+    QCBM demonstrated its ability to learn the empirical distribution and generate
+    new synthetic samples that have the same statistical properties as the original
+    ones, as can be seen in the pdf and QQ-plots.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Analysing the GA convergence for different sets of hyperparameters, we observe
+    that the best results were achieved with CX fixed gates and an exponentially decreasing
+    mutation rate (starting from the maximum value of the mutation rate and setting
+    the decay rate at a reasonably small value). More importantly, we see that more
+    granular rotation angle discretisation schemes provide progressively less incremental
+    value beyond some point. This means that for many practical purposes it is sufficient
+    to implement rotations with the step Δ*𝜃* = *π∕*16 in order to encode target distribution
+    with the desired accuracy for deep enough QCBM architectures (at least two layers
+    of fixed 2-qubit gates). Since qubit rotations on NISQ devices can be implemented
+    with finite precision, this ensures that QCBMs can be used productively for many
+    real-world use cases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: QCBM is a viable choice for building market generators. It performs at least
+    as well as its classical counterpart, RBM, and demonstrates potential for achieving
+    quantum advantage on near-term quantum processors.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we learned how to construct and train a generative QML model
+    – Quantum Circuit Born Machine. We started with the general concept of a PQC as
+    a generative model, where the readout operation produces a sample from the probability
+    distribution encoded in the PQC parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we introduced the concept of a hardware-efficient PQC ansatz. Additionally,
+    to build a model that is compatible with QPU connectivity and can easily be embedded
+    into a QPU graph, we tried to use adjustable (one-qubit) and fixed (two-qubit)
+    gates from the set of the native quantum gates for the given system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then, we studied differentiable and non-differentiable learning algorithms and
+    experimented with the QCBM trained using Genetic Algorithm. Comparison with the
+    classical benchmark (RBM) demonstrated a realistic possibility of quantum advantage
+    for generative QML models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we explored the question of training algorithm convergence for various
+    sets of model parameters.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will study another important and exceptionally promising
+    QML model – Variational Quantum Eigensolver.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join our book’s Discord space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Join our Discord community to meet like-minded people and learn alongside more
+    than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![PIC](img/file1.png)'
+  prefs: []
+  type: TYPE_IMG

@@ -1,0 +1,1149 @@
+- en: '5'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Quantum Boltzmann Machine
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As we saw in Chapters [3](Chapter_3.xhtml#x1-630003) and [4](Chapter_4.xhtml#x1-820004),
+    quantum annealing can be used to solve hard optimisation problems. However, the
+    range of possible applications of quantum annealing is much wider than that. In
+    this chapter, we will consider two distinct but related use cases that go beyond
+    solving optimisation problems: sampling and training deep neural networks. Specifically,
+    we will focus on the Quantum Boltzmann Machine (QBM) – a generative model that
+    is a direct quantum annealing counterpart of the classical Restricted Boltzmann
+    Machine (RBM), and the Deep Boltzmann Machine (DBM) – a class of deep neural networks
+    composed of multiple layers of latent variables with connections between the layers
+    but not between units within each layer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by providing detailed descriptions of the classical RBM, including
+    the corresponding training algorithm. Due to the fact that an RBM operates on
+    stochastic binary activation units, one can establish the correspondence between
+    the RBM graph and the QUBO graph embedded onto the quantum chip. This provides
+    the main motivation for performing Boltzmann sampling (the key stage in training
+    RBMs and DBMs) using quantum annealing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: DBMs can be trained as both generative and discriminative models. In both cases,
+    since a DBM can be constructed by stacking together layers of RBMs, efficient
+    Boltzmann sampling is the key element of the training process. Quantum annealing,
+    which can be integrated into the hybrid quantum-classical training routine, has
+    the potential to improve speed and accuracy. Quantum speedup is an especially
+    appealing element of the envisaged quantum advantage since it can be achieved
+    not only during the RBM training stage but also during the process of generating
+    new samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.1 From Graph Theory to Boltzmann Machines
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We provide here a short self-contained review of graph theory in order to introduce
+    Boltzmann machines (or energy-based models), which one can view as particular
+    types of connected graphs or networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A *graph* is a set of vertices (points or nodes) and edges that connect the
+    vertices. A *directed graph* is a type of graph that contains ordered pairs of
+    vertices while an *undirected graph* is a type of graph that contains unordered
+    pairs of vertices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We consider a graph 𝒢 = (𝒱*,*ℰ) characterised by a finite number of vertices
+    𝒱 and undirected edges ℰ. For a given vertex *v* ∈𝒱, its neighbourhood is defined
+    as the set of all vertices connected to it by some edge, or
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![𝒩 (v) := {w ∈ 𝒱 : {v,w} ∈ ℰ}. ](img/file388.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Finally, a *clique* 𝒞 is a subset of 𝒱 such that all vertices in 𝒞 are pairwise
+    connected by some edge in ℰ.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To each vertex *v* ∈𝒱, we associate a random variable *X*[v] taking values in
+    some space 𝒳. The vector *X* ∈𝒳^(|𝒱|) is called a Markov random field if
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Law (Xv |(Xw ){w∈𝒱∖{v}}) = Law (Xv |(Xw ){w∈𝒩 (v)}). ](img/file389.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The following theorem, originally proved by Hammersley and Clifford  [[125](Biblography.xhtml#XHammersleyClifford)]
+    (see also  [[167](Biblography.xhtml#XKollerFriedman), Theorem 4.2]), provides
+    a way to express the law of Markov random fields over graphs in a convenient form.
+    The Markovian property is fundamental here, as dynamics (for example, the passing
+    of a signal from a hidden layer to a visible layer of an RBM network) should only
+    depend on the current state and not on the whole path followed by the system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Theorem 8** (Hammersley-Clifford Theorem)**.** *A* *strictly positive distribution
+    satisfies the Markov property with respect to an* *undirected graph if and only
+    if it factorises over it.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Phrased differently, the theorem says that *X* is Markovian over 𝒢 if its distribution
+    can be written as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 ∏ ℙX (x) := ℙ(X = x) = -- ψC (xC), for all x ∈ 𝒳 &#124;𝒱&#124;, Z C∈𝒞
+    ](img/file390.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for a set {*ψ*[C]}[C∈𝒞] of functions called the potential over all the cliques
+    *C* ∈𝒞 and where *Z* is a normalisation constant such that the probabilities integrate
+    to unity. Here x[C] naturally corresponds to the elements of the vector x over
+    the clique *C*. The factorisation is often taken over the so-called *maximal cliques*,
+    namely the cliques that are no longer cliques if any node is added. If the distribution
+    of *X* is strictly positive, then so are the functions {*ψ*[C]}[C∈𝒞] and therefore ([5.1](#x1-97006r1))
+    can be written as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) 1 ∑ 1 ℙX (x) = --exp log(ψC (xC)) =: --e−E(x), Z C∈𝒞 Z ](img/file391.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for all x ∈𝒳^(|𝒱|). The function
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∑ E (x) := − log(ψC(xC )) C∈𝒞 ](img/file392.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: is called the *energy* function. Because of their uses in statistical physics,
+    strictly positive distributions of Markov random fields, taking the form ([5.1](#x1-97006r1)),
+    are also called Boltzmann or Gibbs distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Energy-based models are generative models that discover data dependencies by
+    applying a measure of compatibility (scalar energy) to each configuration of the
+    observed and latent variables. The inference consists of finding the values of
+    latent variables that minimise the energy given the values of the observed variables.
+    Energy-based models posses many useful properties (simplicity, stability, flexibility,
+    compositionality) – this makes them models of choice for learning complex multivariate
+    probability distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2 Restricted Boltzmann Machine
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 5.2.1 The RBM as an energy-based model
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The RBM corresponds to a special structure of such a graph, called bipartite,
+    where the set 𝒱 of vertices can be split into two groups of visible vertices 𝒱[V]
+    and hidden vertices 𝒱[H] such that the set ℰ of edges only consists of elements
+    of the form {*v,h*}∈𝒱[V] ×𝒱[H]. Figure [5.1](#5.1) provides a schematic representation
+    of the RBM that implements the bipartite graph structure. This in particular implies
+    that cliques can only be of size one (all the singleton nodes) or two (all the
+    pairs (*v,h*) in 𝒱[V] ×𝒱[H]). For simplicity, we shall denote v an element of
+    𝒳^(|𝒱[V] |) and h an element of 𝒳^(|𝒱[H]|), and identify the random variable *X*
+    with the vertices. The following lemma gives us the general form of the energy
+    function ([5.1](#x1-97006r1)) for RBMs.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lemma 6** (RBM Energy Lemma)**.** *In a Restricted Boltzmann Machine, the*
+    *energy function takes the form*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑N ∑M ∑N ∑M E (v,h ) = Ev(vi)+ Eh (hj)+ Ev,h(vi,hj), i=1 j=1 i=1j=1 ](img/file393.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '*for any* v := (*v*[1]*,…,v*[N]) ∈𝒳^(|𝒱[V] |)*,* h := (*h*[1]*,…,h*[M]) ∈𝒳^(|𝒱[H]|)*.
+    Here,* *N* *is the number* *of visible vertices and* *M* *is the number of hidden
+    vertices.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*Proof.* By the Hammersley-Clifford theorem, for any v ∈𝒳^(|𝒱[V] |), h ∈𝒳^(|𝒱[H]|),
+    we have the factorisation'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ℙ(v*,*h) | = ![-1 Z](img/file394.jpg)∏ [C∈𝒞]*ψ*[C]((v[C]*,*h[C]) ∈ *C*) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![-1 Z](img/file395.jpg)∏ [{{v}:v∈𝒱[V] }]*ψ*[{v}](*v*)∏ [{{h}:h∈𝒱[H]}]*ψ*[{h}](*h*)∏
+    [{{v,h}∈𝒱[V] ×𝒱[H]}]*ψ*[{v,h}](*v,h*) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![-1 Z](img/file396.jpg)exp![{− E (v,h)}](img/file397.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: over all singletons (cliques of size one) and couples (cliques of size two),
+    where the term −*E*(v*,*h) reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| − *E*(v*,*h) | = log ![( ) ∏ ∏ ∏ ( ψ {v}(v) ψ{h}(h ) ψ {v,h}(v,h)) {{v}:v∈𝒱V}
+    {{h}:h∈𝒱H} {{v,h}∈ 𝒱V×𝒱H}](img/file398.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = log ![( ) ( ∏ ) ψ {v}(v) {{v}:v∈𝒱V}](img/file399.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | + log ![( ) ∏ ( ψ {h}(h)) {{h}:h∈𝒱H}](img/file400.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | + log ![( ) ∏ ( ψ{v,h}(v,h)) {{v,h}∈𝒱V×𝒱H }](img/file401.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ∑ [{{v}:v∈𝒱[V] }]log ![( ) ψ{v}(v)](img/file402.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | + ∑ [{{h}:h∈𝒱[H]}]log ![(ψ{h}(h))](img/file403.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | + ∑ [{{v,h}∈𝒱[V] ×𝒱[H]}]log ![( ) ψ{v,h}(v,h)](img/file404.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = −∑ [i=1]^N*E* [v](*v*[i]) −∑ [j=1]^M*E* [h](*h*[j]) −∑ [i=1]^N ∑ [j=1]^M*E*
+    [v,h](*v*[i]*,h*[j])*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: which concludes the proof of the lemma. □
+  prefs: []
+  type: TYPE_NORMAL
+- en: The standard example of an RBM is when the random variables follow Bernoulli
+    distribution, i.e., with 𝒳 = {0*,*1}^(|𝒱|). In this case, their energies read
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Ev (vi) = − aivi, Eh(hj) = − bjhj, Ev,h(vi,hj) = − wijvihj, ](img/file405.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some parameters *a*[i], *b*[j], *w*[ij], *i* = 1*,…,N*, *j* = 1*,…,M*. In
+    particular, for a given *v*[i], we can write, using Bayes’ formula,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ℙ(*v*[i] = 1&#124;v[v[i]]*,*h) | = ![---------ℙ(vi =-1,vvi,h)------- ℙ (vi
+    = 1,vvi,h )+ ℙ(vi = 0,vvi,h)](img/file406.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![ exp (− E (v = 1,v ,h)) ----------------------i-----vi---------------
+    exp (− E (vi = 1,vvi,h))+ exp (− E (vi = 0,vvi,h ))](img/file407.jpg)*.* | (5.2.1)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where we denote v[v[i]] the states of all the nodes in 𝒱∖{*v*[i]}. Now, using
+    the RBM energy lemma, we can single out the energy arising from the particular
+    node *v* using ([5.2.1](#x1-99002r1)) as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![E(vi,vvi,h) = − Φv(vi)− Ψv (vvi,h), ](img/file408.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ⌋ ∑M M∑ Φv (vi) := aivi + wijvihj = ⌈ai + wijhj⌉ vi, j=1 j=1 ∑N ∑M ∑N
+    ∑M Ψv (vvi,h) := akvk + bjhj + wkjvkhj. k=1(k⁄=i) j=1 k=1(k⁄=i)j=1 ](img/file409.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Plugging this into ([5.2.1](#x1-99003r1)) then yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ exp (Φv (vi = 1)+ Ψv (vvi,h)) ℙ(vi = 1&#124;vvi,h ) =-------------------------------------------------------
+    exp (Φv(vi = 1)+ Ψv (vvi,h))+ exp (Φv(vi = 0)+ Ψv (vvi,h)) = --exp-(Φv(vi =-1))-
+    exp (Φv(vi = 1)) + 1 = σ (Φv(vi = 1)), ](img/file410.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: since Φ[v](*v*[i] = 0) = 0, where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![σ(x) :=---1--- 1 + e−x ](img/file411.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: is the sigmoid function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Similarly, we can single out the contribution of the energy on a given hidden
+    node *h*[j], using the RBM energy lemma:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![E (v,hj,hhj) = − Φh(hj)− Ψh (v,hhj), ](img/file412.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑N [ ∑N ] Φh (hj) := bjhj + wijvihj = bj + wijvi hj, i=1 i=1 N M N M Ψ
+    (v,h ) := ∑ a v + ∑ b h + ∑ ∑ w vh . h hj i i k k ik i k i=1 k=1(k⁄=j) i=1k=1(k⁄=j)
+    ](img/file413.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Plugging this into ([5.2.1](#x1-99003r1)) then yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ( )) ℙ(h = 1&#124;v,h ) = ----(----------exp--Φ(h(hj-=))1)+-Ψh(-v,hhj----------(----))-
+    j hj exp Φh(hj = 1)+ Ψh v,hhj + exp Φh (hj = 0) + Ψh v,hhj = --exp(Φh-(hj =-1))-
+    exp (Φh(hj = 1)) + 1 = σ (Φ (h = 1 )) , h j ](img/file414.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: since again Φ[h](*h*[j] = 0) = 0\.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2.2 RBM network architecture
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As shown above, an RBM is thus a shallow two-layer neural network that operates
+    on stochastic binary activation units. The network forms a bipartite graph connecting
+    stochastic binary inputs (visible units) to stochastic binary feature detectors
+    (hidden units) with no connections between the units within the same layer, as
+    shown in Figure [5.1](#5.1)  [[102](Biblography.xhtml#XFischer2012)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-100001r1: Schematic representation of an RBM with the visible layer
+    units (white) and hidden layer units (dark) forming a bipartite graph. ](img/file415.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.1: Schematic representation of an RBM with the visible layer units
+    (white) and hidden layer units (dark) forming a bipartite graph.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Only the visible layer of the network is exposed to the training dataset and
+    its inputs v := (*v*[1]*,…,v*[N]) flow through the network (forward pass) to the
+    hidden layer, where they are aggregated and added to the hidden layer biases b
+    := (*b*[1]*,…,b*[M]). The hidden layer sigmoid activation function ([5.2.1](#x1-99003r1))
+    converts aggregated inputs into probabilities. Each hidden unit then "fires" randomly
+    and outputs a {0*,*1} Bernoulli random variable with the associated probabilities:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( N∑ ) ( ∑N ) ℙ(hj = 1&#124;v) = σ bj + wijvi and ℙ(hj = 0&#124;v) = 1−
+    σ bj + wijvi . i=1 i=1 ](img/file416.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The outputs from the hidden layer h := (*h*[1]*,…,h*[M]) then flow back (backward
+    pass) to the visible layer, where they are aggregated and added to the visible
+    layer biases a := (*a*[1]*,…,a*[N]). Similar to the hidden layer, the visible
+    layer sigmoid activation function first translates aggregated inputs into probabilities
+    and then into Bernoulli random variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( M ) ( M ) ℙ(v = 1&#124;h) = σ(a + ∑ w h ) and ℙ (v = 0&#124;h) = 1−
+    σ (a + ∑ w h ) . i i ij j i i ij j j=1 j=1 ](img/file417.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Therefore, every unit communicates at most one bit of information. This is especially
+    important for the hidden units since this feature implements the information bottleneck
+    structure, which acts as a strong regulariser  [[134](Biblography.xhtml#XHinton2010)].
+    The hidden layer of the network can learn the low-dimensional probabilistic representation
+    of the dataset if the network is organised and trained as an autoencoder.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2.3 Sample encoding
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Figure [5.2](#5.2) illustrates the binary representation of an input signal
+    that enters the network through the visible layer. The number of activation units
+    in the visible layer is determined by the number of features we have to encode
+    and the desired precision of their binary representation. For example, if our
+    sample consists of *m* continuous features and each feature is encoded as an *n*-digit
+    binary number, the total number of activation units in the visible layer is *m*
+    × *n*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-101001r2: Schematic binary encoding of continuous variables. ](img/file418.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.2: Schematic binary encoding of continuous variables.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2.4 Boltzmann distribution
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The network learns the probability distribution ℙ(v*,*h) of the configurations
+    of visible and hidden activation units – the Boltzmann distribution – by trying
+    to reconstruct the inputs from the training dataset (visible unit values) through
+    finding an optimal set of the network weights and biases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 ℙ(v,h) = --e−E(v,h), Z ](img/file419.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where the energy function reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N M N M ∑ ∑ ∑ ∑ E (v,h) = − aivi − bjhj − wijvihj. i=1 j=1 i=1 j=1 ](img/file420.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here, *Z* is the partition function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ Z = e−E (v,h). v,h ](img/file421.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'However, we are usually interested either in learning the probability distribution
+    of the visible layer configurations if we want to generate new samples that would
+    have the same statistical properties as the original training dataset, or in learning
+    the probability distribution of the hidden layer configurations if we want to
+    build a deep neural network where the RBM layer performs the feature extraction
+    and dimensionality reduction function. The probabilities of the visible (hidden)
+    states are given by summing over all possible hidden (visible) vectors:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 ∑ 1 ∑ ℙ (v) = -- e−E(v,h) and ℙ(h) = -- e−E (v,h). Z h Z v ](img/file422.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The most popular training algorithm for RBM, *k-step Contrastive Divergence*,
+    was proposed by Hinton  [[134](Biblography.xhtml#XHinton2010), [133](Biblography.xhtml#XHinton2002)].
+    The algorithm aims to maximise the log probability of a training vector, i.e.,
+    to find such network weights and biases that the "energy" function *E* is minimised
+    for the samples from the training dataset (smaller value of energy corresponds
+    to larger probability of a configuration). The *k*-step CD algorithm is fully
+    specified in Section [5.3.2](#x1-1060002) and the interested reader can also find
+    an excellent introduction to the training of RBMs in the work by Fischer and Igel  [[103](Biblography.xhtml#XFischer2014)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.2.5 Extensions of the Bernoulli RBM
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The standard Bernoulli RBM setup we considered above restricts the visible layer v
+    to a Bernoulli distribution. In fact, as long as the Hammersley-Clifford theorem
+    holds, we can consider any distribution or any form of energy function. It was
+    shown in  [[62](Biblography.xhtml#XCho), [178](Biblography.xhtml#XKrizhevsky)]
+    for example, that a Bernoulli distribution for the hidden layer combined with
+    a Gaussian distribution for the visible layer are compatible with an energy function
+    of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∑N (vi − ai)2 ∑M ∑N ∑M vihj E (v,h) = ---2σ2---− bjhj − wijσ2--, i=1 i j=1
+    i=1j=1 i ](img/file423.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: for some parameters *a*[i], *σ*[i], *b*[j], *w*[ij], *i* = 1*,…,N*, *j* = 1*,…,M*.
+    In this case, for any *h*[j], the conditional probabilities ℙ(*h*[j] = 1|v) remain
+    of sigmoid form and the conditional distribution of the visible layer is Gaussian
+    as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( M ) Law (v|h) = 𝒩 (a + ∑ w h ,σ2 ) , for each i = 1,...,N. i i ij j i
+    j=1 ](img/file424.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The RBMs we have considered do not account for time series, i.e., probability
+    structures with temporal dependence. By enlarging the corresponding graph, in
+    particular adding a conditional layer with directed connections to the classical
+    hidden and visible layers, Taylor  [[280](Biblography.xhtml#XTaylorConditional)]
+    showed that such dependence can be accounted for.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An RBM is a neural network represented by a bipartite graph. Its power is derived
+    from operating on stochastic binary activation units. It is a generative model
+    that encodes learned probability distribution in its weights and biases and then
+    generates new samples that are statistically indistinguishable from the samples
+    in the original dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: If it is organised as an autoencoder with the bottleneck information structure,
+    an RBM is able to learn the low-dimensional representation of the dataset. This
+    property suggests that an RBM can be used as a feature extraction layer in a machine
+    learning pipeline for certain supervised and unsupervised learning problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3 Training and Running RBM
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: To build a neural network means to specify the network architecture and training
+    algorithm. Having described the RBM architecture in the previous section, we now
+    outline the training routines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3.1 Training RBM with Boltzmann sampling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The goal of RBM training is to estimate the optimal vector 𝜃 of model parameters
+    (weights and biases) so that ℙ[𝜃](v) = ℙ[data](v). For a given training sample
+    v := (*v*[1]*,…,v*[N]), the RBM aims at maximising the log-likelihood function,
+    namely
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ n max ∑ 𝔏 (𝜃|v ), 𝜃 i=1 i ](img/file425.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where, for any v,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) ( ∑ ) ( ∑ ) ∑ 𝔏(𝜃|v) = log(ℙ(v)) = log -1 e−E(v,h) = log e− E(v,h) −
+    log ( e−E (v,h)) . Z h h v,h ](img/file426.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The standard optimisation method, as proposed in  [[133](Biblography.xhtml#XHinton2002)],
+    is a standard gradient ascent method, i.e., starting from an initial guess 𝜃⁰,
+    we update it as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ N 𝜃k+1 = 𝜃k + ∂ ∑ 𝔏 (𝜃k|v ) 𝜃 i=1 i ](img/file427.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: until we reach good enough convergence. In order to compute it, one first needs
+    to compute the joint probabilities ℙ(*v*[i]*,h*[j]), which is classically done
+    via Boltzmann (Gibbs) sampling  [[3](Biblography.xhtml#XAckley)], which is possible
+    since we know exactly the conditional distributions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3.2 The Contrastive Divergence algorithm
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: While training RBMs can be performed with Boltzmann sampling, this is usually
+    prohibitively expensive to run. A more efficient training algorithm, the *k*-step
+    Contrastive Divergence (CD) algorithm, was proposed in  [[134](Biblography.xhtml#XHinton2010)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---2:-k-
+    step-Contrastive-Divergence-------------------------- Result: Weights and biases
+    updates. Input: • Training minibatch S; • Model parameters ai,bj,wij for i = 1,...,N,j
+    = 1,...,M (before update ). Initialisation: for all i,j : Δwij = Δai = Δbj = 0
+    for v ∈ S do | v(0) ← v | | for t = 0,...,k − 1 do | | for j = 1,...,M do | |
+    | (t) (t) | | | sample Bernoulli random variable hj ∼ ℙ(hj|v ) | | end | | | |
+    for i = 1,...,N do | | | sample Bernoulli random variable v(t+1) ∼ ℙ(vi|h(t))
+    | | i | end | end | | for i = 1,...,N, j = 1(,...,M do ) | | (0) (0) (k) (k) |
+    Δwij ← Δwij + η ℙ(hj = 1|v )vi − ℙ(hj = 1|v )vi | end | | for i = 1,...,N do(
+    ) | | Δai ← Δai + η v(0) − v(k) | i i | end | | for j = 1,...,M do( ) | | Δbj
+    ← Δbj + η ℙ(hj = 1|v(0)) − ℙ(hj = 1|v(k)) | end end ---------------------------------------------------------------------
+    ](img/file428.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The choice of *k* balances accuracy and speed. For many practical purposes
+    *k* = 1 is an optimal choice, even though the expectations may be biased in this
+    case. However, the bias tends to be small  [[53](Biblography.xhtml#XCarreira2005)].
+    The network is trained through the updates of weights and biases, which increase
+    the log probability of a training vector and are given by the following expressions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Δw = η∂ℙ(v)-= η (⟨v h ⟩ − ⟨v h ⟩ ), ij ∂wij i j data i j model ](img/file429.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![ ∂-ℙ(v) Δai = η ∂ai = η(⟨vi⟩data − ⟨vi⟩model), ](img/file430.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![ ∂ℙ (v) Δbj = η------= η (⟨hj⟩data − ⟨hj⟩model), ∂bi ](img/file431.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where ⟨⋅⟩ denote expectations under the distribution specified by the subscript
+    and *η* is the chosen learning rate. Expectations ⟨⋅⟩[data] can be calculated
+    directly from the training dataset while getting unbiased samples of ⟨⋅⟩[model]
+    requires performing alternating sampling from the model Boltzmann distribution
+    for a long time (this is needed to achieve the state of thermal equilibrium),
+    starting from some randomly initialised state. However, the *k*-step CD method
+    can be used to approximate ⟨⋅⟩[model] with another, easier-to-calculate expectation,
+    as shown in Algorithm [2](#x1-106003r2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.3.3 Generation of synthetic samples
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Once fully trained, the network can be used to generate new samples from the
+    learned distribution. For example, the RBM can be used as a market generator that
+    produces new market scenarios in the form of the new synthetic samples drawn from
+    the multivariate distribution of the market risk factors encoded in the network
+    weights and biases.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The first step is the generation of a random input: each visible unit is initialised
+    with a randomly generated binary variable. The second step is performing a large
+    number of forward and backward passes between the visible and the hidden layers,
+    until the system reaches a state of *thermal equilibrium*: a state where the initial
+    random vector is transformed into a sample from the learned distribution. The
+    number of cycles needed to reach the state of thermal equilibrium is problem dependent
+    and is a function of network architecture and network parameters (weights and
+    biases). In some cases, the generation of independent samples requires 10³ − 10⁴
+    forward and backward passes through the network  [[173](Biblography.xhtml#XKS2020)].
+    The final step is the readout from the visible layer, which gives us a bitstring,
+    encoding the sample from the target distribution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Figure [5.3](#5.3) displays the QQ-plots of the samples drawn from the distributions
+    of daily returns for two stock indices: German DAX and Brazilian BOVESPA. Recall
+    that a quantile-quantile (or QQ) plot is a scatter plot created by plotting two
+    sets of quantiles against one another. If both sets come from the same distribution,
+    all points should lie close to the diagonal. The dataset consists of 536 samples – daily
+    index returns observed between 5 January 2009 and 22 February 2011 (UCI Machine
+    Learning Repository  [[10](Biblography.xhtml#XAkbilgic2013), [9](Biblography.xhtml#XUCI_SP)]).
+    The "Normal" distribution models daily returns as Normally distributed with a
+    mean and variance that match those from the historical dataset. The "RBM" distribution
+    is a dataset of RBM-generated samples that, ideally, should have exactly the same
+    statistical properties as the original historical dataset. If the samples drawn
+    from two distributions have identical quantiles, the QQ-plots will have all points
+    placed on the diagonal and we can conclude that the two distributions are identical.
+    Figure [5.3](#5.3) shows that this is indeed the case (with reasonably good accuracy)
+    for the samples from the "Data" and "RBM" distributions, while both demonstrate
+    much heavier tails in comparison with the fitted Normal distribution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The results shown in Figure [5.3](#5.3) were obtained with an RBM trained on
+    a dataset of daily returns. Each return from the training dataset was converted
+    into a 12-digit binary number. Every digit of the binary number was treated as
+    a separate binary feature (12 features per index; 24 features in total) – this
+    required placing 24 activation units in the visible layer of the RBM network.
+    The number of hidden units was set to 16\. Thus, the network was trained as a
+    strongly regularised autoencoder. The generated returns (in the binary format)
+    were then converted back into their continuous representation. The model was Bernoulli
+    RBM (sklearn.neural_network.BernoulliRBM) from the open source `scikit-learn`
+    package  [[230](Biblography.xhtml#XSL)] with the following set of parameters:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: n_components = 16 – number of hidden activation units
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: learning_rate = 0.0005
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: batch_size = 10 – size of the training minibatches
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: n_iter = 40000 – number of iterations
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The synthetic data generation approach can be formulated as Algorithm [3](#x1-107014r3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---3:-Synthetic-Data-Generation-----------------------------
+    1: The construction of the binary representation of the original dataset: a) A
+    continuous feature can be converted into an equivalent binary representation with
+    the required precision. b) An integer feature x ∈ {x1,...,xn } can be translated
+    into an N -digit binary number through the standard procedure, where N−1 N 2 ≤
+    1m≤ajx≤n(xj)− 1m≤ijn≤n(xj) < 2 . c) A categorical feature can be binarised either
+    through the one-hot encoding method or following the same procedure as for the
+    integer numbers since categorical values can be enumerated. d) The same applies
+    to class labels, both integer and categorical. 2: The training of an RBM on the
+    binary representation of the original dataset with the help of a 1-step CD algorithm.
+    3: The generation of the required number of new synthetic samples in binary format.
+    4: For each synthetic data sample: the conversion of the generated binary features
+    into the corresponding categorical, integer, and continuous representations. 5:
+    The generated synthetic dataset is ready to be used for the training of various
+    classifiers and regressors. ---------------------------------------------------------------------
+    ](img/file432.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![Figurex1-107016r3: QQ-plots of the generated and historical returns. a)-c) DAX.
+    d)-f) BOVESPA. The RBM learns the heavy-tailed empirical distribution of stock
+    index returns. ](img/file433.png)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.3: QQ-plots of the generated and historical returns. a)-c) DAX. d)-f) BOVESPA.
+    The RBM learns the heavy-tailed empirical distribution of stock index returns.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Kondratyev and Schwarz  [[173](Biblography.xhtml#XKS2020)] proposed an RBM-based
+    market generator and investigated its properties on a dataset of daily spot FX
+    log-returns. The time series of four currency pairs’ log-returns covered a 20-year
+    time interval (1999-2019), which allowed the RBM to learn the dependence structure
+    of the multivariate distribution and successfully reconstruct linear and rank
+    correlations as well as joint tail behaviour. Also, it was shown that an RBM can
+    be used to perform conditional sampling (e.g., from low-volatility/high-volatility
+    regimes) and achieve the desired degree of autocorrelation by varying the thermalisation
+    parameter. Other productive applications of RBM-based synthetic data generators
+    are data anonymisation, fighting overfitting, and the detection of outliers as
+    demonstrated by Kondratyev, Schwarz, and Horvath  [[174](Biblography.xhtml#XKSH2020)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: In addition to operating on stochastic binary activation units, the RBM gains
+    extra resistance to overfitting through the autoencoder architecture and being
+    trained with stochastic gradient ascent. This allows RBMs to learn complex multivariate
+    probability distributions from relatively small datasets while avoiding overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4 Quantum Annealing and Boltzmann Sampling
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The application of quantum annealing to Boltzmann sampling is based on the direct
+    correspondence between the RBM energy function given by ([5.2.4](#x1-1020004))
+    and the Hamiltonian in quantum annealing. Recall from Chapter [2](Chapter_2.xhtml#x1-480002)
+    that quantum annealing is based on the principles of adiabatic evolution from
+    the initial state at *t* = 0 given by a Hamiltonian ℋ[0] to a final state at *t*
+    = *T* given by a Hamiltonian ℋ[F] , such that the system Hamiltonian at time *t*
+    ∈ [0*,T*] is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ (t) = r(t)ℋ0 + (1− r(t))ℋF , ](img/file434.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where *r*(*t*) decreases from 1 to 0 as *t* goes from 0 to *T*. An ideal adiabatic
+    evolution scenario envisages the system always staying in the ground state of
+    ℋ(*t*): if the system starts in the ground state of ℋ[0] and the evolution proceeds
+    slowly enough to satisfy the conditions of the quantum adiabatic theorem (Chapter [2](Chapter_2.xhtml#x1-480002)),
+    then the system will end up in the ground state of ℋ[F] .'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, existing quantum annealing hardware does not strictly satisfy the
+    conditions of the quantum adiabatic theorem. Quantum annealers operate at very
+    low temperatures of about 15mK  [[90](Biblography.xhtml#XDW2020)], but some residual
+    thermal noise is still present. There is also some amount of cross-talk between
+    the qubits and the chains of physical qubits that represent logical qubits can
+    be broken. Cross-talk is the effect of a desired action on one or more qubits
+    unintentionally affecting one or more other qubits. In some cases, cross-talk
+    is the major source of computational errors. This poses serious issues for quantum
+    annealers solving optimisation problems where the main objective is to find an
+    exact ground state. But some residual amount of thermal and electromagnetic noise
+    is desirable if we want to use a quantum annealer as a sampler.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4.1 Boltzmann sampling
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The quantum annealer as a sampling engine is based on the central proposal
+     [[4](Biblography.xhtml#XAdachi2015)] that the distribution of excited states
+    can be modelled as a Boltzmann distribution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1- ℙ(x) = Z exp (− β ℋF (x )) , ](img/file435.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where *β* is some parameter (which can be seen as an effective inverse temperature)
+    and *Z* is the partition function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ Z = exp (− βℋF (x)). x ](img/file436.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'If we define the binary vector x to be the concatenation of the visible node
+    vector v and the hidden node vector h:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![x := (v ,v ,...,v ,h ,h ,...,h ), 1 2 N 1 2 M ](img/file437.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'then, by comparing ([5.2.4](#x1-1020004)) and ([5.4.1](#x1-1090001)), we can
+    establish a direct correspondence between the energy function *E* and the Hamiltonian ℋ[F]
+    . Therefore, we can suggest an alternative way of calculating the expectations
+    ⟨⋅⟩[model] formulated as in the following algorithm  [[4](Biblography.xhtml#XAdachi2015)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---4:-Boltzmann--Sampling-----------------------------------
+    1: Use the RBM energy function E as the final Hamiltonian ℋF . 2: Run quantum
+    annealing K times and collect the readout statistics for vi(k ) and hj(k), i =
+    1,...,N , j = 1,...,M , k = 1,...,K. 3: Calculate the unbiased expectations: 1
+    ∑K ⟨vihj⟩model :=-- vi(k)hj(k), K k=1 1 ∑K ⟨vi⟩model := K- vi(k), k=1 ∑K ⟨hj⟩model
+    := 1- hj(k). K k=1 ---------------------------------------------------------------------
+    ](img/file438.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'There are two main motivations for using quantum annealing to perform Boltzmann
+    sampling as described in Algorithm [4](#x1-109006r4). First, it bypasses the need
+    for running the Contrastive Divergence algorithm (Algorithm [2](#x1-106003r2)),
+    which only provides approximations to the expectations ⟨⋅⟩[model] (even though
+    these approximations can be sufficiently accurate). Second, the anneal time needed
+    to generate a new sample from the Boltzmann distribution is of the order of ∼1 microsecond
+    regardless of the graph size. This is not the case with the classical RBM, where
+    it is often necessary to perform thousands of forward and backward passes through
+    the network before a new independent sample from the Boltzmann distribution encoded
+    in the network weights and biases can be read out  [[173](Biblography.xhtml#XKS2020)].
+    For large RBM graphs, it can easily take tens of milliseconds on standard hardware.
+    Thus, we have two avenues of exploring the potential quantum advantage offered
+    by quantum annealing for Boltzmann sampling: accuracy and speedup.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4.2 Mapping
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The first step in performing Boltzmann sampling on a quantum annealer is the
+    mapping of the RBM onto the quantum annealing hardware graph. We start with writing
+    an expression for the RBM energy function *E* in the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![E (v,h) = E(x) = βxTQx. ](img/file439.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Here, *Q* is the (*N* + *M*) × (*N* + *M*) matrix whose elements are RBM weights
+    and biases:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ &#124; ⌋ &#124;a1 0 ... 0 &#124;w11 w12 ... w1M &#124; &#124;&#124;
+    0 a2 ... 0 &#124;w21 w22 ... w2M &#124;&#124; &#124;&#124; . . . . &#124; . .
+    . . &#124;&#124; &#124; .. .. .. .. &#124; .. .. .. .. &#124; &#124;&#124; 0 0
+    ... a &#124;w w ... w &#124;&#124; Q = 1-&#124;&#124;-------------N--&#124;--N1---N2--------NM--&#124;&#124;.
+    β &#124;&#124; 0 0 ... 0 &#124; b1 0 ... 0 &#124;&#124; &#124;&#124; &#124; &#124;&#124;
+    &#124;&#124; 0 0 ... 0 &#124; 0 b2 ... 0 &#124;&#124; &#124; ... ... ... ... &#124;
+    ... ... ... ... &#124; ⌈ &#124; ⌉ 0 0 ... 0 &#124; 0 0 ... bM ](img/file440.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Quantum annealers operate on spin variables {−1*,*+1} instead of binary variables
+    {0, 1}. The vector of binary variables x can be transformed into the vector of
+    spin variables s using
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![x −→ s = 2x − 1, ](img/file441.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'and we obtain the following expression for the RBM energy:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N∑ N+∑M ∑N N∑+M E = − gisi − gjsj − Jijsisj − const = EIsing − const,
+    i=1 j=N+1 i=1j=N+1 ](img/file442.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where, for *i* = 1*,…,N* and *j* = *N* + 1*,…,N* + *M*,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N+M N g := ai+ 1- ∑ w , g := bj + 1-∑ w , J := 1w , i 2 4 ij j 2 4 i=1
+    ij ij 4 ij j=N+1 ](img/file443.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and (*s*[i])[i=1,…,N] are spin variables corresponding to the visible nodes
+    and (*s*[j])[j=N+1,…,N+M] are spin variables corresponding to the hidden nodes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We can ignore the constant term in the RBM energy expression ([5.4.2](#x1-1100002))
+    since the same factor will appear in the numerator and denominator of ℙ(v*,*h).
+    Thus, we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⟨vihj⟩EmIosidngel = ⟨vihj⟩Emodel. ](img/file444.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'To express the Ising Hamiltonian using a quantum mechanical description of
+    spins, we replace the spin variables with their respective Pauli operators:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N N+M N N+M ∑ i ∑ j ∑ ∑ i j ℋIsing = − giσz − gjσz − Jijσzσz, i=1 j=N+1
+    i=1j=N+1 ](img/file445.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with *σ*[z]^i being the usual Pauli matrix representation for an Ising quantum
+    spin. With the initial Hamiltonian given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N+∑M ℋ0 = σi, i=1 x ](img/file446.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: the time-dependent Hamiltonian ([5.4](#x1-1080004)) takes the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ (t) = r(t)ℋ0 + (1 − r(t))ℋIsing. ](img/file447.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 5.4.3 Hardware embedding and parameters optimisation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the standard programming practices of existing quantum annealers, each spin
+    variable *s*[i] should ideally be assigned to a specific chip element, a superconducting
+    flux qubit, modelled by a quantum two-level system that could represent the quantum
+    Hamiltonian
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ ℋlocal = giσiz. i ](img/file448.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: While each qubit supports the programming of the *g*[i] terms, the *J*[ij] parameters
+    can then be implemented energetically through inductive elements, meant to represent
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ ℋcouplers = Jijσizσjz, ij ](img/file449.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: if and only if the required circuitry exists between qubits *i* and *j*, which
+    cannot be manufactured too far apart in the spatial layout of the processor due
+    to engineering considerations  [[296](Biblography.xhtml#XVenturelli2019)]. In
+    other words, *J*[ij] = 0 unless (*i,j*) ∈ *G*, where *G* is a particular quantum
+    annealing graph (e.g., *Chimera* or *Pegasus* graphs in the case of D-Wave quantum
+    annealers).
+  prefs: []
+  type: TYPE_NORMAL
+- en: It would be straightforward to embed the final Hamiltonian ([5.4.2](#x1-1100002))
+    on the quantum chip had all the physical qubits been connected to each other.
+    Unfortunately, this is not the case. The existing quantum annealers have rather
+    limited qubit connectivity. For example, in the case of the *Chimera* (*Pegasus*)
+    graph, a physical qubit is connected with a maximum of six (fifteen) other physical
+    qubits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To get around this restriction, the standard procedure is to employ the minor-embedding
+    compilation technique for fully connected graphs. By means of this procedure,
+    we obtain another Ising form, where qubits are arranged in ordered 1D chains (forming
+    the *logical* qubits that represent the spin variables) interlaced on the quantum
+    annealer graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N∑ [Nc∑−1 ] N+∑M [Nc∑−1 ] ℋIsing = − &#124;JF&#124; σicσi(c+1) − &#124;JF
+    &#124; σjcσj(c+1) i=1 c=1 z z j=N+1 c=1 z z ](img/file450.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![ N [ Nc ] N+M [ Nc ] − ∑ gi- ∑ σic − ∑ gj- ∑ σjc Nc z Nc z i=1 c=1 j=N+1
+    c=1 ](img/file451.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '| ![ ⌊ ⌋ ∑N N+∑M N∑c − Jij⌈ δGij(ci,cj)σizciσjczj⌉ . i=1j=N+1 ci,cj=1 ](img/file452.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'In ([5.4.3](#x1-1110003)), we explicitly isolate the encoding of the *logical*
+    quantum variable: the classical binary variable *s*[i] is associated with *N*[c]
+    Ising spins *σ*[z]^(ic), ferromagnetically coupled directly by strength *J*[F]
+    , forming an ordered 1D chain subgraph of *G*. The value of *J*[F] should be strong
+    enough to correlate the value of the magnetisation of each individual spin if
+    measured in the computational basis (⟨*σ*[z]^(ic)⟩ = ⟨*σ*[z]^(i(c+1))⟩).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In ([5.4.3](#x1-1110003)) and ([5.4.3](#x1-1110003)), we encode the Ising Hamiltonian ([5.4.2](#x1-1100002))
+    through our extended set of variables: the local field *g*[i] is evenly distributed
+    across all qubits belonging to the logical chain *i*, and each coupler *J*[ij]
+    is active only between one specific pair of qubits (*σ*[z]^(ic[i]^⋆)*,σ*[z]^(jc[j]^⋆)),
+    which is specified by the adjacency check function *δ*[ij]^G(*c*[i]*,c*[j]), which
+    assumes a unit value only if (*c*[i] = *c*[i]^⋆) and (*c*[j] = *c*[j]^⋆), and
+    is zero otherwise.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given this particular embedding scheme, we can turn our attention to finding
+    an optimal value for the parameter *β* in ([5.4.2](#x1-1100002)), which can only
+    be done experimentally. Since the final Hamiltonian is programmed on the quantum
+    annealer using dimensionless coefficients, the parameter *β* cannot be expressed
+    in the usual form 1*∕kT*, where *k* is the Boltzmann constant and *T* the effective
+    temperature. Instead, it should be viewed as an empirical parameter that depends
+    on the network architecture, the embedding scheme, and the physical characteristics
+    of the quantum annealer (such as the operating temperature, the anneal time, the
+    energy scale of the superconducting flux qubit system, etc.).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The experimental approach of estimating *β* consists of the following five
+    steps  [[4](Biblography.xhtml#XAdachi2015)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Construct an RBM.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Map the RBM to a final Hamiltonian assuming a particular value of *β* (Alg. [4](#x1-109006r4)-Step
+    1).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Run quantum annealing (Alg. [4](#x1-109006r4)-Step 2).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compute the model expectations using the quantum samples (Alg. [4](#x1-109006r4)-Step
+    3).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Compare the resulting expectations with the "correct" benchmark values (e.g.,
+    obtained with the classical CD algorithm).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: This process is repeated for different choices of *β*. The value of *β* that
+    gives the best fit can then be used for the given RBM architecture. As noted in  [[4](Biblography.xhtml#XAdachi2015)],
+    even with the optimal settings for *β*, the estimates of the model expectations
+    will still have some error. However, in comparison to the noise associated with
+    the Boltzmann sampling in the Contrastive Divergence algorithm, this may be sufficient
+    to estimate the gradients in ([5.3.2](#x1-106003r2)), ([5.3.2](#x1-106003r2)),
+    and ([5.3.2](#x1-106003r2)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.4.4 Generative models
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The main application of the Boltzmann sampling we’ve considered so far is in
+    providing an unbiased estimate of the model expectations as specified in Algorithm [4](#x1-109006r4).
+    Once fully trained with the help of quantum annealing, an RBM can be used in a
+    conventional classical way to generate new synthetic samples from the learned
+    probability distribution. In this case, quantum annealing is only used as a subroutine
+    in the hybrid quantum-classical training protocol.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, it is possible to use a quantum annealer as a generator in its own
+    right. Rather than assisting in training the classical RBM, a quantum annealer
+    can output the binary representation of the continuous samples as per the distribution
+    encoded in the final Hamiltonian ([5.4.2](#x1-1100002)). The Quantum Variational
+    Autoencoder  [[162](Biblography.xhtml#XKhoshaman2018)] is another example of a
+    QBM that can be trained end to end by maximising a well-defined cost function:
+    a quantum lower bound to a variational approximation of the log-likelihood.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Botzmann sampling is the key element of RBM training and the generation of new
+    samples. Quantum annealing can provide orders of magnitude speedup by replacing
+    classical Boltzmann sampling with quantum sampling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.5 Deep Boltzmann Machine
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Deep Boltzmann Machines (DBMs) can be constructed from several RBMs where the
+    hidden layer of the first RBM becomes the visible layer of the second, and so
+    on, as shown in Figure [5.4](#5.4).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-113002r4: Schematic representation of a DBM. ](img/file453.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.4: Schematic representation of a DBM.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A DBM can be trained layer by layer, one RBM at a time. This will result in
+    a powerful generative model capable of learning complex multivariate distributions
+    and dependence structures. However, the generative training of the DBM can be
+    used as the first step towards building a discriminative model if the training
+    dataset samples are labelled. In this case all DBM weights and biases found with
+    the help of either CD or quantum Boltzmann sampling algorithms are seen as initial
+    values of the weights and biases of the corresponding feedforward neural network.
+    The discriminative model will consist of all the layers of the original DBM with
+    an extra output layer performing assignment of the class labels. The discriminative
+    model can be fine tuned through the standard backpropagation of the error algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.5.1 Training DBMs with quantum annealing
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The generative training of DBMs can be seen as a pre-training of the discriminative
+    model. Figure [5.5](#5.5) provides a schematic illustration of the hybrid quantum-classical
+    training process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-114002r5: Generative and discriminative training of a DBM. ](img/file454.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 5.5: Generative and discriminative training of a DBM.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the DBM training scheme shown in Figure [5.5](#5.5), only Step 1 relies
+    on quantum annealing. Steps 2 and 3 are completely classical. Step 3 is optional:
+    without it we have a standard machine learning "pipeline" where one or several
+    RBMs (Step 1) perform "feature extraction" by building a low-dimensional representation
+    of the samples in the dataset, thus helping the discriminative model (Step 2)
+    to achieve better classification results.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 5.5.2 A DBM pipeline example
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The pipeline approach can be illustrated using the popular "King+Rook vs. King+Pawn"
+    dataset from the UCI Machine Learning Repository  [[262](Biblography.xhtml#XUCI_KRKP), [263](Biblography.xhtml#XShapiro1987)].
+    The task is to classify the end game positions with the black pawn one move from
+    queening and the white side (King+Rook) to move. The possible outcomes are "white
+    can win" (Class 1) and "white cannot win" (Class 0). The board is described by 36
+    categorical attributes that can be encoded as 38 binary variables. The dataset
+    consists of 3,196 samples (white can win in 52% of all cases in the dataset).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The `scikit-learn` package provides all the necessary components for building
+    the classical part of a DBM pipeline. The pipeline itself can be constructed with
+    the help of `sklearn.pipeline.make_pipeline`. The DBM is constructed from two
+    RBMs implemented with the help of `sklearn.neural_network.BernoulliRBM`. RBM #1
+    has 38 nodes in the visible layer and 30 nodes in the hidden layer; RBM #2 has 30
+    nodes in the visible layer and 20 nodes in the hidden layer. The exact pipeline
+    configuration is as follows (all other parameters were set at their default values):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| RBM #1 | RBM #2 | MLP Classifier |'
+  prefs: []
+  type: TYPE_TB
+- en: '| n_components = 30 | n_components = 20 | hidden_layer_sizes = (20) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| learning_rate = 0.00025 | learning_rate = 0.00025 | activation = ’tanh’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| batch_size = 10 | batch_size = 10 | solver = ’adam’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| n_iter = 100000 | n_iter = 100000 | alpha = 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  |  | max_iter = 5000 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 5.1: Configuration of the DBM pipeline for the “King+Rook vs. King+Pawn”
+    classification problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Thus, both RBMs are trained as autoencoders: the DBM translates each 38-feature
+    sample into its 20-feature low-dimensional representation. These new "extracted"
+    features, ideally, should have higher predicting power in comparison with the
+    original features, assuming that both RBMs learned the main characteristics and
+    dependence structure of the dataset and stripped away the noise or the less important
+    characteristics. The discriminator is `sklearn.neural_network.MLPClassifier` with 20
+    tanh activation units in its single hidden layer.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'With this setting, the DBM achieves the following out-of-sample classification
+    results (with the dataset split 70:30 into the training and testing datasets using
+    `sklearn.model_selection.train_test_split`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Classification accuracy: 95.2%'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'This compares favourably with, for example, an ensemble learning classifier
+    such as random forest (`sklearn.ensemble.RandomForestClassifier`). The random
+    forest classifier with the number of estimators set at 1,000 and the maximum depth
+    set equal to 5 has the following out-of-sample classification results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Classification accuracy: 94.9%'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The architecture of DBMs allows them to be trained as either generative or discriminative
+    models. In both cases, Boltzmann sampling can play an important role in improving
+    their performance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we learned about energy-based models – a special class of powerful
+    generative models. We learned how to build, train, and run RBMs in order to generate
+    synthetic samples that are statistically indistinguishable from the original training
+    dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We familiarised ourselves with the Boltzmann sampling and Contrastive Divergence
+    algorithms. Boltzmann sampling can be efficiently performed on NISQ-era quantum
+    annealers that may improve the quality of the model and achieve orders of magnitude
+    of speedup in generating new samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We learned how to combine individual RBMs together to construct a DBM. Quantum
+    annealing can be productively applied to the pre-training of a DBM before it is
+    fine tuned as a deep feedforward neural network classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we explored the possibility of using RBMs and DBMs as the first model
+    in the machine learning pipeline for denoising and feature extraction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the next chapter, we will shift our attention to gate model quantum computing.
+    We will start with the concept of a classical binary digit (bit) and classical
+    logic gates before introducing their quantum counterparts: the quantum binary
+    digit (qubit) and one-qubit/multi-qubit quantum logic gates and quantum circuits.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join our book’s Discord space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Join our Discord community to meet like-minded people and learn alongside more
+    than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![PIC](img/file1.png)'
+  prefs: []
+  type: TYPE_IMG

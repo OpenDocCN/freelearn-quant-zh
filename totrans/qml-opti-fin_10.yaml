@@ -1,0 +1,600 @@
+- en: '11'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Quantum Approximate Optimisation Algorithm
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As the name suggests, the Quantum Approximate Optimisation Algorithm (QAOA)
+    is an optimisation algorithm. It is motivated by and draws upon two optimisation
+    algorithms considered in previous chapters: AQC and VQE. From AQC it borrows the
+    concept of solving an optimisation problem through encoding the corresponding
+    objective function in the problem Hamiltonian and then evolving the system in
+    such a way that the ground state of the final Hamiltonian provides the solution
+    we are after (in a bitstring format). From VQE it borrows the variational principle
+    applied to the parameterised quantum circuit. Roughly speaking, QAOA is a gate-model
+    version of an optimisation solver that otherwise could have been tackled with
+    an analog AQC approach. We can also look at QAOA as a special case of VQE with
+    the constraints on the form of the Hamiltonian.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: QAOA was introduced in the pioneering work by Farhi, Goldstone, and Gutmann  [[96](Biblography.xhtml#XFarhi2014)]
+    in 2014 and its potential for establishing quantum supremacy was investigated
+    by Farhi and Harrow in  [[99](Biblography.xhtml#XFarhi2016)]. QAOA and its sister
+    algorithm that generalises it, the Quantum Alternating Operator Ansatz (with the
+    same acronym!), have been tested on a number of financial use cases. Here we can
+    mention the work by Hodson, Ruck, Ong, Garvin, and Dulma  [[138](Biblography.xhtml#XHodson2019)]
+    on portfolio rebalancing experiments and the one by Barkoutsos, Nannicini, Robert,
+    Tavernelli, and Woerner  [[26](Biblography.xhtml#XBarkoutsos2019)] using Conditional
+    Value-at-Risk (CVaR) as the QAOA objective function. The algorithm has significant
+    potential and promises to become a standard tool in the arsenal of quantum computing
+    methods aimed at financial applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11.1 Time Evolution
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Consider again the description of the dynamics of quantum mechanical systems,
+    briefly covered in Chapter [1](Chapter_1.xhtml#x1-220001) (as one of the postulates
+    of quantum mechanics) and Chapter [2](Chapter_2.xhtml#x1-480002) (where we introduced
+    the principles of Adiabatic Quantum Computing). These dynamics are governed by
+    the Schrödinger equation ([1.2.2](Chapter_1.xhtml#x1-370002)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ d &#124;ψ (t)⟩ iℏ--dt--- = ℋ &#124;ψ(t)⟩, ](img/file1116.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with some initial condition ![|ψ(0)⟩](img/file1117.jpg), where ![|ψ (t)⟩](img/file1118.jpg)
+    is the quantum state at time *t* and ℋ is the time-independent Hamiltonian. Its
+    solution is given by ([1.2.2](Chapter_1.xhtml#x1-370002)), namely
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ (t)⟩ = 𝒰(0,t) &#124;ψ(0)⟩, ](img/file1119.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where the operator 𝒰(0*,t*) is obtained from the Hamiltonian ℋ by ([1.2.2](Chapter_1.xhtml#x1-370002)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( iℋt) 𝒰 (0,t) = exp − ---- . ℏ ](img/file1120.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: We work with units where ℏ is set to 1, so that the system dynamics reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ(t)⟩ = e− iℋt &#124;ψ (0 )⟩. ](img/file1121.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: If the initial state of the system ![|ψ(0)⟩](img/file1122.jpg) is known then
+    the state of the system at time *t* is also known and is determined by the action
+    of the Hamiltonian ℋ over the period of time *t*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'However, the solution ([11.1](#x1-2180001)) assumes that the system Hamiltonian
+    is time-independent. At the same time, AQC works with time-dependent Hamiltonians
+    of the form ([2.2](Chapter_2.xhtml#x1-500002)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( t ) t ℋ (t) = 1 − T- ℋ0 + T-ℋF , ](img/file1123.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'for some *initial* Hamiltonian ℋ[0] and some *final* or *problem* (encoding
+    the optimisation problem) Hamiltonian ℋ[F] . How do we reconcile this mismatch?
+    The answer is that we can *approximate*  [[272](Biblography.xhtml#XStechly2020)]
+    the time-dependent Hamiltonian ℋ(*t*) that transforms the state over [0*,T*] by
+    a sequence of time-independent Hamiltonians:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ℋ1, ℋ2, ..., ℋm, ](img/file1124.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'transforming the state over the corresponding shorter time intervals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[t0 = 0,t1], [t1,t2], ..., [tm−1,tm = T ]. ](img/file1125.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: A good analogy is the approximation of a continuous function (e.g., sin(⋅))
+    by a piecewise linear function as shown in Figure [11.1](#11.1). The more granular
+    the time intervals [*t*[i−1]*,t*[i]], the better the approximation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 11.1: Piecewise linear approximation of t↦→sin(t). ](img/file1127.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11.1: Piecewise linear approximation of t![↦→](img/file1126.jpg)sin(t).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Similarly, we can approximate the operator 𝒰(0*,T*) as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![𝒰 (0,T) ≈ 𝒰(tm− 1,tm )𝒰(tm−2,tm− 1) ⋅⋅⋅𝒰 (t2,t1)𝒰(t0,t1). ](img/file1128.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Again, larger values of *n* give a better approximation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The evolution of a quantum mechanical system over a long time interval can be
+    modelled as a sequence of time-independent Hamiltonians transforming the system
+    state over the corresponding shorter time intervals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11.2 The Suzuki-Trotter Expansion
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: A particularly useful approximation of 𝒰(0*,T*) can be obtained using the Suzuki-Trotter
+    expansion  [[279](Biblography.xhtml#XSuzuki1993)]. If 𝒜[1]*,*𝒜[2]*,…,*𝒜[k] are
+    operators that do not necessarily commute, then
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) [ ( 𝒜 ) ( 𝒜 ) (𝒜 ) ]m exp 𝒜1 + 𝒜2 + ...+ 𝒜k = lim exp -1- exp -2-
+    ⋅⋅⋅exp --k . m →∞ m m m ](img/file1129.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Recall that two operators 𝒜 and ℬ are said to commute if 𝒜ℬ = ℬ𝒜. Many operators
+    introduced in previous chapters do not commute, for example, rotations around
+    different axes do not, and the end result (the end quantum state) depends on how
+    rotations are ordered.
+  prefs: []
+  type: TYPE_NORMAL
+- en: As mentioned in Chapter [1](Chapter_1.xhtml#x1-220001), the expectation values
+    of Hermitian operators are real and correspond to physical observables (e.g.,
+    the expectation of a Hermitian Hamiltonian is the physically observable energy).
+    If operators commute we can *measure* them in an arbitrary order and obtain the
+    same answer. There is no uncertainty in the values of the corresponding physical
+    observables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Suzuki-Trotter expansion, however, does not require operators to commute
+    to remain valid. This has important implications for QAOA as we shall see below.
+    If 𝒰(0*,T*) has the form exp([𝒜 + ℬ]*T*) then we can use the Suzuki-Trotter expansion
+    to obtain
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ [ ( ) ( ) ] 𝒜T-- ℬT- m exp([𝒜 + ℬ]T) = mli→m∞ exp m exp m , ](img/file1130.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: namely the time evolution of [𝒜 + ℬ]*T* can be approximated by applying alternatively 𝒜
+    and ℬ over time intervals of length *T∕m*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In Chapter [3](Chapter_3.xhtml#x1-630003), we introduced detailed specifications
+    of the AQC, where the Hamiltonians ℋ[0] and ℋ[F] have the general form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑n ∑n ∑n ∑n ℋ0 = σix and ℋF = aiσiz + bijσizσjz, i=1 i=1 i=1 j=i+1 ](img/file1131.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some coefficients (*a*[i])[i=1,…,n] and (*b*[ij])[i,j=1,…,n]. We also refer
+    the interested reader to  [[304](Biblography.xhtml#Xwurtz2106counterdiabaticity)]
+    for a precise connection between QAOA and AQC, in particular in the case of a
+    finite number of steps *m*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The initial Hamiltonian ℋ[0] is the operator 𝒜 – called the *mixing* Hamiltonian
+    – and the final Hamiltonian ℋ[F] is the operator ℬ – called the *phase* Hamiltonian.
+    Recall from Chapter [10](Chapter_10.xhtml#x1-20200010) that the Pauli operators *σ*[x],
+    *σ*[y], and *σ*[z] are represented by the quantum gates X, Y, and Z, and the superscript
+    in *σ*[x]^i refers to the qubit on which it acts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The initial state is set in the equal superposition state of all possible solutions  [[122](Biblography.xhtml#XHadfield2019)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 1 ( ) 1 2∑n−1 |ψ(0)⟩ = √-n- |0...00⟩ + |0 ...01⟩+ ...+ |1...11⟩ = √-n- |i⟩,
+    2 2 i=0 ](img/file1132.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: which is the ground state of 𝒜 and can be easily constructed from ![|0⟩](img/file1133.jpg)^(⊗n)
+    by applying the Hadamard gate H to every qubit, i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|ψ(0)⟩ = H⊗n |0⟩⊗n . ](img/file1134.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '**Remark:** For a one-qubit system, 𝒜 is the X gate and the initial state is'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 1 |ψ(0)⟩ = √--(|0⟩ + |1⟩) = |+⟩ . 2 ](img/file1135.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As we know from Chapter [10](Chapter_10.xhtml#x1-20200010), state ![|+⟩](img/file1136.jpg)
+    is the eigenstate of X with eigenvalue equal to 1, namely X![|+ ⟩](img/file1137.jpg)
+    = ![|+⟩](img/file1138.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11.3 The Algorithm Specification
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Now everything is in place for the formulation of the QAOA procedure  [[122](Biblography.xhtml#XHadfield2019)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---9:-Quantum--Approximate-Optimisation-Algorithm-----------
+    Input: 𝒜 and ℬ. 1: A parameterised quantum state |ψ(β, γ)⟩, β := (β1,...,βm ),
+    γ := (γ ,...,γ ), is created by alternately applying the operators 𝒜 1 m and ℬ
+    for m rounds, where the duration in round i (i = 1,...,m ) is specified by the
+    parameters β and γ respectively: i i ( ⊗n) |ψ (β, γ)⟩ = e− iβm𝒜e −iγmℬ ⋅⋅⋅e−iβ2𝒜e−
+    iγ2ℬe−iβ1𝒜e −iγ1ℬ H ⊗n |0⟩ . 2: A computational basis (z- basis) measurement is
+    performed on the obtained state, which returns a candidate solution. Repeating
+    the above state preparation and measurement, the expected value of the cost function
+    f over the returned solution samples is given by ⟨f⟩ = ⟨ψ(β,γ)|ℬ |ψ(β,γ )⟩ , which
+    can be statistically estimated from the samples produced (as explained in Chapter
+    10 ). 3: The above steps may then be repeated with the updated sets of time parameters
+    β and γ – the variational part of the algorithm – within the classical optimisation
+    loop that aims to minimise the expectation of the cost function ⟨f⟩. Result: The
+    algorithm returns the best found solution. ---------------------------------------------------------------------
+    ](img/file1139.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'It is important to apply operators exp(−i*β*𝒜) and exp(−i*γ*ℬ) alternately
+    to ensure that we are not trapped in a local minimum. It is also important that 𝒜
+    and ℬ do not commute  [[272](Biblography.xhtml#XStechly2020)]. Indeed, by applying
+    only exp(−i*γ*ℬ), we are facing ending in an eigenstate of the phase Hamiltonian.
+    If this happens, we will be trapped there: any further application of a linear
+    operator to its eigenvector may change its length but not its direction. The same
+    applies to alternating between two commuting operators: if 𝒜 and ℬ commute, then
+    we can come up with a set of basis states that are eigenstates of both 𝒜 and ℬ,
+    and once we get into one of these eigenstates we remain trapped in it. However,
+    since *σ*[x] and *σ*[z] do not commute, there is always a chance to escape from
+    the local minimum.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The ongoing exploration of QAOA potential started with the foundational paper
+    by Farhi, Goldstone, and Gutmann  [[96](Biblography.xhtml#XFarhi2014)] where it
+    outperformed classical algorithms on the Max-Cut problem on connected 3-regular
+    graphs. A regular graph is one where each vertex has the same number of neighbours.
+    In the case of a 3-regular graph (also known as a *cubic* graph), each vertex
+    is connected with three other vertices. We consider the Max-Cut problem in the
+    next section in its most general formulation. It was a decisive result that prompted
+    active development of classical algorithms and, eventually, one with asymptotically
+    much better performance was constructed by Barak *et al*  [[25](Biblography.xhtml#XBarak2015)].
+    This, in turn, triggered further investigations: the performance comparison between
+    QAOA and the best classical algorithms was studied by Hastings in  [[128](Biblography.xhtml#XHastings2019)],
+    and Bravyi, Kliesch, Koenig and Tang  [[44](Biblography.xhtml#XBravyi2019)] established
+    that the locality and the symmetry of QAOA severely limit its performance. To
+    overcome these limitations, they proposed a non-local version that significantly
+    outperforms standard QAOA for a frustrated Ising model on random 3-regular graphs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11.4 The Max-Cut Problem
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The Max-Cut problem is one of the special cases of the graph partitioning problem
+    introduced in Chapter [3](Chapter_3.xhtml#x1-630003). The objective is to divide
+    the vertices of the graph into two groups such that either the maximum possible
+    number of edges going between the two groups are "cut" (if all edges have the
+    same weight) or the total weight of these edges is maximised (if they have different
+    weights).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The problem of maximisation of the total weight (or number of edges being cut)
+    can be formulated as the minimisation of a cost function, which is the sum of
+    the costs of all individual edges. Each individual cost *c*[ij], associated with
+    the edge connecting vertices *i* and *j*, is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 cij = -wij(1 − sisj), 2 ](img/file1140.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where *s*[i] and *s*[j] are classical spin variables taking values {−1*,*+1}
+    and *w*[ij] is the weight associated with the edge connecting vertices *i* and *j*.
+    The two groups of vertices are those where the spin variables take the same values
+    (either −1 or +1). We can see from ([11.4](#x1-2210004)) that when *s*[i] and *s*[j]
+    have the same sign, the cost *c*[ij] is zero; however, when *s*[i] and *s*[j]
+    have opposite signs, the cost *c*[ij] is equal to the weight *w*[ij].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The cost function for the whole graph then has the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ 1 L (s) = 2wij(1− sisj), {ij}∈G ](img/file1141.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where s := (*s*[1]*,…,s*[n]) is the set of decision variables associated with
+    the *n*-node graph *G* and the sum goes over all pairs of nodes connected by the
+    graph edges.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are many possible applications of the Max-Cut problem in finance, for
+    example *client clustering* or *client segmentation*, where the task can be formulated
+    by creating a graph containing a node for each client and an edge between each
+    pair of clients. The weight of an edge connecting any two clients is determined
+    by the relative closeness of clients’ characteristics: the closer the clients,
+    the smaller the weight of the edge that connects them. The clusters that are formed
+    by finding maximum weight cuts have the property that clients in one cluster are
+    more dissimilar from clients in other clusters.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the flagship application of Max-Cut in finance is portfolio optimisation.
+    Dees, Stanković, Constantinides, and Mandi  [[81](Biblography.xhtml#XDees2019)]
+    have shown that the graph-theoretic portfolio partitioning technique can help
+    devise robust and tractable asset allocation schemes by virtue of a rigorous graph
+    framework for considering smaller, computationally feasible, and economically
+    meaningful clusters of assets, based on graph cuts. Barkoutsos, Nannicini, Robert,
+    Tavernelli, and Woerner  [[26](Biblography.xhtml#XBarkoutsos2019)] improved variational
+    quantum optimisation using a Conditional Value-at-Risk technique – ubiquitous
+    in financial risk management. A portfolio optimisation QAOA use case addressed
+    by solving the maximum independent set problem on a quantum simulator was presented
+    in  [[276](Biblography.xhtml#XSuchara2021)]. It is also necessary to mention portfolio
+    rebalancing experiments using the Quantum Alternating Operator Ansatz conducted
+    by Hodson, Ruck, Ong, Garvin, and Dulma  [[138](Biblography.xhtml#XHodson2019)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11.4.1 QAOA gates
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The mixing Hamiltonian 𝒜 and the phase Hamiltonian ℬ corresponding to the cost
+    function ([11.4](#x1-2210004)) read
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ n ∑ i ∑ 1- ( i j) 𝒜 = σx and ℬ = 2 wij 1− σ zσ z , i=1 {ij}∈G ](img/file1142.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where the spin variables *s* are replaced by the corresponding Pauli operators *σ*.
+    We therefore need to find the quantum gate representation of the operators
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ( i) 1 i j exp − iβσx and exp −2-iγσ zσz . ](img/file1143.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'To do so, we require the following (see also Lemma [1](Chapter_1.xhtml#x1-30002r1),
+    albeit with a slightly different proof):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Theorem 9.** *With *ℐ *denoting the identity operator, the following holds
+    for any* *unitary Hermitian operator *ℋ *and any* *𝜃* ∈ℝ*:*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ( ) ( ) 1- 𝜃- 𝜃- R 𝜃(ℋ) ≡ exp − 2i𝜃ℋ = cos 2 ℐ − isin 2 ℋ. ](img/file1144.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '*Proof.* Since ℋ is a unitary Hermitian operator its eigenvalues are +1 and
+    −1 (Chapter [1](Chapter_1.xhtml#x1-220001)). Let 𝒫[±] be projectors onto the eigenspace
+    of eigenvalues ±1 respectively, so that'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℐ = 𝒫+ + 𝒫 − , ℋ = 𝒫+ − 𝒫− . ](img/file1145.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'When a function (in this case *R*[𝜃]) is applied to a matrix (in this case
+    ℋ) it is applied to each of the eigenvalues:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ( ) R (ℋ ) = exp − 1-i𝜃(+1 ) 𝒫 + exp − 1i𝜃 (− 1) 𝒫 𝜃 2 + 2 − ( 1 )
+    ( 1 ) = exp − --i𝜃 𝒫+ + exp -i𝜃 𝒫− . 2 2 ](img/file1146.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: From ([11.4.1](#x1-222001r1)) we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 1 𝒫+ = -(ℐ + ℋ ) and 𝒫− = --(ℐ − ℋ ). 2 2 ](img/file1147.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Substituting ([11.4.1](#x1-222001r1)) into ([11.4.1](#x1-222001r1)) yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| *R*[𝜃](ℋ) | = ![1- 2](img/file1148.jpg)exp![( ) 1- − 2i𝜃](img/file1149.jpg)(ℐ
+    + ℋ) + ![1- 2](img/file1150.jpg)exp![( ) 1- 2i𝜃](img/file1151.jpg)(ℐ−ℋ) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![1- 2](img/file1152.jpg)![[ ( ) ( )] exp − 1i𝜃 + exp 1i𝜃 2 2](img/file1153.jpg)ℐ
+    + ![1- 2](img/file1154.jpg)![[ ( ) ( )] exp − 1i𝜃 − exp 1i𝜃 2 2](img/file1155.jpg)ℋ
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = cos![( ) 𝜃- 2](img/file1156.jpg)ℐ− isin![( ) 𝜃- 2](img/file1157.jpg)ℋ*.*
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: □
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can use ([9](#x1-222001r9)) to write down expressions for the operators ([11.4.1](#x1-2220001))
+    in matrix form. We start with the first operator:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![exp(− iβ σx) = cos(β)I⌊ − isin⌋(β)X ⌊ ⌋ = cos(β)⌈1 0⌉ − isin(β)⌈0 1⌉ 0
+    1 1 0 ⌊ ⌋ cos(β ) − isin(β) = ⌈ ⌉. − isin(β) cos(β ) ](img/file1158.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Since the operator R[X](*𝜃*) has the following matrix representation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ⌋ (𝜃) (𝜃) RX(𝜃) = ⌈ cos 2( ) − isin( 2) ⌉ , − isin 𝜃2 cos 𝜃2 ](img/file1159.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: (see, for example, Chapter [6](Chapter_6.xhtml#x1-1190006) or Theorem [9](#x1-222001r9)),
+    we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![exp(− iβ σx) = RX(2β ), ](img/file1160.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: so that opeator exp(−i*βσ*[x]^i) should be represented in the circuit by the
+    gate R[X](2*β*) placed on the quantum register *i*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We can proceed now with the gate representation of operator exp![(− 1iγσ σ
+    ) 2 z z](img/file1161.jpg), where *σ*[z]*σ*[z] represents the tensor product of
+    two *σ*[z] operators acting on two different qubits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( 1 ) (γ ) ( γ) exp − -iγσzσz = cos -- I ⊗ I − isin -- Z⊗ Z 2 ⌊ ⌋2 ⌊ 2
+    ⌋ 1 0 0 0 1 0 0 0 ( )&#124;&#124; &#124;&#124; ( ) &#124;&#124; &#124;&#124; =
+    cos γ- &#124;&#124; 0 1 0 0 &#124;&#124;− isin γ- &#124;&#124;0 − 1 0 0&#124;&#124;
+    2 &#124; 0 0 1 0 &#124; 2 &#124;0 0 − 1 0&#124; ⌈ ⌉ ⌈ ⌉ 0 0 0 1 0 0 0 1 ⌊ (γ)
+    (γ) ⌋ &#124;cos 2 − isin 2 ( ) 0 ( ) 0 0 &#124; &#124;&#124; 0 cos γ2 + isin γ2
+    0 0 &#124;&#124; = &#124;&#124; (γ ) (γ) &#124;&#124; ⌈ 0 0 cos 2 + isin 2 ( )
+    0 ( )⌉ 0 0 0 cos γ − isin γ ⌊ ⌋ 2 2 e−iγ∕2 0 0 0 &#124;&#124; iγ∕2 &#124;&#124;
+    = &#124;&#124; 0 e 0 0 &#124;&#124; . &#124;⌈ 0 0 eiγ∕2 0 &#124;⌉ −iγ∕2 0 0 0
+    e ](img/file1162.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Where we used the fact that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( 1 ) ( γ) (γ ) exp − -iγ = cos -- − isin -- 2 2 2 ](img/file1163.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( 1 ) ( γ) (γ ) exp -iγ = cos -- + isin -- . 2 2 2 ](img/file1164.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The following lemma provides a quantum circuit for the operator exp![( 1 )
+    −2iγσzσz](img/file1165.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lemma 8.** *The operator* exp![( ) − 12iγ σizσjz](img/file1166.jpg) *can
+    be represented by the* *following circuit:*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![](img/file1167.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Proof.* From ([6.3.3](Chapter_6.xhtml#x1-130014r3)), we can write'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ⌋ ⌊ ⌋ e−iγ∕2 0 −iγ∕2 1 0 RZ(γ ) = ⌈ iγ∕2⌉ = e ⌈ iγ⌉ . 0 e 0 e ](img/file1168.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The multiplier exp![( 1 ) − 2iγ](img/file1169.jpg) is an unobservable global
+    phase and can be ignored. Now,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ⌋ 1 0 0 0 ⌊ ⌋ ⌊ ⌋ &#124; &#124; ⌈1 0⌉ ⌈1 0 ⌉ &#124;&#124; 0 eiγ 0 0
+    &#124;&#124; RZ(γ )⊗ RZ(γ) = iγ ⊗ iγ = &#124;&#124; iγ &#124;&#124; . 0 e 0 e
+    ⌈ 0 0 e 0 ⌉ 0 0 0 e2iγ ](img/file1170.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Finally, the matrix representation of the CR[z](−2*γ*) gate is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ⌋ &#124; 1 0 0 0 &#124; &#124; 0 1 0 0 &#124; CRZ(− 2γ ) = &#124;&#124;
+    &#124;&#124; , &#124;⌈ 0 0 1 0 &#124;⌉ 0 0 0 e− 2iγ ](img/file1171.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and the matrix representation of the whole circuit shown in the lemma is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![⌊ ⌋ ⌊ ⌋ ⌊ ⌋ 1 0 0 0 1 0 0 0 e− iγ∕2 0 0 0 &#124;&#124; iγ &#124;&#124;
+    &#124;&#124; &#124;&#124; &#124;&#124; iγ∕2 &#124;&#124; &#124;&#124;0 e 0 0 &#124;&#124;
+    &#124;&#124;0 1 0 0 &#124;&#124; = eiγ∕2&#124;&#124; 0 e 0 0 &#124;&#124;. &#124;0
+    0 eiγ 0 &#124; &#124;0 0 1 0 &#124; &#124; 0 0 eiγ∕2 0 &#124; ⌈ 2iγ⌉ ⌈ −2iγ⌉ ⌈
+    − iγ∕2⌉ 0 0 0 e 0 0 0 e 0 0 0 e ](img/file1172.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Again, the global phase can be ignored and we arrive at the same matrix expression
+    we obtained for exp![( ) − 12iγσz σz](img/file1173.jpg). □
+  prefs: []
+  type: TYPE_NORMAL
+- en: 11.4.2 QAOA circuit
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As pointed out in Chapters [8](Chapter_8.xhtml#x1-1620008) and [9](Chapter_9.xhtml#x1-1850009),
+    existing quantum processors often have limited qubit connectivity, so that we
+    need to use a particular embedding scheme in order to map the Max-Cut graph onto
+    the QPU graph. The simplest case is a one-to-one mapping of the graph nodes and
+    the connectivity edges. Figure [11.2](#11.2) displays one such graph (implemented
+    in Rigetti’s Aspen system) consisting of eight nodes (embedded in qubits 1*,…,*8)
+    and eight edges. Nodes 1, 3, 5, and 7 each have one connection and nodes 2, 4,
+    6, and 8 each have three connections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 11.2: Embedding of the Max-Cut optimisation problem on Rigetti’s Aspen
+    system. ](img/file1174.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11.2: Embedding of the Max-Cut optimisation problem on Rigetti’s Aspen
+    system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The corresponding QAOA circuit is shown in Figure [11.3](#11.3).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 11.3: QAOA circuit for the Max-Cut problem. ](img/file1175.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11.3: QAOA circuit for the Max-Cut problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The circuit consists of four distinct layers. The first one is a layer of Hadamard
+    gates creating an equal superposition of states ![|0⟩](img/file1176.jpg) and ![|1
+    ⟩](img/file1177.jpg) – transformation of the basis states ![|0⟩](img/file1178.jpg)
+    into the basis states ![|+ ⟩](img/file1179.jpg). The second layer represents the
+    action of the phase Hamiltonian controlled by the adjustable parameter *γ*. The
+    third layer represents the action of the mixing Hamiltonian controlled by the
+    adjustable parameter *β*. The final layer consists of measurement operators. The
+    second and third layers can be applied multiple times with different values of
+    parameters *γ* and *β*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The optimal solution found by the QAOA using `Qiskit` quantum simulator for
+    the case of equal weights (*w*[ij] = 1 for all {*i,j*}∈ *G*) is shown in Figure [11.4](#11.4).
+    The optimal solution reads as the bitstring 10011001, and is represented by the
+    dashed curve that separates nodes into two equal subsets and cuts across all edges
+    of the graph.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 11.4: Visualisation of the Max-Cut problem solution. ](img/file1180.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11.4: Visualisation of the Max-Cut problem solution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Here, the graph nodes (qubits) {1*,*4*,*5*,*8} belong to group "1" and the graph
+    nodes {2*,*3*,*6*,*7} belong to group "0".
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of unequal weights the circuit layout remains the same but the adjustable
+    gate parameters reflect the relative magnitude of the weights assigned to different
+    edges. For example, if the weight assigned to the connection between nodes 1 and
+    2 is increased from 1 to 5 and all other weights remain equal to 1, then the phase
+    Hamiltonian term that corresponds to the connection between nodes 1 and 2 changes
+    from exp![(− 1iγσ σ ) 2 z z](img/file1181.jpg) to exp![( ) − 52iγσzσz](img/file1182.jpg),
+    and the corresponding segment of the quantum circuit changes to the one shown
+    in Figure [11.5](#11.5), with the rest of the circuit remaining the same.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 11.5: Weight w12 increases from 1 to 5\. ](img/file1183.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 11.5: Weight *w*[12] increases from 1 to 5\.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: QAOA can successfully solve NP-hard combinatorial optimisation problems in their
+    QUBO formulations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we studied a quantum optimisation algorithm inspired by the
+    principles of adiabatic evolution of quantum systems. In this regard, QAOA can
+    be seen as a quantum gate model counterpart of the AQC approach to solve classically
+    hard optimisation problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We discussed the Suzuki-Trotter expansion, which provides an approximation of
+    the time evolution of quantum mechanical systems and which lies at the heart of
+    the algorithm. We illustrated QAOA implementation (gates and circuit) on the Max-Cut
+    problem, which has many applications in finance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will explore the sources of power of parameterised quantum
+    circuits.
+  prefs: []
+  type: TYPE_NORMAL

@@ -1,0 +1,992 @@
+- en: '2'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Adiabatic Quantum Computing
+  prefs: []
+  type: TYPE_NORMAL
+- en: Search algorithms are among the most important and fundamental algorithms in
+    computer science, the most basic example being that of finding one special item
+    among a list of *N* items. Classical algorithms are known to solve this problem
+    in time proportional to the problem size, *N*, which becomes highly untractable
+    when the latter grows large. In 1996, Grover   [[117](Biblography.xhtml#XGrover)]
+    devised a quantum algorithm to solve such search problems with a quadratic speedup,
+    with the obvious caveat that quantum computers did not exist at the time. Soon
+    after, Farhi, Goldstone, Gutmann and Sipser  [[98](Biblography.xhtml#XFarhi)]
+    recast the Grover problem as a satisfiability problem in the context of quantum
+    computation by adiabatic evolution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Another class of problems hard to solve classically is that of combinatorial
+    optimisation problems. The truck dispatching problem, originally proposed by Dantzig
+    and Ramser  [[78](Biblography.xhtml#XDantzig)], searches the optimal routing of
+    delivery trucks, and is a generalisation of the famous travelling salesman problem.
+    Other well-known optimisation problems of the same class include partitioning
+    problems and binary integer linear programming, to name just a few. The exact
+    algorithms are only efficient for small-scale instances. Heuristics and metaheuristics
+    (e.g., evolutionary search heuristics such as Genetic Algorithm and Particle Swarm
+    Optimisation) are often more suitable for practical applications, because real-world
+    problems are considerably larger in scale. Since search time scales exponentially
+    with problem size, there has always been a strong motivation for finding alternative
+    approaches to solve such problems with a wide range of practical applications,
+    not least in finance. Adiabatic Quantum Computing (AQC) was ready to enter the
+    stage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.1 Complexity of Computational Problems
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'In this and the following chapters, we will often speak about computational
+    problems that are hard for classical computers but can be solved efficiently using
+    quantum algorithms and hardware. How can we quantify the hardness of a computational
+    problem? One way to answer this is to analyse problems from the computational
+    resource perspective: how much time and memory are needed to solve them? This
+    leads to the concept of *complexity classes*. Important examples are as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The class P (*polynomial*) is the set of decision problems solvable by a deterministic
+    Turing machine in polynomial time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The class NP (*non-deterministic polynomial*) is the set of decision problems
+    solvable by a non-deterministic Turing machine in polynomial time.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'These definitions, in turn, require us to specify the following objects:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*A decision problem* is a computational problem that can be posed as a Yes-No
+    question of the input values.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*Polynomial time* means that the running time of the algorithm is bounded above
+    by a polynomial expression in the size of the input for the algorithm.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*A Turing machine* is an abstract model of computation that is general enough
+    to embody any computer problem.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '*A deterministic Turing machine* is the most basic type of Turing machine that
+    uses a fixed set of rules to determine its future actions.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: A *non-deterministic Turing machine* is a Turing machine that is able to explore
+    multiple alternative future actions from a given state.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: In terms of computational hardness, we will pay special attention to the problems
+    that are *NP-complete* and *NP-hard*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A problem is NP-complete when
+  prefs: []
+  type: TYPE_NORMAL
+- en: the correctness of each solution can be verified in polynomial time and a brute-force
+    search algorithm can find a solution by trying all possible solutions;
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: it can be used to simulate every other problem for which we can verify in polynomial
+    time that a solution is correct.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: NP-complete problems are the hardest, for which solutions can be verified quickly
+    (in polynomial time). If we could find solutions to some NP-complete problems
+    quickly, we could quickly find the solutions to every other problem to which a
+    given solution can be easily verified.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A problem is NP-hard when every problem in NP can be reduced to it in polynomial
+    time. Alternatively, a problem is NP-hard when every NP-complete problem can be
+    reduced to it in polynomial time. Since every problem in NP reduces to an NP-complete
+    problem in polynomial time, the second definition implies the first one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The NP-hard class is not restricted to decision problems and also includes search
+    problems and optimisation problems. This means that NP-hard problems do not have
+    to be elements of the complexity class NP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Arguably, the most important open problem in computer science is whether P =
+    NP. It is widely believed, although it has not been proven yet, that P *≠* NP.
+    Figure [2.1](#2.1) shows the relationship between complexity classes for both
+    scenarios.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 2.1: Schematic illustration of the relationship between P, NP, NP-complete
+    and NP-hard sets of problems. ](img/file254.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.1: Schematic illustration of the relationship between P, NP, NP-complete
+    and NP-hard sets of problems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2 Principles of Adiabatic Quantum Computing
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Adiabatic quantum optimisation is a promising approach to solving NP-complete
+    and NP-hard problems  [[97](Biblography.xhtml#XFarhiUniv)]. Assume that a solution
+    to the optimisation problem is encoded in the ground state (i.e., the quantum
+    state corresponding to the lowest eigenvalue) of a quantum Hamiltonian ℋ[F] .
+    By the second postulate of quantum mechanics (Section [1.2.2](Chapter_1.xhtml#x1-370002)),
+    the dynamics of a quantum system is fully specified by its Hamiltonian. If we
+    know how to encode the objective function that we want to minimise in the Hamiltonian
+    of a quantum system, then finding the ground state of the Hamiltonian is equivalent
+    to finding the set of decision variables that minimises the objective function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'As a simple example of equivalence between the minimum of a function and the
+    ground state of a Hamiltonian, consider a function *f* : {0*,*1}^n →ℝ that needs
+    to be minimised and take the Hamiltonian'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∑ ℋF := f(z) |z⟩⟨z|. z∈ {0,1}n ](img/file255.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Clearly, for any z[0] ∈{0*,*1}^n,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) ℋ |z ⟩ = ( ∑ f(z) |z⟩⟨z|) |z ⟩ = f(z ) |z⟩ ⟨z |z ⟩ = f(z ) |z ⟩, F 0
+    n 0 0 0 0 0 0 0 z∈{0,1} ](img/file256.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: since the computational basis (![|z⟩](img/file257.jpg))[z∈{0,1}^n] is orthonormal.
+    Therefore any z[0] ∈{0*,*1}^n is an eigenstate of ℋ[F] with eigenvalue *f*(z[0]).
+    Minimising *f* is thus clearly equivalent to finding the lowest eigenvalue of
+    the Hamiltonian ℋ[F] .
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let us further assume that we have another quantum Hamiltonian, ℋ[0], whose
+    ground state is easy to find and easy to prepare in an experimental setup. Then,
+    if we prepare a quantum system to be in the ground state of ℋ[0], and then adiabatically
+    (slowly) change the system Hamiltonian, ℋ(*t*), from ℋ[0] at *t* = 0 to ℋ[F] at
+    *t* = *τ* according the following time evolution:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ℋ (t) = 1− -t ℋ0 + tℋF , τ τ ](img/file258.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: then if *τ* is large enough, and ℋ[0] and ℋ[F] do not commute, the quantum system
+    will remain in the ground state at all times according to the quantum adiabatic
+    theorem. Measuring the quantum state at *t* = *τ* will produce a solution of our
+    problem (a bitstring that encodes an optimal configuration of binary decision
+    variables).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We provide a detailed explanation of the adiabatic quantum optimisation algorithm
+    as well as the quantum adiabatic theorem in Section [2.2.1](#x1-510001). In terms
+    of potentially achievable quantum speedup in comparison with the best classical
+    algorithms, for a problem of size *N*, quantum optimisers solve NP-hard combinatorial
+    optimisation problems in time proportional to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ γ exp(βN ), ](img/file259.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: as *N* tends to infinity, for positive coefficients *β* and *γ*, which may be
+    smaller than known classical algorithms  [[197](Biblography.xhtml#XLucas)]. In
+    fact, early experiments on quantum annealers that realised the principles of adiabatic
+    quantum computing demonstrated several orders of magnitude quantum speedup (ignoring
+    various computational overheads that are likely to be reduced as the quantum annealing
+    technology matures)  [[175](Biblography.xhtml#XKondratyev2019), [201](Biblography.xhtml#XMandra2017), [296](Biblography.xhtml#XVenturelli2019)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The coefficient *γ* is by far the most important. This can be illustrated by
+    the following table that provides the estimates of the computation time as a function
+    of problem size. Assuming that a single operation takes 1 microsecond, and the
+    number of operations scales as either 2^N ("classical benchmark") or e^(![√ --
+    N](img/file260.jpg)) ("quantum optimisation" with *γ* = 0*.*5), we obtain the
+    following results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| *N* | 2^(*N*) | e^(![Table 2.1: Computational time as a function of the problem
+    size. ](img/file261.jpg)) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 10 | 1 millisecond | 0.024 milliseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 50 | 35.7 years | 1.2 milliseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 100 | 4 × 10^(16) years | 22 milliseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 500 | 10^(137) years | 1.4 hours |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2.1: Computational time as a function of the problem size.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The asymptotic estimate of the duration of adiabatic system evolution, *T*,
+    which is exponential in problem size, is a consequence of the requirement that
+    the system should always stay in the ground state of the local Hamiltonian. As
+    the gap between the ground state and the first excited state becomes small at
+    some point, the system evolution process should slow down accordingly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, if we only are interested in an approximate solution (and are willing
+    to accept some deterioration in the quality of the obtained solution), we can
+    expect the NP-hard combinatorial problems to be solved in polynomial time proportional
+    to *N*^γ for *γ >* 0, as *N* becomes large  [[23](Biblography.xhtml#XBapst2013), [253](Biblography.xhtml#XSantoro2002)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The power of adiabatic quantum computing lies in its ability to solve hard computational
+    problems through the natural evolution of a physical system.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2.1 The Quantum Adiabatic Theorem
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the Schrödinger equation ([1.2.2](Chapter_1.xhtml#x1-370002)) (normalised
+    with ℏ = 1) with constant Hamiltonian ℋ, if the system starts in ![|ψ (0)⟩](img/file262.jpg)
+    then the solution moves to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ −iℋt |ψ (t)⟩ = e |ψ(0)⟩ ](img/file263.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: at time *t* ≥ 0\. This in particular implies that any eigenstate ![|ψ0 ⟩](img/file264.jpg)
+    of ℋ, satisfying ℋ![|ψ0⟩](img/file265.jpg) = *λ*[0]![|ψ0 ⟩](img/file266.jpg) for
+    some eigenvalue *λ*[0], will evolve through the Schrödinger equation from ![|ψ0⟩](img/file267.jpg)
+    to
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ −iℋt −iλ0t |ψ(t)⟩ = e |ψ0⟩ = e |ψ0⟩ , ](img/file268.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: namely the eigenstate only gains a phase e^(−iλ[0]t) and there is no transition
+    over time between different eigenstates. The more interesting case, which we consider
+    now, is that of a time-dependent Hamiltonian.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider again the Schrödinger equation ([1.2.2](Chapter_1.xhtml#x1-370002))
+    (normalised with ℏ = 1) over the time interval [0*,τ*], where now the Hamiltonian ℋ
+    is a function of time. The time change *t*(⋅), such that *t*(0) = 1 and *t*(1)
+    = *τ*, yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ d &#124;ψ(s)⟩ i--------= t′(s)ℋ (s) &#124;ψ(s)⟩ ds ](img/file269.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: over the unit time interval [0*,*1]. It is important to note here that the Hamiltonian ℋ
+    has no dependence on the time horizon *τ* itself. This excludes in particular
+    Hamiltonians with multiple timescales as in  [[206](Biblography.xhtml#XMarzlin)].
+    Here, we are chiefly interested in Hamiltonians of the (slightly generalised)
+    form ([2.2](#x1-500002)),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ (s) = r(s)ℋ0 + (1− r(s))ℋF , ](img/file270.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for two given Hamiltonians ℋ[0] and ℋ[F] , where *r*(⋅) is a continuous adiabatic
+    evolution path decreasing from *r*(0) = 1 to *r*(1) = 0\. The standard adiabatic
+    schedule is given by *r*(*s*) = 1 − *s*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The gist of the quantum adiabatic theorem is the following. Assume that the
+    system starts from the ground state of ℋ[0]. If the time evolution of the Hamiltonian
+    is sufficiently slow, then the system remains in the ground state of the evolving
+    Hamiltonian up to time 1\. It was originally proposed by Born and Fock  [[41](Biblography.xhtml#XBorn)]
+    and generalised by Kato  [[156](Biblography.xhtml#XKato)] using the theory of
+    perturbation of linear operators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to state it properly, denote by ![|ψ (⋅)⟩](img/file271.jpg) the solution
+    to the Schrödinger equation ([2.2.1](#x1-510001)), so that for any *s* ∈ [0*,*1],
+    there exists a unitary operator 𝒰 for which
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|ψ (s)⟩ = 𝒰(s) |ψ(0)⟩. ](img/file272.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Consider a Hamiltonian of the form ([2.2.1](#x1-510001)) and a time-change *t*(*s*)
+    = *sτ* (hence *t*′(*s*) = *τ*), so that the Schrödinger evolution dynamics reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![id &#124;ψ(t)⟩= τ ℋ(t) &#124;ψ(t)⟩, dt ](img/file273.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: over the interval [0*,*1]. For each *t* ∈ [0*,*1], we denote ![|ϕ(t)⟩](img/file274.jpg)
+    the ground state of ℋ[t].
+  prefs: []
+  type: TYPE_NORMAL
+- en: We finally present the following version of the quantum adiabatic theorem, due
+    to Jansen, Seiler and Ruskai  [[149](Biblography.xhtml#XJansen)]. We recall that
+    an eigenvalue is called non-degenerate if there exists only one eigenstate associated
+    with this eigenvalue. For any *t* ∈ [0*,*1], given the Hamiltonian ℋ(*t*), we
+    denote by Δ[t] the (strictly positive) energy gap between the lowest eigenvalue
+    of ℋ[t] and the next one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Theorem 7** (Quantum Adiabatic Theorem)**.** *Assume that, for any* *t* ∈
+    [0*,*1] *the Hamiltonian *ℋ(*t*) *admits a non-degenerate ground state and that*
+    *there exists* *𝜀 >* 0 *such that*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![2 { ∥ℋ ′(0)∥ ∥ℋ ′(1)∥ ∫ 1[( ) ∥ℋ′(s)∥2 ∥ℋ ′′(s)∥] } -- c0----2---+ c1----2---+
+    3c21 + c1 + c3 ----3---+ c2----2--- ds ≤ τ. 𝜀 Δ0 Δ 1 0 Δ s Δs ](img/file275.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Then, starting the system *([2.2.1](#x1-510001)) *in the state* ![|ψ(0)⟩](img/file276.jpg)
+    = ![|ϕ (0)⟩](img/file277.jpg)*, the* *Schrödinger evolution yields at time *1
+    *a state* ![|ψ (1)⟩](img/file278.jpg) *satisfying*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![∥|ϕ(1)⟩− |ψ(1)⟩∥ ≤ 𝜀. ](img/file279.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This quantitative version of the adiabatic theorem provides an estimate on how
+    large the time horizon *τ* needs to be be in order to achieve sufficient accuracy *𝜀*.
+    Consider, for example, the interpolation scheme ([2.2.1](#x1-510001)) with *r*(*s*)
+    = 1 − *s*, so that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ℋ (s) = (1 − s)ℋ0 + sℋF , ](img/file280.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'and, therefore, ℋ′(*s*) = −ℋ[0] + ℋ[F] and ℋ′′(*s*) = 0\. In that case, the
+    quantitative estimate in Theorem [7](#x1-51002r7) simplifies to the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Corollary 1.** *With the same assumptions as in Theorem *[*7*](#x1-51002r7)
+    *and with the* *interpolation scheme above, the quantitative estimate*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ { } 2 ∥ℋF − ℋ0 ∥ ( 2 ) ∥ ℋF − ℋ0 ∥2 τ ≥ 𝜀- c0------2----+ 3c1 + c1 + c3-------3----
+    , Δ Δ ](img/file281.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*with* Δ := min[s∈[0,1]]Δ[s]*, ensures again that* ![∥|ϕ(1)⟩− |ψ(1)⟩∥](img/file282.jpg)≤
+    *𝜀**.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: This corollary in particular highlights the importance of the spectral gap Δ.
+    The smaller it is, the longer one has to wait to see the adiabatic property become
+    efficient. There exist different versions of the quantum adiabatic theorem, each
+    with slightly different assumptions. A weak form was proved by Avron and Elgart  [[19](Biblography.xhtml#XAvron)]
+    and by Bornemann  [[40](Biblography.xhtml#XBornemann)] without the gap condition.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The proof of the quantum adiabatic theorem is rather technical and many versions
+    exist, with slightly different proofs. They all rely, however, on analysing the
+    evolution operator 𝒰(⋅) corresponding to the Hamiltonian, which clearly solves
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![d𝒰(t)- dt = − iτℋ (t)𝒰 (t) ](img/file283.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: starting from the identity. In particular, one needs to construct an adiabatic
+    operator 𝒰[A](⋅) solving the same Schrödinger equation, replacing ℋ(⋅) by its
+    adiabatic version
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ -i ′ ℋA (t) = ℋ (t)+ τ [𝒫 (t),𝒫(t)], ](img/file284.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where 𝒫(*t*) denotes the projection operator onto the desired eigenstate of ℋ(*t*).
+    The proof then follows from showing that 𝒰[A] and 𝒰 are close enough as *τ* becomes
+    large.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By connecting the geometric properties of the adiabatic limit of the quantum
+    system to parallel transport in a vector bundle, Berry’s  [[33](Biblography.xhtml#XBerry)]
+    and Simon’s  [[267](Biblography.xhtml#XSimon)] works gave rise to Geometric Quantum
+    Computing. Van Dam, Mosca and Vazirani  [[291](Biblography.xhtml#XDam)] showed
+    that it is possible to construct a discrete-time approximation of the evolution
+    operator 𝒰 with only polynomial time overheads.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The quantum adiabatic theorem provides the theoretical background for adiabatic
+    quantum computing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.2.2 Optimisation and metaheuristics
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Metaheuristics are used to find “good” approximate solutions to general optimisation
+    problems. In plain terms, a metaheuristic is a search policy that explores the
+    optimisation function *f*(⋅) by evaluating it at certain points. There are myriad
+    metaheuristic algorithms that decide where next (at which value of x) to evaluate *f*(x)
+    given the history of function evaluations, but all are based on the same essential
+    principle that good solutions are likely to be near other good solutions, or in
+    other words that the optimisation surface has some smoothness. This in turn reveals
+    the exploration versus exploitation trade-off that all metaheuristics must make.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A metaheuristic can exploit its “current” position, by descending incrementally.
+    The risk is that this returns a (possibly not very good) local minimum. Alternatively,
+    a metaheuristic can explore the optimisation surface by making “large movements”
+    to discover whether another part of the optimisation surface returns smaller values
+    of *f*(x). In this case, the global minimum may be found, but the value of x returned
+    may only be a fairly poor approximation of the actual global minimum.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Simulated annealing
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Simulated annealing is a metaheuristic inspired by thermal annealing. Consider
+    the minimisation of a given function *f* : *D* →ℝ over some domain *D* ⊂ℝ^n. The
+    algorithm works as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Start with an initial value x ∈ *D* and compute *f*(x).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Randomly choose a neighbour y of x and evaluate *f*(y).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: If *f*(y) *< f*(x), then set x = y.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Else, either keep x as is or set x = y.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Repeat until an end criterion is attained.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The crucial step is the random choice in Step 4, designed to avoid being stuck
+    in a local minimum and to favour, at least at the beginning of the algorithm,
+    exploration rather than exploitation. In the case where *f*(y) ≥ *f*(x), we shall
+    hence make the switch y![↦→](img/file285.jpg)x with the probability
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ℙ (switch) = exp − f(y)−-f(x)- , τ ](img/file286.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where *τ* plays the role of the thermal annealing temperature: when the system
+    is hot, particles move (exploration), and it cools down when refinement (exploitation)
+    is required.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum annealing and quantum tunnelling
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Quantum annealing combines the idea of simulated annealing with the quantum
+    adiabatic theorem by considering the time-dependent Hamiltonian
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℋ (t) = ℋF + Γ (t)ℋ0, ](img/file287.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where ℋ[F] is the final, *longitudinal field* Hamiltonian whose ground state
+    encodes the optimal solution of the minimisation problem and ℋ[0] is the initial,
+    *transverse* *field* Hamiltonian, assumed not to commute with ℋ[F] . The function Γ
+    is the *transverse field coefficient*, playing the role of the thermal temperature,
+    namely a continuous decreasing function of *t* converging to zero as *t* approaches
+    the final time horizon. By the quantum adiabatic theorem (Theorem [7](#x1-51002r7)),
+    if the system is in the ground state of ℋ(0), and ℋ(⋅) evolves slowly with time,
+    then it will remain in the ground state of ℋ(*t*) for each *t*, and therefore
+    will converge to the ground state of ℋ[F] (hence to the optimal solution of the
+    problem). We note in passing that the quantum equivalent of the jump over the
+    local hills in the simulated annealing framework is now the quantum tunnelling
+    through the hill.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-54006r2: Schematic illustration of solving optimisation problems
+    with quantum annealing. The objective is to keep the system in the ground state
+    of ℋ(t) through adiabatic evolution. ](img/file288.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.2: Schematic illustration of solving optimisation problems with quantum
+    annealing. The objective is to keep the system in the ground state of ℋ(t) through
+    adiabatic evolution.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [2.2](#2.2) illustrates the practical application of quantum annealing
+    to solving optimisation problems. We start by putting the system in the ground
+    state of some easy-to-prepare transverse field Hamiltonian ℋ[0]. This initial
+    Hamiltonian is then slowly (adiabatically) transformed into the final longitudinal
+    field Hamiltonian ℋ[F] . If the system stays in the ground state of the local
+    Hamiltonian throughout the quantum annealing process, then the readout will give
+    us the optimal configuration of the binary decision variables (qubit values) that
+    correspond to the global minimum of the objective function encoded in the final
+    Hamiltonian.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Recall the following definition of the Hamming distance between two sets of
+    (bit) strings:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Definition 8.** Let a := (*a*[1]*,…,a*[n]) and b := (*b*[1]*,…,b*[n]) denote
+    two bit strings in {0*,*1}^n. The Hamming distance between a and b is defined
+    as'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![∑n |ai − bi|. i=1 ](img/file289.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'There are two important mechanisms in finding the global minimum: thermal annealing
+    and quantum tunnelling. In Figure [2.2](#2.2), the final Hamiltonian has a global
+    minimum at state 101101 and two local minima at states `010110` and `111001`.
+    Although the energy of both local minimum states is the same, the Hamming distances
+    from the global minimum are different. The Hamming distance between state `010110`
+    and the global minimum state `101101` is 5: it is necessary to flip 5 bits to
+    get from this local minimum state to the global minimum. The Hamming distance
+    between state `111001` and the global minimum is 2\. However, it is more difficult
+    to get from state `111001` to the global minimum state `101101` because they are
+    separated by the tall energy barrier, while getting from state `010110` to the
+    global minimum is straightforward: a series of sequential bit flips over a relatively
+    low and flat energy barrier can be achieved with the help of thermal annealing.
+    Fortunately, we also have a quantum tunnelling effect that allows the system to
+    go through the tall but narrow energy barriers. Flipping 5 bits (wide barrier)
+    in one go could be a challenging task for the quantum tunnelling but flipping
+    2 bits (narrow barrier) is something that can happen with sufficiently high probability.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Quantum annealing is a practical implementation of the principles of adiabatic
+    quantum computing and can be benchmarked against its classical counterpart – simulated
+    annealing. Quantum annealing derives its power from two sources: thermal annealing
+    and quantum tunnelling. It is the combination of these classical and quantum effects
+    that allows quantum annealing to achieve superior performance.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3 Implementations of AQC
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: How do we build quantum annealers? What is their physical realisation? Can we
+    find a suitable metric that would objectively quantify their performance? Do we
+    observe steady progress in their development? In this section, we provide answers
+    to these questions that are the results of two decades of intensive research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.1 The short history of quantum annealing
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The first major patent was devised by Amin and Steininger  [[11](Biblography.xhtml#XAmin)]
+    for D-Wave Systems, leading to the seminal paper  [[151](Biblography.xhtml#XJohnson)].
+    Since then, numerous works investigated the value of D-Wave computers, in particular
+    McGeoch and Wang  [[211](Biblography.xhtml#XGeochWang)], who proved significant
+    speedup of specific problems on one of the earlier D-Wave processors (D-Wave Two
+    with 512 qubits). More experiments followed this early research with two results
+    that, arguably, stand out from many other interesting findings.
+  prefs: []
+  type: TYPE_NORMAL
+- en: First, the contribution of quantum tunnelling to the performance of D-Wave quantum
+    annealers has been established through experiments on D-Wave Two  [[38](Biblography.xhtml#XBoixo2016)].
+    Multi-qubit tunnelling has been observed and has been experimentally shown to
+    play a computational role in a programmable quantum annealer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then an 8-order of magnitude speedup has been established on a 1,152-qubit D-Wave 2X
+    processor relative to the classical benchmark (simulated annealing) for a crafted
+    problem designed to have tall and narrow energy barriers separating local minima
+    by Denchev *et al.*  [[83](Biblography.xhtml#XDenchev2016computational)]. For
+    instances with 945 variables, the D-Wave 2X quantum annealer achieved time-to-99%-success-probability
+    that is 100 million times faster than simulated annealing running on a single
+    processor core.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Additionally, a fully connected graph problem has been addressed with the help
+    of forward and reverse quantum annealing performed on the more recent 2,048-qubit
+    D-Wave 2000Q processor by Venturelli and Kondratyev  [[175](Biblography.xhtml#XKondratyev2019), [296](Biblography.xhtml#XVenturelli2019)].
+    Chapter [3](Chapter_3.xhtml#x1-630003) provides a detailed description of this
+    use case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the time of writing, the most advanced D-Wave machine is the 5,760-qubit
+    Advantage system, which also boasts lower noise and much better qubit connectivity – a
+    physical qubit can be directly connected with up to 15 other physical qubits in
+    comparison with D-Wave 2000Q where a physical qubit could only be connected with
+    at most 6 other physical qubits  [[92](Biblography.xhtml#XDW2021)]. Therefore,
+    logical qubits that represent binary variables consist of shorter and more stable
+    chains of physical qubits. For example, for the problem size *N* = 64 (which corresponds
+    to the largest fully connected graph that can be embedded on D-Wave 2000Q), the
+    chain length is 17 for the D-Wave 2000Q *Chimera* graph but only 7 for the Advantage
+    *Pegasus* graph.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interestingly, quantum computing algorithms prompted intensive improvement of
+    their classical counterparts and recent developments in optimised classical algorithms
+    proved  [[259](Biblography.xhtml#XSelby)] to be able to at least match D-Wave
+    machines.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.2 Inter-generational comparison of D-Wave quantum annealers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The technological progress in the development of D-Wave quantum annealers has
+    been investigated by Pokharel *et al*  [[235](Biblography.xhtml#XPokharel2021)].
+    The performance of four generations of D-Wave quantum annealers has been studied
+    on the task of solving an identical ensemble of a parameterised family of scheduling
+    problems. These problems are NP-hard and find numerous practical applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The performance of quantum annealers was measured by a metric known as Time-to-Solution
+    (TTS). In benchmarking studies, the data collected from multiple runs of the quantum
+    annealer was used to calculate the probability of finding the ground state solution
+    for the given configuration of adjustable parameters. This probability is given
+    by the expression
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ Number of ground state solutions p = ------------------------------. Total
+    number of runs ](img/file290.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The equivalent TTS is defined as the expected time to obtain the ground state
+    solution at least once with *α* success probability and is computed as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![TTS = trunlog(1−-α-), log(1− p) ](img/file291.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where *t*[run] is the annealing time for a single run of the quantum annealer,
+    and *α* is by default taken equal to 99%.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since scheduling problems are NP-hard, TTS should scale exponentially with the
+    problem size *N* in the asymptotic limit as shown by ([2.2](#x1-500002)) with
+    *γ* = 1\. It is a question of what value of parameter *β* (the scaling exponent)
+    would best fit the experimental results
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![TTS = T0 exp (βN ), ](img/file292.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some constant *T*[0] *>* 0\. As established in  [[235](Biblography.xhtml#XPokharel2021)],
+    the scaling exponent ranges from 1*.*01 for D-Wave Two to 0*.*17 for D-Wave Advantage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To illustrate the magnitude of this improvement let us set *N* = 10 and TTS
+    = 100 microseconds for both cases (*β* = 1*.*01 and *β* = 0*.*17). This produces
+    the following impressive results for TTS as a function of *N* as shown in Table [2.2](#x1-57003r2):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| *N* | TTS (*β* = 1*.*01) | TTS (*β* = 0*.*17) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 10 | 100 microseconds | 100 microseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 15 | 16 milliseconds | 234 microseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 20 | 2.4 seconds | 547 microseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 25 | 6.3 minutes | 1.3 milliseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 30 | 16.5 hours | 3.0 milliseconds |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 2.2: TTS as a function of problem size, *N*, for different values of
+    scaling exponent.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.3 Physical realisations of quantum annealers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Being adiabatic, the quantum annealer is a device that works by first specifying
+    an initial Hamiltonian with an easily computable ground state, and then evolving
+    it slowly to the final problem Hamiltonian. On the hardware side, to ensure quantum
+    coherence, the system lives in a closed environment, away from external magnetic
+    sources, and is kept at a very low temperature. The states of the system are viewed
+    as superpositions of qubits, each represented as a superconducting loop in such
+    a way that the state of the qubit is defined as the electric current in the loop.
+    During computation, the direction of the current is unknown, but when the system
+    decoheres (due to observation or noise), it becomes known. The direction of the
+    spin of each qubit is physically represented by a magnetic field applied to the
+    loop, acting as a noise that may stir the qubit from its current spin. The qubits
+    are also connected to each other via ferromagnetic (antiferromagnetic) couplings
+    forcing their spins in the same or in opposite directions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The D-Wave quantum annealers rely on the Ising formulation of the Hamiltonian.
+    This is justified by the fact that Barahona  [[24](Biblography.xhtml#XBarahona)]
+    showed that finding the ground state of an Ising spin glass is NP-hard. It means
+    that any NP-complete problem can be reduced to an Ising spin glass problem with
+    polynomial overhead (see Section [2.1](#x1-490001)). Mathematically, the optimisation
+    problem is formulated as the minimisation of the cost function
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑N ∑N ∑N LIsing(s) = gisi + Jijsisj, i=1 i=1 j=i+1 ](img/file293.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where s := (*s*[1]*,…,s*[N]) is a vector of binary decision variables (classical
+    spin variables taking values {−1*,*+1}), and (*g*[i])[i=1,…,N] and (*J*[ij])[1≤i<j≤N]
+    are coefficients encoding the parameters of the optimisation problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'According to the quantum mechanical description of a spin, we need to replace
+    the classical spin variables with the corresponding operators – the Pauli operators
+    *σ*[x], *σ*[y] and *σ*[z] (see Section [6.3.3](Chapter_6.xhtml#x1-1300003) for
+    their matrix representations). The *problem* or *final* Hamiltonian then takes
+    the following Ising form  [[147](Biblography.xhtml#XIsing)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑N ∑N ∑N ℋF = giσi + Jijσiσj, i=1 z i=1j=i+1 z z ](img/file294.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where *g*[i] is the bias applied to qubit *i* and *J*[ij] is the coupling between
+    qubits *i* and *j*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The *initial* Hamiltonian has the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N ℋ = ∑ σi, 0 x i=1 ](img/file295.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where the operator *σ*[x] (see Section [6.3.3](Chapter_6.xhtml#x1-1300003))
+    is the quantum NOT gate that flips the qubit state:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![NOT |0⟩ = |1⟩ and NOT |1⟩ = |0⟩ . ](img/file296.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Recalling the quantum states ![|+ ⟩](img/file297.jpg) and ![|− ⟩](img/file298.jpg)
+    defined in ([1.2.3](Chapter_1.xhtml#x1-380003)), we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| NOT![&#124;+ ⟩](img/file299.jpg) | = ![ 1 √--- 2](img/file300.jpg)NOT![(](img/file301.jpg)![&#124;0⟩](img/file302.jpg)
+    + ![&#124;1⟩](img/file303.jpg)![)](img/file304.jpg) = ![ 1 √--- 2](img/file305.jpg)![(](img/file306.jpg)![&#124;1⟩](img/file307.jpg)
+    + ![&#124;0⟩](img/file308.jpg)![)](img/file309.jpg) = ![&#124;+ ⟩](img/file310.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '| NOT![&#124;− ⟩](img/file311.jpg) | = ![√1-- 2](img/file312.jpg)NOT![(](img/file313.jpg)![&#124;0⟩](img/file314.jpg)−![&#124;1⟩](img/file315.jpg)![)](img/file316.jpg)
+    = ![√1-- 2](img/file317.jpg)![(](img/file318.jpg)![&#124;1⟩](img/file319.jpg)−![&#124;0⟩](img/file320.jpg)![)](img/file321.jpg)
+    = −![&#124;− ⟩](img/file322.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: so that ![|+⟩](img/file323.jpg) and ![|− ⟩](img/file324.jpg) are the two eigenstates.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The eigenstate of the initial Hamiltonian ([2.3.3](#x1-580003)) is the equal
+    superposition of the states ![|0⟩](img/file325.jpg) and ![|1⟩](img/file326.jpg)
+    of all individual qubits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![[ ]⊗N √1-(|0⟩+ |1⟩) . 2 ](img/file327.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The Hamiltonian ℋ[0] is the *transverse field* Hamiltonian. Its role is to create
+    disorder and to prevent spins from aligning with each other (along the *z*-axis).
+    The Hamiltonian ℋ[F] is the *longitudinal field* Hamiltonian. At the end of the
+    annealing process, when the transverse field and the *σ*[x] terms go to zero,
+    spins should be aligned either parallel or anti-parallel with each other along
+    the *z*-direction (depending on the values of the corresponding coupling factors
+    and their individual biases).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The architecture of D-Wave quantum annealers is based on a particular graph
+    (the *Chimera* graph in the case of D-Wave 2000Q or the *Pegasus* graph in the
+    case of the Advantage system) that realises a particular connectivity pattern
+    between the physical qubits. These graphs are not fully connected as mentioned
+    earlier, which means that a concrete optimisation problem to be solved on the
+    quantum annealer must first be transformed (*embedded*) into a graph. We refer
+    the reader to  [[63](Biblography.xhtml#XChoi1), [64](Biblography.xhtml#XChoi2)]
+    for a theoretical description of these embeddings. Here, we only present a schematic
+    rendering of the *Chimera* graph and show how logical qubits can be constructed
+    from the chains of multiple physical qubits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Apart from D-Wave, Steffen  [[273](Biblography.xhtml#XSteffen)] built an adiabatic
+    quantum computation using nuclear magnetic resonance, available at room temperature,
+    based on the discrete-time approximation of the quantum adiabatic theorem. Another
+    nuclear magnetic resonance implementation was developed in  [[305](Biblography.xhtml#XXu)]
+    for integer factoring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, it is necessary to mention a perspective approach to building analog
+    quantum computers based on the neutral atoms technology  [[131](Biblography.xhtml#XHenry2021), [163](Biblography.xhtml#XKim2022)].
+    Neutral atom quantum annealers have potential to outperform quantum annealers
+    built using other technologies and to bridge the gap between NISQ and fault-tolerant
+    advantage.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.3.4 Chimera graph and embedding of the logical qubits
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The *Chimera* graph topology  [[76](Biblography.xhtml#XDahl2013), [91](Biblography.xhtml#XDWQPU)]
+    has a recurring structure of a bipartite graph, called a *unit cell*, as shown
+    in Figure [2.3](#2.3). The unit cell consists of two groups of four qubits each
+    with pairwise connections between qubits from different groups and no connections
+    between qubits from the same group. Thus, each unit cell graph consists of 8 vertices
+    (physical qubits) and 16 edges (connections between physical qubits). These physical
+    qubits (superconducting loops) are connected via *internal couplers*. Connections
+    between unit cells are achieved via *external couplers*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Each physical qubit in a *Chimera* graph is connected to six other physical
+    qubits (via four internal couplers and two external couplers). This puts severe
+    limitations on the type of problems that can be embedded in the graph if we would
+    like to establish a one-to-one mapping between the binary decision variable (logical
+    qubit) and the corresponding physical qubit. However, the effective connectivity
+    between logical qubits can be improved if the logical qubit can be represented
+    by a chain of physical qubits. This would allow us to reach distant corners of
+    the graph and solve the fully connected graph problems. Figure [2.3](#2.3) displays
+    an example of a qubit chain formed by qubits A, B, C and D (dark shaded qubits
+    connected by bold lines). While individual qubits have only six connections, the
+    qubit chain A-B-C-D has 18 external connections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-59006r3: Chimera graph. The figure displays a cropped view of four
+    unit cells. Individual physical qubits are shown as circles, internal couplers
+    are shown as straight lines, and external couplers are shown as curved lines.
+    Qubits A, B, C and D form a qubit chain (logical qubit). ](img/file328.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 2.3: Chimera graph. The figure displays a cropped view of four unit
+    cells. Individual physical qubits are shown as circles, internal couplers are
+    shown as straight lines, and external couplers are shown as curved lines. Qubits
+    A, B, C and D form a qubit chain (logical qubit).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: To ensure that qubits A, B, C and D operate as a single logical qubit, we need
+    to make connections between them strong enough such that their states are aligned
+    at all times and they would flip simultaneously if the logical qubit is flipped.
+    Since now they represent a single binary decision variable (logical qubit), the
+    corresponding bias *g* (in ([2.3.3](#x1-580003)) and ([2.3.3](#x1-580003))) will
+    be shared equally across all four physical qubits in the chain.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We expect all physical qubits in the chain to have the same value after measurement
+    but this is not always the case. When the qubit chain becomes too long with too
+    many internal and external couplers between the physical qubits, it is likely
+    that the chain would be broken at some point. This will be seen as a disagreement
+    between the physical qubits forming the chain – some of them will be measured
+    as −1 and some as +1\. The solution is to apply the *majority voting* rule: the
+    value of a logical qubit is given by the mode of all constituent physical qubit
+    values. For example, if physical qubits A, B and C are measured as −1 and qubit
+    D is measured as +1, the value of the logical qubit is assumed to be −1\. The
+    longer the chain, the easier it is to break it. This is why the improved connectivity
+    of the new *Pegasus* graph in comparison with the old *Chimera* graph that results
+    in shorter chains for the fully connected graph problems leads to a significant
+    reduction in TTS.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum annealing has been successfully implemented using superconducting qubits
+    controlled by pulses of microwave radiation. With significant progress in improving
+    connectivity and scaling up the systems observed over the last several years,
+    quantum annealers have demonstrated their potential as powerful optimisers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 2.4 Universality of AQC
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Quantum computing has the theoretical advantage of being able to represent an
+    exponential number of states at once, thereby proving exponential speedup compared
+    to classical algorithms. The historically important examples are Shor’s integer
+    factorisation  [[265](Biblography.xhtml#XShor)] and Grover’s database search  [[117](Biblography.xhtml#XGrover)].
+    On a practical level though, it remains unclear whether this speedup is actually
+    within reach, in particular for NP-hard problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adiabatic quantum computing is a completely different paradigm to gate model
+    quantum computing – although they bear some resemblance – and rests upon the quantum
+    adiabatic theorem. Contrary to gate model quantum computing, AQC has inherent
+    fault tolerance, as proved in  [[61](Biblography.xhtml#XChildsFarhi)]. Since its
+    performance depends on the spectral gap from the adiabatic theorem, environmental
+    decoherence can be minimised by running an AQC device at temperatures much lower
+    than this gap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Key insights connecting gate model quantum computing and its adiabatic version
+    were provided by Aharonov *et al.*  [[7](Biblography.xhtml#XAharonov)], and by
+    Farhi *et al.*  [[97](Biblography.xhtml#XFarhiUniv)]. The former proved that AQC
+    can simulate any algorithm with only polynomial overheads compared to gate model
+    quantum computing while the latter showed that gate model quantum computers can
+    reproduce any AQC computation. These two results therefore imply that AQC and
+    gate model quantum computing are in fact polynomially equivalent. The proof in  [[7](Biblography.xhtml#XAharonov)]
+    assumes that the initial and final Hamiltonians in the adiabatic formulation are
+    so-called *k*-local, meaning that they can be represented as sums of independent
+    Hamiltonians each acting on *k* qubits only. Existing AQC algorithms rely on a
+    certain number of assumptions regarding the final Hamiltonian, the main one being
+    that the latter has null off-diagonal elements with a 2-local connectivity structure,
+    as in the case of the D-Wave quantum annealer. Unfortunately, this currently falls
+    outside the scope of  [[7](Biblography.xhtml#XAharonov)], leaving a question mark
+    about the universality of this setup. Other AQC algorithms exist, in particular
+    involving stoquastic Hamiltonians  [[45](Biblography.xhtml#XBravyi)] with real
+    and non-positive off-diagonal elements or even more restrictive considerations  [[35](Biblography.xhtml#XBiamonte)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The standard background for comparing algorithms – classical, quantum, or adiabatic
+    – is that of complexity classes. We shall not delve into too many technicalities
+    here though, but refer to  [[197](Biblography.xhtml#XLucas)] for details. There,
+    the mathematical formulations of Ising problems (the standard problems solved
+    by AQC) for a large number of NP-complete and NP-hard problems are presented,
+    including precise formulations of Karp’s 21 fundamental NP-complete problems  [[155](Biblography.xhtml#XKarp)],
+    a perfect playground to compare quantum algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: At the beginning of this chapter, we introduced several basic complexity classes
+    and discussed their relationships. The time needed to solve NP-hard problems grows
+    exponentially with the problem size, which is a strong motivation for exploring
+    alternative approaches, such as analog adiabatic quantum computing. Even though
+    quantum optimisers also solve NP-hard combinatorial optimisation problems in time
+    that grows exponentially with problem size, the prefactor in the exponent may
+    be smaller than for known classical algorithms. Additionally, we can expect to
+    find an approximate solution in polynomial time, which provides a strong motivation
+    for many practical applications of adiabatic quantum computing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We then introduced the principles of AQC based on the adiabatic quantum theorem.
+    The physical realisation of AQC – quantum annealing – has been contrasted with
+    its classical counterpart – simulated annealing. We highlighted two main sources
+    of computational power of quantum annealing: thermal annealing, which helps us
+    find the minima of the objective function separated by wide but moderate energy
+    barriers; and quantum tunnelling, which allows us to penetrate through the narrow
+    and steep energy barriers. Their combination ensures efficient convergence to
+    the global minimum of the objective function for many practical problems.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Having established the principles of AQC and the corresponding theoretical framework,
+    we looked at the practical implementation of AQC in the form of quantum annealers
+    based on superconducting qubits. We also introduced the Ising model, which provides
+    a mathematical description of the problems solvable on quantum annealers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We learned about the importance of the quantum chip layout (graph) and how several
+    physical qubits can be coupled together to form a chain representing a single
+    logical qubit. Finally, we touched on the universality of AQC.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will learn how quantum annealing can be used to solve
+    practical NP-hard optimisation problems such as discrete portfolio optimisation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join our book’s Discord space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Join our Discord community to meet like-minded people and learn alongside more
+    than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![PIC](img/file1.png)'
+  prefs: []
+  type: TYPE_IMG

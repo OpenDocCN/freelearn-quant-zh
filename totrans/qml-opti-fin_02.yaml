@@ -1,0 +1,850 @@
+- en: '4'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Quantum Boosting
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In this chapter, we consider a quantum version of the classical boosting meta-algorithm – a
+    family of machine learning algorithms that convert weak classifiers into strong
+    ones. Classically, boosting consists of two main operations: i) adaptive (iterative)
+    training of the weak classifiers, thus improving their individual performance,
+    and ii) finding an optimal configuration of weights applied to the individual
+    weak learners when combining them into a single strong one.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Adaptive learning consists of iterative re-weighting of the samples from the
+    training dataset, forcing the model to improve its performance on the difficult-to-classify
+    samples by giving them heavier weights. These weights are adjusted at each algorithm
+    iteration. Arguably, the best-known and most successful example of such algorithms
+    is the popular *adaptive boosting* (AdaBoost) model. It was first formulated in
+    1997 by Freund and Schapire   [[107](Biblography.xhtml#XFreund1997)], whose work
+    has been recognised by the awarding of the prestigious Gödel Prize in 2003.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The main principle of AdaBoost is that the base classifiers (weak learners)
+    are trained in sequence and each base classifier is trained using a weighted form
+    of the dataset: the weighting coefficient associated with each sample depends
+    on the performance of the previous classifiers. Samples that are misclassified
+    by one of the base classifiers are given larger weights when used to train the
+    next base classifier in the sequence. Once all base classifiers have been trained,
+    their predictions are combined through some kind of weighted majority voting scheme  [[37](Biblography.xhtml#XBishop2006)].
+    Therefore, AdaBoost can be seen as a general framework that allows many possible
+    realisations with various degrees of sophistication rather than a narrowly defined
+    algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In contrast to AdaBoost, a boosting approach that consists of finding an optimal
+    set of weights for the individual weak learners (with the weak learners being
+    trained in the usual way) is straightforward to implement and relies on standard
+    optimisation routines. However, this task becomes a hard combinatorial problem
+    when an additional set of constraints is introduced. When the weights are only
+    allowed to take binary values, the problem naturally lends itself to being formulated
+    as a QUBO problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is where quantum annealing has a role to play, as we have seen in Chapter [3](Chapter_3.xhtml#x1-630003).
+    For a large enough number of weak classifiers, the search space becomes enormous,
+    and classical algorithms (such as various evolutionary search heuristics) may
+    take a non-trivial amount of time to find an optimal configuration of weights
+    (or, at least, a good approximation). This is an ideal scenario for quantum annealing
+    to demonstrate its strong points, including the possibility of achieving a material
+    quantum speedup.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum boosting is a QUBO-based technique combining individual weak learners
+    into a single strong classifier by constructing an optimal linear combination
+    of binary classifiers. It is transparent, easy to interpret, and resistant to
+    overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1 Quantum Annealing for Machine Learning
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Quantum boosting is the first QML algorithm we will consider in this book. This
+    is also the algorithm that plays to the natural strengths of quantum annealing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1.1 General principles of the QBoost algorithm
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We start with the general principles of the Quantum Boosting (QBoost) algorithm
+    before exploring a specific finance-related application. In the formulation of
+    QBoost, we will be using the following definitions and notations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Object | Definition |'
+  prefs: []
+  type: TYPE_TB
+- en: '| x[τ] = (*x*[1](*τ*)*,x*[2](*τ*)*,…,x*[N](*τ*)) | Vector of *N* variables
+    (features) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *y*[τ] = ±1 | Binary label indicating whether x[τ] corresponds to Class 0
+    (−1) or Class 1 (+1) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| {x[τ]*,y*[τ]}[τ=1,…,M] | Set of training events |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *c*[i](x[τ]) = ±![Table 4.1: QBoost algorithm notations. ](img/file357.jpg)
+    | Value of the weak classifier *i* on the event *τ* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| q := (*q*[1]*,q*[2]*,…,q*[N]) | Vector of binary (0 or 1) weights associated
+    with each weak classifier |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4.1: QBoost algorithm notations.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We first specify the classification error for sample *τ*, which is given by
+    the squared error
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![( N )2 ∑ ci(xτ)qi − yτ . i=1 ](img/file358.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The total cost function to minimise is then the sum of squared errors across
+    all samples:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ M ( N )2 L(q) = ∑ ∑ c (x )q − y i τ i τ τ=1( i=1 ) M∑ ∑N ∑N ∑N 2 = ( ci(xτ)qi
+    cj(xτ)qj − 2yτ ci(xτ)qi + yτ) . τ=1 i=1 j=1 i=1 ](img/file359.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Note that *y*[τ]² does not depend on q and therefore has no influence on the
+    minimisation of *L*. Adding a penalty *λ >* 0 to prevent overfitting, the objective
+    function to minimise is thus
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ M ( N N N ) N ^L(q) = ∑ ( ∑ c (x )q ∑ c(x )q − 2y ∑ c (x )q ) + λ ∑ q
+    i τ i j τ j τ i τ i i τ=1 ( i=1 j=1 i=1 ) i=1 M∑ ∑N ∑N ∑N N∑ = ( qiqjci(xτ)cj(xτ)−
+    2 qici(xτ)yτ) + λ qi τ=1 i=1j=1 i=1 i=1 N N ( M ) N ( M ) N = ∑ ∑ ∑ c (x )c(x
+    ) q q − 2∑ ∑ c(x )y q + λ ∑ q i τ j τ i j i τ τ i i i=1 j=1 τ=1 i=1 τ=1 i=1 N∑
+    ∑N ∑N = Cijqiqj + (λ − 2Ci)qi, i=1 j=1 i=1 ](img/file360.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑M ∑M Cij := ci(xτ)cj(xτ) and Ci := ci(xτ)yτ. τ=1 τ=1 ](img/file361.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: '**Remark:** Adding a penalty term controlled by the coefficient *λ* is analogous
+    to the LASSO regression method  [[6](Biblography.xhtml#XAgresti2013)] with *L*[1]
+    penalty, which is ubiquitous in machine learning. Ridge regression  [[243](Biblography.xhtml#XRaschka2019)]
+    with *L*[2] penalty could also be used and would also lead to a QUBO problem.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.1.2 QUBO to Ising
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: As developed in Chapter [3.1.1](Chapter_3.xhtml#x1-650001), we now perform a
+    transformation from QUBO to Ising from the binary decision variables q := (*q*[1]*,…,q*[N])
+    ∈{0*,*1}^N to spin variables s := (*s*[1]*,…,s*[N]) ∈{−1*,*+1}^N using
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![s = 2q − 1 or q = 1(s+ 1 ). 2 ](img/file362.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Therefore, the Ising problem to be solved on the quantum annealer reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑N ( ) ( ) ∑N ( ) ℋ = L^(s) = 1si + 1- 1-sj + 1 Cij + 1si + 1- (λ− 2Ci
+    ) i,j=1 2 2 2 2 i=1 2 2 N N N 1-∑ 1-∑ 1-∑ = 4 sisjCij + 2 siCij + 4 Cij i,j=1
+    i,j=1 i,j=1 1 N∑ λN ∑N ∑N + -- siλ+ ---− siCi − Ci. 2 i=1 2 i=1 i=1 ](img/file363.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Since the three terms
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![1 ∑N λN ∑N 4- Cij, -2--, and Ci i,j=1 i=1 ](img/file364.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: do not depend on s, they can be removed from the cost function. The substitution
+    *λ* = ![1 2](img/file365.jpg)*λ* then yields the final Ising problem
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N N N ℋ = 1-∑ s sC + 1-∑ sC + ∑ s (λ− C ). 4 ij ij 2 i ij i i i,j=1 i,j=1
+    i=1 ](img/file366.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The problem that quantum annealing attempts to solve is to minimise ℋ and to
+    return the minimising, ground-state spin configuration (*s*[i]^g)[i=1,…,N]. The
+    strong classifier is then built as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ N ∑ g R (x) = sici(x) ∈ [− 1,1], i=1 ](img/file367.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for each new event x that we wish to classify  [[218](Biblography.xhtml#XMott2017)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2 QBoost Applications in Finance
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Quantum Annealing for Machine Learning (QAML) has been applied productively
+    to a wide range of financial and non-financial use cases. It demonstrated a performance
+    advantage in comparison with standard classical machine learning models such as
+    the binary decision tree-based Extreme Gradient Boosting (XGBoost) and Deep Neural
+    Network (DNN) classifiers, especially on relatively small datasets. The QAML use
+    cases come from such diverse fields as high-energy physics (the Higgs boson detection  [[218](Biblography.xhtml#XMott2017)])
+    and computational biology (the classification and ranking of transcription factor
+    binding  [[186](Biblography.xhtml#XLi2018)]). In finance, the most obvious application
+    of QAML is to credit scoring and fraud detection as well as to the construction
+    of strong trading signals from large numbers of weak binary (buy/sell) trading
+    signals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this section, we analyse QBoost performance on the more conventional binary
+    classification problem – forecasting credit card client defaults. We also provide
+    classical benchmarks (gradient boosting and feedforward neural network classifiers)
+    and analyse QBoost performance from different angles. The chosen dataset is relatively
+    large, with tens of thousands of samples, which should help standard classical
+    classifiers avoid overfitting and demonstrate their best qualities.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It has been established in  [[218](Biblography.xhtml#XMott2017)] that the QBoost
+    algorithm is resistant to overfitting because it involves an explicit linearisation
+    of correlations (hence its better performance on the smaller dataset in comparison
+    with classical benchmarks). Another useful aspect of the model is that it is interpretable
+    directly, with each weak classifier corresponding to a specific feature or a combination
+    of features (or their functions), and the strong classifier being a simple linear
+    combination thereof. This compares favourably with the "black box" machine learning
+    discriminants, such as when using gradient boosting or DNNs. This is especially
+    important for financial products aimed at retail customers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.1 Credit card defaults
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The default of credit card clients (DCCC) dataset is available from the UCI
+    Machine Learning Repository  [[307](Biblography.xhtml#XUCI_DCCC), [308](Biblography.xhtml#XYeh2009)].
+    The dataset consists of 30,000 samples with binary classification: a client defaults
+    on the credit card payment (Class 1) and a client does not default (Class 0).
+    There are 23 features (F1-F23) that have at least some predictive power and can
+    be used for the classification decision:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'F1: Amount of the given credit (NT dollar): it includes both the individual
+    consumer credit and his/her family (supplementary) credit.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F2: Gender (1 = male; 2 = female).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F3: Education (1 = graduate school; 2 = university; 3 = high school; 4 = others).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F4: Marital status (1 = married; 2 = single; 3 = others).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F5: Age (years).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F6-F11: History of past payments. F6 – the repayment status in the previous
+    month, F7 – the repayment status two months ago, and so on. The measurement scale
+    for the repayment status is: −1 = pay duly; 1 = payment delay for one month; 2 =
+    payment delay for two months; *…*; 8 = payment delay for eight months; 9 = payment
+    delay for nine months and above.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F12-F17: Amount of bill statement (NT dollar). F12 – amount of bill statement
+    previous month, F13 – amount of bill statement two months ago, and so on.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'F18-F23: Amount of previous payment (NT dollar). F18 – amount paid last month,
+    F19 – amount paid two months ago, and so on.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'The weak classifiers were constructed in the following way: each feature was
+    used separately as an input into the logistic regression classifier with the aim
+    of making a binary prediction: −1*∕N* for Class 0 (no default) and +1*∕N* for
+    Class 1 (default), where *N* = 23 is the total number of weak classifiers (number
+    of features in the dataset). Note that this is not the only possible approach.
+    It is perfectly feasible to build the weak classifiers through some (possibly
+    non-linear) combination of original features. This should be done every time we
+    have a clear understanding of which combination of features would produce a more
+    meaningful and insightful result. However, in this particular example, our objective
+    is to illustrate the general principles of QBoost algorithm and we do not assume
+    any subject matter expertise that would allow us to construct better derived features.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We have used `sklearn.linear_model.LogisticRegression` from the `scikit-learn`
+    package  [[230](Biblography.xhtml#XSL)] for the weak classifiers. The dataset
+    was split into training and testing datasets at a 70:30 ratio with the help of
+    the sklearn.model_selection.train_test_split module. The class labels were encoded
+    as −1 for Class 0 and +1 for Class 1, as per the QBoost algorithm requirements.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following configuration of the `LogisticRegression` model was used in constructing
+    the weak classifiers dataset (all other parameters were set at their default values):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: penalty = ‘l2’
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: C = 1.0
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: solver = ‘lbfgs’
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: max_iter = 1000
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Therefore, we have a training dataset (21,000 samples) and a testing dataset
+    (9,000 samples), each consisting of the predictions of 23 weak classifiers (taking
+    values {−1*∕*23, +1*∕*23}) and class labels (taking values in {−1, +1}). If the
+    prediction of the strong classifier is given by the sum of predictions of the
+    weak classifiers (a simple majority voting approach), its value will be in the
+    [−1*,*1] range, with the values of −1 and +1 achieved if all the weak classifiers
+    are in perfect agreement with each other.
+  prefs: []
+  type: TYPE_NORMAL
+- en: QBoost provides an improvement on this approach by finding an optimal configuration
+    of the weak classifiers such that the majority voting is performed on a subset
+    of available weak classifiers. In other words, a majority voting performed on
+    all weak classifiers is just a special case of the QBoost (one of the possible
+    configurations to explore). Therefore, it is necessary to compare QBoost performance
+    with more advanced classical machine learning models such as gradient boosting
+    and neural networks. We provide this comparison in Section [4.3](#x1-890003).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.2.2 QUBO classification results
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Each feature in the DCCC dataset is uniquely mapped to the corresponding (weak)
+    logistic regression classifier and associated binary decision variable (*q*[i])[i=1,…,23].
+    These decision variables are represented by the logical qubits/spin variables
+    in the QUBO/Ising formulation of the optimisation problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The number of non-zero decision variables (weights) depends on the degree of
+    regularisation we would like to impose. Table [4.2](#x1-88001r2) shows the optimal
+    configurations of the weights as a function of the penalty *λ* obtained for the
+    training dataset. Given the relatively small number of weak classifiers in our
+    example, the optimal configuration can be found by an exhaustive search. As one
+    would expect, the larger the value of the penalty *λ*, the smaller the number
+    of non-zero weights.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| *λ* | non-zero weights |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 500 | {*q*[1]*,q*[6]*,q*[7]*,q*[8]*,q*[9]*,q*[10]*,q*[11]} |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 600 | {*q*[6]*,q*[7]*,q*[8]*,q*[9]*,q*[10]*,q*[11]} |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 700 | {*q*[6]*,q*[7]*,q*[10]*,q*[11]} |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 800 | {*q*[6]*,q*[10]*,q*[11]} |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 900 | {*q*[6]*,q*[11]} |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 1000 | {*q*[6]} |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4.2: Optimal configurations of QUBO weights q for various values of the
+    penalty λ. The optimal configurations list all non-zero weights.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a configuration of weights, we can build the strong classifier as per ([4.1.2](#x1-850002)).
+    Then, we can compare the performance of the obtained strong classifier on both
+    training (in-sample) and testing (out-of-sample) datasets. The performance metrics
+    of choice are *accuracy*, *precision*, and *recall*. The classifier performance
+    can also be visualised with the help of a *confusion matrix*. Here are their definitions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Accuracy** is the ratio of correctly predicted observations to the total
+    observations. Accuracy is a good metric for classes of roughly the same size and
+    equivalent importance. However, it is a poor metric for the dataset in our example:
+    the Class 0 samples (no default) are far more numerous but the relative importance
+    of Class 1 samples (default) is much higher.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Precision** is the ratio of correctly predicted positive observations to
+    the total predicted positive observations. High precision corresponds with a low
+    false positive rate. This is a metric we would like to maximise in the context
+    of credit card defaults if there is a high cost associated with the incorrect
+    default predictions.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Recall** is the ratio of correctly predicted positive observations to all
+    observations in the positive class. In the context of credit card defaults, this
+    metric shows how many of the actual defaults were predicted by the classifier.
+    We would like to maximise this metric from the risk management perspective.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Confusion matrix** for a binary classifier is a 2 × 2 matrix whose elements
+    are the counts of the true positive (TP), true negative (TN), false positive (FP),
+    and false negative (FN) predictions of a classifier, as shown in Figure [4.1](#4.1).'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![Figurex1-88004r1: Confusion matrix for a binary classifier. ](img/file368.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.1: Confusion matrix for a binary classifier.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Accuracy, precision, and recall are then defined as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Accuracy | := ![ TP + TN TP-+-TN--+-FP-+-FN--](img/file369.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Precision | := ![ TP --------- TP + FP](img/file370.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Recall | := ![--TP----- FN + TP](img/file371.jpg)*.* |'
+  prefs: []
+  type: TYPE_TB
+- en: Figure [4.2](#4.2) displays in-sample and out-of-sample confusion matrices for
+    the strong QBoost classifier assuming that Class 1 (default) is the positive class
+    and Class 0 (no default) is the negative class. The penalty was set at *λ* = 10³,
+    thus enforcing strong regularisation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The in-sample and out-of-sample results are quite close, as one would expect
+    from a strongly regularised classifier. Table [4.3](#x1-88008r3) summarises the
+    results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-88006r2: Confusion matrices for the QBoost classifier (DCCC dataset).
+    ](img/file372.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.2: Confusion matrices for the QBoost classifier (DCCC dataset).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Accuracy | Precision | Recall |'
+  prefs: []
+  type: TYPE_TB
+- en: '| In-sample | 0.82 | 0.69 | 0.33 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Out-of-sample | 0.83 | 0.71 | 0.33 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4.3: Accuracy, precision, and recall for the QBoost classifier trained
+    and tested on the DCCC dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3 Classical Benchmarks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Classical benchmarking is an important element of the testing of quantum algorithms.
+    Small-scale (or even stylised) problems are ideally suited for this task. Let
+    us see how the QBoost model performs in comparison with the standard classical
+    ML classifiers: neural networks and gradient boosting.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.1 Artificial neural network
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'An Artificial Neural Network (ANN) is a network of interconnected *activation*
+    *units* (or *artificial neurons*), where each activation unit performs three main
+    functions (Figure [4.3](#4.3)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summation of the input signals (*x*[i])[i=1,…,N], from all the upstream units
+    to which it is connected with multiplication by the corresponding weights (*w*[i])[i=1,…,N];
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Non-linear transformation of the aggregated input;
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sending the result to the downstream units to which it is connected.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sometimes the activation unit also performs binarisation (or, more generally,
+    digitisation) of the output – typically, this is a task of the activation units
+    in the output layer of an ANN trained as a classifier.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-90004r3: Schematic representation of an artificial neuron (perceptron).
+    ](img/file373.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.3: Schematic representation of an artificial neuron (perceptron).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In its simplest form, an ANN is organised as layers of activation units: an
+    input layer, an output layer, and one or several hidden layers, as schematically
+    pictured in Figure [4.4](#4.4).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-90006r4: Schematic representation of a feedforward ANN. ](img/file374.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.4: Schematic representation of a feedforward ANN.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The activation unit in Figure [4.3](#4.3) is known as a *perceptron*, and the
+    ANNs consisting of layers of perceptrons are known as Multi-Layer Perceptrons
+    (MLPs). MLPs are *feedforward* neural networks: the signal travels in one direction
+    from the input layer to the output layer. ANNs can be organised differently with
+    signal travelling back and forth between the layers, and we will explore one such
+    model in the next chapter. However, when it comes to building a classifier, the
+    simple feedforward architecture works well in practice.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The practical approach to the ANN architecture is based on the fundamental result
+    obtained by Cybenko  [[75](Biblography.xhtml#XCybenko1989)]. It states that arbitrary
+    decision regions can be arbitrarily well approximated by continuous feedforward
+    neural networks with only a single hidden layer and any continuous sigmoidal non-linearity.
+    This result was further generalised to the wider range of activation functions
+    by Hornik, Stinchcombe, and White  [[141](Biblography.xhtml#XHornik1990)]. It
+    was established that multilayer feedforward networks with only a single hidden
+    layer and an appropriately smooth hidden layer activation function are capable
+    of arbitrarily accurate approximating any arbitrary function and its derivatives.
+    In fact, these networks can even approximate functions that are not differentiable
+    in the classical sense, but possess only generalised derivatives  [[224](Biblography.xhtml#XNikolskii1975)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.2 Training artificial neural networks
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The process of training an ANN consists in finding an optimal configuration
+    of network parameters (weights and biases) such that the new unseen input is transformed
+    in the desired way. The network is trained on what is known as a *training dataset*.
+    The samples from the training dataset can be *labelled* (each sample is assigned
+    a class label, either numerical or categorical). In this case, we can perform
+    *supervised learning*, where the network is tasked with learning the mapping between
+    the features and the class labels – an ANN trained in the supervised learning
+    mode becomes a classifier. When the samples are not labelled, we can train the
+    network as a regressor. Although ANNs trained as classifiers may seem to be the
+    most obvious practical decision-making tools, regressors too find numerous applications
+    in various fields of quantitative finance, for example in learning the natural
+    dynamics and transformations of interest rate curves  [[169](Biblography.xhtml#XKondratyev2018)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, we would like to focus here on the labelled datasets since our objective
+    is to consider a classical counterpart of the QBoost classifier. The standard
+    approach to training a feedforward ANN is the *backpropagation* of error with
+    gradient descent  [[113](Biblography.xhtml#XGoodfellow2016)]. We briefly explain
+    the main idea of this method.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The starting point is the specification of some suitable cost function that
+    indicates how far we are from the correct classification. Without loss of generality,
+    assume that we work with a training dataset consisting of *M* samples, where each
+    sample is a pair of an *N*-dimensional vector of features and a binary class label:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![{xj,yj} , with xj := (xj,...,xj ) and (yj) ∈ {0,1}. j=1,...,M 1 N j=1,...,M
+    ](img/file375.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Let (*ŷ*^j)[j=1,…,M] be the class labels assigned to the corresponding training
+    samples by the ANN for some configuration of the network weights w = (*w*[1]*,…,w*[K]).
+    Then, we can define the cost function as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑M ( ) L (w) := g yj,ˆyj(w) , j=1 ](img/file376.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where *g*(*y*^j*,ŷ*^j(w)) is the estimation error for sample *j*. There are
+    many possible ways of specifying the error function, the most popular being the
+    squared error
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![g(yj,ˆyj) := (yj − ˆyj)2\. ](img/file377.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Given the cost function *L*(⋅), we can calculate its sensitivities (derivatives)
+    *∂L*(w)*∕∂w*[k], for each *k* = 1*,…,K*, with respect to the network weights.
+    We can then *update* the weights by changing them in the direction that would
+    reduce the estimation error, i.e., by moving in the opposite direction of the
+    corresponding gradients:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∂L (w) wk ← − wk − η--∂w--, k ](img/file378.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where the coefficient *η* is called the *learning rate*, which can be either
+    constant or dynamic. We then iterate the procedure given by ([4.3.2](#x1-910002)),
+    ([4.3.2](#x1-910002)), and ([4.3.2](#x1-910002)) until either the estimation error
+    drops below a predefined threshold or a maximum number of iterations is reached.
+    Often the learning rate is set initially at some relatively large value and then
+    decays exponentially with the number of iterations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The gradients can be calculated numerically (e.g., using the finite difference
+    method) or analytically, the latter being obviously preferable. The most widely
+    used non-linear activation functions and their gradients are listed in Table [4.4](#4.4)
+    and their plots are shown in Figure [4.5](#4.5):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Table 4.4: Activation functions. ](img/file379.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Table 4.4: Activation functions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 4.5: Activation functions. ](img/file380.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.5: Activation functions.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Remark:** The sigmoid activation functions, such as logistic sigmoid and
+    hyperbolic tangent, are the activation functions of choice for shallow neural
+    networks with only a couple of hidden layers. In this case, it is possible to
+    exploit the smoothness of the sigmoid functions in order to achieve the best possible
+    approximation of the function we are trying to learn. However, in the case of
+    deep neural networks with a large number of hidden layers, we face the problem
+    of vanishing gradients – gradients of *σ*(*x*) and tanh(*x*) become null as *x*
+    →±∞. At the same time, ReLU always has a non-zero gradient for all *x >* 0, which
+    makes it the activation function of choice for deep neural networks whenever it
+    makes sense to sacrifice the smoothness of the activation function for non-zero
+    gradients.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Finally, the problem of overfitting can be addressed by adding a regularisation
+    penalty term to ([4.3.2](#x1-910002)), for example the following *L*[2] penalty,
+    which discourages large network weights associated with strong non-linearity:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑M ( ) L (w) := g yj,ˆyj(w) + λ &#124;&#124;w&#124;&#124;2, j=1 ](img/file381.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where the parameter *λ* controls the degree of regularisation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.3 Decision trees and gradient boosting
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The decision tree approach to classification is based on the concept of splitting
+    a dataset on the available features in order to maximise the *information gain*,
+    defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ M G(D, f) = I(D )− ∑ Nj-I(d ), j=1 N j ](img/file382.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where *D* is the dataset of the parent node, (*d*[j])[j=1,…,M] are the datasets
+    of the child nodes into which the parent node is split, *N* is the number of samples
+    in the parent node, (*N*[j])[j=1,…,M] are the number of samples in the child nodes,
+    and *I* is the chosen *impurity measure*. The latter indicates the presence of
+    the samples from the different classes in the same node: it is zero if the node
+    holds samples from a single class and is maximal if the node holds an equal number
+    of samples from the available classes. Therefore, maximisation of the information
+    gain is achieved through minimisation of the child node impurities.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [4.6](#4.6) provides a schematic representation of a decision tree based
+    on the binary ("rainy/not rainy") and continuous ("wind speed") features. The
+    decision tree algorithm starts at the *root*, which is shown in the figure as
+    a shaded box. Splitting the dataset on the root feature results in the largest
+    information gain. The splitting leads to the creation of *branches* (shown in
+    the figure as arrows going from the parent node to the child nodes) and *leaves*
+    (shown in the figure as white boxes). The terminal leaves (classes) are represented
+    as dashed boxes. The splitting continues until either no more branches can be
+    created or the maximum allowed depth is reached. It is good practice to avoid
+    the construction of a too deep tree by imposing *pruning* – a strict limit on
+    the maximum depth of the tree, in order to avoid overfitting.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-92004r6: Schematic representation of a decision tree. ](img/file383.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.6: Schematic representation of a decision tree.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The most widely used impurity measures are *Gini impurity* and *entropy*. Let
+    (*p*[i]^l)[i=1,…,C] be the proportion of the samples that belong to class *i*
+    for node *l*. Then the impurity measures are defined as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ C C ∑ l l ∑ l l IGini := pi(1 − pi) and IEntropy := − pilog2(pi). i=1 i=1
+    ](img/file384.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Decision trees can be seen as weak learners that can be *boosted* to be strong
+    learners. One of the most popular methods of combining weak classifiers into a
+    single strong classifier is *gradient boosting*. The main principle of gradient
+    boosting is as follows  [[185](Biblography.xhtml#XChengLi)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The objective is to improve the weak classifier through an iterative process
+    with the improvement measured as a minimisation of the estimation error (for example,
+    the squared error given by ([4.3.2](#x1-910002))). As before, without loss of
+    generality, we assume that we deal with the binary classification problem ([4.3.2](#x1-910002)).
+    Further, assume that at the *k*-th iteration, the weak learner returns the estimate
+    *ŷ*[k](x^j) for sample x^j. In order to improve the classification results, the
+    algorithm should add some estimator *h*[k], such that for the given sample x^j
+    we have
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ˆyk+1(xj) := ˆyk(xj)+ hk(xj) = yj, ](img/file385.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'where *y*^j is the correct class label for sample x^j. In other words, the
+    task is to fit the new estimator *h*[k] to the residuals *y*^j −*ŷ*[k](x^j), *j*
+    = 1*,…,M*. We also notice that the estimator *h*[k] is proportional to the negative
+    gradient of the squared error ([4.3.2](#x1-910002)) with respect to *ŷ*[k]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ j j j 1∂g(yj,ˆyk(xj)) hk(x ) := y − yˆk(x ) = − 2 ∂ˆyk . ](img/file386.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Therefore, gradient boosting combines boosting with the gradient descent algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 4.3.4 Benchmarking against standard classical classifiers
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The classical benchmarks of choice are the MLP classifier (`sklearn.neural_network.MLPClassifier`)
+    and the gradient boosting classifier (`sklearn.ensemble.GradientBoostingClassifier`).
+    Table [4.5](#x1-93003r5) holds weakly optimised model parameters: we did not search
+    for the absolute best set of model parameters but tried just a few configurations.
+    We can think of it as a very rough grid search method that produces a viable configuration
+    of model parameters but is not necessarily optimal. All other model parameters
+    were set at their default values.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| Gradient Boosting Classifier | MLP Classifier |'
+  prefs: []
+  type: TYPE_TB
+- en: '| loss = ‘deviance’ | hidden_layer_sizes = (20) |'
+  prefs: []
+  type: TYPE_TB
+- en: '| learning_rate = 0.1 | activation = ‘tanh’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| n_estimators = 1000 | solver = ‘adam’ |'
+  prefs: []
+  type: TYPE_TB
+- en: '| criterion = ‘friedman_mse’ | alpha = 0.1 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| max_depth = 3 | max_iter = 5000 |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | alpha = 0.01 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4.5: Model parameters for classical benchmarks.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Figure [4.7](#4.7) displays out-of-sample confusion matrices for the classical
+    benchmarks and Table [4.6](#x1-93007r6) provides a direct comparison of the out-of-sample
+    results for the QBoost and classical classifiers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-93005r7: Confusion matrices for the gradient boosting and MLP classifiers
+    (DCCC dataset, out-of-sample results). ](img/file387.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 4.7: Confusion matrices for the gradient boosting and MLP classifiers
+    (DCCC dataset, out-of-sample results).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '|  | Accuracy | Precision | Recall |'
+  prefs: []
+  type: TYPE_TB
+- en: '| Gradient Boosting | 0.83 | 0.69 | 0.35 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| MLP | 0.83 | 0.69 | 0.35 |'
+  prefs: []
+  type: TYPE_TB
+- en: '| QBoost | 0.83 | 0.71 | 0.33 |'
+  prefs: []
+  type: TYPE_TB
+- en: 'Table 4.6: Out-of-sample accuracy, precision, and recall for the QBoost, gradient
+    boosting, and MLP classifiers (DCCC dataset).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: QBoost achieves similar out-of-sample results to those of gradient boosting
+    and MLP classifiers. A comparison of in-sample and out-of-sample QBoost performance
+    confirms QBoost’s ability to impose strong regularisation and avoid overfitting.
+    At the same time, QBoost provides full transparency in terms of which features
+    contribute to the strong classifier. We also obtain an explicit optimal configuration
+    of features for any given degree of regularisation. This is not the case when
+    we deal with the conventional machine learning models, which may require an extensive
+    analysis of sensitivities and feature importances to unpack their "black boxes".
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum boosting can be applied to financial optimisation problems where the
+    emphasis is on transparency, interpretability, and robustness.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we learned how to apply quantum annealing to build a strong
+    classifier from several weak ones. We started with the general principles of quantum
+    boosting and its corresponding QUBO formulation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We then illustrated the application of the QBoost algorithm to solving a practical
+    real-world financial problem, namely predicting credit card clients defaulting
+    on their payments. The chosen dataset is reasonably large and complex enough to
+    provide a meaningful challenge while remaining easy to understand and interpret
+    the obtained results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is important to have an objective comparison with the corresponding classical
+    counterparts. With this in mind, we introduced several classical classifiers based
+    on the concepts of a feedforward neural network and a decision tree. We benchmarked
+    QBoost against the MLP and gradient boosting models using such metrics as accuracy,
+    precision, and recall.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we will learn how quantum annealing can assist in training
+    powerful generative machine learning models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join our book’s Discord space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Join our Discord community to meet like-minded people and learn alongside more
+    than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![PIC](img/file1.png)'
+  prefs: []
+  type: TYPE_IMG

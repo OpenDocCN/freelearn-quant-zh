@@ -1,0 +1,774 @@
+- en: Chapter 11. Asset and Liability Management
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: This chapter introduces the usage of R for commercial bank **asset and liability
+    management (ALM)** purposes. The ALM function in a bank is traditionally associated
+    with interest rate risk and liquidity risk management of banking book positions.
+    Both of the interest rate positioning and liquidity risk management require the
+    modeling of banking products. Nowadays, professional ALM units use complex **Enterprise
+    Risk Management (ERM)** frameworks, which are able to incorporate the management
+    of all risk types and provide an adequate tool for ALM to steer the balance sheet.
+    Our general objective is to set up a simplified framework of ALM to illustrate
+    the use of R for certain ALM tasks. These tasks are based on the interest rate
+    and liquidity risk management and the modeling of non-maturing accounts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter is structured as follows. We start with the data-preparation process
+    of ALM analysis. The process of planning and measurement needs special information
+    about the banking book, market conditions, and the business strategy. This part
+    establishes a data-management tool that consists of the major input datasets,
+    and extracts data into the form that we use in the rest of this chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we will be dealing with the measurement of the interest rate risk. There
+    are two common approaches in the banking industry to quantify interest rate risk
+    in the banking book. Simpler techniques use repricing gap table analysis to manage
+    the interest rate risk exposure and calculate parallel yield curve shocks to forecast
+    the **net interest income (NII)** and calculate the **market value of equity (MVoE)**.
+    More advanced methods use dynamic simulation of balance sheets and stochastic
+    simulation of interest rate development. Choosing which tool to use depends on
+    the targets and the balance sheet structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: For example, a savings bank (with client term deposits on the liability side
+    and fix bond investments on the asset side) focuses on its market value of equity
+    risk, while a corporate bank (with floating interest position) concentrates on
+    the net interest income risk. We illustrate how to efficiently provide a repricing
+    gap table and net interest income forecasts with R.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Our third topic is related to the liquidity risk. We define three types of
+    liquidity risks: structural, funding, and contingency risks. Structural liquidity
+    risks arise from the different contractual maturities on the asset and liability
+    side. Commercial banks usually collect short-term client deposits and place the
+    acquired funding into long-term client loans. As a result, the bank is exposed
+    to a roll-over risk on the liability side as it is uncertain how much of the maturing
+    short term client funding will be rolled over, which endangers the solvency of
+    the bank. Funding liquidity risks occur during the roll-overs; it refers to the
+    uncertainty of the cost of renewed funding. In ordinary course of business, even
+    though a bank can roll over its maturing interbank deposits, the cost of the deals
+    highly depends on the available liquidity on the market. Contingency risk refers
+    to the behavior of the clients in unforeseen scenarios. For example, a contingency
+    risk appears as sudden withdrawals of term deposits or premature repayments among
+    the client loans. While ALM appropriately handles the structural and funding liquidity
+    risks by regulating bank positions, contingency liquidity risks can only be hedged
+    by buffering liquid assets. We show how to build up liquidity gap tables and forecast
+    net financing needs.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the last section of this chapter, we will concentrate on the modeling of
+    non-maturing products. Client products can be classified by their maturity structure
+    and interest rate behavior. Examples of typical non-maturing liability products
+    are on-demand deposits and savings accounts without any notice period of withdrawal.
+    The clients can withdraw their money at any time, while the bank has the right
+    to modify the offered interest rate. On the asset side, overdrafts and credit
+    cards show quite similar characteristics. The complex models of non-maturing products
+    make the work of ALM quite challenging. Practically, the modeling of non-maturing
+    products means the mapping of the cash-flow profiles, estimating the interest
+    rate elasticity of the demand, and analyzing the liquidity-related costs in the
+    internal **funds transfer pricing (FTP)** system. Here, we demonstrate how to
+    measure the interest sensitivity of the non-maturing deposits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data preparation
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Complex ERM software are essential tools in the banking industry to quantify
+    the net interest income and the market value of equity risks, and to prepare reports
+    particularly on the asset and liability portfolio, the re-pricing gaps, and the
+    liquidity positions. We set up a simplified simulation and reporting environment
+    using R, which reproduces the key features of the commercially used ALM software
+    solutions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Typical ALM data processes follow the so-called **extract, transform, and load
+    (ETL)** logic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Data preparation](img/2078OT_11_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Extraction, which is the first phase, means that the bank has already collected
+    the deal-level and account-based source data from the local **data warehouse (DWH)**,
+    the mid-office, the controlling or the accounting systems. The source data of
+    the total balance sheet (here called a portfolio) is also extracted in order to
+    save calculation time, memory and storage space. Moreover, single deal-level data
+    is aggregated by the given dimensions (for example, by currency denomination,
+    interest behavior, amortization structure, and so on). Market data (such as yield
+    curves, market prices, and volatility surfaces) is also prepared in a raw dataset.
+    The next step is to set the simulation parameters (for example, yield curve shocks
+    and volume increments of the renewed business), in which we call strategy. For
+    the sake of simplicity, here we reduce this strategy to keep the existing portfolio
+    therefore the balance sheet remains the same forecasted period.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the stage of transformation, the portfolio, market, and strategy datasets
+    are combined and used for further analysis, and are transformed into new structures.
+    In our terms, this means that the cash-flow table is generated by using the portfolio
+    and market descriptors, and it is converted into a narrow data form.
+  prefs: []
+  type: TYPE_NORMAL
+- en: At the time of loading, the results are written into a reporting table. Usually,
+    users can define what dimensions of the portfolio and values of risk measures
+    should be loaded into the result database. We will show how liquidity risk and
+    interest rate risk can be measured and documented in the following sections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Data source at first glance
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'We call the data source that lists the balance sheet items "portfolios". Market
+    data (such as yield curves, market prices, and volatility surfaces) is also prepared
+    in a raw dataset. Let''s import our initial datasets into R. First of all, we
+    need to download the datasets and the functions to be used in this chapter from
+    the link of Packt Publishing. Now, let''s import the sample portfolio and market
+    datasets that are stored in standard `csv` format in a local folder that is used
+    in the code as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The selected datasets contain dates that have to be converted into the appropriate
+    format. We transform the date formats with the `as.Date` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Print the first few rows of the imported `portfolio` dataset with the `head(portfolio)`
+    command. It results the following output:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The columns of this data frame refer to the identification number (the number
+    of the row), the account type, and the product characteristics. The first three
+    columns represent the product identifier, the account identifier (or the short
+    name), and the long name of the account. Using the `levels` function, we can easily
+    list the type of accounts that are related to the typical commercial bank products
+    or balance sheet items:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: The `portfolio` dataset also contains the notional volume in EUR, the type of
+    the interest binding (FIX or LIBOR), the repricing frequency of the account in
+    the number of months (if the interest binding is LIBOR), and the spread component
+    of the interest rate in basis points. Furthermore, other columns describe the
+    cash-flow structure of the products. The columns are issue date (this is the first
+    repricing day), maturity date, the type of principal repayment structure (bullet,
+    linear, or annuity), and the repayment frequency in number of months. The last
+    column stores the identifier of the interest rate curve, what we use for the calculation
+    of future floating rate payments.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Actual interest rates are stored in the `market` dataset. Let''s list some
+    of the first few rows to check the content:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: The first column indicates the yield curve type (for example, yields are from
+    the bond market or the interbank market). The `type` column has to be the same
+    as in `portfolio` to connect the two datasets. The `date` column shows the maturity
+    of the current rate, and `rate` indicates the value of the rate in basis points.
+    As you can see, the yield curve is very unusual at this time as there are negative
+    yield curve points for certain tenors. The last column stores the label of the
+    yield curve tenor.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The datasets reflect the current state of the bank portfolio and the current
+    market environment. The actual date is September 30, 2014 in our analysis. Let''s
+    declare it as a date variable called `NOW`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, we finished the preparation of our source data. This is a sample dataset
+    created by the authors for illustrative purposes, and demonstrates the simplified
+    version of a hypothetical commercial bank balance sheet structure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cash-flow generator functions
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: After we import the static data of our balance sheet and the current yield curve,
+    we use this information to generate the total cash-flow of the bank. First, we
+    calculate the floating interest rates using the forward yield curve; after that,
+    we can generate separately the principal and interest cash-flows. For this purpose,
+    we predefine the basic functions to calculate principal cash-flows based on payment
+    frequencies and to extract floating interest rates for variable interest rate
+    products. This script is also available on the link provided by Packt Publishing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Copy it into the local folder and run the script of the predefined functions
+    from the working directory.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This source file loads the `xts`, `zoo`, `YieldCurve`, `reshape`, and `car`
+    packages, and if necessary, it installs these required packages. Let''s take a
+    look at the most important functions we use from this script file. The `cf` function
+    generates a predefined cash-flow structure. For example, generating a bullet payment
+    structure loan with the nominal value of EUR 100, a maturity of three years, and
+    a fixed interest rate of 10 percent looks like this:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The function provides the entire cash-flow, the interest and capital repayment
+    structure, and the value of the remaining capital in each period. The `get.yieldcurve.spot`
+    function provides a fitted spot yield curve on a certain sequence of dates. This
+    function uses the `YieldCurve` package, what we have already loaded before. Let''s
+    define a test variable of dates, as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Get and plot the fitted spot yields on the specified dates using the `market`
+    data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following screenshot is the result of the preceding command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cash-flow generator functions](img/2078OT_11_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The preceding graph draws the observed yield curve (points) and the fitted yield
+    curve (line). Looking at the `get.yieldcurve.forward` and `get.floating` functions,
+    we see that both of them use the repricing date of the balance sheet product.
+    The following example generates a sequence of repricing dates for a period of
+    20 timepoints.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Extract the forward yield curve using the `market` data:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, let's generate the floating rates and illustrate the difference between
+    the forward curve and the `test.floating` variable by setting the `showplot` option
+    to TRUE.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following screenshot gives the output for the preceding command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cash-flow generator functions](img/2078OT_11_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As you can see, the floating rate forecast consists of a step-wise function.
+    For pricing purposes, the floating rate is substituted by the actual forward rate;
+    however, the floating rate is only updated at the time of repricing.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Preparing the cash-flow
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In the next steps, we will demonstrate the cash-flow table that we produce
+    from our `portfolio` and `market` datasets. The `cf.table` function calls the
+    functions detailed earlier and provides a cash-flow of the exact product, which
+    has the `id` identification number. In the `portfolio` dataset, identification
+    numbers have to be integers, and they have to be in an increasing order. Practically,
+    each of them should be the line number of the given row. Let''s generate the cash-flow
+    of all products:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As the `portfolio` dataset contains 147 products, the running of this code
+    might take a few (10-60) seconds. When we are ready, let''s check the result that
+    shows the first few lines:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Now we are done with the creation of the cash-flow table. We can also calculate
+    the present value of the products and, the market value of the equity of the bank.
+    Let''s run the `pv.table` function in the following loop:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Print the initial rows of the table to check the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: The results might differ slightly because the `Svensson` method may produce
+    different outputs. To get the market value of equity, we need to add the present
+    values.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: The cash-flow table handles liabilities as negative assets; hence, adding up
+    all the items provides us with the appropriate results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Interest rate risk measurement
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'Managing interest rate risk is one of the most important components of asset
+    and liability management. Variation of the interest rate could affect both the
+    interest earnings and the market value of equity. Interest rate management focuses
+    on the sensitivity of net interest income. Net interest income (NII) equals the
+    difference between interest revenues and interest expenses:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interest rate risk measurement](img/2078OT_11_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Here, *SA* and *SL* denote the interest sensitive assets and liabilities, and
+    *NSA* and *NSL* refer to the non-sensitive ones. Interest rate of assets and liabilities
+    are noted with ![Interest rate risk measurement](img/2078OT_11_05.jpg) and ![Interest
+    rate risk measurement](img/2078OT_11_06.jpg). The traditional approach of interest
+    rate risk positioning of the balance sheet is based on gap models. Interest rate
+    gap refers to the net asset position for a certain time period between interest-bearing
+    assets and liabilities, which are repriced at the same time. The interest rate
+    gap (G) equals:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interest rate risk measurement](img/2078OT_11_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The re-pricing gap table shows these interest-bearing items in the balance
+    sheet grouped by the time of repricing and the basis of repricing (that is, 3
+    months EURIBOR or 6 months EURIBOR). Interest earnings variation can be characterized
+    as the risk-bearing items multiplied by the change of interest rate (*Δi*), shown
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interest rate risk measurement](img/2078OT_11_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The sign of the gap is crucial from an interest rate risk point of view. A positive
+    gap indicates increasing earnings when interest rates rise, and indicates decreasing
+    earnings when interest rates decline. The repricing gap table can also capture
+    the basis risk by aggregating the interest-bearing assets and liabilities based
+    on their reference interest rate (that is 3 months or 6 months EURIBOR). Interest
+    rate gap tables can be sufficient tools to determine the risk exposure from the
+    earnings perspective. However, gap models cannot be used as a single risk measure
+    to quantify rather the net interest income risk of the total balance sheet. Interest
+    rate gaps are management tools, which provide guidance on interest rate risk positioning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here, we show how to build up net interest income and repricing gap tables
+    and how to create figures about the net interest income term structure. Let''s
+    construct the interest rate gap table from the `cashflow.table` data. Continuing
+    from the previous section, we use the predefined `nii.table` function to produce
+    the desired data form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Considering the net interest income table for the next 7 years, we get the
+    following table:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It is easy to read what account brings interest revenues or costs for the bank.
+    The net interest rate table can be plotted as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The result is shown in the following graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interest rate risk measurement](img/2078OT_11_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now, we can explore the re-pricing gaps by composing the re-pricing gap table.
+    Let's use the predefined `repricing.gap.table` function and get the monthly gaps,
+    and then plot the results with `barplot`.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'With the preceding code, we can illustrate the marginal gaps for the next 12
+    months:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Interest rate risk measurement](img/2078OT_11_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We have to mention that there are more sophisticated tools for interest rate
+    risk management. In practice, simulation models are applied for risk management
+    purposes. However, the banking book risks are not explicitly subjected to capital
+    charge under Pillar 1 of the Basel II regulations; Pillar 2 covers the interest
+    rate risk in the banking book. Regulators lay particular emphasis also on the
+    risk assessment regarding the market value of equity. Risk limits are based on
+    specific stress scenarios, which could be either deterministic interest rate shocks
+    or historical volatility-based earnings at risk concepts. Therefore, risk measurement
+    techniques stand for scenario-based or stochastic simulation approaches, focusing
+    on the interest earnings or the market value of equity. Net interest income simulation
+    is rather a dynamic, forward-looking approach, while calculation of the market
+    value of equity provides a static result. Equity duration is also a widely used
+    measure for interest rate risk of the banking book. Duration of the assets and
+    liabilities are calculated to quantify the duration of equity. ALM professionals
+    often use effective duration, which incorporates embedded options (caps, floors,
+    and so on) in the interest rate sensitivity calculation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Liquidity risk measurement
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Traditional liquidity risk measurement tools are the so-called static and dynamic
+    liquidity gap tables. A liquidity gap table gives a cash-flow view of the balance
+    sheet, and organizes the balance sheet items according to their contractual cash-inflows
+    and cash-outflows into maturity buckets. The net cash-flow gap in each bucket
+    shows the bank structural liquidity position. The static view assumes a rundown
+    balance sheet while the dynamic liquidity table also takes into account the cash-flows
+    from rollovers and new businesses. For the sake of simplicity, we demonstrate
+    here only the static view of the liquidity positions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Starting with the preparation of daily cash-flow positions. Sometimes, we need
+    to know what the forecasted liquidity position is on a given date. It is easy
+    to aggregate the `cashflow.table` by date.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Secondly, let's prepare a liquidity gap table and create a chart. We can also
+    use a predefined function (`lq.table`) and check the resulting table.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To plot the liquidity gap figure, we can use the `barplot` function, which
+    is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output of the `barplot` function is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Liquidity risk measurement](img/2078OT_11_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The bars on the plot show the liquidity gap in each time bucket. The dashed
+    line with squares represents the net liquidity position (financial need), while
+    the solid black line shows the cumulative liquidity gap.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Modeling non-maturity deposits
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The importance of **non-maturity deposits (NMD)** in banking is substantially
+    high as the large part of commercial banks' balance sheets consist of client products
+    with non-contractual cash-flow features. Non-maturity deposits are special financial
+    instruments as the bank has an option to change the paid interest on the deposit
+    account at any time, and the client has the option to withdraw any amount from
+    the account without a period of notice. The liquidity and interest rate risk management
+    of these products are a crucial part of ALM analysis; therefore, modeling of non-maturity
+    deposits needs special attention. The uncertain maturity and interest rate profile
+    generates a high level of complexity in their hedging, internal transfer pricing,
+    and risk modeling.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A Model of deposit interest rate development
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'In the following code, we use Austrian non-maturity deposit time series data
+    that we queried from the ECB Statistical Database, which is publicly available.
+    We have monthly deposit interest rates (`cpn`), end-of-month balances (`bal`),
+    and the 1 month EURIBOR fixing (`eur1m`) in our dataset. The time series are stored
+    in a `csv` file in the local folder. The command for that is ads follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'First, we plot the 1 month EURIBOR rate and the deposit interest rate development
+    by using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following screenshot displays the graph of **Deposit Coupon vs 1-month
+    EURIBOR**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A Model of deposit interest rate development](img/2078OT_11_12.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Our first goal is to estimate an error correction model (ECM) to describe the
+    long-term explanatory power of 1 month EURIBOR rate on the non-maturity deposit
+    interest rate. Measuring the pass-through effect of market rates into deposit
+    interest rates has gained high importance in recent years from the regulatory
+    point of view as well. ECB required euro-zone banks to estimate the pass-through
+    effect in certain stress-test scenarios. We use the Engle-Granger two-step method
+    to estimate the ECM model. In the first step, we estimate the cointegrating vector
+    with a regression model. We take the residuals, and in the second step, we estimate
+    the long-term and short-term effects of EURIBOR on deposit rates using the error-correction
+    mechanism. Before the first step, we have to test whether both time series are
+    integrated in the same order. Therefore, we run Augmented Dickey-Fuller (ADF)
+    and the KPSS tests from the `urca` package on the original and the differentiated
+    time series. The script is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'As a result, we get the following summary tables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The null-hypothesis of the ADF test cannot be refused for the original time
+    series, but the test results show that the first difference of the deposit rate
+    and 1 month EURIBOR time series does not contain the unit root. This means that
+    both series are integrated at the first order, and they are I(1) processes. The
+    KPSS test has a similar result. The next step is to test the cointegration of
+    the two I(1) series by testing the residuals of the simple regression equation,
+    where we regress the deposit interest rates on the 1 month EURIBOR rate. Estimate
+    the cointegrating equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Do the unit root test of residuals as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The test statistic of the ADF test is lower than the 1 percent critical value,
+    so we can conclude that the residuals are stationary. This means that the deposit
+    coupon and 1 month EURIBOR are cointegrated, as the linear combination of the
+    two *I(1)* time series gives us a stationary process. The existence of cointegration
+    is important because it is a prerequisite for the error-correction model estimation.
+    The basic structure of an ECM equation is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A Model of deposit interest rate development](img/2078OT_11_13.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'We estimate the long-term and short-term effect of X on Y; the lagged residuals
+    from the cointegration equation represent the error-correction mechanism. The
+    ![A Model of deposit interest rate development](img/2078OT_11_14.jpg) coefficient
+    measures the short-term correction part, while ![A Model of deposit interest rate
+    development](img/2078OT_11_15.jpg) is the coefficient of the long-term equilibrium
+    relationship, which captures the correction of deviations from the equilibrium
+    of X. Now, we estimate the ECM model using the `dynlm` package, which is suitable
+    to estimate dynamic linear models with lags:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: The lagged changes in 1 month EURIBOR are corrected in the deposit interest
+    rates by 25.7 percent (![A Model of deposit interest rate development](img/2078OT_11_16.jpg))
+    on the short run. We cannot conclude that deviations from the long-term equilibrium
+    are not corrected as beta2 is not significant and has a positive sign, meaning
+    that the errors are not corrected but boosted by 7 percent. The economic interpretation
+    of the results is that we cannot identify a long-term relationship between NMD
+    coupons and 1 month EURIBOR rate, but deviations in the EURIBOR are reflected
+    in the coupons by 25.7 percent in the short term.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Static replication of non-maturity deposits
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: A possible method to hedge interest-rate-related risks of non-maturity deposits
+    is to construct a replicating portfolio of zero-coupon instruments to mimic the
+    interest payment of non-maturity deposits, and earn a margin on the higher-yielding
+    replicating instruments over the low interest on deposit accounts.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s assume that we include 1-month and 3-month EUR money market placements
+    and 1Y, 5Y, and 10Y government benchmark bonds in our replicating portfolio. We
+    queried the historical time series of the yields from ECB Statistical Data Warehouse
+    and stored the data in a `csv` file in the local folder. We will call the `csv`
+    file using the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Plot the results:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following screenshot shows the ECB yield curve:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Static replication of non-maturity deposits](img/2078OT_11_17.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Our goal is to calculate those portfolio weights of the five hedging instruments
+    in the replicating portfolio, which ensures that the minimum volatility of the
+    margin compared to the deposit coupon (cpn) in the given time horizon. In other
+    words, we would like to minimize the tracking error of the interest earning of
+    our replicating portfolio. The problem can be formulated in the following least
+    squares minimization formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Static replication of non-maturity deposits](img/2078OT_11_18.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'This is subject to:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Static replication of non-maturity deposits](img/2078OT_11_19.jpg)![Static
+    replication of non-maturity deposits](img/2078OT_11_20.jpg)![Static replication
+    of non-maturity deposits](img/2078OT_11_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ***A*** is the ![Static replication of non-maturity deposits](img/2078OT_11_22.jpg)
+    matrix's historical rates, ***b*** is the vector of the deposit coupons, and ***x***
+    is the vector of portfolio weights. The function to be minimized is the squared
+    difference between the vector ***b*** and the linear combination of ***x*** with
+    the columns of matrix ***A***. The first condition is that the portfolio weights
+    have to be non-negative and summed up to 1\. We introduce an additional condition
+    on the average maturity of the portfolio, which should be equal to the *l* constant.
+    The vector ***m*** contains the maturity in months of the five hedging instruments.
+    The rationale behind this constraint is that banks usually assume that the core
+    base of non-maturity deposit volume stays in the bank for a longer term. The tenor
+    of this long-term part is usually derived from a volume model, which could be
+    the ARIMA model or a dynamic model with dependency on market rates and the deposit
+    coupon.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To solve the optimization problem, we use the `solve.QP` function from the `quadprog`
+    package. This function is suitable to solve quadratic optimization problems with
+    equality and inequality constraints. We reformulate the least squares minimization
+    problem in order to derive the proper parameter matrix (***A'A***) and parameter
+    vector (***b'A***) of the `solve.QP` function.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We also set ![Static replication of non-maturity deposits](img/2078OT_11_23.jpg),
+    assuming 5 year final maturity for the replicating portfolio, which mimics the
+    liquidity characteristics of the core part of the NMD portfolio through the following
+    command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our result suggests that based on historical calibration, we should keep 51
+    percent in 3 month money market placement and 49 percent in a 10 year government
+    bond instrument in our replicating portfolio to replicate the coupon development
+    of NMDs with the smallest tracking error. With these portfolio weights, the income
+    on our replicating portfolio and the expense on deposit accounts are calculated
+    by the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following graph displays **Margin of static replication**:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Static replication of non-maturity deposits](img/2078OT_11_24.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As you can see, due to the replication with this static strategy, a bank was
+    able to earn more profit around 2010, when the term spread between the short-
+    and long-term interest rates was unusually high.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter, we demonstrated how R can support the process of asset and
+    liability management in a commercial bank. There is a wide range of tasks from
+    data preparation to reporting, where the R programming language can help or solve
+    repeating problems. However, we only gave a brief introduction about how to solve
+    problems of interest rate and liquidity measurement. We also provided some examples
+    about the statistical estimation of the interest rate sensitivity of non-maturity
+    deposits. You can find practical knowledge about the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Generating cash-flow from bank portfolios and market data
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Measuring and reporting tools for basic interest rate risk management
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Measuring and reporting tools for basic liquidity risk management
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Modeling the behavior of non-maturity deposits
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: We think that this chapter is an organic part of the bank management topics
+    in this book. Asset and liability management brings a particular problem set of
+    the bank management, and R, as an open-source language with a versatile package
+    library, can effectively add valuable tools for practitioners.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Bessis, Joel (2011)**: Risk management in banking, *John Wiley & Sons*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Choudhry, Moorad (2011)**: Bank asset and liability management: strategy,
+    trading, analysis, *John Wiley & Sons*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Matz, Leonard and Neu, Peter (2006)**: Liquidity risk measurement and management:
+    A practitioner''s guide to global best practices, *John Wiley & Sons*.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

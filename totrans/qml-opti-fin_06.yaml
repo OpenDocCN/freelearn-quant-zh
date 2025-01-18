@@ -1,0 +1,687 @@
+- en: '7'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Parameterised Quantum Circuits and Data Encoding
+  prefs: []
+  type: TYPE_NORMAL
+- en: Having built the quantum hardware, how can we use it to the maximum effect given
+    its scale, connectivity, and fidelity rate? This question can be best answered
+    if we split it into two parts. First, what problems are in principle solvable
+    on NISQ computers? Second, how do we encode classical data into quantum states?
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rest of this book focuses on the first part: problems and models that can
+    be formulated in a way that doesn’t require a massive number of qubits and that
+    are, at least to some extent, noise tolerant. The first step in this direction
+    is the concept of the Parameterised Quantum Circuit (PQC) as a generic quantum
+    machine learning model.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The second part – data encoding – is equally important and relies on several
+    practical methods described in this chapter. This is an active area of research
+    where we can expect most of the progress to come from the quantum software side.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.1 Parameterised Quantum Circuits
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'We have seen how to combine quantum gates to form arbitrarily wide and deep
+    quantum circuits. A quantum circuit transforms an initial quantum state ![|ψ⟩](img/file659.jpg)
+    into a final quantum state ![|ψ ′⟩](img/file660.jpg) by applying a sequence of
+    unitary operators:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ′⟩ = U (𝜃 )...U (𝜃 )U (𝜃 ) &#124;ψ ⟩. m m 2 2 1 1 ](img/file661.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Here, (U[i])[i=1,…,m] and (𝜃[i])[i=1,…,m] denote respectively the individual
+    gates and the associated vectors of gate parameters. Some gates may be *fixed*
+    (e.g., a two-qubit CNOT gate viewed as a controlled rotation of the target qubit
+    state around the *x*-axis by a fixed angle *𝜃* = *π*) while some gates may be
+    *adjustable* (e.g., a one-qubit R[X](*𝜃*) gate that rotates the qubit state around
+    *x*-axis by an arbitrary angle *𝜃* ∈ [−*π,π*]).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Once the final quantum state ![ ′ |ψ ⟩](img/file662.jpg) is constructed, the
+    individual qubits can be measured. After measurement the qubit states stay the
+    same in the basis in which they were measured, which we always assume to be the
+    standard computational basis unless explicitly specified otherwise. Therefore,
+    the final output of running the quantum circuit and then measuring the qubits
+    (not necessarily all qubits have to be measured) is a classical bitstring.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What we just described is a parameterised quantum circuit schematically shown
+    in Figure [7.1](#7.1). The PQC can be used in many different ways. First of all,
+    let us note that the PQC can be *trained*. Training the PQC has the meaning of
+    finding an optimal set of adjustable parameters (the vectors 𝜃[1]*,…,*𝜃[m] above,
+    for example) given the overall PQC *ansatz* (architecture). The meaning of "optimal"
+    is problem dependent but generally means a configuration of adjustable parameters
+    that ensures maximum closeness of the final quantum state ![ ′ |ψ ⟩](img/file663.jpg)
+    to some desired target quantum state that corresponds to a particular probability
+    distribution we aim to encode.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 7.1: Schematic representation of a Parameterised Quantum Circuit.
+    ](img/file664.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.1: Schematic representation of a Parameterised Quantum Circuit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the following chapters, we will see how PQCs can be used as discriminative
+    ML models (Chapter [8](Chapter_8.xhtml#x1-1620008)), as generative ML models (Chapter [9](Chapter_9.xhtml#x1-1850009)),
+    and as optimisers (Chapters [10](Chapter_10.xhtml#x1-20200010) and [11](Chapter_11.xhtml#x1-21700011)):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of the Variational Quantum Eigensolver, a PQC is used to construct
+    the final quantum state ![ ′ |ψ ⟩](img/file665.jpg) that is close to the eigenstate
+    of the problem Hamiltonian that corresponds to the smallest eigenvalue (the ground
+    state energy that is linked to the minimum of the cost function).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When we build a quantum discriminative model – a Quantum Neural Network trained
+    as a classifier – we are interested in measuring only a handful of qubits (or
+    even just a single qubit). This should give us the binary representation of the
+    "class label" for the given sample. The input (initial quantum state ![|ψ ⟩](img/file666.jpg))
+    encodes the sample we want to classify.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: When our objective is to build a quantum generative model – the Quantum Circuit
+    Born Machine – we measure all qubits. This gives us a bitstring that is a generated
+    sample from the probability distribution encoded in the final quantum state ![|ψ
+    ′⟩](img/file667.jpg) constructed by the PQC. The initial state is initialised
+    as ![|0⟩](img/file668.jpg)^(⊗n).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'PQCs are invariably trained using hybrid quantum-classical protocols. The hybrid
+    approach is shown schematically in Figure [7.2](#7.2) and consists of three components:
+    the user, the classical computer, and the quantum computer  [[29](Biblography.xhtml#XBenedetti2019)].'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figurex1-151003r2: Training PQCs – schematic process. ](img/file669.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.2: Training PQCs – schematic process.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The user provides the model for the problem; the classical computer pre-processes
+    the data and produces the initial set of parameters for the PQC; the quantum computer
+    runs the PQC by preparing the quantum state as prescribed by the PQC and by performing
+    measurements. Measurement outcomes are then post-processed by the classical computer,
+    which updates the model parameters as per the chosen training algorithm (backpropagation
+    of error with gradient descent, non-differentiable learning method, etc.) The
+    overall algorithm is run in a closed loop between the classical and quantum computers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: PQC is one of the most successful frameworks for applying NISQ computers to
+    solving non-trivial real-world problems. It follows the paradigm of a hybrid quantum-classical
+    computational protocol and can be used for experimenting with the wide range of
+    quantum machine learning models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.2 Angle Encoding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Let us go back to the Bloch sphere (Figure [7.2](#x1-1520002)) that visualises
+    the canonical representation of the qubit state – a unit vector in the 2-dimensional
+    complex vector space:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⌊ ( ) ⌋ cos 𝜃- &#124;ψ⟩ = &#124;&#124; (2 ) &#124;&#124;. ⌈eiϕsin 𝜃- ⌉
+    2 ](img/file670.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: The angles *𝜃* ∈ [0*,π*] and *ϕ* ∈ [0*,*2*π*] uniquely determine the position
+    of the qubit on the unit sphere. Since we need two continuous variables to specify
+    the qubit state, a single qubit can encode two real-valued features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 7.3: Quantum state |ψ ⟩ on the Bloch sphere. ](img/file672.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.3: Quantum state ![|ψ ⟩](img/file671.jpg) on the Bloch sphere.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.2.1 The basic encoding scheme
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'We can illustrate this with the following schematic example: let us assume
+    that we have an 8-feature dataset consisting of *N* samples and that all features
+    *X*[1]*,…,X*[8] are real-valued and such that their extremal values, *X*[i]^(min)
+    and *X*[i]^(max), *i* = 1*,…,*8, can be computed. Then, for every sample *j* =
+    1*,…,N* from the dataset, we can establish a one-to-one mapping between the values
+    of the features *X*[i]^j and the corresponding rotation angles *𝜃*[i]^j:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ j Xj − Xmin 𝜃i = --miax----iminπ, X i − X i ](img/file673.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where *X*[i]^(min) := min[j]*X*[i]^j and *X*[i]^(max) := max[j]*X*[i]^j. Rotation
+    angles *𝜃*[i]^j generalise angles *𝜃* and *ϕ* in Figure [7.2](#x1-1520002).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 7.4: Feature encoding – rotations around y axis. States of qubits
+    q1,…,q4 are shown on the same Bloch sphere. The initial state of all qubits is
+    |0⟩ and the end states after rotations around the y-axis by angles 𝜃1,…,𝜃4 are
+    denoted as A, B, C, and D. ](img/file675.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.4: Feature encoding – rotations around y axis. States of qubits q[1],…,q[4]
+    are shown on the same Bloch sphere. The initial state of all qubits is ![|0⟩](img/file674.jpg)
+    and the end states after rotations around the y-axis by angles 𝜃[1],…,𝜃[4] are
+    denoted as A, B, C, and D.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The 8-feature sample can be encoded in a 4-qubit state (unentangled). For example,
+    starting with four quantum registers initialised as ![|0⟩](img/file676.jpg) in
+    the computational basis, we can first perform rotations around the *y*-axis: rotation
+    by *𝜃*[1] for qubit 1, rotation by *𝜃*[2] for qubit 2, and so on. This is shown
+    schematically in Figure [7.2.1](#x1-1530001) where qubits move from their initial
+    state ![|0⟩](img/file677.jpg) to states *A*, *B*, *C*, and *D*.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.2.2 Encoding two features per quantum register
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'After that, we encode the remaining features by performing rotations around
+    the *z*-axis: rotation by *𝜃*[5] for qubit 1, rotation by *𝜃*[6] for qubit 2,
+    and so on as shown in Figure [7.5](#7.5).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 7.5: Feature encoding – rotations around the z-axis. The initial states
+    of qubits q1,…,q4 are A,B,C,D. After rotation around the z-axis by angles 𝜃5,…,𝜃8,
+    the final qubit states are E,F,G,H. ](img/file678.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.5: Feature encoding – rotations around the z-axis. The initial states
+    of qubits q[1],…,q[4] are A,B,C,D. After rotation around the z-axis by angles
+    𝜃[5],…,𝜃[8], the final qubit states are E,F,G,H.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The qubit states move from *A* to *E*, from *B* to *F*, from *C* to *G*, and
+    from *D* to *H*. The corresponding quantum circuit looks as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 7.6: 4-qubit quantum circuit for 8-feature sample encoding. ](img/file679.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.6: 4-qubit quantum circuit for 8-feature sample encoding.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.2.3 Mapping a classical data sample into a quantum state
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: We can summarise the angle encoding scheme as follows. For the classical data
+    sample *X*^j := (*X*[1]^j*,…,X*[K]^j) ∈ℝ^K, *j* = 1*,…,N*, angle encoding works
+    by constructing the map
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ K ( ( j) ( j) ) j ⊗ 𝜃i 𝜃i X ↦−→ cos 2 |0⟩+ sin 2 |1⟩ , i=1 ](img/file680.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'where angles (*𝜃*[i]^j)[i=1,…,K;j=1,…,N] are given by the expression ([7.2.1](#x1-1530001)).
+    This scheme only requires one rotation gate for each qubit, hence encodes as many
+    features as the number of qubits. However, we know that a single quantum register
+    can encode two real variables. The following scheme maps the classical sample
+    into the quantum state with the help of an extra phase gate:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ⊗K ( ( 𝜃j ) (𝜃j ) ) Xj ↦−→ cos -2i−1 |0⟩+ exp (i𝜃2i)sin -2i−1 |1⟩ . i=1
+    2 2 ](img/file681.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This scheme allows us to encode 2*n* features with *n* qubits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '*n* quantum registers have capacity to encode 2*n* continuous features with
+    just two layers of one-qubit gates.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.3 Amplitude Encoding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'So far we have not utilised the information encoding possibilities provided
+    by entanglement although, in principle, most of the information in large quantum
+    systems can be stored in correlations. In the case of our 8-feature dataset example
+    considered in the previous section, we can reduce the number of necessary qubits
+    to just three if we use entanglement. The first six rotation angles *𝜃*[1]*,…,𝜃*[6]
+    can still be used for the single-qubit rotations R[Y]*,*R[Z]. The last two, *𝜃*[7]
+    and *𝜃*[8], can be used for controlled rotations that entangle qubits 1 and 2
+    and qubits 2 and 3 as shown in Figure [7.7](#7.7):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 7.7: 3-qubit quantum circuit for 8-feature sample encoding. ](img/file682.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 7.7: 3-qubit quantum circuit for 8-feature sample encoding.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In principle, since the *n*-qubit state can be uniquely described by specifying
+    2^n probability amplitudes, we only need *n* qubits to encode 2^n features. However,
+    this superdense encoding is not always practical or desirable. The *amplitude*
+    *encoding* was used in the seminal work by Harrow, Hassidim, and Lloyd  [[126](Biblography.xhtml#XHHL2009)],
+    but obtaining the amplitude encoding is a non-trivial task for problems of realistic
+    size and this, usually, is the main bottleneck for many quantum algorithms  [[184](Biblography.xhtml#XLandman2021)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The amplitude encoding can be formalised in the following way. Consider an *N*-dimensional
+    (with *N* = 2^n) data point x := (*x*[1]*,…,x*[N]) ∈ℂ^N. We can associate quantum
+    amplitudes to the coordinates as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∑N |ψx⟩ = -1-- xi |i⟩, ∥x∥ i=1 ](img/file683.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ∥x∥ := ∑ [i=1]^N|*x*[i]|² is the normalisation factor. We can therefore
+    encode the dataset D := (x¹*,…,*x^M) consisting of *M* points in ℝ^N as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ p 1 2∑ -- |D⟩ = C-- xi |i⟩, D i=1 ](img/file684.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: for some integer *p*, where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![-- -- 1 1 2 2 M M MN x = (xi)i=1,...,2p = (x1,...,xN ,x1,...,x N,...,x1 ,...,x
+    N ) ∈ ℝ ](img/file685.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: is the concatenation of all the data points and *C*[D] is a normalisation constant.
+    Here the constraint is hence that 2^p ≥ *MN*, namely *p* ≥ log [2](*MN*). Note
+    that there may again be some sparsity in the case where 2^p *> MN*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The clear advantage is that it can store 2^n features with only *n* qubits,
+    but unfortunately has a depth 𝒪(2*n*) and is hence hard to build.
+  prefs: []
+  type: TYPE_NORMAL
+- en: With the amplitude encoding, *n* quantum registers have capacity to encode 2^n
+    continuous features. However, this requires construction of the deep quantum circuits
+    with the circuit depth growing as 𝒪(2*n*). This solution may not be practical
+    for NISQ computers when dealing with a large number of features.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.4 Binary Inputs into Basis States
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Consider a real number *x* ∈ℝ approximated with the binary representation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) 𝔦∑−1 ∑𝔡 x ≈ ^x = (x 𝔦,x𝔦−1,⋅⋅⋅ ,x−𝔡) := (− 1)x𝔦( xj2j + x −j2−j) j=0
+    j=1 ↦− → &#124;x𝔦x𝔦−1⋅⋅⋅x−𝔡⟩ =: &#124;x⟩, ](img/file686.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for some non-negative integers 𝔦*,*𝔡, where *x*[𝔦] ∈{0*,*1} accounts for the
+    sign of *x* and (*x*[j])[j=0,…,𝔦−1] ∈{0*,*1}^(𝔦) and (*x*[j])[j=−1,…,−𝔡] ∈{0*,*1}^(𝔡)
+    represent respectively the integer and decimal parts of *x*. Consider now a vector
+    x := (*x*¹*,…,x*^N) ∈ℝ^N. We can concatenate all the binary approximations *x*¹*,…,**x*^N
+    into one vector
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![( 1 1 1 N N N ) (1+𝔦+𝔡)N x𝔦,x𝔦− 1,⋅⋅⋅ ,x−𝔡,⋅⋅⋅ ,x𝔦 ,x 𝔦−1,⋅⋅⋅ ,x− 𝔡 ∈ {0,1}
+    ](img/file687.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: to obtain a quantum state representation with (1 + 𝔦 + 𝔡)*N* qubits of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 1 1 1 N N N ⟩ |x𝔦x𝔦−1⋅⋅⋅x−𝔡 ⋅⋅⋅x 𝔦 ,x𝔦−1⋅⋅⋅x−𝔡 . ](img/file688.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Since the vector thus obtained only contains 0 and 1, starting from the quantum
+    state ![|0⟩](img/file689.jpg)^(⊗(1+𝔦+𝔡)N), we only need to apply the NOT gate X
+    whenever the corresponding value is equal to one, so that the encoding circuit
+    simply reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ⊗(1+𝔦+𝔡)N ⊗N ⊗ 𝔦 xl ⊗(1+𝔦+𝔡)N |0⟩ ↦− → X k |0⟩ . l=1 k=−𝔡 ](img/file690.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: While the algorithm is straightforward and only requires the use of the single-qubit
+    quantum gate X, it requires a large number of qubits and is in general not efficient
+    in practice. Indeed, for a given dimension *N*, there are 2^N possible basis states.
+    If a dataset contains only *M* points with *M* being much smaller than *N*, the
+    quantum representation will therefore be sparse.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Example:** Consider a dataset D = (*x*¹*,x*²) with *x*¹*,x*² ∈ [−2*,*2],
+    each approximated with four qubits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 1 1( 1 1 ) x1 ≈ (− 1)x1(20x10 + 2− 1x1−1 + 2−2x1−2) = (− 1)x1 x10 +-x1−1
+    +-x1− 2 2 4 ](img/file691.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 2 2 ( 1 1 ) x2 ≈ (− 1)x1(20x20 + 2−1x2− 1 + 2−2x2−2) = (− 1)x1 x20 +-x2−1
+    +-x2−2 , 2 4 ](img/file692.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: with *x*[k]^i ∈{0*,*1} for each *i* = 1*,*2 and *k* = −2*,*−1*,*0*,*1\. Their
+    quantum embeddings therefore read ![|x1x1x1 x1 ⟩ 1 0 − 1 −2](img/file693.jpg)
+    and ![|x2x2x2 x2 ⟩ 1 0 −1 − 2](img/file694.jpg), and the quantum circuit to encode
+    the dataset therefore takes the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ [( 1 1 1 1 ) ( 2 2 2 2 )] |0⟩⊗8 ↦−→ Xx1 ⊗ Xx0 ⊗ Xx−1 ⊗ Xx−2 ⊗ Xx1 ⊗ Xx0
+    ⊗ Xx−1 ⊗ Xx−2 |0⟩⊗8\. ](img/file695.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 7.5 Superposition Encoding
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: As developed in  [[287](Biblography.xhtml#XTrugenberger2001), [294](Biblography.xhtml#XVentura2000)],
+    it is possible to build such a superposition of data in time linear in the number
+    of points and features. We consider again a dataset D := (x¹*,…,*x^M), with x^k
+    := (*x*[1]^k*,…,x*[n]^k) ∈{0*,*1}^n for each *k* = 1*,…,M*. We use a quantum system
+    of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![|ψ0⟩ := |0⟩⊗n |00⟩ |0⟩⊗n , ](img/file696.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where the left-most part with *n* qubits is called the loading register while
+    the right-most one (also with *n* qubits) is the storage register. The middle
+    one is an ancilla register that will be used to control manipulations between
+    the loading and storage registers. The encoding algorithm works recursively. We
+    first apply an Hadamard gate to the second ancilla qubit and store the first data
+    point x¹ into the storage register. Since
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![(⊗ n ) Xx1i |0⟩⊗n = |x1 ⋅⋅⋅x1⟩ = |x1⟩, i=1 1 n ](img/file697.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: this can be achieved (after the Hadamard operation) by applying the unitary
+    operator
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( n ) I⊗n ⊗ I⊗ H ⊗ ⊗ Xx1i i=1 ](img/file698.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: controlled with the second ancilla qubit, and the resulting quantum state reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ⊗n ⊗n ⊗n 1⟩ |ψ ⟩ := |0⟩--|0√0⟩-|0⟩---+ |0⟩---|√01⟩ |x-. 1 2 2 ](img/file699.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This can easily be turned (see the proof of Lemma [7](#x1-158003r7) below) into
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ⊗n 1⟩ ⊗n ⊗n |ψ ⟩ = |0⟩--|√00⟩ |x--+ |0⟩---|0√1⟩-|0⟩---. 1 2 2 ](img/file700.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: After *m* steps, we arrive at a quantum state of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 ∑m ⟩ ∘ M--−-m-- &#124;ψm ⟩ := √--- &#124;0⟩⊗n &#124;00⟩ &#124;xk + -------
+    &#124;0⟩⊗n &#124;01 ⟩ &#124;0 ⟩⊗n . M k=1 M ](img/file701.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The following lemma guarantees the validity of the algorithm:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lemma 7.** *There exists a unitary operator* U *such that*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ m+1 ∘ ------------- -1-- ∑ ⊗n k⟩ M-−--(m--+-1) ⊗n ⊗n U |ψm ⟩ = √M--- |0⟩
+    |00⟩ |x + M |0⟩ |01⟩ |0⟩ =: |ψm+1 ⟩ k=1 ](img/file702.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*Proof.* The proof is constructive and shows precisely what the operator U
+    looks like.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Construct the successive maps
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '| ![ ∑m ⟩ ∘ -------- &#124;ψ ⟩ = √-1-- &#124;0⟩⊗n &#124;00 ⟩ &#124;xk + M-−--m-&#124;0⟩⊗n
+    &#124;01⟩ &#124;0⟩⊗n , m M k=1 M m ⟩ ∘ -------- ↦−→ √-1--∑ &#124;xm+1 ⟩ &#124;00⟩
+    &#124;xk + M--−-m-&#124;xm+1 ⟩ &#124;01⟩ &#124;0⟩⊗n, M M km=1 ⟩ ∘ -------- ↦−→
+    √-1--∑ &#124;xm+1 ⟩ &#124;00⟩ &#124;xk + M--−-m-&#124;xm+1 ⟩ &#124;01⟩ &#124;xm+1
+    ⟩, M M km=1 ∘ -------- --1- ∑ m+1 ⟩ k⟩ M--−-m- m+1 ⟩ m+1 ⟩ ^ ⟩ ↦−→ √M--- &#124;x
+    &#124;00⟩ &#124;x + M &#124;x &#124;11⟩ &#124;x =: &#124;ψm . k=1 ](img/file703.jpg)
+    |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: The first one is easily achieved by applying the operator ![( ) ⊗ni=1 Xxmi+1](img/file704.jpg)⊗I^(⊗2)
+    ⊗I^(⊗n) to ![|ψm⟩](img/file705.jpg). The second step is realised with controlled
+    gates using the second qubit of the ancilla register as control. The last one
+    is trivial with a CNOT gate on the first ancilla qubit using the second ancilla
+    qubit as control.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: Now define the unitary gate
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '![ ( √----------- ) ^U := √--1-----( M − m − 1 ----1-----) , M − m − 1 √ M
+    − m − 1 ](img/file706.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: and note that its controlled (by the first ancilla qubit *a*[1]) version [a[1]]U
+    acts as
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '| [a[1]]U![&#124;00⟩](img/file707.jpg) | = ![&#124;00⟩](img/file708.jpg)*,*
+    |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '| [a[1]]U![&#124;11⟩](img/file709.jpg) | = ![---1----- √M--−-m--](img/file710.jpg)![&#124;1⟩](img/file711.jpg)⊗![(
+    √ ----------- ) &#124;0⟩ + M − m − 1 &#124;1⟩](img/file712.jpg) = ![ √ -----------
+    &#124;10⟩+---M--−-m-−-1-&#124;11⟩- √M--−-m--](img/file713.jpg)*.* |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: Applying it to the ancilla register of ![ ⟩ |^ψm](img/file714.jpg) in Step 1
+    (and leaving all other qubits unchanged) yields
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '|  | = I^(⊗n) ⊗ [a[1]]U⊗I^(⊗n)![ ⟩ &#124;^ψm](img/file715.jpg) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '|  | = ![√-1-- M](img/file716.jpg)∑ [k=1]^m![&#124;xm+1 ⟩](img/file717.jpg)![
+    &#124;00⟩](img/file718.jpg)![ ⟩ &#124;xk](img/file719.jpg) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '|  | + ![∘ M--−-m-- ------- M](img/file720.jpg)![ ⟩ &#124;xm+1](img/file721.jpg)![
+    { &#124;10⟩+ √M--−-m-−-1-&#124;11⟩} -------√--------------- M − m](img/file722.jpg)![
+    ⟩ &#124;xm+1](img/file723.jpg) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '|  | = ![√-1-- M](img/file724.jpg)∑ [k=1]^m![&#124;xm+1 ⟩](img/file725.jpg)![
+    &#124;00⟩](img/file726.jpg)![ ⟩ &#124;xk](img/file727.jpg) |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: '|  | + ![ 1 √---- M](img/file728.jpg)![ ⟩ &#124;xm+1](img/file729.jpg)![{ √
+    ----------- } &#124;10⟩+ M − m − 1 &#124;11⟩](img/file730.jpg)![ ⟩ &#124;xm+1](img/file731.jpg)
+    |'
+  prefs:
+  - PREF_IND
+  type: TYPE_TB
+- en: We then flip the first ancilla qubit to 0 in the ![|10⟩](img/file732.jpg) case
+    (easily achievable with SWAP and CNOT gates) and, regrouping the same ancilla
+    terms together we obtain
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![ m+∑1 ⟩ ⟩ ∘ ------------- ⟩ ⟩ √1-- |xm+1 |00⟩ |xk + M--−-(m-+-1) |xm+1 |11⟩
+    |xm+1 . M k=1 M ](img/file733.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: Resetting the registers as in ([7.5](#x1-1580005)) to obtain
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: '![ ------------- 1 m∑+1 ⟩ ∘ M − (m + 1) √---- |0⟩⊗n |00⟩ |xk + ------------
+    |0 ⟩⊗n |01⟩ |0⟩⊗n M k=1 M ](img/file734.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: finishes the proof of the lemma.
+  prefs:
+  - PREF_IND
+  type: TYPE_NORMAL
+- en: □
+  prefs: []
+  type: TYPE_NORMAL
+- en: 7.6 Hamiltonian Simulation
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Hamiltonian encoding, popular in quantum machine learning, is inspired by the
+    Schrödinger equation ([1.2.2](Chapter_1.xhtml#x1-370002)), which reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ d|ψ-(t)⟩- iℏ dt = ℋ |ψ (t)⟩, ](img/file735.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: for some Hamiltonian ℋ, where ℏ is the Planck constant, and subject to some
+    boundary condition at *t* = 0\. The solution to the equation reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) |ψ (t)⟩ = exp − iℋt-- |ψ(0)⟩. ℏ ](img/file736.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The idea of Hamiltonian encoding is to encode the initial data into the Hamiltonian ℋ.
+    Consider a cloud of points X ∈ℳ[n,n](ℂ). If X is Hermitian, we can define the
+    Hamiltonian matrix ℋ[X] := X, otherwise the augmented version
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) 0n,n X ℋX := ( † ) X 0n,n ](img/file737.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: is Hermitian by construction.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our aim is, for a given precision level *𝜀*, to find a state ![ ⟩ |^ψ](img/file738.jpg)
+    (or an algorithm generating this state) such that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![∥ ⟩ ∥ ∥∥|^ψ − |ψ (t)⟩∥∥ ≤ 𝜀, ](img/file739.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: for some given norm ∥⋅∥, where ![|ψ (t)⟩](img/file740.jpg) solves the Schrödinger
+    equation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: An important bottleneck of this method is the computation of exp![(ℋXt )](img/file741.jpg)
+    (where we ignore the ratio −i*∕*ℏ for simplicity). Suppose that the Hamiltonian ℋ[X]
+    can be written as a sum
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∑p ℋX = ℋi i=1 ](img/file742.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: of easy-to-compute Hamiltonians (ℋ[i])[i=1,…,p]. If the latter do not commute,
+    then the identity
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ∑p ) ∏p exp ℋit = eℋit i=1 i=1 ](img/file743.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: does not hold, but the first-order Suzuki-Trotter  [[220](Biblography.xhtml#XNaomichi-Suzuki), [286](Biblography.xhtml#XTrotter)]
+    formula (used by Lloyd in  [[191](Biblography.xhtml#XLloydsUniv)])
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ∑p ) ∏p exp ℋit = eℋit + 𝒪 (t2), i=1 i=1 ](img/file744.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: for *t* small enough, allows us to bypass this issue.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Indeed, even if *t* is not so small, we may pick *δ >* 0 small enough and use
+    the factorisation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ⌊ ( ) ⌋ ( ∑p ) ∑ t∕δ [ p∏ ]t∕δ exp ℋit = ⌈exp ( ℋiδ) ⌉ = eℋiδ + 𝒪 (δ2) ,
+    i=1 i=1,...,p i=1 ](img/file745.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: which has a small error (albeit with the caveat that the operation needs to
+    be computed many times). In general, any *n*-qubit Hamiltonian ℋ can be decomposed
+    in at most 4^n elementary Hamiltonians (of the Pauli form) as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∑ ( ⊗n ) ⊗n ℋ = -1- Tr σi ℋ σi , 2n i,...,i∈{I,X,Y,Z} k=1 k k=1 k 1 n ](img/file746.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *σ*[i[k]] is a Pauli operator. Of course, 4^n appeals to Pauli operators
+    may be too large in general, but local features of the Hamiltonian (such as sparse  [[34](Biblography.xhtml#XBerrySparse)]
+    or diluted or degree-reducted  [[8](Biblography.xhtml#XAharonovZhou)] Hamiltonians)
+    help reduce the complexity.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Remark:** An alternative approach, especially for QML problems analysed in
+    the next chapter, is to encode the data using Quantum Random Access Memory (QRAM),
+    essentially with the bucket-brigade algorithm developed in  [[110](Biblography.xhtml#XGiovannettiQRAM)]
+    (see also  [[140](Biblography.xhtml#XHongQRAM), [15](Biblography.xhtml#XMoscaQRAM)]),
+    and we refer the interested reader to  [[65](Biblography.xhtml#XCilibertoQRAM_Summary)]
+    for a good summary of the current state-of-the-art algorithms.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Encoding classical data into a quantum computer has seen many advances recently
+    and several competing techniques are now available depending on the problem under
+    investigation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we introduced the concept of a parameterised quantum circuit
+    as a generic QML model. PQCs can be trained and used as discriminative and generative
+    QML models as well as optimisers. They can also be used to encode classical data
+    samples into the corresponding quantum states.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We considered several popular data encoding methods. Arguably, the simplest
+    and easiest to implement is the angle encoding algorithm – we shall use this approach
+    in the next chapter. Other methods also have their strong points, although they
+    tend to be either more demanding in terms of the hardware capabilities or better
+    suited for some niche applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the next chapter, we apply what we learned so far to the task of building
+    the quantum neural network trained as a classifier and compare its performance
+    on the binary classification problem with standard classical machine learning
+    models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Join our book’s Discord space
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Join our Discord community to meet like-minded people and learn alongside more
+    than 2000 members at: [https://packt.link/quantum](https://packt.link/quantum)'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![PIC](img/file1.png)'
+  prefs: []
+  type: TYPE_IMG

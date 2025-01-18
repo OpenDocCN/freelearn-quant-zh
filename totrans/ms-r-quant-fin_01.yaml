@@ -1,0 +1,1216 @@
+- en: Chapter 1. Time Series Analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we consider some advanced time series methods and their implementation
+    using R. Time series analysis, as a discipline, is broad enough to fill hundreds
+    of books (the most important references, both in theory and R programming, will
+    be listed at the end of this chapter's reading list); hence, the scope of this
+    chapter is necessarily highly selective, and we focus on topics that are inevitably
+    important in empirical finance and quantitative trading. It should be emphasized
+    at the beginning, however, that this chapter only sets the stage for further studies
+    in time series analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our previous book *Introduction to R for Quantitative Finance*, *Packt Publishing*,
+    discusses some fundamental topics of time series analysis such as linear, univariate
+    time series modeling, **Autoregressive integrated moving average** (**ARIMA**),
+    and volatility modeling **Generalized Autoregressive Conditional Heteroskedasticity**
+    (**GARCH**). If you have never worked with R for time series analysis, you might
+    want to consider going through [Chapter 1](ch01.html "Chapter 1. Time Series Analysis"),
+    *Time Series Analysis* of that book as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The current edition goes further in all of these topics and you will become
+    familiar with some important concepts such as cointegration, vector autoregressive
+    models, impulse-response functions, volatility modeling with asymmetric GARCH
+    models including exponential GARCH and Threshold GARCH models, and news impact
+    curves. We first introduce the relevant theories, then provide some practical
+    insights to multivariate time series modeling, and describe several useful R packages
+    and functionalities. In addition, using simple and illustrative examples, we give
+    a step-by-step introduction to the usage of R programming language for empirical
+    analysis.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Multivariate time series analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: The basic issues regarding the movements of financial asset prices, technical
+    analysis, and quantitative trading are usually formulated in a univariate context.
+    Can we predict whether the price of a security will move up or down? Is this particular
+    security in an upward or a downward trend? Should we buy or sell it? These are
+    all important considerations; however, investors usually face a more complex situation
+    and rarely see the market as just a pool of independent instruments and decision
+    problems.
+  prefs: []
+  type: TYPE_NORMAL
+- en: By looking at the instruments individually, they might seem non-autocorrelated
+    and unpredictable in mean, as indicated by the Efficient Market Hypothesis, however,
+    correlation among them is certainly present. This might be exploited by trading
+    activity, either for speculation or for hedging purposes. These considerations
+    justify the use of multivariate time series techniques in quantitative finance.
+    In this chapter, we will discuss two prominent econometric concepts with numerous
+    applications in finance. They are cointegration and vector autoregression models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Cointegration
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: From now on, we will consider a vector of time series ![Cointegration](img/2078OT_01_01.jpg),
+    which consists of the elements ![Cointegration](img/2078OT_01_02.jpg) each of
+    them individually representing a time series, for instance, the price evolution
+    of different financial products. Let's begin with the formal definition of cointegrating
+    data series.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The ![Cointegration](img/2078OT_01_03.jpg) vector ![Cointegration](img/2078OT_01_01.jpg)
+    of time series is said to be cointegrated if each of the series are individually
+    integrated in the order ![Cointegration](img/2078OT_01_04.jpg) (in particular,
+    in most of the applications the series are integrated of order 1, which means
+    nonstationary unit-root processes, or random walks), while there exists a linear
+    combination of the series ![Cointegration](img/2078OT_01_05.jpg), which is integrated
+    in the order ![Cointegration](img/2078OT_01_06.jpg) (typically, it is of order
+    0, which is a stationary process).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Intuitively, this definition implies the existence of some underlying forces
+    in the economy that are keeping together the *n* time series in the long run,
+    even if they all seem to be individually random walks. A simple example for cointegrating
+    time series is the following pair of vectors, taken from *Hamilton (1994)*, which
+    we will use to study cointegration, and at the same time, familiarize ourselves
+    with some basic simulation techniques in R:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cointegration](img/2078OT_01_07.jpg)![Cointegration](img/2078OT_01_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The unit root in ![Cointegration](img/2078OT_01_01.jpg) will be shown formally
+    by standard statistical tests. Unit root tests in R can be performed using either
+    the `tseries` package or the `urca` package; here, we use the second one. The
+    following R code simulates the two series of length `1000`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**Downloading the example code**'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can download the example code files from your account at [http://www.packtpub.com](http://www.packtpub.com)
+    for all the Packt Publishing books you have purchased. If you purchased this book
+    elsewhere, you can visit [http://www.packtpub.com/support](http://www.packtpub.com/support)
+    and register to have the files e-mailed directly to you.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The output of the preceding code is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cointegration](img/2078OT_01_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'By visual inspection, both series seem to be individually random walks. Stationarity
+    can be tested by the Augmented Dickey Fuller test, using the `urca` package; however,
+    many other tests are also available in R. The null hypothesis states that there
+    is a unit root in the process (outputs omitted); we reject the null if the test
+    statistic is smaller than the critical value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: For both of the simulated series, the test statistic is larger than the critical
+    value at the usual significance levels (1 percent, 5 percent, and 10 percent);
+    therefore, we cannot reject the null hypothesis, and we conclude that both the
+    series are individually unit root processes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Now, take the following linear combination of the two series and plot the resulted
+    series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cointegration](img/2078OT_01_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The output for the preceding code is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cointegration](img/2078OT_01_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '![Cointegration](img/2078OT_01_12.jpg) clearly seems to be a white noise process;
+    the rejection of the unit root is confirmed by the results of ADF tests:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'In a real-world application, obviously we don''t know the value of ![Cointegration](img/2078OT_01_13.jpg);
+    this has to be estimated based on the raw data, by running a linear regression
+    of one series on the other. This is known as the Engle-Granger method of testing
+    cointegration. The following two steps are known as the Engle-Granger method of
+    testing cointegration:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Run a linear regression ![Cointegration](img/2078OT_01_14.jpg) on ![Cointegration](img/2078OT_01_15.jpg)
+    (a simple OLS estimation).
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Test the residuals for the presence of a unit root.
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We should note here that in the case of the *n* series, the number of possible
+    independent cointegrating vectors is ![Cointegration](img/2078OT_01_16.jpg); therefore,
+    for ![Cointegration](img/2078OT_01_17.jpg), the cointegrating relationship might
+    not be unique. We will briefly discuss ![Cointegration](img/2078OT_01_18.jpg)
+    later in the chapter.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Simple linear regressions can be fitted by using the `lm` function. The residuals
+    can be obtained from the resulting object as shown in the following example. The
+    ADF test is run in the usual way and confirms the rejection of the null hypothesis
+    at all significant levels. Some caveats, however, will be discussed later in the
+    chapter:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, consider how we could turn this theory into a successful trading strategy.
+    At this point, we should invoke the concept of **statistical arbitrage** or pair
+    trading, which, in its simplest and early form, exploits exactly this cointegrating
+    relationship. These approaches primarily aim to set up a trading strategy based
+    on the spread between two time series; if the series are cointegrated, we expect
+    their stationary linear combination to revert to 0\. We can make profit simply
+    by selling the relatively expensive one and buying the cheaper one, and just sit
+    and wait for the reversion.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: The term statistical arbitrage, in general, is used for many sophisticated statistical
+    and econometrical techniques, and this aims to exploit relative mispricing of
+    assets in statistical terms, that is, not in comparison to a theoretical equilibrium
+    model.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What is the economic intuition behind this idea? The linear combination of time
+    series that forms the cointegrating relationship is determined by underlying economic
+    forces, which are not explicitly identified in our statistical model, and are
+    sometimes referred to as long-term relationships between the variables in question.
+    For example, similar companies in the same industry are expected to grow similarly,
+    the spot and forward price of a financial product are bound together by the no-arbitrage
+    principle, FX rates of countries that are somehow interlinked are expected to
+    move together, or short-term and long-term interest rates tend to be close to
+    each other. Deviances from this statistically or theoretically expected comovements
+    open the door to various quantitative trading strategies where traders speculate
+    on future corrections.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The concept of cointegration is further discussed in a later chapter, but for
+    that, we need to introduce vector autoregressive models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Vector autoregressive models
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Vector autoregressive models (VAR) can be considered as obvious multivariate
+    extensions of the univariate autoregressive (AR) models. Their popularity in applied
+    econometrics goes back to the seminal paper of *Sims (1980)*. VAR models are the
+    most important multivariate time series models with numerous applications in econometrics
+    and finance. The R package vars provide an excellent framework for R users. For
+    a detailed review of this package, we refer to Pfaff (2013). For econometric theory,
+    consult *Hamilton (1994)*, *Lütkepohl (2007)*, *Tsay (2010)*, or *Martin et al.
+    (2013)*. In this book, we only provide a concise, intuitive summary of the topic.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In a VAR model, our point of departure is a vector of time series ![Vector
+    autoregressive models](img/2078OT_01_01.jpg) of length ![Vector autoregressive
+    models](img/2078OT_01_19.jpg). The VAR model specifies the evolution of each variable
+    as a linear function of the lagged values of all other variables; that is, a VAR
+    model of the order *p* is the following:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Vector autoregressive models](img/2078OT_01_20.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![Vector autoregressive models](img/2078OT_01_21.jpg) are ![Vector autoregressive
+    models](img/2078OT_01_22.jpg) the coefficient matrices for all ![Vector autoregressive
+    models](img/2078OT_01_23.jpg), and ![Vector autoregressive models](img/2078OT_01_24.jpg)
+    is a vector white noise process with a positive definite covariance matrix. The
+    terminology of vector white noise assumes lack of autocorrelation, but allows
+    contemporaneous correlation between the components; that is, ![Vector autoregressive
+    models](img/2078OT_01_24.jpg) has a non-diagonal covariance matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The matrix notation makes clear one particular feature of VAR models: all variables
+    depend only on past values of themselves and other variables, meaning that contemporaneous
+    dependencies are not explicitly modeled. This feature allows us to estimate the
+    model by ordinary least squares, applied equation-by-equation. Such models are
+    called reduced form VAR models, as opposed to structural form models, discussed
+    in the next section.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Obviously, assuming that there are no contemporaneous effects would be an oversimplification,
+    and the resulting impulse-response relationships, that is, changes in the processes
+    followed by a shock hitting a particular variable, would be misleading and not
+    particularly useful. This motivates the introduction of structured VAR (SVAR)
+    models, which explicitly models the contemporaneous effects among variables:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Vector autoregressive models](img/2078OT_01_25.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![Vector autoregressive models](img/2078OT_01_26.jpg) and ![Vector autoregressive
+    models](img/2078OT_01_27.jpg); thus, the structural form can be obtained from
+    the reduced form by multiplying it with an appropriate parameter matrix ![Vector
+    autoregressive models](img/2078OT_01_28.jpg), which reflects the contemporaneous,
+    structural relations among the variables.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In the notation, as usual, we follow the technical documentation of the vars
+    package, which is very similar to that of *Lütkepohl (2007)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the reduced form model, contemporaneous dependencies are not modeled; therefore,
+    such dependencies appear in the correlation structure of the error term, that
+    is, the covariance matrix of ![Vector autoregressive models](img/2078OT_01_29.jpg),
+    denoted by ![Vector autoregressive models](img/2078OT_01_30.jpg). In the SVAR
+    model, contemporaneous dependencies are explicitly modelled (by the ***A*** matrix
+    on the left-hand side), and the disturbance terms are defined to be uncorrelated,
+    so the ![Vector autoregressive models](img/2078OT_01_31.jpg) covariance matrix
+    is diagonal. Here, the disturbances are usually referred to as structural shocks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: What makes the SVAR modeling interesting and difficult at the same time is the
+    so-called identification problem; the SVAR model is not identified, that is, parameters
+    in matrix *A* cannot be estimated without additional restrictions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: How should we understand that a model is not identified? This basically means
+    that there exist different (infinitely many) parameter matrices, leading to the
+    same sample distribution; therefore, it is not possible to identify a unique value
+    of parameters based on the sample.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Given a reduced form model, it is always possible to derive an appropriate parameter
+    matrix, which makes the residuals orthogonal; the covariance matrix ![Vector autoregressive
+    models](img/2078OT_01_32.jpg) is positive semidefinitive, which allows us to apply
+    the LDL decomposition (or alternatively, the Cholesky decomposition). This states
+    that there always exists an ![Vector autoregressive models](img/2078OT_01_33.jpg)
+    lower triangle matrix and a ![Vector autoregressive models](img/2078OT_01_34.jpg)
+    diagonal matrix such that ![Vector autoregressive models](img/2078OT_01_35.jpg).
+    By choosing ![Vector autoregressive models](img/2078OT_01_36.jpg), the covariance
+    matrix of the structural model becomes ![Vector autoregressive models](img/2078OT_01_37.jpg),
+    which gives ![Vector autoregressive models](img/2078OT_01_38.jpg). Now, we conclude
+    that ![Vector autoregressive models](img/2078OT_01_39.jpg) is a diagonal, as we
+    intended. Note that by this approach, we essentially imposed an arbitrary recursive
+    structure on our equations. This is the method followed by the `irf()` function
+    by default.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are multiple ways in the literature to identify SVAR model parameters,
+    which include short-run or long-run parameter restrictions, or sign restrictions
+    on impulse responses (see, for example, *Fry-Pagan (2011)*). Many of them have
+    no native support in R yet. Here, we only introduce a standard set of techniques
+    to impose short-run parameter restrictions, which are respectively called A-model,
+    B-model, and AB-model, each of which are supported natively by package `vars`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the case of an A-model, ![Vector autoregressive models](img/2078OT_01_40.jpg),
+    and restrictions on matrix ***A*** are imposed such that ![Vector autoregressive
+    models](img/2078OT_01_41.jpg) is a diagonal covariance matrix. To make the model
+    "just identified", we need ![Vector autoregressive models](img/2078OT_01_42.jpg)
+    additional restrictions. This is reminiscent of imposing a triangle matrix (but
+    that particular structure is not required).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Alternatively, it is possible to identify the structural innovations based on
+    the restricted model residuals by imposing a structure on the matrix **B** (B-model),
+    that is, directly on the correlation structure, in this case, ![Vector autoregressive
+    models](img/2078OT_01_43.jpg) and ![Vector autoregressive models](img/2078OT_01_44.jpg).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: The AB-model places restrictions on both A and B, and the connection between
+    the restricted and structural model is determined by ![Vector autoregressive models](img/2078OT_01_45.jpg).
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Impulse-response analysis is usually one of the main goals of building a VAR
+    model. Essentially, an impulse-response function shows how a variable reacts (response)
+    to a shock (impulse) hitting any other variable in the system. If the system consists
+    of ![Vector autoregressive models](img/2078OT_01_46.jpg) variables, ![Vector autoregressive
+    models](img/2078OT_01_47.jpg) impulse response functions can be determined. Impulse
+    responses can be derived mathematically from the Vector Moving Average representation
+    (VMA) of the VAR process, similar to the univariate case (see the details in *Lütkepohl
+    (2007)*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: VAR implementation example
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'As an illustrative example, we build a three-component VAR model from the following
+    components:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Equity return: This specifies the Microsoft price index from January 01, 2004
+    to March 03, 2014'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Stock index: This specifies the S&P500 index from January 01, 2004 to March
+    03, 2014'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: US Treasury bond interest rates from January 01, 2004 to March 03, 2014
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Our primary purpose is to make a forecast for the stock market index by using
+    the additional variables and to identify impulse responses. Here, we suppose that
+    there exists a hidden long term relationship between a given stock, the stock
+    market as a whole, and the bond market. The example was chosen primarily to demonstrate
+    several of the data manipulation possibilities of the R programming environment
+    and to illustrate an elaborate concept using a very simple example, and not because
+    of its economic meaning.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We use the `vars` and `quantmod` packages. Do not forget to install and load
+    those packages if you haven''t done this yet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The `Quantmod` package offers a great variety of tools to obtain financial
+    data directly from online sources, which we will frequently rely on throughout
+    the book. We use the `getSymbols()`function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: By default, `yahoofinance` is used as a data source for equity and index price
+    series (`src='yahoo'` parameter settings, which are omitted in the example). The
+    routine downloads open, high, low, close prices, trading volume, and adjusted
+    prices. The downloaded data is stored in an `xts` data class, which is automatically
+    named by default after the ticker (MSFT and SNP). It's possible to plot the closing
+    prices by calling the generic `plot` function, but the `chartSeries` function
+    of `quantmod` provides a much better graphical illustration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The components of the downloaded data can be reached by using the following
+    shortcuts:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Thus, for example, by using these shortcuts, the daily close-to-close returns
+    can be plotted as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The screenshot for the preceding command is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VAR implementation example](img/2078OT_01_48.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Interest rates are downloaded from the **FRED (Federal Reserve Economic Data)**
+    data source. The current version of the interface does not allow subsetting of
+    dates; however, downloaded data is stored in an `xts` data class, which is straightforward
+    to subset to obtain our period of interest:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The downloaded prices (which are supposed to be nonstationary series) should
+    be transformed into a stationary series for analysis; that is, we will work with
+    log returns, calculated from the adjusted series:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To proceed, we need a last data-cleansing step before turning to VAR model
+    fitting. By eyeballing the data, we can see that missing data exists in T-Bill
+    return series, and the lengths of our databases are not the same (on some dates,
+    there are interest rate quotes, but equity prices are missing). To solve these
+    data-quality problems, we choose, for now, the easiest possible solution: merge
+    the databases (by omitting all data points for which we do not have all three
+    data), and omit all NA data. The former is performed by the inner join parameter
+    (see help of the merge function for details):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Here, we note that VAR modeling is usually done on lower frequency data. There
+    is a simple way of transforming your data to monthly or quarterly frequencies,
+    by using the following functions, which return with the opening, highest, lowest,
+    and closing value within the given period:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'A simple reduced VAR model may be fitted to the data by using the `VAR()` function
+    of the `vars` package. The parameterization shown in the following code allows
+    a maximum of 4 lags in the equations, and choose the model with the best (lowest)
+    Akaike Information Criterion value:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'For a more established model selection, you can consider using `VARselect()`,
+    which provides multiple information criteria (output omitted):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The resulting object is an object of the `varest` class. Estimated parameters
+    and multiple other statistical results can be obtained by the `summary()` method
+    or the `show()` method (that is, by just typing the variable):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'There are other methods worth mentioning. The custom plotting method for the
+    `varest` class generates a diagram for all variables separately, including its
+    fitted values, residuals, and autocorrelation and partial autocorrelation functions
+    of the residuals. You need to hit *Enter* to get the new variable. Plenty of custom
+    settings are available; please consult the `vars` package documentation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Predictions using our estimated VAR model can be made by simply calling the
+    `predict` function and by adding a desired confidence interval:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Impulse responses should be first generated numerically by `irf()`, and then
+    they can be plotted by the `plot()` method. Again, we get different diagrams for
+    each variable, including the respective impulse response functions with bootstrapped
+    confidence intervals as shown in the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, consider fitting a structural VAR model using parameter restrictions described
+    earlier as an A-model. The number of required restrictions for the SVAR model
+    that is identified is ![VAR implementation example](img/2078OT_01_50.jpg); in
+    our case, this is 3.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Tip
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: See *Lütkepohl (2007)* for more details. The number of additional restrictions
+    required is ![VAR implementation example](img/2078OT_01_51.jpg), but the diagonal
+    elements are normalized to unity, which leaves us with the preceding number.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The point of departure for an SVAR model is the already estimated reduced form
+    of the VAR model (var1). This has to be amended with an appropriately structured
+    restriction matrix.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For the sake of simplicity, we will use the following restrictions:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: S&P index shocks do not have a contemporaneous effect on Microsoft
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: S&P index shocks do not have a contemporaneous effect on interest rates
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: T-Bonds interest rate shocks have no contemporaneous effect on Microsoft
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'These restrictions enter into the SVAR model as 0s in the **A** matrix, which
+    is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![VAR implementation example](img/2078OT_01_53.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'When setting up the **A** matrix as a parameter for SVAR estimation in R, the
+    positions of the to-be estimated parameters should take the NA value. This can
+    be done with the following assignments:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Finally, we can fit the SVAR model and plot the impulse response functions
+    (the output is omitted):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: Cointegrated VAR and VECM
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Finally, we put together what we have learned so far, and discuss the concepts
+    of Cointegrated VAR and **Vector Error Correction Models (VECM)**.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our starting point is a system of cointegrated variables (for example, in a
+    trading context, this indicates a set of similar stocks that are likely to be
+    driven by the same fundamentals). The standard VAR models discussed earlier can
+    only be estimated when the variables are stationary. As we know, the conventional
+    way to remove unit root model is to first differentiate the series; however, in
+    the case of cointegrated series, this would lead to overdifferencing and losing
+    information conveyed by the long-term comovement of variable levels. Ultimately,
+    our goal is to build up a model of stationary variables, which also incorporates
+    the long-term relationship between the original cointegrating nonstationary variables,
+    that is, to build a cointegrated VAR model. This idea is captured by the Vector
+    Error Correction Model (VECM), which consists of a VAR model of the order *p -
+    1* on the differences of the variables, and an error-correction term derived from
+    the known (estimated) cointegrating relationship. Intuitively, and using the stock
+    market example, a VECM model establishes a short-term relationship between the
+    stock returns, while correcting with the deviation from the long-term comovement
+    of prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Formally, a two-variable VECM, which we will discuss as a numerical example,
+    can be written as follows. Let ![Cointegrated VAR and VECM](img/2078OT_01_54.jpg)
+    be a vector of two nonstationary unit root series ![Cointegrated VAR and VECM](img/2078OT_01_55.jpg)
+    where the two series are cointegrated with a cointegrating vector ![Cointegrated
+    VAR and VECM](img/2078OT_01_56.jpg). Then, an appropriate VECM model can be formulated
+    as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Cointegrated VAR and VECM](img/2078OT_01_57.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![Cointegrated VAR and VECM](img/2078OT_01_58.jpg) and the first term
+    are usually called the error correction terms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In practice, there are two approaches to test cointegration and build the error
+    correction model. For the two-variable case, the Engle-Granger method is quite
+    instructive; our numerical example basically follows that idea. For the multivariate
+    case, where the maximum number of possible cointegrating relationships is ![Cointegrated
+    VAR and VECM](img/2078OT_01_59.jpg), you have to follow the Johansen procedure.
+    Although the theoretical framework for the latter goes far beyond the scope of
+    this book, we briefly demonstrate the tools for practical implementation and give
+    references for further studies.
+  prefs: []
+  type: TYPE_NORMAL
+- en: To demonstrate some basic R capabilities regarding VECM models, we will use
+    a standard example of three months and six months T-Bill secondary market rates,
+    which can be downloaded from the FRED database, just as we discussed earlier.
+    We will restrict our attention to an arbitrarily chosen period, that is, from
+    1984 to 2014\. Augmented Dickey Fuller tests indicate that the null hypothesis
+    of the unit root cannot be rejected.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We can consistently estimate the cointegrating relationship between the two
+    series by running a simple linear regression. To simplify coding, we define the
+    variables `x1` and `x2` for the two series, and `y` for the respective vector
+    series. The other variable-naming conventions in the code snippets will be self-explanatory:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: The two series are indeed cointegrated if the residuals of the regression (variable
+    `r`), that is, the appropriate linear combination of the variables, constitute
+    a stationary series. You could test this with the usual ADF test, but in these
+    settings, the conventional critical values are not appropriate, and corrected
+    values should be used (see, for example *Phillips and Ouliaris (1990)*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'It is therefore much more appropriate to use a designated test for the existence
+    of cointegration, for example, the Phillips and Ouliaris test, which is implemented
+    in the `tseries` and in the `urca` packages as well. The most basic `tseries`
+    version is demonstrated as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: The null hypothesis states that the two series are not cointegrated, so the
+    low p value indicates rejection of null and presence of cointegration.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The Johansen procedure is applicable for more than one possible cointegrating
+    relationship; an implementation can be found in the `urca` package:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: The test statistic for *r = 0* (no cointegrating relationship) is larger than
+    the critical values, which indicates the rejection of the null. For ![Cointegrated
+    VAR and VECM](img/2078OT_01_60.jpg), however, the null cannot be rejected; therefore,
+    we conclude that one cointegrating relationship exists. The cointegrating vector
+    is given by the first column of the normalized eigenvectors below the test results.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The final step is to obtain the VECM representation of this system, that is,
+    to run an OLS regression on the lagged differenced variables and the error correction
+    term derived from the previously calculated cointegrating relationship. The appropriate
+    function utilizes the `ca.jo` object class, which we created earlier. The *r =
+    1* parameter signifies the cointegration rank which is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: The coefficient of the error-correction term is negative, as we expected; a
+    short-term deviation from the long-term equilibrium level would push our variables
+    back to the zero equilibrium deviation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can easily check this in the bivariate case; the result of the Johansen
+    procedure method leads to approximately the same result as the step-by-step implementation
+    of the ECM following the Engle-Granger procedure. This is shown in the uploaded
+    R code files.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Volatility modeling
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'It is a well-known and commonly accepted stylized fact in empirical finance
+    that the volatility of financial time series varies over time. However, the non-observable
+    nature of volatility makes the measurement and forecasting a challenging exercise.
+    Usually, varying volatility models are motivated by three empirical observations:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Volatility clustering**: This refers to the empirical observation that calm
+    periods are usually followed by calm periods while turbulent periods by turbulent
+    periods in the financial markets.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Non-normality of asset returns**: Empirical analysis has shown that asset
+    returns tend to have fat tails relative to the normal distribution.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '**Leverage effect**: This leads to an observation that volatility tends to
+    react differently to positive or negative price movements; a drop in prices increases
+    the volatility to a larger extent than an increase of similar size.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'In the following code, we demonstrate these stylized facts based on S&P asset
+    prices. Data is downloaded from `yahoofinance`, by using the already known method:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Our purpose of interest is the daily return series, so we calculate log returns
+    from the closing prices. Although it is a straightforward calculation, the `Quantmod`
+    package offers an even simpler way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: Volatility analysis departs from eyeballing the autocorrelation and partial
+    autocorrelation functions. We expect the log returns to be serially uncorrelated,
+    but the squared or absolute log returns to show significant autocorrelations.
+    This means that Log returns are not correlated, but not independent.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Notice the `par(mfrow=c(2,2))` function in the following code; by this, we
+    overwrite the default plotting parameters of R to organize the four diagrams of
+    interest in a convenient table format:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The screenshot for preceding command is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Volatility modeling](img/2078OT_01_61.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Next, we look at the histogram and/or the empirical distribution of daily log
+    returns of S&P and compare it with the normal distribution of the same mean and
+    standard deviation. For the latter, we use the function `density(ret)`, which
+    computes the nonparametric empirical distribution function. We use the function
+    `curve()`with an additional parameter `add=TRUE` to plot a second line to an already
+    existing diagram:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Volatility modeling](img/2078OT_01_62.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The excess kurtosis and fat tails are obvious, but we can confirm numerically
+    (using the `moments` package) that the kurtosis of the empirical distribution
+    of our sample exceeds that of a normal distribution (which is equal to 3). Unlike
+    some other software packages, R reports the nominal value of kurtosis, and not
+    excess kurtosis which is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'It might be also useful to zoom in to the upper or the lower tail of the diagram.
+    This is achieved by simply rescaling our diagrams:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Volatility modeling](img/2078OT_01_63.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Another useful visualization exercise is to look at the **Density on log-scale**
+    (see the following figure, left), or a **QQ-plot** (right), which are common tools
+    to comparing densities. **QQ-plot** depicts the empirical quantiles against that
+    of a theoretical (normal) distribution. In case our sample is taken from a normal
+    distribution, this should form a straight line. Deviations from this straight
+    line may indicate the presence of fat tails:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE32]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The screenshot for preceding command is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Volatility modeling](img/2078OT_01_64.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Now, we can turn our attention to modeling volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Broadly speaking, there are two types of modeling techniques in the financial
+    econometrics literature to capture the varying nature of volatility: the **GARCH-family**
+    approach (*Engle, 1982* and *Bollerslev, 1986*) and the **stochastic volatility
+    (SV)** models. As for the distinction between them, the main difference between
+    the GARCH-type modeling and (genuine) SV-type modeling techniques is that in the
+    former, the conditional variance given in the past observations is available,
+    while in SV-models, volatility is not measurable with respect to the available
+    information set; therefore, it is hidden by nature, and must be filtered out from
+    the measurement equation (see, for example, *Andersen – Benzoni (2011)*). In other
+    words, GARCH-type models involve the estimation of volatility based on past observations,
+    while in SV-models, the volatility has its own stochastic process, which is hidden,
+    and return realizations should be used as a measurement equation to make inferences
+    regarding the underlying volatility process.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In this chapter, we introduce the basic modeling techniques for the GARCH approach
+    for two reasons; first of all, it is much more proliferated in applied works.
+    Secondly, because of its diverse methodological background, SV models are not
+    yet supported by R packages natively, and a significant amount of custom development
+    is required for an empirical implementation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: GARCH modeling with the rugarch package
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: There are several packages available in R for GARCH modeling. The most prominent
+    ones are `rugarch`, `rmgarch` (for multivariate models), and `fGarch`; however,
+    the basic `tseries` package also includes some GARCH functionalities. In this
+    chapter, we will demonstrate the modeling facilities of the `rugarch` package.
+    Our notations in this chapter follow the respective ones of the `rugarch` package's
+    output and documentation.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The standard GARCH model
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'A GARCH (p,q) process may be written as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The standard GARCH model](img/2078OT_01_65.jpg)![The standard GARCH model](img/2078OT_01_66.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here, ![The standard GARCH model](img/2078OT_01_67.jpg) is usually the disturbance
+    term of a conditional mean equation (in practice, usually an ARMA process) and
+    ![The standard GARCH model](img/2078OT_01_68.jpg). That is, the conditional volatility
+    process is determined linearly by its own lagged values ![The standard GARCH model](img/2078OT_01_69.jpg)
+    and the lagged squared observations (the values of ![The standard GARCH model](img/2078OT_01_67.jpg)).
+    In empirical studies, GARCH (1,1) usually provides an appropriate fit to the data.
+    It may be useful to think about the simple GARCH (1,1) specification as a model
+    in which the conditional variance is specified as a weighted average of the long-run
+    variance ![The standard GARCH model](img/2078OT_01_70.jpg), the last predicted
+    variance ![The standard GARCH model](img/2078OT_01_71.jpg), and the new information
+    ![The standard GARCH model](img/2078OT_01_72.jpg) (see *Andersen et al. (2009)*).
+    It is easy to see how the GARCH (1,1) model captures autoregression in volatility
+    (volatility clustering) and leptokurtic asset return distributions, but as its
+    main drawback, it is symmetric, and cannot capture asymmetries in distributions
+    and leverage effects.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The emergence of volatility clustering in a GARCH-model is highly intuitive;
+    a large positive (negative) shock in ![The standard GARCH model](img/2078OT_01_73.jpg)
+    increases (decreases) the value of ![The standard GARCH model](img/2078OT_01_67.jpg),
+    which in turn increases (decreases) the value of ![The standard GARCH model](img/2078OT_01_74.jpg),
+    resulting in a larger (smaller) value for ![The standard GARCH model](img/2078OT_01_75.jpg).
+    The shock is persistent; this is volatility clustering. Leptokurtic nature requires
+    some derivation; see for example Tsay (2010).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Our empirical example will be the analysis of the return series calculated from
+    the daily closing prices of Apple Inc. based on the period from Jan 01, 2006 to
+    March 31, 2014\. As a useful exercise, before starting this analysis, we recommend
+    that you repeat the exploratory data analysis in this chapter to identify stylized
+    facts on Apple data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Obviously, our first step is to install a package, if not installed yet:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE33]'
+  prefs: []
+  type: TYPE_PRE
+- en: To get the data, as usual, we use the `quantmod` package and the `getSymbols()`
+    function, and calculate return series based on the closing prices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE34]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The programming logic of `rugarch` can be thought of as follows: irrespective
+    of whatever your aim is (fitting, filtering, forecasting, and simulating), first,
+    you have to specify a model as a system object (variable), which in turn will
+    be inserted into the respective function. Models can be specified by calling `ugarchspec()`.
+    The following code specifies a simple GARCH (1,1) model, (sGARCH), with only a
+    constant ![The standard GARCH model](img/2078OT_01_76.jpg) in the mean equation:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE35]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'An obvious way to proceed is to fit this model to our data, that is, to estimate
+    the unknown parameters by maximum likelihood, based on our time series of daily
+    returns:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE36]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The function provides, among a number of other outputs, the parameter estimations
+    ![The standard GARCH model](img/2078OT_01_77.jpg):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE37]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Estimates and various diagnostic tests can be obtained by the `show()` method
+    of the generated object (that is, by just typing the name of the variable). A
+    bunch of other statistics, parameter estimates, standard error, and covariance
+    matrix estimates can be reached by typing the appropriate command. For the full
+    list, consult the `ugarchfit` object class; the most important ones are shown
+    in the following code:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE38]'
+  prefs: []
+  type: TYPE_PRE
+- en: Standard GARCH models are able to capture fat tails and volatility clustering,
+    but to explain asymmetries caused by the leverage effect, we need more advanced
+    models. To approach the asymmetry problem visually, we will now describe the concept
+    of news impact curves.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'News impact curves, introduced by Pagan and Schwert (1990) and Engle and Ng
+    (1991), are useful tools to visualize the magnitude of volatility changes in response
+    to shocks. The name comes from the usual interpretation of shocks as news influencing
+    the market movements. They plot the change in conditional volatility against shocks
+    in different sizes, and can concisely express the asymmetric effects in volatility.
+    In the following code, the first line calculates the news impacts numerically
+    for the previously defined GARCH(1,1) model, and the second line creates the visual
+    plot:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE39]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The screenshot for the preceding command is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The standard GARCH model](img/2078OT_01_78.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As we expected, no asymmetries are present in response to positive and negative
+    shocks. Now, we turn to models to be able to incorporate asymmetric effects as
+    well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Exponential GARCH model (EGARCH)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Exponential GARCH models were introduced by Nelson (1991). This approach directly
+    models the logarithm of the conditional volatility:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Exponential GARCH model (EGARCH)](img/2078OT_01_65.jpg)![The Exponential
+    GARCH model (EGARCH)](img/2078OT_01_79.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where, *E* is the expectation operator. This model formulation allows multiplicative
+    dynamics in evolving the volatility process. Asymmetry is captured by the ![The
+    Exponential GARCH model (EGARCH)](img/2078OT_01_80.jpg) parameter; a negative
+    value indicates that the process reacts more to negative shocks, as observable
+    in real data sets.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To fit an EGARCH model, the only parameter to be changed in a model specification
+    is to set the EGARCH model type. By running the `fitting` function, the additional
+    parameter will be estimated (see `coef()`):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE40]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'News impact curve reflects the strong asymmetry in response of conditional
+    volatility to shocks and confirms the necessity of asymmetric models:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE41]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![The Exponential GARCH model (EGARCH)](img/2078OT_01_81.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The Threshold GARCH model (TGARCH)
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Another prominent example is the TGARCH model, which is even easier to interpret.
+    The TGARCH specification involves an explicit distinction of model parameters
+    above and below a certain threshold. TGARCH is also a submodel of a more general
+    class, the asymmetric power ARCH class, but we will discuss it separately because
+    of its wide penetration in applied financial econometrics literature.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The TGARCH model may be formulated as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![The Threshold GARCH model (TGARCH)](img/2078OT_01_65.jpg)![The Threshold
+    GARCH model (TGARCH)](img/2078OT_01_82.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ![The Threshold GARCH model (TGARCH)](img/2078OT_01_83.jpg)
+  prefs: []
+  type: TYPE_NORMAL
+- en: The interpretation is straightforward; the ARCH coefficient depends on the sign
+    of the previous error term; if ![The Threshold GARCH model (TGARCH)](img/2078OT_01_84.jpg)
+    is positive, a negative error term will have a higher impact on the conditional
+    volatility, just as we have seen in the leverage effect before.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the R package, `rugarch`, the threshold GARCH model is implemented in a framework
+    of an even more general class of GARCH models, called the Family GARCH model *Ghalanos
+    (2014)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE42]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Thanks to the specific functional form, the news impact curve for a Threshold-GARCH
+    is less flexible in representing different responses, there is a kink at the zero
+    point which can be seen when we run the following command:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE43]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![The Threshold GARCH model (TGARCH)](img/2078OT_01_85.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Simulation and forecasting
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'The Rugarch package allows an easy way to simulate from a specified model.
+    Of course, for simulation purposes, we should also specify the parameters of the
+    model within `ugarchspec()`; this could be done by the `fixed.pars` argument.
+    After specifying the model, we can simulate a time series with a given conditional
+    mean and GARCH specification by using simply the `ugarchpath()` function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE44]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Once we have an estimated model and technically a fitted object, forecasting
+    the conditional volatility based on that is just one step:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE45]'
+  prefs: []
+  type: TYPE_PRE
+- en: The plotting method of the forecasted series provides the user with a selection
+    menu; we can plot either the predicted time series or the predicted conditional
+    volatility.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE46]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Simulation and forecasting](img/2078OT_01_86.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: In this chapter, we reviewed some important concepts of time series analysis,
+    such as cointegration, vector-autoregression, and GARCH-type conditional volatility
+    models. Meanwhile, we have provided a useful introduction to some tips and tricks
+    to start modeling with R for quantitative and empirical finance. We hope that
+    you find these exercises useful, but again, it should be noted that this chapter
+    is far from being complete both from time series and econometric theory, and from
+    R programming's point of view. The R programming language is very well documented
+    on the Internet, and the R user's community consists of thousands of advanced
+    and professional users. We encourage you to go beyond books, be a self-learner,
+    and do not stop if you are stuck with a problem; almost certainly, you will find
+    an answer on the Internet to proceed. Use the documentation of R packages and
+    the help files heavily, and study the official R-site, [http://cran.r-project.org/](http://cran.r-project.org/),
+    frequently. The remaining chapters will provide you with numerous additional examples
+    to find your way in the plethora of R facilities, packages, and functions.
+  prefs: []
+  type: TYPE_NORMAL
+- en: References and reading list
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Andersen, Torben G; Davis, Richard A.; Kreiß, Jens-Peters; Mikosh, Thomas (ed.)
+    (2009). Handbook of Financial Time Series
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Andersen, Torben G. and Benzoni, Luca (2011). Stochastic volatility. Book chapter
+    in Complex Systems in Finance and Econometrics, Ed.: Meyers, Robert A., Springer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Brooks, Chris (2008). Introductory Econometrics for Finance, Cambridge University
+    Press
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Fry, Renee and Pagan, Adrian (2011). Sign Restrictions in Structural Vector
+    Autoregressions: A Critical Review. Journal of Economic Literature, American Economic
+    Association, vol. 49(4), pages 938-60, December.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Ghalanos, Alexios (2014) Introduction to the rugarch package [http://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf](http://cran.r-project.org/web/packages/rugarch/vignettes/Introduction_to_the_rugarch_package.pdf)
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Hafner, Christian M. (2011). Garch modelling. Book chapter in Complex Systems
+    in Finance and Econometrics, Ed.: Meyers, Robert A., Springer'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Hamilton, James D. (1994). Time Series Analysis, Princetown, New Jersey
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Lütkepohl, Helmut (2007). New Introduction to Multiple Time Series Analysis,
+    Springer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Murray, Michael. P. (1994). A drunk and her dog: an illustration of cointegration
+    and error correction. *The American Statistician*, *48*(1), 37-39.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Martin, Vance; Hurn, Stan and Harris, David (2013). Econometric Modelling with
+    Time Series. Specification, Estimation and Testing, Cambridge University Press
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pfaff, Bernard (2008). Analysis of Integrated and Cointegrated Time Series with
+    R, Springer
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Pfaff, Bernhard (2008). VAR, SVAR and SVEC Models: Implementation Within R
+    Package vars. Journal of Statistical Software, 27(4)'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Phillips, P. C., & Ouliaris, S. (1990). Asymptotic properties of residual based
+    tests for cointegration. *Econometrica: Journal of the Econometric Society*, 165-193.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Pole, Andrew (2007). Statistical Arbitrage. Wiley
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Rachev, Svetlozar T., Hsu, John S.J., Bagasheva, Biliana S. and Fabozzi, Frank
+    J. (2008). Bayesian Methods in Finance. John Wiley & Sons.
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Sims, Christopher A. (1980). Macroeconomics and reality. *Econometrica: Journal
+    of the Econometric Society*, 1-48.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tsay, Ruey S. (2010). Analysis of Financial Time Series, 3rd edition, Wiley
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

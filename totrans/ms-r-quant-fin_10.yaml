@@ -1,0 +1,1007 @@
+- en: Chapter 10. Technical Analysis, Neural Networks, and Logoptimal Portfolios
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter we give a brief introduction to different methods that may
+    help to improve the performance of your portfolio: technical analysis, neural
+    networks and log-optimal portfolios. The common idea behind these methods is that
+    past price movements may help in forecasting future trends. In other words, we
+    implicitly assume that prices do not follow a Markov process (for example random
+    walk), but they have some kind of long lasting memory, hence patterns from the
+    past may reoccur also in the future, all in all markets are not efficient.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the first part we introduce the most common tools of technical analysis and
+    present some indicative examples of how to program them in the R environment.
+    In the second part we outline the concept of neural networks and their design
+    by R's built-in function. Technical analysis and neural network are applied on
+    the bitcoin database, thus we focus on a single asset and investigate for reliable
+    signals of buying and selling. Finally, in the third part we discuss the so called
+    log-optimal portfolio strategies that enable us to optimize our portfolio of several
+    assets (in our example some NYSE stocks) for the long run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The main goal of this chapter is just to give a helicopter view on the concepts,
+    the most common tools that are used and to provide some examples of their programming.
+    Therefore we would like to underline here that, by need of being concise, we only
+    intend to give you some insight into the field and to entice you to check the
+    references, learn more and try further tools yourself.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Market efficiency
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Markets are efficient to the extent that all information is built into the current
+    prices. The weak form of market efficiency requires that the latest price already
+    incorporates all the information which can be obtained from the chart of past
+    prices and trading volumes. Clearly, if markets were efficient at least in this
+    weak sense, returns would be totally independent over time and strategies based
+    on technical analysis, neural networks and the logoptimal portfolio theory would
+    be completely worthless, see *Hull (2009)*, *Model of the behavior of stock prices*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: However, the efficiency of a given market is purely an empirical question. You
+    can never be sure that asset returns in the real world are really completely independent
+    in time. Therefore, you should not take market efficiency as a fact but you are
+    encouraged to test it on your own by inventing and implementing new technically
+    inspired strategies. If your strategy calibrated on past trading data proves to
+    be robust enough and works well in the future, then the market will generously
+    honor your efforts by enhancing the risk/return profile of your portfolio, and,
+    as a result, you will earn an extra profit. Studies have shown that emerging currency
+    markets, for instance, are less efficient due to illiquidity and to central bank
+    interventions, see *Tajaddini-Crack (2012)*; whereas most technicist strategies
+    do not hold on the more developed American stock market *Bajgrowicz-Scaillet (2012)*,
+    *Zapranis-Prodromos (2012)*. Furthermore, the same studies indicate that when
+    technical trading is successful, its combination with fundamental analysis is
+    even more so. *Zwart et al. (2009)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Despite being sort of an apocrypha still today, technical analysis is widely
+    used even among fundamental investors. This is mainly due to its self-fulfilling
+    nature: as market players know that more and more of their peers are using the
+    TA tools they keep an eye on them, too. If, for instance, a 200-day moving average
+    is breached on a main index chart, it is likely to make the headlines and cause
+    a selling wave.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Technical analysis
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: '**Technical analysis** (**TA**) can help you achieve better results if you
+    do not overestimate its predictive power. Technical analysis is especially good
+    at predicting short-term trends and at indicating market sentiment. Fundamental
+    investors (and one of the writers of this chapter) use them to choose their buy-in
+    and sell-out point: given their fundamentally backed view on the direction of
+    the market technical analysis is a valuable help in choosing the short-term optimum.
+    It can also eliminate such common trading flaws as badly chosen position size
+    (indication on the strength of the trend), shaky hands (only sell when there is
+    a sign) and inability to press the button (but when there is a sign, do sell).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Three golden rules to remember before we jump to technicalities:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Each market has its own mix of tools that work**: For example head-and-shoulders
+    mostly appear on stock charts whereas support-resistance levels temper the trading
+    on forex markets, and within the markets each asset can be specific. Therefore,
+    as a rule of thumb, use tailor-made sets of indicators and neural networks specific
+    to the actual asset you are looking at.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**No pain, no gain**: Keep in mind that there is no holy grail, if one achieves
+    to sustain winning on 60% of the trades then she has found a viable and well-rewarding
+    trading strategy.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Avoid impulsive trading**: Maybe this is the most important above all. It
+    might hurt that you lost on your last trade but do not let it influence your future
+    decisions. Trade only when there is a sign. If you consider opening a live trade
+    account read extensively on money management (handling risk and position size,
+    leverage) and on psychology of trading (greed, fear, hope, regret).'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: The TA toolkit
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Technical analysis abounds of tools but most of them can be categorized into
+    four main groups. We advise you to use the old ones as these are more followed
+    by professionals and are more likely to trigger price movements themselves (being
+    self-fulfilling) besides being usually more user-friendly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Support-resistance and price channels**: Price levels often influence trading:
+    strategic levels may act either as support, keeping price levels from falling
+    below, or as resistance, an obstacle to further rises. Parallel lines applied
+    to the primary conditions of a trend (bottoms for an increasing trend, tops for
+    a decreasing trend) define price channels - they are tools of the top-bottom analysis,
+    just like the next category, the chart patterns. As these are usually harder to
+    program we do not deal with them in detail.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Chart patterns – Head-and-shoulders, saucers**: sound familiar? Perhaps,
+    due to their easily recognizable nature, chart patterns are the most widely known
+    tools of technical analysis. They have three categories: trend makers (mast, flag),
+    trend breakers (double tops) and decision point signals (triangles). These, too,
+    are rather intuitive, hardly programmable, and thus fall out of the scope of this
+    chapter.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Candle patterns**: As candlestick charts are the most widespread technicists
+    started to spot signals on these and have given those names like morning star,
+    three white soldiers or the famous key reversal. More than any other TA tool,
+    they are significant only if combined with other signals, in most cases strategic
+    price levels. They can be a combination of two-five candles.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**Indicators**: This is the type we will deal with the most in the following
+    pages. Easy to program, technical indicators serve as basis of **high frequency
+    trading** (**HFT**), a strategy based on algorithmic decisions and rapid market
+    orders. These indicators have four categories: momentum-based, trend follower,
+    money flow (based on volume) and volatility-based.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: In this chapter we are going to present a strategy that combines elements from
+    types (3) and (4), we will be looking for potential trend changes by the help
+    of indicators and signal key reversals there.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Markets
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Although everyone should explore by her own the TA tools that best work on the
+    respective markets some general observations can be formulated.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Stocks** usually form nice chart patterns and are sensitive to candle patterns
+    and to strategic moving average crossings, too. Asymmetric information is an important
+    issue, although less than in the case of commodities, for instance, and unpredictable
+    spikes can alter the course of the prices at news releases.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: '**FX** is traded continuously around the globe and is strongly decentralized
+    which implies two things. First, no overall volume data is available, so one should
+    have a general idea about the liquidity of the markets to weigh the importance
+    of price changes – for example in summer liquidity is lower, therefore even a
+    smaller buy-in can generate volatility. Second, different people trade at different
+    times and each of them has different habits. In EURJPY, for instance, during the
+    US and European trading hours the tens and round numbers tend to be psychological
+    supports, whereas there is a switch to the 8s during the Asian trading (8 being
+    a lucky number). From a TA toolkit perspective: no characteristic chart patterns
+    besides triangles and masts, important support-resistance levels and price channels,
+    zone-thinking, stuck-launch dynamics and Fibonacci proportions are mostly used.'
+  prefs:
+  - PREF_OL
+  type: TYPE_NORMAL
+- en: Plotting charts - bitcoin
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Charting programs, if not provided by brokerages in the trading program, can
+    get expensive and not always provide sophisticated TA tools. To circumvent this
+    problem you can use R to trace your charts and can program all the indicators
+    you like – if they are not yet built in.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s look at an example now: plotting charts for bitcoin. Bitcoin is a crypto
+    currency that got popular in the summer of 2014 where its price was up to $1162
+    from below $1 and is traded on many freshly founded and therefore rudimentary
+    exchanges. This posed a problem to many small investors: how to trace the chart?
+    And, even if they were okay with BitStamp''s uneasy platform, granular data was
+    only available in spreadsheet format and is still today.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: You can source data from [http://bitcoincharts.com/](http://bitcoincharts.com/).
+    Herein we included a code that draws in live data and thus acts as if it was a
+    live charting tool. With this useful trick you can avoid paying hundreds of dollars
+    for a professional software. We plot candlestick charts (also called OHLC), the
+    commonly used type. Before we start here is a graphic that explains how they work.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Plotting charts - bitcoin](img/2078OT_10_01.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here we provide the program code of the live data fetcher that draws OHLC chart.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'We will use the `RCurl` package to get data from the Internet. First let''s
+    have a look at the following function:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE0]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'First we use the `getURL` function from the `RCurl` package to read the whole
+    website as a string:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE1]'
+  prefs: []
+  type: TYPE_PRE
+- en: If we have a look at the HTML code we can easily find the bitcoin price we are
+    looking for. The function returns it as a numeric value.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE2]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'Or we can grab the exact same information with the help of the XML package,
+    which was created to parse HTML and XML files and to extract information:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE3]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'This practice of getting price data is of course only for demonstration purposes.
+    Live price data should be provided by our broker (for which we can still use R).
+    Now let''s see, how to draw a live candle chart:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE4]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'To fully understand this code some time and some programming experience is
+    probably needed. To summarize the algorithm does the following: in an infinite
+    loop, reads price data and stores it in a matrix with four rows as OHLC. Every
+    time the last column of this matrix is recalculated to assure that *H* is the
+    highest and *L* is the lowest price observed in that time interval. When the time
+    determined by the `time_frame_in_minutes` variable is reached matrix columns roll,
+    the oldest observations (first column) are dropped, and each column is replaced
+    by the next one. The first column is then filled with NAs except the O (open)
+    price, which is considered as the close price of the previous column, so the chart
+    is continuous.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The remaining code is only for drawing the candles with the "polygon" method.
+    (We can do it with built-in functions as well, as we will see later.)
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Let''s call this function and see what happens:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE5]'
+  prefs: []
+  type: TYPE_PRE
+- en: See more on data manipulation in [Chapter 4](ch04.html "Chapter 4. Big Data
+    – Advanced Analytics"), *Big Data – Advanced Analytics*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Built-in indicators
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: R has many built-in indicators, such as the **simple moving average** (**SMA**),
+    the **exponential moving average** (**EMA**), the **relative strength indicator**
+    (**RSI**), and the famous MACD. These constitute an integral part of technical
+    analysis, their main goal is to visualize a relative benchmark so that you could
+    get an idea whether your asset is overbought, relatively well-performing or at
+    a strategic level compared to some reference period. Here you find a brief explanation
+    to what each of them does, and how you can put them on your chart.
+  prefs: []
+  type: TYPE_NORMAL
+- en: SMA and EMA
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Moving averages are the simplest among all indicators: they show the average
+    price level for you on a rolling basis. For example, if you trace the 15-candle
+    SMA, it will give you the average price level of the 15 preceding candles. Obviously,
+    if your current candle''s time is up and a new candle starts, the SMA will calculate
+    a new average leaving out the previously first candle and taking in the newest
+    one instead. The difference between SMA and EMA is that SMA weighs all candles
+    equally whereas EMA gives exponential weights – hence the name: it overweighs
+    current candles to previous ones. This is a good approach if you want a benchmark
+    that is more tied to current price levels and that reacts more quickly where there
+    are shifts in price levels. These are overlay indicators that are directly plotted
+    on the chart.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: RSI
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'The relative strength index is a band-indicator: its value can vary between
+    0 and 100 with three bands within this range. With an RSI between 0 to 30 the
+    asset is oversold, between 70 to 100 it is overbought. RSI endeavors to judge
+    upon price variations'' intensity by using the relative strength ratio: average
+    price of up closes divided by the average price of down closes (aka green candles''
+    average close per red candles'' average close). The average''s summing period
+    may vary, 70 is the most used.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![RSI](img/2078OT_10_02.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: As the formula suggests this indicator often gives signals, mostly in strong
+    trends. As prices might remain at overbought or oversold levels use this indicator
+    carefully, always in combination with some other type of indicator, or chart pattern
+    like a trend breaker, also called failure swing. You might also consider diminishing
+    your position size or looking for warning signs if, for instance, it shows that
+    the asset you are long on is overbought.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Here you can see how to trace this indicator and a moving average:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE6]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![RSI](img/2078OT_10_03.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: By looking at the above chart we can conclude that during this period the market
+    became rather oversold as the RSI tended to remain at low territories and it has
+    hit the extreme levels several times.
+  prefs: []
+  type: TYPE_NORMAL
+- en: MACD
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: '**MACD** (Mac Dee) stands for **Moving Average Convergence-Divergence**. It
+    is a combination of a slow (26-candles) and a quick (12 candles) exponential moving
+    average, a trend follower indicator: it gives signals rarely, but these tend to
+    be more accurate. MACD gives signals when the quick EMA crosses the slow one.
+    This is a buy if the quick crosses from below and a sell if it crosses from above
+    (the 12-canlde average price being lower than the 26-candle, long-term average).
+    The position of the EMA(12) marks the general direction of the trend – for example
+    if it is above the EMA(26) the market is bullish. Important restriction: MACD
+    gives false alarms in ranges, use only in strong trends. Some use the direction
+    of the changes of the distance between the two lines, too, plotted in red or green
+    histograms: once there are four bars in the same color, the strength of the trend
+    is confirmed.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'For technical analysis, you can use different R-packages: `quantmod`, `ftrading`,
+    `TTR`, and so on. We mostly rely on `quantmod`. Here you can see how to trace
+    the MACD on a previously saved dataset, named `Bitcoin.csv`:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE7]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![MACD](img/2078OT_10_04.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: You can see the MACD under the chart, in the strong downwards trend it gives
+    valid signals.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Candle patterns: key reversal'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Now that you got a general grasp of R's TA features let us program a rather
+    easy strategy. The following script recognizes key reversals, a candlestick pattern,
+    at strategic price levels.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'To do this, we applied the following dual rationale: first, we gave a discretional
+    definition to what a strategic price level is. For instance, we recognized as
+    mature increasing trend the price movement whose bottoms are monotonously increasing
+    (bottom being the candle body''s lowest point) and whose current MA(25) level
+    is higher than the MA(25) measured 25 candles before. We underline here that this
+    does not constitute part of the standard TA tools and that its parameters have
+    been chosen to best fit the actual chart we deal with, that of bitcoin. If you
+    would like to apply it to other assets we advise you to adjust it to provide the
+    best fit. This is not a trend recognition algorithm on itself: it only serves
+    as part of our signal system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'If this algorithm recognized a strategic price level in a mature trend that
+    would be likely to break down if a candle pattern appeared, we started to look
+    for key reversals. The key reversal is a trend breaker candlestick pattern, it
+    occurs when the previous trend''s last candle that points to the same direction
+    as the trend itself (it is green for a rising trend, red for a falling one), but
+    suddenly prices turn and the next candle points in the opposite direction of the
+    trend with a bigger candle body than the previous one. The trend breaker candle
+    should start at least as high as the previous one, or, if the quotes are not continuous,
+    a bit above the close for a rising trend, and a bit below for a falling one. See
+    our graphic below for a key reversal in a rising trend:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Candle patterns: key reversal](img/2078OT_10_05.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Here you find the code of the function that recognizes this pattern.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Earlier in the bitcoin section we used the polygon method to create candle charts
+    manually. Here we are using the quantmod package and the `chartSeries` function
+    to do the same more easily wrapped in the OHLC function to make it more flexible.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE8]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'The following function takes the time series and two indices (*i* and *j*)
+    as arguments, and decides, weather it is an increasing trend from i to j or not:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE9]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'First: if the MA(25) is not increasing then it is not an increasing trend so
+    we return FALSE.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE10]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this simple algorithm a candle is called a **valley**, if the bottom of the
+    candle body is lower than the previous one and the next one. If the valleys make
+    a monotonous non-decreasing series we have an increasing trend.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE11]'
+  prefs: []
+  type: TYPE_PRE
+- en: This was the trend recognition. Let's see the trend reversal. First we use the
+    previous function to check the conditions of the increasing trend. Then we check
+    the last two candles for the reversal pattern. That's it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE12]'
+  prefs: []
+  type: TYPE_PRE
+- en: We are out of the woods. Now we can use this in real data. We simply read the
+    bitcoin data and run the trend reversal recognition on it. If there is a reversed
+    trend with at least 10 candles we plot it.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE13]'
+  prefs: []
+  type: TYPE_PRE
+- en: Evaluating the signals and managing the position
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Our code successfully recognizes four key reversals, including the historical
+    turning point in the bitcoin price giving us a nice short selling signal. We can
+    conclude that the signaling was successful, the only thing left to do is to use
+    them wisely.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Aware of the fundamentals of bitcoin (its acceptance as money undermined, ousting
+    from such previously core markets as China), one could have made a nice profit
+    whilst following the signal (the last candle on the chart) which is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Evaluating the signals and managing the position](img/2078OT_10_06.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: TA is useful while setting take profits and stop losses, in other words managing
+    your position. If you chose to sell at the signal, you could have set these as
+    follows.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The system signals that you might want to sell at $1023,9 on December 5, 2013,
+    in the last candle of the above chart, highlighted with an arrow on the next chart.
+    You decide to proceed and open a position. Since bitcoin prices fluctuate quite
+    much, especially after an exponentially increasing previous trend, you decide
+    to put your stop loss to the historical high, to 1163, because you don't want
+    false spikes to close you out of the position.
+  prefs: []
+  type: TYPE_NORMAL
+- en: On the next chart, here below, you can see that this approach is justified,
+    after the fall in prices volatility increases significantly and shadows grow.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Evaluating the signals and managing the position](img/2078OT_10_07.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: By the end of 2013 a supposed trend line can be traced if you connect the tops
+    of the candles bodies (in white, drawn manually). This seems to hold and a lower
+    trendline forms on the bottoms, with a lower slope, giving a triangle. We say
+    that a triangle is valid on a chart if the price leaves it before it reaches 3/4
+    of its length.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'This is what happens: on December 26, 2013 the daily chart breaks the line
+    upwards with a big green candle (pointed at by an arrow). The MACD crosses, giving
+    a strong bullish signal, and we close the position on the top of the body, at
+    747.0 – if not before. So, we earned $276.9, or a 27% return on the trade.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A word on money management
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let''s look at the risk profile of this trade to show how technical analysis
+    can be used to manage your exposure. The best way to do so is to calculate your
+    risk-reward ratio, given by the below formula:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A word on money management](img/2078OT_10_08.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'The denominator is easy to define, this is the possible loss on the position,
+    (1163.0-1023.9) = $139.1 in the case of the activation of the stop loss. The numerator,
+    the possible gain can be approximated by a Fibonacci retracement, a tool that
+    uses the golden section to predict possible price reversions, particularly useful
+    in this exponential trend. You can see it below on a graph from [https://bitcoinwisdom.com/](https://bitcoinwisdom.com/):'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A word on money management](img/2078OT_10_09.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: If you take the height of the trend as 100%, you can expect prices to touch
+    Fibonacci levels when the trend breaks. Since a key reversal is a strong sign,
+    let's take the 38.2%, which equals $747.13, so we expect prices to go down there.
+    So the numerator of the risk-reward ratio is (1023.9-747.1) = $276.8, giving a
+    final result of 276.8 /139.1 = 1.99, meaning that there is an ex-ante profit potential
+    of $1.99 per one dollar at risk. This is a just fine potential, the trade should
+    be approved.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whenever you consider entering into a position, calculate how much you risk
+    compared to how much you expect to gain. If it is below 3/2, the position is not
+    the best, if below 1, you should forget the trade altogether. The possible ways
+    to improve your risk/reward ratio are a tighter stop loss or the choice of a stronger
+    sign. Technical analysis provides you with useful risk management tactics if you
+    wish to be successful at trading, do not forget about them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Wraping up
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Technical analysis, and particularly the presented chartist approach, is a highly
+    intuitive, graphical way of analyzing financial assets. It uses support-resistance
+    levels, chart- and candle patterns and indicators to predict future price movements.
+    R enabled us to fetch live data for free and plot it as an OHLC chart, plot indicators
+    on it and receive automated signs for key reversals, a candlestick pattern. We
+    used one of these to show how a real position could have been managed manually
+    and have shown that the appeal of TA is that it not only tells you when to open
+    a position but also when to close it and calculate the strength of the signal
+    by using risk management practices.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Neural networks
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'After remaining a long time in academic circles due to their advanced mathematical
+    background, **neural networks** (**NN**) rapidly grew in popularity as more practically
+    usable formats are available – like the built-in function of R. NNs are artificial
+    intelligence adaptive software that can detect complex patterns in data: it is
+    just like an old trader who has a good market intuition but cannot always explain
+    to you why he is convinced you should go short on the **Dow Jones Industrial Average
+    index** (**DIJA**).'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The network architecture consists of a number of nodes connected by links.
+    Networks usually have 3 or 4 layers: input, hidden and output layers, and in each
+    layer several neurons can be found. The number of first layer''s nodes corresponds
+    to the number of the model''s explanatory variables, while the last layer''s equals
+    to the number of the response variables (usually 2 neurons in case of binary target
+    variable or 1 neuron in case of continuous target variable). The model''s complexity
+    and forecast ability is determined by the number of nodes in the hidden layer(s).
+    Normally, each node of one layer has connections to all the other nodes of the
+    next layer, and these edges (see the figure) represent weights. Every neuron receives
+    inputs from the previous layer and, by the use of a non-linear function, it transforms
+    to the next layer''s input.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: A feed-forward NN with one hidden layer can be useful almost in case of any
+    kind of complex problems *(Chauvin-Rumelhart, 1995)*, that is why it often used
+    by researchers. (*Sermpinis et al., 2012*; *Dai et al, 2012*) *Atsalakis-Valavanis
+    (2009)* pointed out, that the **multi-layer precepton** (**MLP**) model that belongs
+    to the family of **feed-forward neural networks** (**FFNN**) can be the most effective
+    to forecast financial time series. The next graph depicts the structure of a 3
+    layer MLP neural network, according to *(Dai et al, 2012)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Neural networks](img/2078OT_10_10.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The connection weights (the values of the edges) are assigned initial values
+    first. The error between the predicted and actual output values is back-propagated
+    via the network for updating the weights. The supervised learning procedure then
+    attempts to minimize the error (usually MSE, RMSE or MAPE) between the desired
+    and forecasted outputs. Since the network with certain number of neurons in the
+    hidden layer can learn any relationship on the learning data (even the outliers
+    and noise), by halting the learning algorithm early the prevention of the over-learning
+    is possible. The learning process of the network stops when the test segment has
+    reached its minimum. Then, with the given parameter the network has to be run
+    on the validation segment, see (Wang et al., 2012).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'There are many practical problems to solve when you create and perform your
+    own neural network, for example, the selection of appropriate network topology,
+    the selection and the transformation of input variables, the reduction of output
+    variance and most importantly the mitigation of over fitting which refers to the
+    situation when the error on the training set is very small, but when we fit the
+    network on new data the error is large. It means that the network has just memorized
+    the training examples but was not successful in understanding the general structure
+    of the relationships. In order to avoid overfitting, we need to split the data
+    into three subsets: train, validation, test. The training set usually accounting
+    for the 60-70% of the total data is used for learning and fitting the network
+    parameters. The validation data set (10-20%) is used for minimizing the overfitting
+    effect and tuning the parameters, for example to choose the number of hidden nodes
+    in a NN. The test data (10-20%) set is used only for testing the final solution
+    in order to confirm the predictive power of the network.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Forecasting bitcoin prices
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Let us see how it works in practice. This example applies trading strategies
+    based on the forecasting of the closing prices of Bitcoin. The period between
+    3 August 2013 and 8 May 2014 were selected for analysis. There were totally 270
+    data points in the dataset and the first 240 data points was used as the training
+    sample while the remaining 30 points was used as the testing sample (the forecasting
+    models were tested on the last one months of this time series of 9 months).
+  prefs: []
+  type: TYPE_NORMAL
+- en: First we load the dataset from `Bitcoin.csv` which can be found on the website
+    of the book.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE14]'
+  prefs: []
+  type: TYPE_PRE
+- en: In the second step we calculate the log returns and install the `TTR` library
+    in order to generate technical indicators.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE15]'
+  prefs: []
+  type: TYPE_PRE
+- en: The six technical indicators selected for modeling have been widely and successfully
+    used by researchers and professional traders as well.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE16]'
+  prefs: []
+  type: TYPE_PRE
+- en: We create the Input and Target matrix for training and validation dataset. The
+    training and validation dataset include the closing prices and technical indicators
+    between August 3, 2013 (700) and April 8, 2014 (940).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE17]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now, we install and load the `caret` package order to split our learning dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE18]'
+  prefs: []
+  type: TYPE_PRE
+- en: We split the learning dataset in 90-10% (train-validation) ratio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE19]'
+  prefs: []
+  type: TYPE_PRE
+- en: We install and load the `nnet` package.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE20]'
+  prefs: []
+  type: TYPE_PRE
+- en: The appropriate parameters (number of neurons in hidden layer, learning rate)
+    are selected by means of the grid search process. The network's input layer comprise
+    six neurons (in accordance with the number of explanatory variables), whereas
+    networks of 5, 12, …, 15 neurons were tested in the hidden layer. The network
+    has one output: the daily yield of the bitcoin. The models were tested at low
+    learning rates (0.01, 0.02, 0.03) in the learning process. The convergence criterion
+    used was a rule that the learning process would be halted if the 1000th iteration
+    has been reached. The network topology with the lowest RMSE in the test set was
+    chosen as optimal.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE21]'
+  prefs: []
+  type: TYPE_PRE
+- en: In this step, we create the Input and Target matrix for the test dataset. The
+    test dataset include the closing prices and technical indicators between April
+    8, 2013 (940) and May 8, 2014 (969).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE22]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, we fit the best neural network model on test data.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE23]'
+  prefs: []
+  type: TYPE_PRE
+- en: We repeat and average the model 20 times in order to eliminate the outlier networks.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE24]'
+  prefs: []
+  type: TYPE_PRE
+- en: We calculate the result of the buy-and-hold benchmark strategy and neural network
+    on the test dataset.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE25]'
+  prefs: []
+  type: TYPE_PRE
+- en: We plot the investment value according to the benchmark and the neural network
+    strategy on the test dataset (1 month).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE26]'
+  prefs: []
+  type: TYPE_PRE
+- en: '![Forecasting bitcoin prices](img/2078OT_10_11.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Evaluation of the strategy
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We note that in this illustrative example NN strategy has outperformed the "buy-and-hold"
+    strategy in terms of the realized return. With neural network we achieved a return
+    of 20% in a month, while with the passive buy and hold strategy it was only 3%.
+    However, we didn't take into account the transaction costs, the bid-ask spreads
+    and the price impacts and these factors may reduce the neural network's profit
+    significantly.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Logoptimal portfolios
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Contrary to the previous points, let us suppose that there are a finite number
+    of risky assets available on the market. These assets are traded continuously
+    without any transaction costs. The investor analyses historical market data and
+    based on this, can reset her portfolio at the end of each day. How can she maximize
+    her wealth in the long run? If returns are independent in time, then markets are
+    efficient in the weak sense and the time series of returns have no memory. If
+    returns are also identically distributed (i.i.d), the optimal strategy is to set
+    portfolio weights for example, according to the Markowitz model (see *Daróczi
+    et al. 2013*) and to keep portfolio weights fixed over the whole time horizon.
+    In this setting, any rearrangements would have negative effects on the portfolio
+    value in the long run.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Now, let us suspend the assumption of longitudinal independency, hence let us
+    allow for hidden patterns in the asset returns, therefore markets are not efficient
+    and it is worth analyzing historical price movements. The only assumption we keep
+    is that asset returns are generated by a stationary and ergodic process. It can
+    be shown that the best choice is the so called **logoptimal portfolio**, see *Algoet-Cover
+    (1988)*. More precisely, there are no other investment strategies which have asymptotically
+    higher expected return than the logoptimal portfolio. The problem is that in order
+    to determine logoptimal portfolios one should know the generating process.
+  prefs: []
+  type: TYPE_NORMAL
+- en: But, what can we do in a more realistic setting when we know nothing about the
+    nature of the underlying stochastic process? A strategy is called **universally
+    consistent** if it ensures that asymptotically the average growth rate approximates
+    that of the logoptimal strategy for any (!) generating process being stationary
+    and ergodic. It is surprising, but universally consistent strategies exist, see
+    *Algoet-Cover (1988)*. Thus, the basic idea is to search for patterns in the past
+    that are similar to the most recently observed pattern, and building on this,
+    to forecast the future returns and to optimize the portfolio relative to this
+    forecast. The concept of similarity can be defined in different ways, therefore
+    we can use different approaches, for example partitioning estimator, core function
+    based estimator and nearest neighbor estimator. For illustration purposes, in
+    the next point we present a simple universally consistent strategy which is based
+    on the core function approach according to *Györfi et al. (2006)*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A universally consistent, non-parametric investment strategy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: 'Let us suppose that there are d different stocks traded on the market. Vector
+    ***b*** containing portfolio weights can be rearranged every day. We suppose that
+    portfolio weights are nonnegative (short selling is not allowed) and the sum of
+    the weights is always 1 (the portfolio must be self-financing). Vector ***x***
+    contains price relatives ![A universally consistent, non-parametric investment
+    strategy](img/2078OT_10_12.jpg) where *P* stands for the closing price on the
+    *i*th day. The investor''s initial wealth is *S[0]*, hence her wealth at the end
+    of the *n*th period is as follows:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A universally consistent, non-parametric investment strategy](img/2078OT_10_19.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ![A universally consistent, non-parametric investment strategy](img/2078OT_10_20.jpg)
+    is the scalar product of the two vectors, n is the number of the days we followed
+    the investment strategy, *W[n]* is the average log return over the *n* days and
+    ***B*** represents all the ***b*** vectors applied. Therefore, the task is to
+    determine a reallocation rule in a way that *W[n]* be maximal in the long run.
+    Here we present a simple universally consistent strategy which disposes this attractive
+    property. Let *J[n]* denote the set of days which are similar to the most recently
+    observed day in terms of the Euclidean distance. It is determined by the formula
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A universally consistent, non-parametric investment strategy](img/2078OT_10_15.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'where *r[l]* is the maximum allowed distance (radium) selected by the *l*th
+    expert. The logoptimal portfolio according to the *l*th expert on day *n* can
+    be expressed in the following way:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A universally consistent, non-parametric investment strategy](img/2078OT_10_21.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In order to get a well-balanced and robust strategy we define different experts
+    (portfolio managers) with different radium, and we allocate our wealth to different
+    experts according to a weight vector ***q***. Weights can be equal; or can depend
+    on the previous performance of the experts or on other characteristics. This way
+    we combine the opinion of several experts and our wealth on the *n*th day is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A universally consistent, non-parametric investment strategy](img/2078OT_10_22.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Let us suppose that we are an expert and we follow the above strategy between
+    1997 and 2006 on the market of four NYSE stocks (aph, alcoa, amerb, and coke)
+    plus a U.S. treasury bond and we use a moving time-window of one year. Data can
+    be collected for example from here: [http://www.cs.bme.hu/~oti/portfolio/data.html](http://www.cs.bme.hu/~oti/portfolio/data.html).
+    Let us first read the data in.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE27]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function calculates the expected value of the portfolio in line with the
+    portfolio weights depending on the radium (*r*) we set in advance.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE28]'
+  prefs: []
+  type: TYPE_PRE
+- en: This function calculates the optimal portfolio weights for a particular day.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE29]'
+  prefs: []
+  type: TYPE_PRE
+- en: Now we optimize the portfolio weight for all the days we found similar. At the
+    same time we also calculate the actual value of our investment portfolio for each
+    day.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE30]'
+  prefs: []
+  type: TYPE_PRE
+- en: Finally, let us plot the investment value in time.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '[PRE31]'
+  prefs: []
+  type: TYPE_PRE
+- en: 'We got the following graph:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![A universally consistent, non-parametric investment strategy](img/2078OT_10_18.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Evaluation of the strategy
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: We can see on the above graph that our log-optimal strategy outperformed the
+    passive benchmark of keeping portfolio weights equal and fixed over time. However,
+    it is notable that not only the average return, but also the volatility of the
+    investment value is much higher in the former case.
+  prefs: []
+  type: TYPE_NORMAL
+- en: It is mathematically proven that there exist non-parametric investment strategies
+    which are able to effectively reveal hidden patterns in the realized returns and
+    to exploit them in order to achieve an "almost" optimal growth rate in the investor's
+    wealth. For this, we do not have to know the underlying process; the only assumption
+    is that the process is stationary and ergodic. However, we cannot be sure that
+    this assumption holds in reality. It is also important to emphasize that these
+    strategies are optimal only in the asymptotic sense, but we know little about
+    the short run characteristics of the potential paths.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: 'In this chapter we overviewed not only technical analysis but also some corresponding
+    strategies, like neural networks and log-optimal portfolios. These methods are
+    similar in the sense that when applying them, we implicitly suppose that past
+    situations may reappear in the future; therefore we took the courage to challenge
+    the concept of market efficiency and to build up an active trading strategy. In
+    this setting, we discussed the problems of forecasting the price of a single asset
+    (bitcoin), optimizing the timing of our trading, and also optimizing our portfolio
+    of several risky assets (NYSE stocks) in a dynamic manner. We demonstrated that
+    some simple algorithms based on the toolkit available in R can produce significant
+    extra profit relative to the passive strategy of buying-and-holding. We also note
+    however, that a comprehensive performance analysis focuses not only on the average
+    returns, but also on the corresponding risks. Therefore, we suggest that when
+    optimizing your strategy take care of the downturns, the volatility and other
+    risk measures as well. And, of course, you must be aware of the limitations of
+    the presented methods: you cannot be sure to know the return generating process;
+    if you trade frequently, you have to pay a lot of transaction costs; and the more
+    you get rich, the more you suffer from the adverse price impact and so on. However,
+    we do hope you got new inspirations and useful hints to develop your own sophisticated
+    trading strategy.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: References
+  prefs:
+  - PREF_H1
+  type: TYPE_NORMAL
+- en: Algoet, P.; Cover, T. (1988) Asymptotic optimality, asymptotic equipartition
+    properties of logoptimal investments, Annals of Probability, 16, pp. 876-898
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Atsalakis, G. S. Valavanis, K. P. (2009) Surveying stock market forecasting
+    techniques-Part II. Soft computing methods. Expert Systems with Applications,
+    36(3), pp. 5932-5941
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Bajgrowicz, P; Scaillet, O. (2012) Technical trading revisited: False discoveries,
+    persistence tests, and transaction costs, Journal of Financial Economics, Vol.
+    106, pp. 473-491'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Chauvin, Y.; Rumelhart, D. E. (1995) Back propagation: Theory, architectures,
+    and applications. New Jersey: Lawrence Erlbaum associates.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Dai, W.; Wu, J-Y.; Lu, C-J. (2012) Combining nonlinear independent component
+    analysis and neural network for the prediction of Asian stock market indexes.
+    Expert Systems with Application, 39(4), pp. 4444-4452
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Daróczi, G. et al. (2013) Introduction to R for Quantitative Finance, Packt
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Györfi, L.; Lugosy, G.; Udina, F. (2006) Non-parametric Kernel-based sequential
+    investment strategies, International Journal of Theoretical and Applied Finance,
+    10, pp. 505-516
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Sermpinis, G.; Dunis, C.; Laws, J.; Stasinakis, C. (2012) Forecasting and trading
+    the EUR/USD exchange rate with stochastic Neural Network combination and time-varying
+    leverage. Decision Support Systems, 54(1), pp. 316-329
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Tajaddini, R.; Falcon Crack, T. (2012) Do momentum-based trading strategies
+    work in emerging currency markets?, Journal of International Financial Markets,
+    Institutions & Money, Vol. 22, pp. 521-537
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Wang, J. J.; Wang, J. Z.; Zhang, Z. G.; Guo, S. P. (2012) Stock index forecasting
+    based on a hybrid model. Omega, 40(6), pp. 758-766
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Zapranis, A.; T. E. Prodromos (2012) A novel, rule-based technical pattern
+    identification mechanism: Identifying and evaluating saucers and resistant levels
+    in the US stock market, Expert Systems with Applications, Vol. 39, pp. 6301-6308'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: Zwart, G.; Markwat, T.; Swinkels, L.; van Dijk, D. (2009) The economic value
+    of fundamental and technical information in emerging currency markets, Journal
+    of International Money and Finance, Vol. 28\. pp. 581-604
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL

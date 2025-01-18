@@ -1,0 +1,1411 @@
+- en: '13'
+  prefs:
+  - PREF_H2
+  type: TYPE_NORMAL
+- en: Looking Ahead
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first generation of quantum algorithms appeared in the 1990s when quantum
+    computers existed only as a concept. On the one hand, the absence of actual quantum
+    hardware was a huge disadvantage since it made direct experiments impossible;
+    on the other hand, it stimulated theoretical research not inhibited by the limitations
+    and constraints of the imperfect early quantum computers. Researchers focused
+    on devising algorithms that would achieve quadratic or even exponential speedup,
+    assuming that powerful, error-free quantum computers would be available one day.
+    It was the time when Shor’s prime factorisation algorithm  [[265](Biblography.xhtml#XShor)]
+    and Grover’s search algorithm  [[117](Biblography.xhtml#XGrover)] were discovered.
+    Incidentally, as the book was about to be released, Peter Shor was named one of
+    the four recipients of the 2022 Breakthrough Prize in Fundamental Physics (along
+    with C. H. Bennett, G. Brassard, and D. Deutsch) for their foundational work in
+    quantum information. Many such algorithms, in turn, relied on basic building blocks
+    such as Quantum Phase Estimation and Quantum Fourier Transform  [[278](Biblography.xhtml#XSutor2019)].
+    These algorithms played an important role in demonstrating the capabilities of
+    universal gate model quantum computers – if only they were available!
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'A quarter of a century later we are facing a different problem: the development
+    of practical quantum computing algorithms and techniques that would allow us to
+    extract value from NISQ computers. While quantum computing hardware is improving
+    at a breathtaking pace, it is still too far from a state where it can break RSA
+    encryption. What are existing quantum computers capable of doing? What is their
+    relative strength in comparison with classical computers? In this chapter we look
+    at several new, NISQ-friendly algorithms that bring us one step closer to achieving
+    the quantum advantage.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.1 Quantum Kernels
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: We start with the popular classical kernel method and then describe its quantum
+    counterpart based on parameterised quantum circuits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.1.1 Classical kernel method
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'A *kernel method* is the key element of a powerful classical supervised learning
+    algorithm: Support Vector Machine (SVM). Unlike a feedforward-neural-network-based
+    classifier whose objective is to minimise the classification error, the SVM’s
+    objective is to maximise the margin, defined as the distance between a separating
+    hyperplane (decision boundary separating samples belonging to different classes)
+    and the training samples that are closest to this hyperplane  [[243](Biblography.xhtml#XRaschka2019)].
+    The samples that are closest to the separating hyperplane are called *support
+    vectors*, thus giving its name to the algorithm.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The maximisation of the margins lowers the generalisation error and helps fight
+    overfitting. This is a very important property but finding the separating hyperplane
+    is not an easy task for non-linearly separable data. Fortunately, the kernel method
+    allows us to overcome this difficulty, by creating non-linear combinations of
+    the original features and projecting them onto a higher-dimensional space where
+    the data samples become linearly separable.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Whereas an SVM with linearly separable data operates on the inner product ![⟨xi,xj⟩](img/file1241.jpg)
+    of the training samples, the generalised version to non-linearly separable data
+    operates on the kernel function
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![k(xi,xj) := ϕ(xi)⊤ ϕ(xj), ](img/file1242.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where *ϕ* : ℝ^N →ℝ^M, with *M* ≫ *N*, is the feature map that projects the
+    *N*-dimensional feature x := (*x*[1]*,…,x*[N]) onto the *M*-dimensional feature
+    space. The inner product ([13.1.1](#x1-2380001)) would be computationally expensive
+    to calculate directly but the kernel function is computationally inexpensive –
+    this is known as the *kernel trick*. The kernel function can be seen as a similarity
+    function operating on a pair of samples. For example, the radial basis function'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ i j ( ∥xi − xj∥2) k(x,x ) = exp − ---2σ2---- , ](img/file1243.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: translates the distance between samples x^i and x^j (defined on [0*,*∞)^N) into
+    a similarity score (defined on the interval [0*,*1]).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The right choice of kernel function can make the classification task much easier.
+    However, some kernels may be hard to compute. This is where quantum computing
+    may play an important role by providing efficient quantum circuits to compute
+    them.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.1.2 Quantum kernel method
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Wang, Du, Luo, and Ta  [[298](Biblography.xhtml#XWang2021)] have shown a close
+    correspondence between classical and quantum kernels. The feature map *ϕ*(⋅) coincides
+    with the preparation of a quantum state via a parameterised quantum circuit 𝒰(⋅),
+    which maps the input data sample into a high-dimensional Hilbert space described
+    by *n* qubits:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⊗n ϕ(x) → &#124;ψ(x)⟩ = 𝒰(x) &#124;0⟩ . ](img/file1244.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'The kernel function then coincides with applying measurements on the prepared
+    quantum states:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ &#124;⟨ ⟩&#124; k(xi,xj) → &#124;ψ (xj)&#124;ψ(xi) &#124;2 , ](img/file1245.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and allows for more expressive models in comparison with the alternative
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![k (xi,xj) = ϕ(xi)⊤ ϕ(xj) → ⟨ψ(xj)&#124;ψ (xi)⟩. ](img/file1246.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Huang *et al.*  [[143](Biblography.xhtml#XHuang2021)] argued that even though
+    the kernel function ([13.1.2](#x1-2390002)) seems to be more natural, the quantum
+    kernel ([13.1.2](#x1-2390002)) can learn arbitrarily deep quantum neural networks
+    (deep PQC). This is a strong result, especially in combination with the hierarchy
+    of expressive power of parameterised quantum circuits (Chapter [12](Chapter_12.xhtml#x1-22500012),
+    Equation ([10](Chapter_12.xhtml#x1-233002r10))).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Havlíček *et al.*  [[129](Biblography.xhtml#XHavlicek2019)] described how a
+    quantum computer can be used to estimate the kernel. The kernel entries are the
+    *fidelities* between different feature vectors (analogous to similarity scores
+    in classical kernel methods). Burnham, Cleve, Watrous, and R. de Wolf  [[50](Biblography.xhtml#XBurnham2001)]
+    and Cincio, Subaşi, Sornborger, and Coles  [[66](Biblography.xhtml#XCincio2018)]
+    investigated various fidelity estimation methods such as quantum fingerprinting
+    and machine learning approach (both relying on the application of a CSWAP gate
+    implementing the swap test). However, by using the fact that the states in the
+    feature space are not arbitrary, the overlap between the quantum states can be
+    estimated from the transition probability:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;⟨ j i⟩&#124;2 † j i 2 &#124; ψ(x )&#124;ψ(x )&#124; = &#124;⟨0 &#124;𝒰
+    (x )𝒰 (x ) &#124;0⟩&#124;, ](img/file1247.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where, for brevity, we used the notation ![|0 ⟩](img/file1248.jpg) := ![|0⟩](img/file1249.jpg)^(⊗n).
+    The first step is the application of a composition of two consecutive feature
+    map circuits (representing the operators 𝒰(x^i) and 𝒰^†(x^j)) to the initial state ![|0⟩](img/file1250.jpg).
+    The second step is the measurement of the final state in the computational basis *K*
+    times and counting the number *κ* of all-zero strings ![|0⟩](img/file1251.jpg).
+    The frequency *κ∕K* of the all-zero string is the estimate of the transition probability
+    (the "similarity score").
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The rest of the supervising learning protocol is classical, allowing for the
+    natural embedding of quantumly computed kernels into the overall framework: the
+    algorithm remains essentially classical with only the classically hard task outsourced
+    to the quantum chip.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.1.3 Quantum circuits for the feature maps
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Figure [13.1](#13.1) displays a schematic representation of the feature map
+    circuit. In this example, we work with an 8-dimensional dataset with features
+    encoded in the rotation angles such that there is a direct mapping of a sample
+    x^i := (*x*[1]^i*,…,x*[8]^i) into the vector of adjustable circuit parameters
+    𝜃^i := (*𝜃*[1]^i*,…,𝜃*[8]^i). The first section of the circuit implements the
+    operator 𝒰(x^i), creating an entangled state due to the layer of fixed two-qubit
+    CZ gates, whereas the second section of the circuit implements 𝒰^†(x^j). Here
+    we use the fact that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![R†X(𝜃) = RX(− 𝜃), R†Y(𝜃) = RY(− 𝜃), CZ† = CZ. ](img/file1252.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: It is easy to see that if the samples x^i and x^j are identical (so that 𝜃^i
+    = 𝜃^j), then 𝒰(x^i)𝒰^†(x^j) = ℐ and all *K* measurements will return the all-zero
+    string ![|0 ⟩](img/file1253.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 13.1: Schematic quantum kernel circuit. ](img/file1254.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13.1: Schematic quantum kernel circuit.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The rest of the protocol is classical – the quantum computer is used to assist
+    the classifier with the calculation of a kernel function that would not be feasible
+    if only classical computational resources were available.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Let us now apply the quantum kernel method to the Australian Credit Approval
+    dataset (introduced in Chapter [8](Chapter_8.xhtml#x1-1620008)) in order to estimate
+    the degree of similarity between samples drawn from the same class and samples
+    drawn from two different classes. The ACA dataset consists of 690 samples, with 383
+    samples labelled as Class 0 and 307 samples labelled as Class 1, so the dataset
+    is reasonably well balanced. Each sample consists of 14 features (continuous,
+    integer, binary). In Chapter [8](Chapter_8.xhtml#x1-1620008) we built a QNN classifier
+    and tested its performance on the ACA dataset, employing the *angle encoding*
+    scheme as explained in Section [7.2](Chapter_7.xhtml#x1-1520002). We would like
+    to build a feature map that is consistent with the angle encoding scheme and does
+    not require the construction of a too deep PQC. In fact, we would like to build
+    a feature map using the PQC that is as close as possible to the one shown in Figure [13.1](#13.1).
+    The proposed scheme can be embedded into all existing NISQ systems we considered
+    earlier in this book. For example, we can use IBM’s Melbourne system shown in
+    Figure [13.2](#13.2).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 13.2: Embedding of the quantum kernel circuit into IBM’s Melbourne
+    system. ](img/file1255.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13.2: Embedding of the quantum kernel circuit into IBM’s Melbourne system.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: We know that 7 quantum registers (shown as shaded qubits connected by the thick
+    lines in Figure [13.2](#13.2)) can encode a 14-feature data sample if we follow
+    the angle encoding scheme. The corresponding circuit is shown in Figure [13.3](#13.3).
+    The linear sequential connectivity between the physical qubits makes the choice
+    of the 2-qubit gates straightforward (and, in fact, similar to the one in Figure [13.1](#13.1)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 13.3: Quantum kernel circuit for the ACA dataset. ](img/file1256.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13.3: Quantum kernel circuit for the ACA dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the circuit shown in Figure [13.3](#13.3), the angles 𝜃^i and 𝜃^j encode
+    the data samples x^i and x^j, which can be drawn either from the same class or
+    from two different classes. Running the circuit *K* times and calculating the
+    number *κ* of all-zero bitstrings (after measurement) gives us the measure of
+    similarity between samples x^i and x^j (estimated as the ratio *κ∕K*). Figure [13.4](#13.4)
+    displays the mean values of the transition probabilities (similarity scores) obtained
+    using the quantum kernel ([13.1.2](#x1-2390002)) by running the quantum circuit
+    on the Qiskit simulator *K* = 10*,*000 times for each pair of data samples. The
+    mean values were calculated across all possible pairs of samples from the corresponding
+    classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 13.4: Mean values of the quantum kernel (13.1.2) for the ACA dataset.
+    ](img/file1257.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13.4: Mean values of the quantum kernel ([13.1.2](#x1-2390002)) for
+    the ACA dataset.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: As expected, samples drawn from the same class have, on average, significantly
+    larger similarity scores given by the quantum kernel compared with samples drawn
+    from two different classes.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum kernels that can be efficiently calculated on quantum computers have
+    the potential to improve the performance of hybrid quantum-classical machine learning
+    models.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.2 Quantum Generative Adversarial Networks
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: 'Generative Adversarial Networks (GANs) are powerful statistical techniques
+    to generate (as much as needed) data close enough (in some sense) to given samples.
+    They were introduced in  [[114](Biblography.xhtml#XGoodfellow2014)] and originally
+    tested on image data. Since then, they have seen wide applications in finance,
+    for time series generation  [[301](Biblography.xhtml#Xwiese2021multi), [302](Biblography.xhtml#Xwiese2020quant)],
+    tuning of trading models  [[176](Biblography.xhtml#Xkoshiyama2021generative)],
+    portfolio management  [[196](Biblography.xhtml#Xlu2022autoencoding)], synthetic
+    data generation  [[17](Biblography.xhtml#Xassefa2020generating)], and diverse
+    types of fraud detection  [[261](Biblography.xhtml#Xsethia2018data)]. The gist
+    of it is to have a generator and a discriminator compete against each other in
+    order to improve themselves: the generator improves by becoming better at generating
+    good samples (i.e., close to real data) from random noise, whereas the discriminator
+    improves by being able to recognise real data from "fake" (namely generated) data.
+    Both the generator and the discriminator are usually built as neural networks
+    with hyperparameters over which to optimise. Mathematically, given a generator (⋅*,*𝜃^()
+    and a discriminator (⋅*,*𝜃^(), where 𝜃 ^(and 𝜃 ^(represent the hyperparameters,
+    the problem reads as follows:))))'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ { } min max 𝔼x∼ℙdata [log ((x;𝜃 )]+ 𝔼z∼ℙ ) [log (1− ((z;𝜃);𝜃 ))] , 𝜃 𝜃
+    (⋅,𝜃 ](img/file1258.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where x ∼ℙ[data] means some sample x generated from the original dataset, whereas
+    z ∼ℙ [refers to sample generated from the generator . We refer the interested
+    reader to  [[95](Biblography.xhtml#Xeckerli2021generative)] for an overview of
+    the advantages and the pitfalls of GANs in finance. Given this popularity and
+    the existence of quantum neural networks (Chapter [8](Chapter_8.xhtml#x1-1620008)),
+    it is thus natural to explore the question of whether GANs can be extended to
+    the quantum world, and whether there is any advantage in doing so.]
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The main principles of Quantum Generative Adversarial Network (QGAN) – introduced
+    simultaneously by Lloyd and Weedbrook  [[192](Biblography.xhtml#Xlloyd2018quantum)]
+    and by Dallaire-Demers and Killoran  [[77](Biblography.xhtml#Xdallaire2018quantum)]
+    – remain the same, relying on two actors, a generator and a discriminator, competing
+    against each other. In  [[192](Biblography.xhtml#Xlloyd2018quantum)], the authors
+    translated the classical problem in the language of density matrices (described
+    in Section [1.3.1](Chapter_1.xhtml#x1-420001)): Given some data represented by
+    a density matrix *σ* (not necessarily describing a pure state) and a generator 
+    generating some output density matrix *ρ*, the discriminator is tasked with identifying
+    the true data from the fake one. More precisely, it makes a positive operator-valued
+    measurement (Section [1.2.3](Chapter_1.xhtml#x1-380003)) with outcomes T (for
+    True) or  (for False). The probability that the measurement yields a positive
+    answer given the true data is'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ℙ(T |σ ) = (Tσ ), ](img/file1259.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: while the probability that it yields a positive answer given generated data
+    is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ℙ(T|) = (T ρ). ](img/file1260.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The adversarial game, similarly to the classical case, therefore reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ { } min max (T ρ)− (Tσ ) . T ](img/file1261.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Note that both the set of positive measurement operators T (with 1-norm less
+    than one) and the set of density matrices *ρ* are convex, ensuring that the optimisation
+    problem ([13.2](#x1-2410002)) admits at least one optimum. However, these two
+    sets are infinite dimensional, making the optimisation problem hard to solve.
+    Following similar arguments, Dallaire-Demers and Killoran  [[77](Biblography.xhtml#Xdallaire2018quantum)]
+    further proposed to model both the generator and the discriminator as variational
+    quantum circuits parameterised by some vector of parameters describing, for example,
+    the rotation angles of all the gates. A natural question then is whether some
+    optimal architecture of variational quantum circuit might exist. While there is
+    no clear answer at this stage – as far as we know – recent developments have improved
+    our understanding and the power of such circuits.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Starting from *n* qubits, a quantum generator : ℂ^(2^n) →ℂ^(2^n) takes the
+    form of a multi-layer quantum neural network, for example of the following form:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∏1 := Ul(𝜃l). l=L ](img/file1262.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'For each layer *l* ∈{1*,…,L*}, the unitary gate U[l](𝜃[l]) acts on all *n*
+    qubits at the same time, and depends on a vector of parameters (or hyperparameters) 𝜃[l].
+    In order to avoid (too expensive) high-order qubit gates, entanglement takes the
+    form of pairwise controlled unitary gates, and we therefore assume that, for each
+    *l* ∈{1*,…,L*}, U[l] is composed of one- or two-qubit gates only. One possible
+    (though not the only one) way to parameterise U[l] is with the following principles
+    in mind:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: any one-qubit unitary gate can be decomposed into a sequence of three rotation
+    gates R[Z], R[X] and R[Y], as proved in  [[223](Biblography.xhtml#XNielsen2010), Theorem
+    4.1];
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: following  [[256](Biblography.xhtml#Xschuld2020circuit)], *imprimitive* two-qubit
+    gates (i.e., two-qubit gates that map product states to non-product states), together
+    with one-qubit gates ensure quantum universality  [[47](Biblography.xhtml#Xbrylinski2002universal)].
+    In particular the decomposition R[X](*𝜃*)Q(*ϕ*) is universal  [[47](Biblography.xhtml#Xbrylinski2002universal), Corollary 9.2],
+    for *𝜃,ϕ* ∈ [0*,*2*π*), where
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: '![ ⌊ ⌋ | 1 0 0 0 | || 0 1 0 0 || Q(ϕ) := | | . |⌈ 0 0 1 0 |⌉ 0 0 0 eiϕ ](img/file1263.jpg)'
+  prefs:
+  - PREF_IND
+  type: TYPE_IMG
+- en: The general form of the *L*-layer neural network is therefore ([13.2](#x1-2410002)),
+    where each layer gate U[l](𝜃[l]) takes the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ {⊗n } Ul(𝜃l) = RX(𝜃ie)Q1+(i mod n)(𝜃iimp) i=1 {( n ) ( n ) ( n ) } ⊗ R
+    (𝜃i ) ⊗ R (𝜃i ) ⊗ R (𝜃i ) , i=1 Z Z,l i=1 X X,l i=1 Y Y,l ](img/file1264.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where Q^i means that qubit *i* is the control qubit and the gate acts on qubit (*i*
+    + 1). Note that 1 + (*i *mod* n*) = 1 + *i* when *i* ∈{1*,…,n*− 1} and is equal
+    to 1 when *i* = *n*. The total number of hyperparameters is therefore 5*n* per
+    layer, thus 5*nL* in total. The discriminator itself may or may not be of quantum
+    nature (following a construction similar to the generator), depending on the problem
+    at hand (it is in  [[18](Biblography.xhtml#Xassouel2021quantum)] but not in  [[268](Biblography.xhtml#Xsitu2020quantum)]
+    for example), and the nature of the problem – in particular the potential need
+    to encode/decode data from quantum to classical (with a high cost) may influence
+    this choice.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The finite-dimensional optimisation ([13.2](#x1-2410002)) is usually carried
+    out via some gradient descent method; the gradients themselves are computed via
+    separate quantum circuits in  [[77](Biblography.xhtml#Xdallaire2018quantum)],
+    or rather – more efficiently – using the parameter-shift rule, explained in Section [8.2.3](Chapter_8.xhtml#x1-1670003)
+    (see also  [[257](Biblography.xhtml#XSchuld2018)]), which allows for an exact
+    computation of the gradient from the original circuit.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'QGANs are a very new and active research area, and promise to be one where
+    NISQ-based algorithms will be particularly fruitful. They are intimately linked
+    with developments of QNNs as a whole, and current advances in the field relate
+    to the following, which we encourage the reader to follow closely over the next
+    few years:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'QGAN to generate probability distributions: we refer the interested reader
+    to  [[18](Biblography.xhtml#Xassouel2021quantum), [268](Biblography.xhtml#Xsitu2020quantum), [314](Biblography.xhtml#XZoufal2019)]
+    for univariate distributions, mostly in the context of finance, and to  [[5](Biblography.xhtml#Xagliardi2022optimal), [312](Biblography.xhtml#Xzhu2021generative)]
+    for multivariate distributions;'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Quantum Convolutional Neural Networks: In  [[160](Biblography.xhtml#Xkerenidis2019quantum)],
+    the authors show how to handle non-linearities in (quantum) deep neural networks;
+     [[69](Biblography.xhtml#Xcong2019quantum),  [300](Biblography.xhtml#Xwei2022quantum)]
+    explain how reduce the number of required gates (equivalently, the number of rotation
+    parameters) in the circuit, and  [[142](Biblography.xhtml#Xhur2022quantum)] highlights
+    the importance and sufficiency of two-qubit interactions, more amenable to NISQ
+    devices;'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 'Quantum Wasserstein GAN: In  [[55](Biblography.xhtml#Xchakrabarti2019quantum)]
+    – mimicking recent results in classical Wasserstein GANs  [[13](Biblography.xhtml#Xarjovsky2017wasserstein), [121](Biblography.xhtml#Xgulrajani2017improved)]
+    – the authors introduced a Wasserstein semimetric between quantum data, which
+    they use to reduce the number of required quantum gates.'
+  prefs:
+  - PREF_UL
+  type: TYPE_NORMAL
+- en: 13.3 Bayesian Quantum Circuit
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: Parameterised quantum circuits can be used to construct a quantum state with
+    desired properties and to modify it in a controlled way. Measuring the final state
+    is then equivalent to drawing a sample from a probability distribution in a form
+    of a bitstring. This is the key concept behind the Quantum Circuit Born Machine
+    (QCBM) we considered in Chapter [9](Chapter_9.xhtml#x1-1850009). The Bayesian
+    Quantum Circuit (BQC) is another quantum generative machine learning model that
+    extends the capabilities of QCBM  [[88](Biblography.xhtml#XDu2018)]. Unlike QCBM
+    that operates only on *data* qubits encoding the desired probability distribution,
+    BQC has additional *ancillary* qubits encoding the *prior* distribution. The BQC
+    circuit is shown in Figure [13.5](#13.5).
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![Figure 13.5: Schematic representation of BQC. ](img/file1265.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'Figure 13.5: Schematic representation of BQC.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: The first *m* quantum registers in the circuit are ancillary qubits. After applying
+    *K* operator blocks U(*γ*^i)[i=1,…,K], to the initial state ![|0⟩](img/file1266.jpg)^(⊗m),
+    we construct the state ![|ψ ⟩](img/file1267.jpg),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ K &#124;ψ⟩ = ∏ U(γi) &#124;0⟩⊗m , i=1 ](img/file1268.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and measuring it generates a sample from the prior distribution.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The next *n* quantum registers are data qubits. Quantum gates operating on them
+    are conditional on the states of the ancillary qubits. Conditionally applying
+    *l* × *m* operator blocks to *n* data qubits, we obtain a state that is conditional
+    on ![|ψ ⟩](img/file1269.jpg). Measuring it will generate a sample from the conditional
+    distribution, which is exactly what is needed to realise a Bayesian model. Bayesian
+    modelling allows us to infer a *posterior* distribution over the parameters 𝜃
+    of the model given some observed data *D* using Bayes’ theorem  [[57](Biblography.xhtml#XChang2021)],
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ℙ(𝜃&#124;D) = ℙ-(D-&#124;𝜃)ℙ(𝜃) = ∫-ℙ(D-&#124;𝜃-)ℙ-(𝜃)--, ℙ(D ) ℙ(D &#124;𝜃)ℙ(𝜃)d𝜃
+    ](img/file1270.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where ℙ(*D*|𝜃) is the likelihood, ℙ(*D*) is the marginal likelihood or evidence,
+    and ℙ(𝜃) is the prior. We obtain ℙ(𝜃) by repeatedly measuring the state ![|ψ⟩](img/file1271.jpg)
+    given by ([13.3](#x1-242002r3)), ℙ(*D*|𝜃) by repeatedly measuring the final state
+    after applying the conditional operators U(*β*), and ℙ(*D*) by repeatedly measuring
+    the final state after applying the operators U(*β*) unconditionally.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'In the case of BQC, the prior is parameterised by the parameters γ := (*γ*¹*,…,γ*^K).
+    The posterior can be used to model new unseen data, *D*^∗, using the *posterior*
+    *predictive*  [[105](Biblography.xhtml#XFortuin2021)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∫ ℙ(D ∗&#124;D) = ℙ (D ∗&#124;𝜃)ℙ(𝜃&#124;D)d𝜃. ](img/file1272.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: This integral averages predictions of all plausible models weighted by posterior
+    probability and is called the *Bayesian model average*.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The BQC can be trained by minimising the maximum mean discrepancy cost function
+    described in Chapter [9](Chapter_9.xhtml#x1-1850009). In terms of expressive power,
+    Du, Hsieh, Liu, and Tao  [[88](Biblography.xhtml#XDu2018)] showed that a better
+    expressive power of BQC is obtained in comparison with MPQC from a computational
+    complexity perspective.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Bayesian networks can be used for financial asset price forecasting  [[21](Biblography.xhtml#XBack2019), [56](Biblography.xhtml#XChandra2021)],
+    predicting dynamics of limit order book market  [[199](Biblography.xhtml#XMagris2022)],
+    predicting corporate bankruptcy  [[52](Biblography.xhtml#XCao2022)], and to model,
+    analyse, and understand trading behaviour  [[282](Biblography.xhtml#XTicknor2013)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: The Bayesian Quantum Circuit model extends the capabilities of parameterised
+    quantum circuits trained as generative models (QCBM) through the addition of ancillary
+    quantum registers encoding the prior distribution. As a result, it achieves greater
+    expressive power than MPQC.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.4 Quantum Semidefinite Programming
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In Semidefinite Programming (SDP), one optimises a linear function subject to
+    the constraint that an affine combination of symmetric matrices is positive semidefinite.
+    Such a constraint is non-linear and non-smooth, but convex, so semidefinite programs
+    are convex optimisation problems. Semidefinite programming unifies several standard
+    problems (e.g., linear and quadratic programming) and finds many applications
+    in engineering and combinatorial optimisation  [[292](Biblography.xhtml#XVandenberghe1996)].
+    Similarly to finding a quantum counterpart to the classical kernel method, we
+    can specify a quantum version of the SDP.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.4.1 Classical semidefinite programming
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'The SDP can be generally defined as the following optimisation problem:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ max Tr(CX ), subject to Tr(AjX ) ≤ bj, for all j ∈ [[M ]], X∈ℳ+N(ℝ) ](img/file1273.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where [[*M*]] := {1*,…,M*}, ℳ[n]^+(ℝ) denotes the set of positive semidefinite
+    matrices of size *N* ×*N*. Here, Hermitian matrices (A[j])[j=1,…,M] and C in ℳ[N](ℝ),
+    and (*b*[j])[j∈[[M]]] ∈ℝ^M are the inputs of the problem.
+  prefs: []
+  type: TYPE_NORMAL
+- en: SDP can be applied to complex NP-hard optimisation problems  [[112](Biblography.xhtml#XGoemans1997)],
+    such as various portfolio optimisation problems. For example, it is typically
+    an unrealistic assumption that the distribution of asset returns is known exactly.
+    The necessary information may not be complete and estimates are subject to estimation
+    errors as well as modelling errors (e.g., an assumption of stationarity of the
+    distributions).
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.4.2 Maximum risk analysis
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The classical maximum risk analysis problem, assuming there is uncertainty in
+    the estimate of the covariance matrix of asset returns, Σ, can be formulated as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ⊤ L U Σ∈mℳa+x(ℝ)w Σw, subject to Σij ≤ Σij ≤ Σ ij, for all i,j ∈ [[N ]],
+    N ](img/file1274.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'where w is the fixed vector of weights and Σ is the problem variable. For each
+    *i,j* ∈ [[*N*]], the matrices Σ[ij]^L and Σ[ij]^U are fixed constraints in ℳ[N]^+(ℝ).
+    The task is to establish the maximum possible portfolio risk for the known asset
+    allocation, given uncertainty in the estimate of covariance matrix of asset returns.
+    The problem can be expressed as the following SDP  [[229](Biblography.xhtml#XPaini2018)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ max Tr(w ⊤Σw ) , Σ∈ℳ+N(ℝ) ({ L subject to Tr(− EijΣ) ≤ − Σ ij, for all
+    (i,j) ∈ [[N ]]× [[N ]], ( Tr(EijΣ ) ≤ ΣU , ij ](img/file1275.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where we denote (*E*[ij])[αβ] := *δ*[iα]*δ*[jβ]. The maximum risk analysis problem
+    can be expressed in the same form with different risk measures such as VaR or
+    Expected Shortfall.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.4.3 Robust portfolio construction
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The robust portfolio construction problem aims at finding an asset allocation
+    method that would achieve the minimum *estimation error* in the suggested asset
+    allocation weights. This problem has been addressed in  [[194](Biblography.xhtml#XMLDP2019)]
+    using Monte Carlo simulations to determine the most robust asset allocation method
+    with respect to small changes in the input covariance matrix for the given portfolio.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In the most general case, it can be formulated as the Min-Max problem
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![min max w ⊤Σw, w∈𝒲 Σ∈𝒮 ](img/file1276.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| 𝒮 | := ![{](img/file1277.jpg)Σ ∈ℳ[N]^+(ℝ) : Σ [ij]^L ≤ Σ [ij] ≤ Σ[ij]^U*,*
+    for all *i,j* ∈ [[*N*]]![}](img/file1278.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| 𝒲 | := ![{ N ⊤ ⊤ } w ∈ ℝ : 1 w = 1, μ w ≥ Rmin](img/file1279.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: where w is the vector of weights, *μ* is the vector of expected asset returns,
+    and Σ is the covariance matrix of asset returns.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'The following theorem (first proven by von Neumann  [[297](Biblography.xhtml#XvonNeumann28)]
+    in 1928) establishes the equivalence of the Min-Max and Max-Min optimisation problems  [[288](Biblography.xhtml#XTuy2004)]:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Theorem 11** (Minimax Theorem)**.** *Let* 𝒳 ⊂ℝ^n *and* 𝒴 ⊂ℝ^m *be compact*
+    *convex sets. If the function* *f* : 𝒳 ×𝒴 →ℝ *is continuous and concave in **x*
+    *for fixed **y* *and continuous and convex in **y* *for fixed **x**, then*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![min max f (x, y) = max minf (x, y). y∈𝒴 x∈𝒳 x∈ 𝒳 y∈𝒴 ](img/file1280.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Therefore, in general, the Min-Max robust portfolio construction problem (which
+    is convex in w and concave in Σ) is equivalent to the Max-Min problem and can
+    be expressed for the constraints above as an SDP in all variables  [[229](Biblography.xhtml#XPaini2018)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.4.4 Quantum semidefinite programming
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The key idea behind Quantum Semidefinite Programming (QSDP) is based on the
+    observation that a normalised positive semidefinite matrix can be naturally represented
+    as a quantum state. Operations on quantum states can sometimes be computationally
+    cheaper to perform on a quantum computer than classical matrix operations. This
+    idea prompted the development of quantum algorithms for SDPs  [[42](Biblography.xhtml#XBrandao2016)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider the SDP ([13.4.1](#x1-2440001)) and let *𝜀 >* 0 be small. An algorithm
+    is called an *𝜀*-*approximate quantum SDP oracle*  [[290](Biblography.xhtml#XJvA2018)]
+    if for all inputs *g* ∈ℝ and *ζ* ∈ (0*,*1), it finds, with success probability
+    1 −*ζ*, a vector y ∈ℝ^(M+1) and a real number *z* such that for the density matrix
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) ∑M ρ = ---e(xp--−(---j=1yjAj-+-y0C--)), Tr exp − ∑M y A + y C j=1
+    j j 0 ](img/file1281.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: we have that *zρ* is an *𝜀*-feasible solution with objective value at least
+    *g* − *𝜀*, that is
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![( { Tr(z ρAj) ≤ bj + 𝜀, for all j ∈ [[M ]], ( Tr(z ρC) ≥ g − 𝜀, ](img/file1282.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: or concludes that no such *z* and y exist even if we set *𝜀* = 0.
+  prefs: []
+  type: TYPE_NORMAL
+- en: A general QSDP-solver for sparse matrices was implemented by Brandão and Svore  [[42](Biblography.xhtml#XBrandao2016)]
+    using the Arora-Kale framework  [[14](Biblography.xhtml#XArora2016)]. They observed
+    that the density matrix *ρ* in ([13.4.4](#x1-2470004)) is in fact a log(*N*)-qubit
+    Gibbs state and can be efficiently prepared as a quantum state on a quantum computer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The reader should already be familiar with the Gibbs state (Gibbs distribution)
+    in the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ − βℋ ρ = -e------, Tr(e− βℋ) ](img/file1283.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where ℋ is the problem Hamiltonian and Tr(exp(−*β*ℋ)) is the partition function.
+    The Gibbs (Boltzmann) sampling and the Gibbs (Boltzmann) distribution were discussed
+    in Chapter [5](Chapter_5.xhtml#x1-960005) (in ([5.4.1](Chapter_5.xhtml#x1-1090001))
+    and ([5.4.1](Chapter_5.xhtml#x1-1090001))). The form of the partition function
+    in ([13.4.4](#x1-2470004)) should not be confusing. Recall from ([10.1](Chapter_10.xhtml#x1-2030001)),
+    that since the Hamiltonian is a Hermitian operator, its spectral decomposition
+    yields the representation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ ℋ = Ei &#124;ψi⟩⟨ψi&#124;, i ](img/file1284.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'which gives the following expression for the Gibbs state:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ e−βℋ 1 ∑ ρ = -----= -- e−βEi &#124;ψi⟩⟨ψi&#124;, Z Z i ](img/file1285.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where the partition function *Z* is given by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) ∑ Z = Tr e− βℋ = e− βEi. i ](img/file1286.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: QSDP gives a square-root unconditional speedup over any classical method for
+    solving SDPs both in *N* and *M*  [[42](Biblography.xhtml#XBrandao2016)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum Semidefinite Programming is yet another example where quantum speedup
+    can be achieved since operations on quantum states performed on a quantum computer
+    are less computationally expensive than the corresponding matrix operations on
+    a classical computer.
+  prefs: []
+  type: TYPE_NORMAL
+- en: We would like to finish this chapter (and the book!) with a glance beyond the
+    capabilities of the NISQ computers. The last section presents several important
+    algorithms which, one day, will become the main building blocks of many quantum
+    computing applications.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.5 Beyond NISQ
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this section, we start with describing the workhorse of many important quantum
+    algorithms, the Quantum Fourier Transform (QFT), before moving to its flagship
+    application, the Quantum Phase Estimation (QPE), and then discussing the possibility
+    of achieving quantum speedup with the Quantum Monte Carlo (QMC) and the Quantum
+    Linear Solver (QLS) algorithms.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.5.1 Quantum Fourier Transform
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: In the classical setting, the discrete Fourier transform maps a vector x :=
+    (*x*[0]*,…,x*[2^n−1]) ∈ℂ^(2^n) to a vector y := (*y*[0]*,…,y*[2^n−1]) ∈ℂ^(2^n)
+    , the components of which read
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ n 1 2∑−1 ( 2πijk) n yk = √-n- exp -2n--- xj, for each k = 0,...,2 − 1\.
+    2 j=0 ](img/file1287.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: Similarly, the quantum Fourier transform is the linear map
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 2∑n−1 ( 2πikj ) &#124;k⟩ ↦− → √-n- exp --n--- &#124;j⟩ , 2 j=0 2 ](img/file1288.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: and the operator
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 2n−1 ( ) ℱ := √1---∑ exp 2πikj- |j⟩⟨k| q 2n 2n k,j=0 ](img/file1289.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: represents the Fourier transform matrix which is unitary as qℱqℱ^† = ℐ. In an
+    *n*-qubit system with basis (![|0⟩](img/file1290.jpg)*,…,*![|2n − 1⟩](img/file1291.jpg)),
+    for a given state ![|j⟩](img/file1292.jpg), we use the binary representation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![j := j-⋅⋅⋅j-, 1 n ](img/file1293.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with (*j*[1]*,…,j*[n]) ∈{0*,*1}^n so that ![|j⟩](img/file1294.jpg) = ![|j1⋅⋅⋅jn⟩](img/file1295.jpg)
+    = ![|j1⟩](img/file1296.jpg)⊗*…*⊗![|jn⟩](img/file1297.jpg). Likewise, the notation
+    0*.j*[1]*j*[2]*…j*[n] represents the binary fraction ∑ [i=1]^n2^(−i)*j*[i]. Elementary
+    algebra (see  [[223](Biblography.xhtml#XNielsen2010), Section 5.1] for details)
+    then yields
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ --1- ( 2πi0.jn ) ( 2πi0.jn−1jn ) qℱ &#124;j⟩ = √2n- &#124;0⟩+ e &#124;1⟩
+    ⊗ &#124;0 ⟩+ e &#124;1⟩ ⊗ ⋅⋅⋅ ( ------ ) ⋅⋅⋅⊗ &#124;0⟩ + e2πi0.j1...jn &#124;1⟩
+    . ](img/file1298.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 13.5.2 Quantum Phase Estimation
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: The goal of QPE is to estimate the unknown phase *φ* ∈ [0*,*1) for a given unitary
+    operator 𝒰 with an eigenvector ![|u⟩](img/file1299.jpg) and eigenvalue exp(2*π*i*φ*).
+    Consider a register of size *m* and define
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ { ---------} b∗ := sup j = 2m 0.j1 ⋅⋅⋅jm . j≤2m φ ](img/file1300.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Thus with *b*^∗ = *b*[1]![⋅⋅⋅](img/file1301.jpg)*b*[m], we obtain that 2^(−m)*b*^∗
+    = 0*.b*[1]![⋅⋅⋅](img/file1302.jpg)*b*[m] is the best *m*-bit approximation of *φ*
+    from below. The QPE procedure uses two registers, with the first containing *m*
+    qubits initially in the state ![|0⟩](img/file1303.jpg). Selecting *m* relies on
+    the number of digits of accuracy for the estimate of *φ*, and the probability
+    with which we wish to obtain a successful phase estimation procedure.
+  prefs: []
+  type: TYPE_NORMAL
+- en: QPE allows us to implement a measurement for any Hermitian operator. Note that
+    we always measure individual qubits. If we want to measure a more complex observable,
+    we can use a QPE that implements the von Neumann’s measurement scheme  [[212](Biblography.xhtml#XMello2013)].
+    The routine prepares an eigenstate of the Hermitian operator in one register and
+    stores the corresponding eigenvalue in a second register.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Up to a SWAP transformation, the quantum phase circuit  [[223](Biblography.xhtml#XNielsen2010), Section 5.2]
+    gives the output
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 1 ( 2πi0.φm ) ( 2πi0.φm−-1φm- ) &#124;ψ⟩ = √-m-- &#124;0⟩+ e &#124;1⟩
+    ⊗ &#124;0⟩+ e &#124;1⟩ ⊗ ⋅⋅⋅ 2 ( ------- ) ⋅⋅⋅⊗ &#124;0⟩+ e2πi0.φ1...φm &#124;1⟩
+    , ](img/file1304.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: which is exactly equal to the QFT for the state ![ m |2 φ⟩](img/file1305.jpg)
+    = ![|φ1φ2 ...φm⟩](img/file1306.jpg) as in ([13.5.1](#x1-2490001)), and therefore
+    ![|ψ ⟩](img/file1307.jpg) = qℱ![|2m φ⟩](img/file1308.jpg). Since the QFT is a
+    unitary transformation, we can inverse the process to retrieve ![ m |2 φ⟩](img/file1309.jpg).
+    Algorithm [10](#x1-250008r10) below provides pseudocode for the QPE procedure,
+    and we refer the interested reader to  [[223](Biblography.xhtml#XNielsen2010), Chapter
+    5.2] for detailed explanations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---10:-Quantum--Phase-Estimation---------------------------
+    Input: • Unitary matrix (gate) U with U |u⟩ = e2πiφ |u⟩; • m ancilla qubits initialised
+    at |0 ⟩. ⊗m 1: Prepare the initial state with |0⟩ being the m -qubit ancilla register
+    and |u⟩ being the n -qubit eigenstate register. 2: Map to 2m− 1 √-1-- ∑ |j⟩ |u
+    ⟩ 2m j=0 with Hadamard gates applied to the ancilla register. 3: Map to 2m∑− 1
+    2m∑ −1 √-1-- |j⟩Uj |u⟩ = √1-- |j⟩e2πijφ |u ⟩ 2m j=0 2m j=0 with Controlled Uj
+    gates applied to the eigenstate register. 4: Compute |φ^⟩ |u⟩ using the inverse
+    QFT, where φ^is an m -qubit approximation of φ. 5: Measure to deduceφ^. Result:
+    Phase estimate ^φ. ---------------------------------------------------------------------
+    ](img/file1310.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 13.5.3 Monte Carlo speedup
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: Leveraging on the speedup provided by the Quantum Phase Estimation, Montanaro  [[216](Biblography.xhtml#XMontanaro_QSpeedup)]
+    devised a Monte Carlo scheme providing quantum speedup compared to the classical
+    one.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Classical Monte Carlo
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'Monte Carlo techniques represent a wide array of methods to simulate statistics
+    of random processes. We refer the interested reader to the excellent monograph  [[111](Biblography.xhtml#Xglasserman2004monte)]
+    for a full description and analysis. Consider a one-dimensional random variable *X*
+    and a function *ϕ* : ℝ → [0*,*1] such that both 𝔭 := 𝔼[*ϕ*(*X*)] and *σ*² := 𝕍[*ϕ*(*X*)]
+    are well defined. By the Central Limit Theorem, given an iid collection of random
+    variables (*X*[1]*,…,X*[N]) distributed as *X*, then'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![√ --^𝔭N-−-𝔭- N σ ](img/file1311.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: converges to a centered Gaussian with unit variance 𝒩(0*,*1) as *N* tends to
+    infinity, where 𝔭[N] := ![1- N](img/file1312.jpg) ∑ [i=1]^N*X*[i] is the empirical
+    mean. This implies that, for any *𝜀 >* 0, we can estimate
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( √ --) (||^ || ) 𝜀--N- ℙ 𝔭N − 𝔭 ≤ 𝜀 = ℙ |𝒩 (0,1)| ≤ σ , ](img/file1313.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: so that, for any *z >* 0 and *δ* ∈ (0*,*1), in order to get an estimate of the
+    form ℙ![(| | ) |^𝔭N − 𝔭| ≤ z](img/file1314.jpg) = 1 − *δ*, we need *N* = 𝒪(1*∕𝜀*²)
+    samples.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum Monte Carlo
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: Consider now an operator 𝒜 of the form
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ⊗n ∑ 𝒜 |0⟩ = αx |ψx⟩ |x⟩, x∈{0,1}k ](img/file1315.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: 'for some *k* ≤ *n*, where each ![|ψx⟩](img/file1316.jpg) is a quantum state
+    with *n*−*k* qubits and ![|x⟩](img/file1317.jpg) a quantum state with *k* qubits,
+    and *α*[x] ∈ℂ is some amplitude, the meaning of which will be made clear below.
+    We simply assume that {![|ψx⟩](img/file1318.jpg)}[x∈{0,1}^k] forms an orthogonal
+    family and are in fact "garbage qubits", i.e., qubits that are, for example, used
+    as controlled to build the solution vector ![|x⟩](img/file1319.jpg) from the data.
+    Given the encoded data ![|x⟩](img/file1320.jpg), assume further the existence
+    of the operator 𝒲:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ∘ -------- ∘ ---- ) 𝒲 |x⟩ |0⟩ = |x⟩ 1− ϕ (x) |0⟩ + ϕ(x) |1⟩ . ](img/file1321.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: This can be achieved for example by using the following lemma.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lemma 9** (Conditional Rotation. Theorem 3.5 in  [[184](Biblography.xhtml#XLandman2021)])**.**
+    *Given a quantum state *![|ψa ⟩](img/file1322.jpg)*, encoding* *a* ∈ [−1*,*−1]
+    *in **q* *qubits, there exists a* *quantum circuit performing the unitary mapping*
+    ![|ψ ⟩ a](img/file1323.jpg)![|0⟩](img/file1324.jpg)![↦−→](img/file1325.jpg)![|ψ
+    ⟩ a](img/file1326.jpg)![(](img/file1327.jpg)*a*![|0⟩](img/file1328.jpg) + ![√
+    ------ 1− a2](img/file1329.jpg)![ |1⟩](img/file1330.jpg)![)](img/file1331.jpg)*.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider now the operator ℳ:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( ) ( ) ℳ := ℐn− k ⊗ 𝒲 𝒜 ⊗ ℐ , ](img/file1332.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where ℐ^(n−k) means the identity operator acting on *n* − *k* qubits, so that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![&#124;ψ⟩](img/file1333.jpg) | := ℳ![&#124;0⟩](img/file1334.jpg)^(⊗(n+1))
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![(](img/file1335.jpg)ℐ^(n−k) ⊗𝒲![)](img/file1336.jpg)![( ) ∑ ( αx &#124;ψx⟩
+    &#124;x⟩) x∈{0,1}k](img/file1337.jpg)![&#124;0⟩](img/file1338.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ∑ [x∈{0,1}^k]*α*[x]![(](img/file1339.jpg)ℐ^(n−k) ⊗𝒲![)](img/file1340.jpg)![&#124;ψx
+    ⟩](img/file1341.jpg)![&#124;x⟩](img/file1342.jpg)![&#124;0⟩](img/file1343.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ∑ [x∈{0,1}^k]*α*[x]![&#124;ψx⟩](img/file1344.jpg)![&#124;x⟩](img/file1345.jpg)![(∘
+    -------- ∘ ---- ) 1− ϕ(x) &#124;0⟩ + ϕ(x) &#124;1⟩](img/file1346.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | =: ![&#124;ΨB ⟩](img/file1347.jpg)![&#124;0⟩](img/file1348.jpg) + ![&#124;ΨG
+    ⟩](img/file1349.jpg)![&#124;1⟩](img/file1350.jpg)*,* | (13.5.1) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where ![|Ψ ⟩ B](img/file1351.jpg),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ ∘ -------- &#124;ΨB ⟩ := αx 1− ϕ (x ) &#124;ψx⟩ &#124;x⟩, x∈ {0,1}k
+    ](img/file1352.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: stands for the ‘bad’ state, and ![|ΨG ⟩](img/file1353.jpg),
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ∑ ∘ ---- &#124;ΨG ⟩ := αx ϕ(x) &#124;ψx⟩ &#124;x⟩, x∈{0,1}k ](img/file1354.jpg)
+    |  |'
+  prefs: []
+  type: TYPE_TB
+- en: stands for the ‘good’ state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Consider now the projector 𝒫 := ℐ^n![|1⟩](img/file1355.jpg)⟨1| and measure the
+    probability of the last qubit of ![|ψ⟩](img/file1356.jpg) to be in state ![|1⟩](img/file1357.jpg),
+    namely
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ⟨*ψ*&#124;𝒫^†𝒫![&#124;ψ ⟩](img/file1358.jpg) | = ⟨*ψ*&#124;𝒫![&#124;ψ⟩](img/file1359.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![(](img/file1360.jpg)⟨0&#124;⟨Ψ[B]&#124; + ⟨1&#124;⟨Ψ[G]&#124;![)](img/file1361.jpg)𝒫![(](img/file1362.jpg)![&#124;Ψ
+    ⟩ B](img/file1363.jpg)![&#124;0⟩](img/file1364.jpg) + ![&#124;Ψ ⟩ G](img/file1365.jpg)![&#124;1⟩](img/file1366.jpg)![)](img/file1367.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![(](img/file1368.jpg)⟨0&#124;⟨Ψ[B]&#124; + ⟨1&#124;⟨Ψ[G]&#124;![)](img/file1369.jpg)![(](img/file1370.jpg)![&#124;ΨB
+    ⟩](img/file1371.jpg)![&#124;1⟩](img/file1372.jpg)![ ⟨1&#124;0⟩](img/file1373.jpg)
+    + ![&#124;ΨG ⟩](img/file1374.jpg)![&#124;1⟩](img/file1375.jpg)![ ⟨1&#124;1⟩](img/file1376.jpg)![)](img/file1377.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![(](img/file1378.jpg)⟨0&#124;⟨Ψ[B]&#124; + ⟨1&#124;⟨Ψ[G]&#124;![)](img/file1379.jpg)![&#124;ΨG
+    ⟩](img/file1380.jpg)![ &#124;1⟩](img/file1381.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ⟨0&#124;![⟨ΨB &#124;ΨG ⟩](img/file1382.jpg)![&#124;1⟩](img/file1383.jpg)
+    + ⟨1&#124;![⟨ΨG &#124;ΨG ⟩](img/file1384.jpg)![ &#124;1⟩](img/file1385.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![⟨ΨB &#124;ΨG ⟩](img/file1386.jpg)![ ⟨0&#124;1⟩](img/file1387.jpg)
+    + ![⟨ΨG &#124;ΨG ⟩](img/file1388.jpg)![ ⟨1&#124;1⟩](img/file1389.jpg) = &#124;Ψ[G]&#124;²*.*
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: Now, since the family {![|ψx⟩](img/file1390.jpg)}[x] is orthogonal, it is easy
+    to see from ([13.5.3](#x1-253004r3)) that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| &#124;Ψ[G]&#124;² | = ![⟨ΨG &#124;ΨG ⟩](img/file1391.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ![( ) ∑ ∘ ---- ( α∗x ϕ(x)⟨x&#124;⟨ψx&#124;) x∈{0,1}k](img/file1392.jpg)![(
+    ) ∑ ∘ ---- ( αy ϕ (y) &#124;ψy ⟩ &#124;y⟩) y∈{0,1}k](img/file1393.jpg) |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ∑ [x,y∈{0,1}^k]*α*[x]^∗*α* [y]![∘ ---- ϕ (x )](img/file1394.jpg)![∘
+    ---- ϕ (y )](img/file1395.jpg)⟨x&#124;![⟨ψx&#124;ψy⟩](img/file1396.jpg)![&#124;y⟩](img/file1397.jpg)
+    |'
+  prefs: []
+  type: TYPE_TB
+- en: '|  | = ∑ [x∈{0,1}^k]&#124;*α*[x]&#124;²*ϕ*(x)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: which corresponds precisely to the expectation 𝔼[*ϕ*(*X*)] where the random
+    variable *X* is discretised over the set with labels {0*,*1}^k, and where each |*α*[x]|²
+    corresponds to the discrete probability of *X* being in x.
+  prefs: []
+  type: TYPE_NORMAL
+- en: In order to retrieve the expectation we are after, we therefore simply need
+    to run the circuit corresponding to ℳ, measure the output in the computational
+    basis, and determine the probability of observing the state ![|1⟩](img/file1398.jpg).
+  prefs: []
+  type: TYPE_NORMAL
+- en: QMC speedup
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The actual speedup of QMC resides in a subtle application of the *Amplitude*
+    *Estimation* theorem and the *Powering Lemma*, which we present now.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Theorem 12** (Amplitude Estimation. Theorem 12 in  [[43](Biblography.xhtml#Xbrassard2002quantum)])**.**
+    *Assume that we have access to a quantum unitary operator *𝒰 *such that* 𝒰![|0⟩](img/file1399.jpg)
+    = ![√----- 1 − 𝔭](img/file1400.jpg)![|ΨB ⟩](img/file1401.jpg)![|0⟩](img/file1402.jpg)+![√
+    -- 𝔭](img/file1403.jpg)![|ΨG ⟩](img/file1404.jpg)![|1⟩](img/file1405.jpg)*, for
+    some states *![|ΨB ⟩](img/file1406.jpg)*,*![|ΨG ⟩](img/file1407.jpg)*. Then,*
+    *for any* *N* ∈ℕ*, the amplitude estimation algorithms outputs the estimate* 𝔭
+    *such that*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ∘ -------- | | 𝔭(1 − 𝔭) π2 |^𝔭 − 𝔭| ≤ 2π----N-----+ N2- ](img/file1408.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: '*with probability at least* 8*∕π*²*. To achieve this takes exactly **N* *iterations.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '**Lemma 10** (Powering Lemma. Lemma 6.1 in  [[150](Biblography.xhtml#Xjerrum1986random)])**.**
+    *Let *𝔭 *be a quantity* *to estimate and *𝒰 *an algorithm that output* 𝔭 *such
+    that* ![||^ || 𝔭 − 𝔭](img/file1409.jpg) ≤ *𝜀* *except* *with probability smaller
+    than *1*∕*2*. Then, for any* *δ* ∈ (0*,*1)*, it suffices to* *repeat *𝒰 *about*
+    𝒪(log(1*∕δ*)) *times and to take the median to obtain* ![|| || ^𝔭 − 𝔭](img/file1410.jpg)≤
+    *𝜀* *with probability at least* 1 − *δ**.*'
+  prefs: []
+  type: TYPE_NORMAL
+- en: In light of ([13.5.1](#x1-253004r1)), the Amplitude Estimation theorem, combined
+    with the Powering Lemma, shows that in order to obtain an estimate of the empirical
+    mean
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ † 2 ⟨ψ|𝒫 𝒫 |ψ ⟩ = |ΨG | ](img/file1411.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: with probability at least 1 − *δ* (for any *δ* ∈ (0*,*1)), i.e.,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ℙ(||^𝔭− 𝔭|| ≤ 𝜀) ≥ 1− δ, ](img/file1412.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: it suffices to apply the operators ℳ and 𝒫 about 𝒪(*N* log(1*∕δ*)) times, with
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ -------- ∘ 𝔭(1 − 𝔭) 𝜀 = 2π----------, N ](img/file1413.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: so that, for any fixed *δ* ∈ (0*,*1), the computational cost is of order 𝒪(1*∕𝜀*),
+    achieving quadratic speedup compared to classical Monte Carlo.
+  prefs: []
+  type: TYPE_NORMAL
+- en: 13.5.4 Quantum Linear Solver
+  prefs:
+  - PREF_H4
+  type: TYPE_NORMAL
+- en: 'Harrow, Hassidim and Lloyd  [[126](Biblography.xhtml#XHHL2009)] devised a quantum
+    algorithm to solve linear systems, beating classical computation times. Linear
+    systems are ubiquitous in applications, and many aspects of quantitative finance
+    rely on being able to solve such (low- or high-dimensional) systems. We highlight
+    below two key examples of fundamental importance in finance: solving Partial Differential
+    Equations (PDEs) and portfolio optimisation.'
+  prefs: []
+  type: TYPE_NORMAL
+- en: Theoretical aspects
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: 'The problem can be stated as follows: given a matrix A ∈ℳ[N](ℂ) and a vector
+    b ∈ℂ^N, find the vector x ∈ℂ^N such that'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![Ax = b. ](img/file1414.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: In order for the algorithm to work, the matrix A needs to be Hermitian. If A
+    is not so, we can nevertheless consider the augmented system
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![( ) ( ) ( ) (0N,N A ) (0N,1 ) = ( b ) , A † 0N,N x 0N,1 ](img/file1415.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: similarly to the Hamiltonian embedding in Section [7.6](Chapter_7.xhtml#x1-1590006).
+    We assume from now now that A is indeed Hermitian. The first step of the algorithm
+    is to assume that the vector b can be encoded into a quantum state ![|b⟩](img/file1416.jpg)
+    and to then rewrite ([13.5.4](#x1-2560004)) as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![A &#124;x⟩ = &#124;b⟩, ](img/file1417.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: where we now look for the solution, not as an element of ℂ^N, but as a quantum
+    state.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Since A is Hermitian, it admits the spectral decomposition (Section [1.1.5](Chapter_1.xhtml#x1-280005))
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ N− 1 ∑ A = λj |ϕj⟩⟨ϕj|, j=0 ](img/file1418.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: where *λ*[0]*,…,λ*[N−1] are its (not necessarily distinct) strictly positive
+    eigenvalues with corresponding eigenstates ![|ϕ0⟩](img/file1419.jpg)*,…,*![|ϕN
+    −1⟩](img/file1420.jpg), and we immediately obtain that its inverse reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ N−1 A −1 = ∑ 1--|ϕ ⟩ ⟨ϕ |. j=0 λj j j ](img/file1421.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: We can also decompose ![|b ⟩](img/file1422.jpg) into the (![|ϕ ⟩ j](img/file1423.jpg))[j=0,…,N−1]
+    basis as
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ N−1 |b⟩ = ∑ b |ϕ ⟩ , j=0 i j ](img/file1424.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and therefore the solution to ([13.5.4](#x1-2560004)) reads
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ N− 1 |x⟩ = A −1 |b⟩ = ∑ bj-|ϕ ⟩. j=0 λj j ](img/file1425.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: The goal of the QLS algorithm is thus to construct such a state, and we summarise
+    it as Algorithm [11](#x1-256007r11) below. Note that, since A is Hermitian then,
+    for any *t* ∈ℝ, U := exp(iA*t*) is unitary with decomposition
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ N∑− 1 U = eiλjt |ϕj⟩⟨ϕj|. j=0 ](img/file1426.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: In total, the QLS algorithm requires *n*[l] + *n*[b] + 1 qubits, where *n*[l]
+    is the number of qubits used to encode the *n*[l]-bit binary representation of
+    (*λ*[j])[j=0,…,N−1] and *n*[b] is the number of qubits used to convert b into ![|b
+    ⟩](img/file1427.jpg) (and also the number of qubits to write the solution state).
+  prefs: []
+  type: TYPE_NORMAL
+- en: In terms of computation time, Harrow, Hassidim, and Lloyd showed that the stated
+    runtime is of order poly(log(*N*)*,κ*) assuming that A is sparse with condition
+    number *κ*, which yields an exponential speedup compared to the classical 𝒪(*N*![√--
+    κ](img/file1428.jpg)) runtime.
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![--------------------------------------------------------------------- -Algorithm---11:-HHL--Quantum--Linear-Solver--------------------------
+    Input: Hermitian matrix A and nl + nb + 1 qubits initialised at ⊗nl ⊗nb |0⟩ |0⟩
+    |0⟩. 1: Load the data b into |b⟩ using n qubits (with N = 2nb). b 2: Apply QPE
+    with U := exp(iAt), after which the quantum state of the register is N∑ −1 bj
+    |λj⟩n |ϕj⟩n |0⟩ . j=0 l b 3: Rotate the ancillary qubit |0⟩ controlled by |λj⟩n
+    to obtain l N∑− 1 ( ∘ ------2 ) bj |λj⟩ |ϕj⟩ 1 − C--|0⟩+ C-|1⟩ , j=0 nl nb λ2j
+    λj for some normalising constant C (with |C | < minj λj). 4: Apply the inverse
+    QPE to obtain N −1 ( ∘ ------- ) ∑ b |0⟩ |ϕ ⟩ 1− C2- |0⟩ + C--|1⟩ . j nl j nb
+    λ2j λj j=0 5: Measure the ancillary qubit in the computational basis. If the outcome
+    is |1⟩, the register is in the post- measurement state N∑− 1 C bi |0⟩n |ϕj⟩ ,
+    j=0 λi l nb which up to a normalisation factor corresponds to the solution. Result:
+    Solution |x⟩: N −1 −1 ∑ bj- |x⟩ = A |b ⟩ = λj |ϕj⟩. j=0 ---------------------------------------------------------------------
+    ](img/file1429.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Solving PDEs
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: One important example is finite-difference schemes for partial differential
+    equations; standard tools can be consulted in  [[269](Biblography.xhtml#Xsmith1985numerical)]
+    for example, and specific applications to finance can be found in  [[89](Biblography.xhtml#Xduffy2013finite)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: 'Consider for example the Black-Scholes parabolic PDE:'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ σ2- 2 2 ∂tVt + rS ∂SVt + 2 S ∂SSVt = rVt, ](img/file1430.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with boundary condition *V* [T] (*S*) (for instance for a European call option
+    with maturity *T >* 0 and strike *K >* 0, we have *V* [T] (*S*) = ![(ST − K )](img/file1431.jpg)[+]
+    := max![(ST − K, 0)](img/file1432.jpg)). Before trying to solve it, it is standard
+    to simplify it. Let *τ* := *T* − *t* and define *g*[τ](*S*) := *V* [t](*S*), then
+    *∂*[t]*V* [t](*S*) = −*∂*[τ]*g*[τ](*S*) and hence
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 2 − ∂ g + rS ∂ g + σ-S2∂2 g = rg , τ τ S τ 2 SS τ τ ](img/file1433.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: with boundary condition *g*[0](*S*). Introduce now *f*[τ](*S*) := e^(rτ)*g*[τ](*S*),
+    so that
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ 2 − ∂τfτ + rS ∂Sfτ + σ-S2∂2SSfτ = 0, 2 ](img/file1434.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: with boundary condition *f*[0](*S*). The transformation *x* := log(*S*) and
+    the map *ψ*[τ](*x*) := *f*[τ](*S*) yield, after simplifications,
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ ( ) σ2- σ2-2 − ∂τψτ + r − 2 ∂xψτ + 2 ∂xxψ τ = 0, ](img/file1435.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: 'with boundary condition *ψ*[0](*x*). Finally, setting *ϕ*[τ] via *ψ*[τ](*x*)
+    =: e^(αx+βτ)*ϕ*[τ](*x*) with'
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ ( 2) ( 2 )2 α := − 12- r − σ-- and β := −-12- r − σ-- , σ 2 2σ 2 ](img/file1436.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: implies that equation ([13.5.4](#x1-2570004)) becomes the heat equation
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ σ2-2 ∂τϕτ(x) = 2 ∂xxϕτ(x), ](img/file1437.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for all *x* ∈ℝ with (Dirichlet) boundary condition *ϕ*[0](*x*) = e^(−αx)*ψ*[0](*x*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We now discretise this PDE using an explicit scheme, where the time derivative
+    *∂*[τ] is evaluated by forward difference while the space derivative *∂*[xx] is
+    approximated with a central difference scheme (implicit schemes or more general
+    *𝜃*-schemes follow a similar logic). We consider ([13.5.4](#x1-2570004)) for *τ
+    >* 0 and *x* in some interval [*x*[L]*,x*[U]] ∈ℝ, with (Dirichlet) boundary conditions
+    *ϕ*(0*,x*) = *f*(*x*) (payoff at maturity), *ϕ*(*τ,x*[L]) = *f*[L](*τ*), and *ϕ*(*τ,x*[U])
+    = *f*[U](*τ*).
+  prefs: []
+  type: TYPE_NORMAL
+- en: We start by constructing the time-space grid for the approximation scheme. For
+    two integers *m* and *n*, we consider a uniform grid, i.e., we split the space
+    axis into *m* intervals and the time axis into *n* intervals, and we denote 𝒱
+    := {0*,*1*,…,n*} and 𝒲 := {0*,*1*,…,m*}. This means that each point on the grid
+    has coordinates (*iδ*[T] *,x*[L] + *jδ*[x]) for *i* ∈𝒱 and *j* ∈𝒲, where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ T x − x δT :=-- and δx :=-U-----L. n m ](img/file1438.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: At each node, we let *ϕ*[i,j] := *ϕ*(*iδ*[T] *,x*[L] + *jδ*[x]) denote the value
+    of the function *u*. Note in particular that the boundary conditions imply
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![ϕ0,j = f (xL + jδx), ϕi,0 = fL(iδT), ϕi,m = fU (iδT). ](img/file1439.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: More precisely we consider the following approximations
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| *∂*[τ]*ϕ*(*τ,x*) | = ![ϕ(τ-+-δT,x)-−-ϕ(τ,x) δT](img/file1440.jpg) + 𝒪![(δ
+    ) T](img/file1441.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| *∂*[xx]*ϕ*(*τ,x*) | = ![ϕ(τ,x + δx)− 2ϕ (τ,x) + ϕ(τ,x− δx) -----------------2----------------
+    δx](img/file1442.jpg) + 𝒪![( ) δ2x](img/file1443.jpg)*.* |'
+  prefs: []
+  type: TYPE_TB
+- en: Ignoring the terms in *δ*[T] and *δ*[x]², the heat equation at the node (*iδ*[T]
+    *,x*[L] + *jδ*[x]) becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ϕ − ϕ σ2ϕ − 2ϕ + ϕ ( ) -i+1,j----i,j + 𝒪 (δT ) = ---i,j+1-----i2,j----i,j−1+
+    𝒪 δx2 , δT 2 δx ](img/file1444.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: which we can rewrite
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ δ σ2 ( δ ) δ σ2 ϕi+1,j = -T2---ϕi,j+1 + 1− -T2σ2 ϕi,j + -T2---ϕi,j−1,
+    δx 2 δx δx 2 ](img/file1445.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: for all *i* = 0*,…,n*− 1, *j* = 1*,…,m*− 1\. To rewrite this in matrix form,
+    introduce for each *i* = 0*,…,n*, [i] ∈ℝ^(m−1), B[i] ∈ℝ^(m−1) and the matrix A
+    ∈ℳ[m−1](ℝ) by
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| [i] | := ![(ϕ ,...,ϕ ) i,1 i,m−1](img/file1446.jpg)^⊤*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| B[i] | := ![(ϕi,0,0,...,0,ϕi,m)](img/file1447.jpg)^⊤*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: '| A | := T[m−1]![( 2 2) 1 − ασ2, ασ-, ασ-- 2 2](img/file1448.jpg)*,* |'
+  prefs: []
+  type: TYPE_TB
+- en: where
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![α := δT- δ2x ](img/file1449.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: and where T[m−1](⋅) denotes the tridiagonal matrix of dimension (*m*− 1) × (*m*−
+    1).
+  prefs: []
+  type: TYPE_NORMAL
+- en: The recursion ([13.5.4](#x1-2570004)) thus becomes
+  prefs: []
+  type: TYPE_NORMAL
+- en: '| ![ 2 i+1= Ai + α-σ-Bi, for each i = 0,...,n − 1, 2 ](img/file1450.jpg) |  |'
+  prefs: []
+  type: TYPE_TB
+- en: with the time boundary condition
+  prefs: []
+  type: TYPE_NORMAL
+- en: '![0 = (ϕ0,1,...,ϕ0,m− 1)⊤ = (f (xL + δx),...,f(xL + (m − 1)δx))⊤. ](img/file1451.jpg)'
+  prefs: []
+  type: TYPE_IMG
+- en: Leaving the boundary term B[i] aside, the recursion ([13.5.4](#x1-2570004))
+    thus is exactly of the form ([13.5.4](#x1-2560004)), and can therefore be tackled
+    using the HHL algorithm.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This is the obvious first step to investigate the use of HHL-type algorithms
+    in quantitative finance, and further developments have already been proposed in  [[104](Biblography.xhtml#Xfontanela2021quantum), [108](Biblography.xhtml#Xgarcia2021solving), [188](Biblography.xhtml#Xlinden2022quantum), [310](Biblography.xhtml#Xzhao2022quantum)],
+    with or without finance applications in mind.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Application to portfolio optimisation
+  prefs:
+  - PREF_H5
+  type: TYPE_NORMAL
+- en: The second immediate application of QLS in finance is for portfolio optimisation.
+    Indeed, the standard Markowitz-type problem of the form ([3.3](Chapter_3.xhtml#x1-740003))
+    in Section [3.3](Chapter_3.xhtml#x1-740003) is readily formulated (at least for
+    weights in {0*,*1}) as a linear problem, the constraints only increasing the dimension
+    as Lagrange multipliers. We shall not dive into the details here as this is a
+    rather novel development with huge potential but limited results so far, and instead
+    refer the reader to  [[306](Biblography.xhtml#Xyalovetzky2021nisq), [187](Biblography.xhtml#Xli2022portfolio)]
+    for promising implementations and details.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Summary
+  prefs:
+  - PREF_H3
+  type: TYPE_NORMAL
+- en: In this chapter, we introduced several new promising quantum algorithms. First,
+    we learned about quantum kernels, which can replace classical kernels in hybrid
+    quantum-classical protocols.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Next, we introduced the Bayesian quantum circuit model that expands the concept
+    of a Bayesian neural network to parameterised quantum circuits. BQC is a promising
+    generative model with larger expressive power than QCBM/MPQC (covered in Chapters [9](Chapter_9.xhtml#x1-1850009)
+    and [12](Chapter_12.xhtml#x1-22500012)).
+  prefs: []
+  type: TYPE_NORMAL
+- en: Then we looked at quantum SDP and its potential to outperform classical SDP.
+    This is a topic of active research.
+  prefs: []
+  type: TYPE_NORMAL
+- en: Finally, we covered several important quantum algorithms that rely on the existence
+    of a quantum computing hardware with characteristics that exceed the capabilities
+    of currently available NISQ computers. However, the very presence of these algorithms
+    and their potential to achieve quadratic or even exponential speedup provides
+    strong motivation for the rapid development of quantum computers.
+  prefs: []
+  type: TYPE_NORMAL
+- en: This chapter completes the book. Looking ahead, we see a bright future for quantum
+    computing. In the update to their quantum computing development roadmap  [[145](Biblography.xhtml#XIBMRoadmap2022)],
+    IBM outlined an exciting vision with the goal to build quantum-centric supercomputers.
+    The latter will incorporate quantum processors, classical processors, quantum
+    communication networks, and classical networks. The immediate deliverables are
+    expected to be the 433-qubit *Osprey* processor (expected to be released in 2022)
+    and the 1,121-qubit *Condor* processor (expected to be released in 2023). The
+    next step will be to develop ways to link processors together into a modular system
+    capable of scaling without physical limitations.
+  prefs: []
+  type: TYPE_NORMAL
+- en: The modular, multi-chip scaling technology is also envisaged by Rigetti. Rigetti
+    anticipates the launch of their next generation single-chip 84-qubit quantum computer
+    in 2023 and 336-qubit multi-chip processor later in 2023\. The 336-qubit multi-chip
+    processor is expected to combine the anticipated improvements of the 84-qubit
+    processor with the modular, multi-chip scaling technology of Rigetti’s Aspen-M
+    machine. These machines are expected to deliver increased performance across the
+    key dimensions of speed, scale, and fidelity  [[246](Biblography.xhtml#XRigettiRoadmap2022)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: We also expect to see significant progress in the trapped ion space. IonQ announced
+    several major breakthroughs that may have a major impact on the way quantum algorithms
+    are designed and run on trapped ion quantum computing hardware. This includes,
+    for example, a new family of *n*-qubit gates, such as the *n*-qubit Toffoli gate,
+    which flips a select qubit if and only if all the other qubits are in a particular
+    state. Unlike standard two-qubit quantum computing gates, the *n*-qubit Toffoli
+    gate acts on many qubits at once, leading to more efficient operations  [[146](Biblography.xhtml#XIonQ2022)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: Quantum annealing is going from strength to strength. In a recent white paper  [[39](Biblography.xhtml#XBoothby2021)],
+    D-Wave introduced the new *Zephyr* graph with better connectivity than its predecessors,
+    *Chimera* and *Pegasus*. Plans are in place for a 7,000-qubit chip based on *Zephyr*,
+    scheduled to be available in 2023-2024  [[93](Biblography.xhtml#XDW2022)]. Early
+    benchmarks with smaller-scale prototype systems consisting of 500+ qubits have
+    demonstrated more compact embedding, lower error rates, improved solution quality,
+    and an increased probability of finding optimal solutions  [[210](Biblography.xhtml#XMcGeoch2022)].
+  prefs: []
+  type: TYPE_NORMAL
+- en: But, ultimately, it is up to the users to try and test various hardware and
+    software solutions on a variety of use cases. We encourage our readers to experiment
+    and apply the methods of quantum computing to their own spheres of interest and
+    discover new quantum algorithms and applications. This is an exciting journey
+    and a great opportunity to participate in the collective effort of achieving quantum
+    advantage for the benefits of wider society.
+  prefs: []
+  type: TYPE_NORMAL
