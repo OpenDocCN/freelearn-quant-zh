@@ -1,7 +1,9 @@
 - en: Chapter 5. Estimating the Term Structure of Interest Rates
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第5章：估算利率期限结构
 - en: In the previous chapter we discussed how changes in the level of interest rates,
     the term structure, affect the prices of fixed income securities. Now we focus
     on the estimation of the term structure of interest rates, which is a fundamental
@@ -9,12 +11,16 @@
     This chapter will introduce term structure estimation methods by cubic spline
     regression, and it will demonstrate how one can estimate the term structure of
     interest rates using the `termstrc` package and the `govbonds` dataset.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 在上一章中，我们讨论了利率水平和期限结构的变化如何影响固定收益证券的价格。现在，我们将重点讨论利率期限结构的估算，这是金融学中的一个基本概念。它几乎在所有金融决策中都是一个重要的输入。本章将介绍通过三次样条回归估算期限结构的方法，并演示如何使用`termstrc`包和`govbonds`数据集来估算利率期限结构。
 - en: The term structure of interest rates and related functions
+  id: totrans-2
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 利率期限结构及相关函数
 - en: A *t*-year zero-coupon bond with a face value of 1 USD is a security that pays
     1 USD at maturity, that is, in *t* years time. Let ![The term structure of interest
     rates and related functions](img/0933OS_05_03.jpg) denote its market value, which
@@ -27,51 +33,75 @@
     related functions](img/0933OS_05_07.jpg). It is also usually assumed that ![The
     term structure of interest rates and related functions](img/0933OS_05_06.jpg)
     is twice continuously differentiable.
+  id: totrans-3
   prefs: []
   type: TYPE_NORMAL
+  zh: 一只*t*年期的零息债券，面值为1美元，是一种在到期时支付1美元的证券，也就是说，*t*年后支付。设 ![利率期限结构及相关函数](img/0933OS_05_03.jpg)
+    为其市场价值，也称为*t*年期的折现因子。该函数 ![利率期限结构及相关函数](img/0933OS_05_04.jpg) 称为折现函数。基于无套利假设，通常假定
+    ![利率期限结构及相关函数](img/0933OS_05_05.jpg)，![利率期限结构及相关函数](img/0933OS_05_06.jpg) 是单调递减的，并且
+    ![利率期限结构及相关函数](img/0933OS_05_07.jpg)。还通常假定 ![利率期限结构及相关函数](img/0933OS_05_06.jpg)
+    是二次连续可微的。
 - en: 'Let ![The term structure of interest rates and related functions](img/0933OS_05_08.jpg)
     denote the continuously compounded annual return of the *t*-year zero coupon bond;
     it shall be defined as:'
+  id: totrans-4
   prefs: []
   type: TYPE_NORMAL
+  zh: 设 ![利率期限结构及相关函数](img/0933OS_05_08.jpg) 表示*t*年期零息债券的连续复利年收益率；它定义为：
 - en: '![The term structure of interest rates and related functions](img/0933OS_05_09.jpg)'
+  id: totrans-5
   prefs: []
   type: TYPE_IMG
+  zh: '![利率期限结构及相关函数](img/0933OS_05_09.jpg)'
 - en: The function ![The term structure of interest rates and related functions](img/0933OS_05_10.jpg)
     is called the (zero coupon) yield curve.
+  id: totrans-6
   prefs: []
   type: TYPE_NORMAL
+  zh: 函数 ![利率期限结构及相关函数](img/0933OS_05_10.jpg) 称为（零息）收益率曲线。
 - en: 'Let ![The term structure of interest rates and related functions](img/0933OS_05_11.jpg)
     denote the instantaneous forward rate curve or simply the forward rate curve,
     where:'
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 设 ![利率期限结构及相关函数](img/0933OS_05_11.jpg) 表示瞬时远期利率曲线，或简称远期利率曲线，其中：
 - en: '![The term structure of interest rates and related functions](img/0933OS_05_12.jpg)'
+  id: totrans-8
   prefs: []
   type: TYPE_IMG
+  zh: '![利率期限结构及相关函数](img/0933OS_05_12.jpg)'
 - en: Here ![The term structure of interest rates and related functions](img/0933OS_05_13.jpg)
     is the interest rate agreed upon by two parties in a hypothetical forward loan
     agreement, in which one of the parties commits to lend an amount to the other
     party in *t* years time for a very short term and at an interest rate that is
     fixed when the contract is signed.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里 ![利率期限结构及相关函数](img/0933OS_05_13.jpg) 是指在一个假设的远期贷款协议中，双方约定的利率，其中一方承诺在*t*年后，以非常短的期限，按签订合同时固定的利率将一笔金额借给另一方。
 - en: The discount function, the yield curve, and the forward rate curve mutually
     determine each other and are a possible representation of the term structure of
     interest rates. The term structure may relate to any and all of these functions.
+  id: totrans-10
   prefs: []
   type: TYPE_NORMAL
+  zh: 折现函数、收益率曲线和远期利率曲线相互决定，是利率期限结构的可能表示方式。利率期限结构可能与这些函数中的任何一个或全部相关。
 - en: The estimation problem
+  id: totrans-11
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 估算问题
 - en: We cannot observe the term structure directly, but we can observe the market
     prices of instruments whose price depends on the term structure and thus estimate
     the term structure. A good source of information regarding the term structure
     is the government bond market, where usually a lot of liquid securities are traded
     whose prices depend solely on the term structure.
+  id: totrans-12
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们无法直接观察期限结构，但我们可以观察那些价格依赖于期限结构的工具的市场价格，从而估计期限结构。一个关于期限结构的良好信息来源是政府债券市场，在这里通常有大量的流动性证券交易，其价格完全依赖于期限结构。
 - en: 'Suppose there are *n* bonds traded whose gross (or dirty) prices are denoted
     by ![The estimation problem](img/0933OS_05_14.jpg). There are *m* dates when at
     least one bond''s owners receive a payment. These payments are due in ![The estimation
@@ -80,11 +110,16 @@
     matrix *C* contains the cash flows of the bonds. We model bond prices as the sum
     of the present value of the bond''s cash flow and a normally distributed error
     term:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设有 *n* 种债券交易，其总价格（或脏价格）用 ![估计问题](img/0933OS_05_14.jpg) 表示。有 *m* 个日期，在这些日期，至少有一种债券的持有者会收到支付。这些支付分别在
+    ![估计问题](img/0933OS_05_15.jpg) 年后到期，其中 ![估计问题](img/0933OS_05_16.jpg) 。矩阵 *C* 包含债券的现金流。我们将债券价格建模为债券现金流现值与一个正态分布误差项的和：
 - en: '![The estimation problem](img/0933OS_05_18.jpg)'
+  id: totrans-14
   prefs: []
   type: TYPE_IMG
+  zh: '![估计问题](img/0933OS_05_18.jpg)'
 - en: 'Here *d* is the vector containing the discount factors ![The estimation problem](img/0933OS_05_19.jpg)
     and ![The estimation problem](img/0933OS_05_20.jpg) is a vector containing the
     error terms. The observed market price of a bond can differ from the present value
@@ -93,54 +128,78 @@
     costs, which allow for a small difference between the theoretical and the market
     price, without the difference being an arbitrage opportunity. The variance of
     the error terms might differ from bond to bond:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里 *d* 是包含折现因子的向量 ![估计问题](img/0933OS_05_19.jpg)，而 ![估计问题](img/0933OS_05_20.jpg)
+    是包含误差项的向量。债券的观察市场价格可能与现金流现值有所不同，原因有两个：可能存在观测市场价格的测量误差和/或存在轻微的市场不完美，比如交易成本，这允许理论价格与市场价格之间存在小的差异，而这种差异并不构成套利机会。误差项的方差可能因债券不同而有所差异：
 - en: '![The estimation problem](img/0933OS_05_21.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
+  zh: '![估计问题](img/0933OS_05_21.jpg)'
 - en: Here, ![The estimation problem](img/0933OS_05_22.jpg) is an ![The estimation
     problem](img/0933OS_05_23.jpg) positive semidefinite diagonal matrix. It is logical
     to assume that the standard deviation of the error term in the price of a bond
     is proportional to its bid-ask spread, that is, the difference between the bid
     and asked price of the bond. Thus, ![The estimation problem](img/0933OS_05_24.jpg)
     is often chosen as the squared bid-ask spread of bond *i*.
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，![估计问题](img/0933OS_05_22.jpg) 是一个 ![估计问题](img/0933OS_05_23.jpg) 正半定对角矩阵。合乎逻辑的假设是，债券价格误差项的标准差与其买卖价差成正比，也就是债券的买价与卖价之间的差异。因此，![估计问题](img/0933OS_05_24.jpg)
+    通常被选为债券 *i* 的买卖价差的平方。
 - en: Equation *(1)* looks like a typical linear regression, however, it usually cannot
     be estimated directly as the number of observations (bond prices) is usually less
     than the number of coefficients to be estimated. Because of this, we need to model
     the term structure to reduce the number of parameters to be estimated, and to
     ensure that the resulting term structure estimation is reasonable.
+  id: totrans-18
   prefs: []
   type: TYPE_NORMAL
+  zh: 方程式*(1)*看起来像一个典型的线性回归，然而，它通常不能直接估计，因为观察值（债券价格）的数量通常少于需要估计的系数数量。由于这个原因，我们需要对期限结构进行建模，以减少需要估计的参数数量，并确保最终的期限结构估计是合理的。
 - en: Estimation of the term structure by linear regression
+  id: totrans-19
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 通过线性回归估计期限结构
 - en: Suppose that the discount function can be expressed as the linear combination
     of the ![Estimation of the term structure by linear regression](img/0933OS_05_25.jpg)
     functions that are twice continuously differentiable functions as
+  id: totrans-20
   prefs: []
   type: TYPE_NORMAL
+  zh: 假设折现函数可以表示为一个线性组合，其中的 ![通过线性回归估计期限结构](img/0933OS_05_25.jpg) 函数是二次连续可微的函数，如下所示：
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_26.jpg)'
+  id: totrans-21
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_26.jpg)'
 - en: where
+  id: totrans-22
   prefs: []
   type: TYPE_NORMAL
+  zh: 哪里
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_27.jpg)'
+  id: totrans-23
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_27.jpg)'
 - en: We can estimate the weights ![Estimation of the term structure by linear regression](img/0933OS_05_28.jpg)
     by generalized least squares. We will discuss the choice of the functions ![Estimation
     of the term structure by linear regression](img/0933OS_05_29.jpg) later. The estimated
     discount function is the function of the estimated weights ![Estimation of the
     term structure by linear regression](img/0933OS_05_30.jpg).
+  id: totrans-24
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们可以通过广义最小二乘法估计权重![通过线性回归估计期限结构](img/0933OS_05_28.jpg)。我们稍后将讨论函数![通过线性回归估计期限结构](img/0933OS_05_29.jpg)的选择。估计的折现函数是估计权重![通过线性回归估计期限结构](img/0933OS_05_30.jpg)的函数。
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_31.jpg)'
+  id: totrans-25
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_31.jpg)'
 - en: Let *D* denote an ![Estimation of the term structure by linear regression](img/0933OS_05_32.jpg)
     matrix whose elements ![Estimation of the term structure by linear regression](img/0933OS_05_33.jpg)
     are ![Estimation of the term structure by linear regression](img/0933OS_05_34.jpg),
@@ -148,39 +207,59 @@
     the vector that contains the weights ![Estimation of the term structure by linear
     regression](img/0933OS_05_28.jpg). Thus ![Estimation of the term structure by
     linear regression](img/0933OS_05_36.jpg) and
+  id: totrans-26
   prefs: []
   type: TYPE_NORMAL
+  zh: 设*D*表示一个![通过线性回归估计期限结构](img/0933OS_05_32.jpg)矩阵，其元素![通过线性回归估计期限结构](img/0933OS_05_33.jpg)是![通过线性回归估计期限结构](img/0933OS_05_34.jpg)，而![通过线性回归估计期限结构](img/0933OS_05_35.jpg)是包含权重![通过线性回归估计期限结构](img/0933OS_05_28.jpg)的向量。因此![通过线性回归估计期限结构](img/0933OS_05_36.jpg)并且
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_37.jpg)'
+  id: totrans-27
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_37.jpg)'
 - en: 'which is a linear regression model under the constraint that ![Estimation of
     the term structure by linear regression](img/0933OS_05_38.jpg), which can be expressed
     as follows:'
+  id: totrans-28
   prefs: []
   type: TYPE_NORMAL
+  zh: 这是一个线性回归模型，约束条件为![通过线性回归估计期限结构](img/0933OS_05_38.jpg)，其可以表示为如下：
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_39.jpg)'
+  id: totrans-29
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_39.jpg)'
 - en: where ![Estimation of the term structure by linear regression](img/0933OS_05_40.jpg).
+  id: totrans-30
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中![通过线性回归估计期限结构](img/0933OS_05_40.jpg)。
 - en: The GLS estimation for the weights of equation (2) under the constraint of equation
     (3) is
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
+  zh: 在方程（2）中，权重的GLS估计在方程（3）约束下为
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_41.jpg)'
+  id: totrans-32
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_41.jpg)'
 - en: where
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
+  zh: 其中
 - en: '![Estimation of the term structure by linear regression](img/0933OS_05_42.jpg)'
+  id: totrans-34
   prefs: []
   type: TYPE_IMG
+  zh: '![通过线性回归估计期限结构](img/0933OS_05_42.jpg)'
 - en: Cubic spline regression
+  id: totrans-35
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 三次样条回归
 - en: We need to choose the functions ![Cubic spline regression](img/0933OS_05_29.jpg)
     carefully if we want the estimation to yield a reasonably estimated discount function.
     The typical discount function is nonlinear. It is a monotonically decreasing function
@@ -191,14 +270,18 @@
     maturities. If we fit high-order polynomials, they may fit well but tend to produce
     wild swings at long-term maturities where relatively few bonds mature. These wild
     swings usually result in unrealistic term structure estimates.
+  id: totrans-36
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果我们希望估计能够得到合理的折现函数，我们需要仔细选择函数![三次样条回归](img/0933OS_05_29.jpg)。典型的折现函数是非线性的。它是一个单调递减的函数，并且在无限远处渐近于零。因此，拟合一条直线并不是一个好主意。我们可以尝试拟合一个高阶多项式来逼近折现函数，但这也不是一个令人满意的解决方案。如果我们拟合低阶多项式，它们通常不够灵活，拟合效果也不好，尤其是在短期到期的情况下。如果我们拟合高阶多项式，它们可能拟合得较好，但往往会在长期到期时产生剧烈波动，特别是在到期债券相对较少的情况下。这些剧烈波动通常会导致不现实的期限结构估计。
 - en: Spline functions are functions that help solve this problem as their flexibility
     can be increased locally where needed, without raising the polynomial order of
     the estimated function. Estimating the term structure by fitting cubic splines
     to the discount function was first proposed by *McCulloch* in 1971.
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
+  zh: 样条函数是帮助解决这个问题的函数，因为它们的灵活性可以在需要的地方局部增加，而无需提高估计函数的多项式阶数。通过将三次样条拟合到折现函数来估计期限结构的做法是由*麦卡洛克*于1971年首次提出的。
 - en: Cubic splines are real functions whose domain is an interval of the real line.
     The domain ![Cubic spline regression](img/0933OS_05_47.jpg) is divided into subintervals
     by the so-called knot points ![Cubic spline regression](img/0933OS_05_43.jpg)
@@ -214,24 +297,34 @@
     functions ![Cubic spline regression](img/0933OS_05_29.jpg) as a cubic spline basis,
     which we will demonstrate in the German government bonds data from the `govbonds`
     dataset.
+  id: totrans-38
   prefs: []
   type: TYPE_NORMAL
+  zh: 三次样条是实函数，其定义域是实数线的一个区间。定义域![三次样条回归](img/0933OS_05_47.jpg)被所谓的节点点![三次样条回归](img/0933OS_05_43.jpg)分为子区间，其中![三次样条回归](img/0933OS_05_48.jpg)。三次样条函数在每个子区间内是三次多项式，这些三次多项式在节点点处连接，使得样条函数在![三次样条回归](img/0933OS_05_44.jpg)上连续且二次连续可导。每个三次样条函数在![三次样条回归](img/0933OS_05_44.jpg)上和给定的节点点![三次样条回归](img/0933OS_05_43.jpg)可以表示为![三次样条回归](img/0933OS_05_45.jpg)基样条函数的线性组合，这些基样条函数是同一节点点上的三次样条。因此，如果我们想为折扣函数拟合一个三次样条，我们只需选择![三次样条回归](img/0933OS_05_29.jpg)作为三次样条基函数，这一点我们将在`govbonds`数据集中的德国政府债券数据中演示。
 - en: '[PRE0]'
+  id: totrans-39
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: The dataset holds information about 52 German bonds, from which we will concentrate
     on the issue and maturity dates, price, and provided cash flows. To create a similar
     dataset ready for further analysis, please see the examples of `?govbonds`.
+  id: totrans-40
   prefs: []
   type: TYPE_NORMAL
+  zh: 该数据集包含52只德国债券的信息，我们将集中关注发行和到期日期、价格以及提供的现金流。要创建一个类似的数据集以便进一步分析，请参见`?govbonds`的示例。
 - en: 'First, we preprocess the bond dataset with the `prepro_bond` function that
     returns cash flows, maturities, yield-to-maturity, duration-based weight matrices
     plus dirty price, and accrued interest vectors, among other values:'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们使用`prepro_bond`函数预处理债券数据集，该函数返回现金流、到期时间、到期收益率、基于久期的权重矩阵、脏价格和应计利息向量等值：
 - en: '[PRE1]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'An important decision is setting the number of knot points and placing them.
     The first and last knot points are zero and T respectively, and the others are
     usually chosen so that approximately the same number of bonds mature at every
@@ -244,104 +337,154 @@
     that the number of knot points be ![Cubic spline regression](img/0933OS_05_46.jpg)
     approximately. We now demonstrate that in the following command with the help
     of the maturity matrix decomposed from the `prepro` object:'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
+  zh: 一个重要的决策是设置节点点的数量并确定它们的位置。第一个和最后一个节点点分别为零和T，其他节点点通常选择使得每个子区间大致有相同数量的债券到期。设置节点点的数量并不那么简单。它将决定需要估计的参数数量，并将显著影响估计的期限结构。可以通过将`K`设置为`1`开始估计过程，然后将其增加一个，重复估计直到拟合优度有显著改善，并且估计的期限结构表现良好。或者，可以遵循McCulloch提出的经验法则，节点点的数量大约为![三次样条回归](img/0933OS_05_46.jpg)。我们现在将在以下命令中演示这一点，借助从`prepro`对象分解出的到期矩阵：
 - en: '[PRE2]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'And let us define the number of German bonds with `n` and its rounded square
     root by `s` (number of knot points) that results in `7`:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
+  zh: 让我们定义德国债券的数量为`n`，并将其平方根的四舍五入值定义为`s`（节点点数量），结果为`7`：
 - en: '[PRE3]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'If `s` results in a number less than three, identifying the ideal knot points
     is easy. We will use the following command:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`s`的结果小于三，确定理想的节点点就很容易了。我们将使用以下命令：
 - en: '[PRE4]'
+  id: totrans-48
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: Here we have identified the smallest (`min`) number in the first column and
     the largest (`max`) number from the last (`ncol`) column from the maturity matrix
     rounded to the largest integer just below the results (`floor`).
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们已经识别出到期矩阵中第一列的最小值（`min`）和最后一列的最大值（`max`），并将这些结果四舍五入到下方的最大整数（`floor`）。
 - en: 'If `s` is higher than three, the first and last knot points are defined just
     as in the preceding command lines and the others between those points are computed
     with some helper vectors with the length of `s-3`, as shown in the following commands:'
+  id: totrans-50
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果`s`大于三，则第一个和最后一个结点点的定义与前面的命令行一样，其他结点点则通过一些辅助向量计算，这些辅助向量的长度为`s-3`，如以下命令所示：
 - en: '[PRE5]'
+  id: totrans-51
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: The `i` vector simply holds the sequence from `2` to `5` in this case, from
     which we compute the indices of the column (`h`) from the maturity matrix that
     will be used to search other knot points. Here `theta` is used as a weight.
+  id: totrans-52
   prefs: []
   type: TYPE_NORMAL
+  zh: '`i`向量仅仅持有从`2`到`5`的序列，从中我们计算了到期矩阵的列（`h`）的索引，这些索引将用于搜索其他结点点。这里`theta`作为权重使用。'
 - en: '[PRE6]'
+  id: totrans-53
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'Here we find the highest number in each hth column of the maturity matrix and
     add the `theta`-weighted difference of the `h+1` and `h` columns'' maximum results
     in the following output:'
+  id: totrans-54
   prefs: []
   type: TYPE_NORMAL
+  zh: 在这里，我们找到了到期矩阵中每一列的最大值，并在以下输出中加入了`theta`加权的`h+1`列和`h`列最大值的差异：
 - en: '[PRE7]'
+  id: totrans-55
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'Now we concatenate (with the c function) the first (minimum) and the last (maximum)
     value computed earlier to the preceding results copied from the preceding code
     chunk to identify all knot points:'
+  id: totrans-56
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我们使用`c`函数将先前计算出的最小（`min`）值和最大（`max`）值与前面的结果连接起来，这些结果是从前面的代码块中复制的，用于识别所有结点点：
 - en: '[PRE8]'
+  id: totrans-57
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: Applied R functions
+  id: totrans-58
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 应用的 R 函数
 - en: 'Although we have already used some functions from the `termstrc` package in
     the previous example to demonstrate how one can determine the ideal number of
     knot points and also specify those, this process can be done in an easier manner
     with some further R functions, as shown in the following command lines:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
+  zh: 尽管我们已经在前面的例子中使用了一些`termstrc`包中的函数，演示了如何确定理想的结点点数量并指定它们，但这一过程也可以通过一些进一步的 R 函数更轻松地完成，如以下命令行所示：
 - en: '[PRE9]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: First we used the `estim_cs` function that estimates the term structure of coupon
     bonds based on cubic splines (*Ferstl-Haydn, 2010*) and returns the knot points
     in a list with the `knotpoints` name. Please note that `estim_cs` works with a
     list—just like most functions in the package—that's why `x$knotpoints` returned
     a list from which we checked only the first element that was identical to the
     values we computed manually in the preceding section.
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
+  zh: 首先，我们使用了`estim_cs`函数，该函数基于三次样条（*Ferstl-Haydn, 2010*）估算票息债券的期限结构，并返回一个包含`knotpoints`名称的结点点列表。请注意，`estim_cs`是与列表一起工作的——就像包中的大多数函数一样——这就是为什么`x$knotpoints`返回了一个列表，我们只检查了其中第一个元素，该元素与我们在前一部分手动计算的值相同。
 - en: 'There are a bunch of other useful values returned by the preceding function
     that by default result in the following command lines:'
+  id: totrans-62
   prefs: []
   type: TYPE_NORMAL
+  zh: 前述函数返回了一些其他有用的值，默认情况下会导致以下命令行：
 - en: '[PRE10]'
+  id: totrans-63
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'The goodness of fit can be shown with the `summary` function, just like with
     other R models:'
+  id: totrans-64
   prefs: []
   type: TYPE_NORMAL
+  zh: 拟合优度可以通过`summary`函数展示，就像其他 R 模型一样：
 - en: '[PRE11]'
+  id: totrans-65
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: The zero-coupon yield curve and its confidence interval can be shown easily
     with the knot points by simply calling `plot` on the `x` object.
+  id: totrans-66
   prefs: []
   type: TYPE_NORMAL
+  zh: 零息收益率曲线及其置信区间可以通过简单地对`x`对象调用`plot`来轻松展示，其中的结点点也被包含在内。
 - en: '![Applied R functions](img/0933OS_05_01.jpg)'
+  id: totrans-67
   prefs: []
   type: TYPE_IMG
+  zh: '![应用的 R 函数](img/0933OS_05_01.jpg)'
 - en: The preceding figure shows the estimated zero-coupon yield curve and the yield-to-maturity
     of the individual bonds in the database. The two bonds with the shortest maturities
     are outliers as they are probably less liquid before expiration. We see that the
@@ -350,41 +493,57 @@
     the corresponding yield to maturity of coupon bonds. It may be the result of an
     imperfect fit, or it may be explained by the fact that these bonds are not zero-coupon
     bonds but coupon bonds.
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面的图表展示了估算的零息收益率曲线和数据库中各个债券的到期收益率。到期时间最短的两个债券是异常值，因为它们在到期前可能流动性较差。我们看到，估算的收益率曲线与10年的到期收益率非常接近。对于较长的到期时间，估算的零息收益率通常高于相应的票息债券到期收益率。这可能是拟合不完美的结果，或者可以通过这些债券不是零息债券而是票息债券来解释。
 - en: 'And by setting `mfrow` with `par,` we can also `plot` two different graphs
     on the same frame (we also set `multiple=TRUE` so that the plots would be rendered
     without waiting for user input). For example, let us draw the discount and forward
     curves from the `x` object using the following commands:'
+  id: totrans-69
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过使用`par`设置`mfrow,` 我们还可以在同一框架中绘制两个不同的图形（我们还设置了`multiple=TRUE`，这样图形将在不等待用户输入的情况下渲染）。例如，我们可以使用以下命令绘制`x`对象中的折现曲线和远期曲线：
 - en: '[PRE12]'
+  id: totrans-70
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: '![Applied R functions](img/0933OS_05_02.jpg)'
+  id: totrans-71
   prefs: []
   type: TYPE_IMG
+  zh: '![应用的R函数](img/0933OS_05_02.jpg)'
 - en: In the preceding figure, we see that the estimated discount function and the
     forward rate curves are well behaved and do not show the presence of arbitrage
     opportunities (the discount function is monotonically decreasing, and the forward
     rate curve does not produce unrealistic values and swings).
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
+  zh: 在前面的图中，我们可以看到，估计的折现函数和远期利率曲线表现良好，不存在套利机会（折现函数单调递减，远期利率曲线不会产生不现实的值和波动）。
 - en: The cubic spline estimation of the term structure usually leads to good estimates.
     Sometimes, however, the estimated term structure is not appealing (the forward
     rate curve swings widely). In this case, one can use nonlinear spline regression
     or parsimonious yield curve models, but these are beyond the scope of this chapter.
+  id: totrans-73
   prefs: []
   type: TYPE_NORMAL
+  zh: 三次样条估计的期限结构通常能给出良好的估计。然而，有时估计的期限结构并不理想（远期利率曲线波动较大）。在这种情况下，可以使用非线性样条回归或简约收益率曲线模型，但这些内容超出了本章的范围。
 - en: Further resources such as the Nelson/Siegel, Diebold/Li, Svensson, and Adjusted
     Svensson methods are also available with the help of the `estim_nss` function
     or the `YieldCurve` package.
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
+  zh: 通过`estim_nss`函数或`YieldCurve`包，您还可以使用包括Nelson/Siegel、Diebold/Li、Svensson和调整后的Svensson方法等更多资源。
 - en: Summary
+  id: totrans-75
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we discussed term structure estimation methods by cubic spline
     regression and also demonstrated how one can estimate the term structure of interest
     rates in R. After a brief theoretical introduction to term structure and interest
@@ -392,5 +551,7 @@
     and related problems, the chapter gave a detailed overview of an R implementation
     of cubic spline regression model and also mentioned already published R functions
     and packages for such tasks with more complex expectations.
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章讨论了通过三次样条回归进行期限结构估计的方法，并演示了如何在R中估计利率的期限结构。在简要介绍期限结构和利率的理论后，还讨论了最基本的方法，如线性回归模型及相关问题，本章详细概述了三次样条回归模型在R中的实现，并提到了一些已经发布的R函数和包，以应对具有更复杂预期的任务。

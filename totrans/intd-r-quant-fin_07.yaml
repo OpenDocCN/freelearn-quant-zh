@@ -1,7 +1,9 @@
 - en: Chapter 7. Credit Risk Management
+  id: totrans-0
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 第七章 信用风险管理
 - en: This chapter introduces some useful tools for credit risk management. Credit
     risk is the distribution of the financial losses due to unexpected changes in
     the credit quality of a counterparty in a financial agreement (*Giesecke 2004*).
@@ -15,33 +17,45 @@
     However, the contractual or regulatory definition of a credit event can usually
     be wider than just a missed payment. The modeling end estimation of the possibility
     of default is an essential need in all of the three cases.
+  id: totrans-1
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章介绍了一些信用风险管理的有用工具。信用风险是指由于金融协议中对方信用质量的意外变化而导致的财务损失分布（*Giesecke 2004*）。为管理信用风险，已经开发了多种工具和行业解决方案。根据文献，可以将信用风险视为**违约风险**、**降级风险**或**对手方风险**。在大多数情况下，违约风险直接与债务或信用的未履行风险相关。而降级风险则是在债券价格由于信用评级恶化而下降，但并未发生实际的信用事件。对手方风险是指合同对方未履行合同义务的风险。然而，信用事件的合同或监管定义通常比仅仅是未支付要广泛。无论是哪种情况，建模和估计违约的可能性在所有三种情况中都是至关重要的。
 - en: 'Managing credit risk is conducted in various ways at financial institutions.
     In general, the tasks in credit risk management are as follows:'
+  id: totrans-2
   prefs: []
   type: TYPE_NORMAL
+  zh: 金融机构通过多种方式进行信用风险管理。一般来说，信用风险管理的任务如下：
 - en: Credit portfolio selection (for example, the decision of a commercial bank about
     lending or credit scoring)
+  id: totrans-3
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 信用投资组合选择（例如，商业银行关于贷款或信用评分的决策）
 - en: Measuring and predicting the probability of default or downgrade (using, for
     example, a credit rating migration matrix with CreditMetrics)
+  id: totrans-4
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 衡量和预测违约或降级的概率（例如，使用信用评级迁移矩阵与CreditMetrics）
 - en: 'Modeling the distribution of the financial loss due to default or downgrade
     (for a single entity: structural and reduced form pricing and risk models or,
     for a portfolio: dependency structure modeling)'
+  id: totrans-5
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 模拟因违约或降级导致的金融损失分布（对于单一实体：结构定价和风险模型或对于投资组合：依赖结构建模）
 - en: Mitigating or eliminating credit risk (with a hedge, diversification, prevention,
     or insurance; we do not investigate it in this book)
+  id: totrans-6
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: 缓解或消除信用风险（通过对冲、多样化、预防或保险；我们在本书中不做探讨）
 - en: In this chapter, we will show examples using R for some of the preceding listed
     problems. At first, we introduce the basic concepts of credit loss modeling, namely,
     the structural and reduced form approaches, and their applications in R. After
@@ -50,29 +64,39 @@
     how R manages credit migration matrices and, finally, we give detailed insight
     into credit scoring with analysis tools, such as logit and probit regressions
     and **receiver operating characteristic** (**ROC**) analysis.
+  id: totrans-7
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我们将使用R语言展示一些前面列出的问题的示例。首先，我们介绍信用损失建模的基本概念，即结构方法和简化形式方法及其在R中的应用。之后，我们提供一种将相关随机变量与copula结合的实用方法，这是结构化信用衍生品定价的有效技术。我们还展示了R如何管理信用迁移矩阵，最后，我们深入探讨使用分析工具（如logit回归和probit回归）进行信用评分分析，并介绍**接收者操作特征**（**ROC**）分析。
 - en: Credit default models
+  id: totrans-8
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 信用违约模型
 - en: The goal of the first part of the chapter is to show the methods of using R
     for pricing and performing Monte Carlo simulations with standard credit risk models.
     The following sections give an essential picture of loss distributions and the
     generating and pricing of a single debt instrument.
+  id: totrans-9
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章第一部分的目标是展示如何使用R进行标准信用风险模型的定价和蒙特卡洛模拟。接下来的各节将提供损失分布的基本图景，并生成和定价单一债务工具。
 - en: Structural models
+  id: totrans-10
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
+  zh: 结构模型
 - en: 'We start with the well-known option-based model of Merton (*Merton 1974*) as
     the introductory model of structural approach. Merton evaluates risky debt as
     a contingent claim of the firm value. Let us suppose that the `V` firm value follows
     geometric Brownian motion:'
+  id: totrans-11
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_A.jpg)'
+  id: totrans-12
   prefs: []
   type: TYPE_IMG
 - en: 'In the preceding formula, `μ` is the drift parameter, `σ>0` is the volatility
@@ -81,201 +105,273 @@
     interest rate, and lets us define the default state as that where the value of
     the assets V falls below the liabilities (`K`) upon the of maturity of debt (T).
     We express the V[T] firm value at maturity as the integral of:'
+  id: totrans-13
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_B.jpg)'
+  id: totrans-14
   prefs: []
   type: TYPE_IMG
 - en: 'Where we express `dlnV[t]` using Ito''s lemma to derive the differential of
     the logarithm of firm value as:'
+  id: totrans-15
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_C.jpg)'
+  id: totrans-16
   prefs: []
   type: TYPE_IMG
 - en: 'Along with generating Gaussian distributed random variables for capturing ![Structural
     models](img/0933OS_07_D.jpg), we calculate the V[T] firm value at maturity with
     this discrete approach in the following way:'
+  id: totrans-17
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_E.jpg)'
+  id: totrans-18
   prefs: []
   type: TYPE_IMG
 - en: 'Where `∆t` denotes the one-period length of the elapsed time. We simulate the
     firm value with R in accordance with this logic. First, set the parameters of
     the simulation, namely, the initial asset value, the drift, and the volatility
     parameters in the following way:'
+  id: totrans-19
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE0]'
+  id: totrans-20
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE0]'
 - en: 'Next, declare the length of `∆t` and the end of the time periods (`Time`):'
+  id: totrans-21
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE1]'
+  id: totrans-22
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE1]'
 - en: 'Let''s also compute the number of time periods:'
+  id: totrans-23
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE2]'
+  id: totrans-24
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE2]'
 - en: 'And finally, decide on the number of generated trajectories:'
+  id: totrans-25
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE3]'
+  id: totrans-26
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE3]'
 - en: 'To make pseudo-random generated variables you would be able to replicate later,
     set a random seed every time before calling the generator functions:'
+  id: totrans-27
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE4]'
+  id: totrans-28
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE4]'
 - en: 'And, to produce the increments of the logarithm of the `V` process (`ΔlnV`),
     generate `n*M` numbers from a normal distribution using the specified mean and
     standard deviation:'
+  id: totrans-29
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE5]'
+  id: totrans-30
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE5]'
 - en: 'And store these numbers in a `matrix` with `M` rows and `n` columns:'
+  id: totrans-31
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE6]'
+  id: totrans-32
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE6]'
 - en: 'In order to get the variation of the firm value in time (`V`), summarize the
     logarithm of the increments and, as computed above, take the exponential of this
     sum and multiply it with the initial firm value. The equivalent code for `n` number
     of trajectories is as follows:'
+  id: totrans-33
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE7]'
+  id: totrans-34
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE7]'
 - en: 'The used `cumsum` function is common with the `apply` command. Plot the first
     five trajectories with `matplot` as follows:'
+  id: totrans-35
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE8]'
+  id: totrans-36
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE8]'
 - en: 'We selected the first five (`1:5`) columns of `V` to be plotted with solid
     (`lty=1`) and stair steps (`type=''s''`) lines resulting in the following graph:'
+  id: totrans-37
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933_07_01.jpg)'
+  id: totrans-38
   prefs: []
   type: TYPE_IMG
 - en: 'Note that the price of the risky debt is the expected value of the discounted
     payoff of the risky debt at maturity as per the risk neutral or martingale P measure,
     where drift is the `r` risk-free interest rate as the following formula expresses:'
+  id: totrans-39
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_F.jpg)'
+  id: totrans-40
   prefs: []
   type: TYPE_IMG
 - en: 'If we set the `r` risk-free interest rate and face value of the debt (`K`):'
+  id: totrans-41
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE9]'
+  id: totrans-42
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE9]'
 - en: 'We can demonstrate the Monte Carlo pricing as the parallel min (`pmin`) of
     the debt face value and the previously computed `V` from which we take the `M^(th)`
     column''s mean as shown in the previous formula, as follows:'
+  id: totrans-43
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE10]'
+  id: totrans-44
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE10]'
 - en: 'For the standard parameters and the fixed pseudo-random generated variables
     `D`, risky debt with a face value of 80 dollars counts:'
+  id: totrans-45
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE11]'
+  id: totrans-46
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE11]'
 - en: 'From the Black-Scholes pricing formula of the European call options, the value
     of risky debt value at `t=0` can be expressed as the `V` firm value less the equity
     value (`E`), which is a European call option on `V`. Noting the pricing formula
     with `c^(BS)`, we get:'
+  id: totrans-47
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_G.jpg)'
+  id: totrans-48
   prefs: []
   type: TYPE_IMG
 - en: 'One can calculate debt value with the `GBSOption` function of the `fOptions`
     package. After installing and calling the following library, one can use the following
     appropriate function:'
+  id: totrans-49
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE12]'
+  id: totrans-50
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE12]'
 - en: 'Set the `TypeFlag` parameter to `"c"` (call) and the other parameters to the
     previously defined value. Select parameter `b` to the `r` risk-free interest rate
     to get the Black-Scholes European call and write the `@price` slot at the end
     of the command to return the value of `price` from the generated object of class
     `fOption`:'
+  id: totrans-51
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE13]'
+  id: totrans-52
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE13]'
 - en: 'We receive the following result, which is very close to our previous estimation:'
+  id: totrans-53
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE14]'
+  id: totrans-54
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE14]'
 - en: 'However, there is a small difference between analytically and numerically computed
     prices; with the increasing number of trajectories and decreasing `Δt`, the price
     based upon Monte Carlo simulation converges to the theoretical price. Let us calculate
     the term structure of credit spreads (denoted by `s(T)`) on risky debt at `t=0`
     as follows, where credit spreads depend on the maturity of debt (`T`):'
+  id: totrans-55
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933OS_07_H.jpg)'
+  id: totrans-56
   prefs: []
   type: TYPE_IMG
 - en: 'For different maturities (from 0.1 to 10 years by 0.1 year), plot these spreads
     in a hump-shaped curve. Define the time grids as follows:'
+  id: totrans-57
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE15]'
+  id: totrans-58
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE15]'
 - en: 'And recalculate the debt value for each point on the grid to calculate the
     credit spreads:'
+  id: totrans-59
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE16]'
+  id: totrans-60
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE16]'
 - en: 'It is useful to plot this curve:'
+  id: totrans-61
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE17]'
+  id: totrans-62
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE17]'
 - en: 'The following figure shows the team structure of credit spreads in the Merton
     Model:'
+  id: totrans-63
   prefs: []
   type: TYPE_NORMAL
 - en: '![Structural models](img/0933_07_02.jpg)'
+  id: totrans-64
   prefs: []
   type: TYPE_IMG
 - en: There are several extensions of Merton's model, for example, Moody's KMV application
     or the Black and Cox first hitting the time approach.
+  id: totrans-65
   prefs: []
   type: TYPE_NORMAL
 - en: Intensity models
+  id: totrans-66
   prefs:
   - PREF_H2
   type: TYPE_NORMAL
@@ -284,101 +380,135 @@
     without showing any earlier sign for predictability. The dynamics of the default
     intensity depend on the predicted probability of default. We also show an example
     later in the chapter, where intensity is constant.
+  id: totrans-67
   prefs: []
   type: TYPE_NORMAL
 - en: 'The central idea behind the intensity models is that the number of independent
     defaults in a given time interval comes from the Poisson distribution. Let `τ[1]`,
     `τ[2]`, ..., `τ[i]`, ..., `τ[n]` be random default times. Thus, let `N[t]` denote
     the number of defaults up to time `t` as follows:'
+  id: totrans-68
   prefs: []
   type: TYPE_NORMAL
 - en: '![Intensity models](img/0933OS_07_I.jpg)'
+  id: totrans-69
   prefs: []
   type: TYPE_IMG
 - en: 'Where the indicator function formulates the following:'
+  id: totrans-70
   prefs: []
   type: TYPE_NORMAL
 - en: '![Intensity models](img/0933OS_07_J.jpg)'
+  id: totrans-71
   prefs: []
   type: TYPE_IMG
 - en: 'The probability that the number of jumps equals to `k` on the `[s,t]` interval
     is derived from the Poisson distribution where `λ[u]` is the instantaneous intensity
     of default at time `u`:'
+  id: totrans-72
   prefs: []
   type: TYPE_NORMAL
 - en: '![Intensity models](img/0933OS_07_K.jpg)'
+  id: totrans-73
   prefs: []
   type: TYPE_IMG
 - en: 'The probability of default occurring before time `t` is the expected value
     of the following generalization exponential cumulative distribution function:'
+  id: totrans-74
   prefs: []
   type: TYPE_NORMAL
 - en: '![Intensity models](img/0933OS_07_L.jpg)'
+  id: totrans-75
   prefs: []
   type: TYPE_IMG
 - en: 'However, though elementary models use a constant `λ` hazard rate, industrial
     models apply more complex structures. For example, in the double-stochastic Poisson
     model (or Cox-model), the hazard rate follows the Cox-Ingersoll-Ross process described
     in the following equation:'
+  id: totrans-76
   prefs: []
   type: TYPE_NORMAL
 - en: '![Intensity models](img/0933OS_07_M.jpg)'
+  id: totrans-77
   prefs: []
   type: TYPE_IMG
 - en: 'A simulation of the **Cox-Ingersoll-Ross** (**CIR**) process is supplied by
     the `sde` package:'
+  id: totrans-78
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE18]'
+  id: totrans-79
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE18]'
 - en: 'Redefine the time dimensions, maturity, length, and number of time periods:'
+  id: totrans-80
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE19]'
+  id: totrans-81
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE19]'
 - en: 'After that, create the CIR process by declaring the `X0` initial value, the
     `θ[1]`, `θ[2]` drift parameters (`θ[1] / θ[2]` is the long run value, `θ[2]` is
     the speed of adjustment), and the `θ[3]` volatility parameter:'
+  id: totrans-82
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE20]'
+  id: totrans-83
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE20]'
 - en: 'It is easy to produce Poisson processes in R. Let us generate `n*(M+1)` Poisson
     distributed random variables (`n` is the number of trajectories), with a `lambda`
     parameter vector (this simulated vector of `θ` proves that the process is a double-stochastic
     or Cox process):'
+  id: totrans-84
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE21]'
+  id: totrans-85
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE21]'
 - en: 'Store these numbers in a `matrix` with `M+1` rows and `n` columns, such as
     the following:'
+  id: totrans-86
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE22]'
+  id: totrans-87
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE22]'
 - en: 'Add the increments of `N[t]` (`dN`) to get the whole Cox process (`N`):'
+  id: totrans-88
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE23]'
+  id: totrans-89
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE23]'
 - en: Plot it as we did earlier in the chapter. The resulting graph should look something
     like the following diagram.
+  id: totrans-90
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE24]'
+  id: totrans-91
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE24]'
 - en: '![Intensity models](img/0933_07_03.jpg)'
+  id: totrans-92
   prefs: []
   type: TYPE_IMG
 - en: Correlated defaults – the portfolio approach
+  id: totrans-93
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -395,66 +525,91 @@
     for historical datasets also.) This package also serves useful functions in a
     wide range of topics about copulas, such as plotting or fitting copula classes
     involving Archimedean copulas.
+  id: totrans-94
   prefs: []
   type: TYPE_NORMAL
 - en: 'At first, declare a Gaussian copula class with an `0.7` correlation after loading
     the `copula` package as follows:'
+  id: totrans-95
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE25]'
+  id: totrans-96
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE25]'
 - en: 'After that, generate `500` realizations of two uniformly distributed random
     variables with the Gaussian copula dependency structure:'
+  id: totrans-97
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE26]'
+  id: totrans-98
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE26]'
 - en: 'For the comparison, define a `tcopula` class with an `0.7` correlation and
     `4` degrees of freedom:'
+  id: totrans-99
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE27]'
+  id: totrans-100
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE27]'
 - en: 'Now, generate `500` realizations of pairs of random variables with t-copula
     dependence:'
+  id: totrans-101
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE28]'
+  id: totrans-102
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE28]'
 - en: Plot the results into two graphs next to each other. The `par` command ensures
     the two figures will be placed next to each other, ordered in a row and two columns
     (`mfcol`).
+  id: totrans-103
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE29]'
+  id: totrans-104
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE29]'
 - en: '![Correlated defaults – the portfolio approach](img/0933_07_04.jpg)'
+  id: totrans-105
   prefs: []
   type: TYPE_IMG
 - en: 'Fit the Gaussian copula correlation parameter for `u1` data with the maximum
     likelihood (`ml`) method where the function uses the copula family type of the
     `norm.cop` object we defined before:'
+  id: totrans-106
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE30]'
+  id: totrans-107
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE30]'
 - en: 'When we print the following results, we receive that the estimated correlation
     is around 0.69:'
+  id: totrans-108
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE31]'
+  id: totrans-109
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE31]'
 - en: We remark that the package supports some other methods for estimating correlation.
+  id: totrans-110
   prefs: []
   type: TYPE_NORMAL
 - en: Migration matrices
+  id: totrans-111
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -464,28 +619,37 @@
     **Conditional Value-at-Risk** (**CVaR**) and credit spreads of a portfolio due
     to downgrade and upgrading. In this section, we show how to calculate credit spreads
     from a transition matrix.
+  id: totrans-112
   prefs: []
   type: TYPE_NORMAL
 - en: 'We have to define the **loss given default** (**lgd**), the ratings (in this
     example: `A`, `B`, and `D`) and the one year transition matrix to compute credit
     spreads:'
+  id: totrans-113
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE32]'
+  id: totrans-114
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE32]'
 - en: 'The command `cm.cs` calculates the credit spreads from the migration matrix:'
+  id: totrans-115
   prefs: []
   type: TYPE_NORMAL
 - en: '[PRE33]'
+  id: totrans-116
   prefs: []
   type: TYPE_PRE
+  zh: '[PRE33]'
 - en: According to this example, a debt instrument with the rating `"A"` has around
     1% credit spread and debt rated `"B"` has around 7.8% credit spread, calculated
     from the `M` migration matrix.
+  id: totrans-117
   prefs: []
   type: TYPE_NORMAL
 - en: Getting started with credit scoring in R
+  id: totrans-118
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
@@ -494,6 +658,7 @@
     logit and probit regressions and ROC curve analysis. During both behavioral and
     application credit scoring, one can estimate or score the probability of default
     in the usual way that the theory of cross-sectional econometrics suggests.
+  id: totrans-119
   prefs: []
   type: TYPE_NORMAL
 - en: Logit and probit regressions are generalized linear regression models with binary,
@@ -506,8 +671,12 @@
     in R for estimating coefficients. Typical R tools for regression analysis suit
     further examinations well. For example, the `anova` function is also useful in
     providing a classical analysis of variance.
+  id: totrans-120
   prefs: []
   type: TYPE_NORMAL
+  zh: Logit 和 probit 回归是广义线性回归模型，用于处理二元因变量，其中两个结果可以是，例如，违约或不违约。Logit 回归使用逻辑函数；而 probit
+    模型则应用标准正态分布的累积分布函数来估计违约概率。在这两种情况下，自变量的系数通常通过最大似然法进行估计。Logit 和 probit 回归模型可以通过
+    `glm` 命令调用，该命令是 R 中用于估计系数的广义线性模型函数。典型的 R 回归分析工具非常适合进一步的检验。例如，`anova` 函数在提供经典方差分析时也非常有用。
 - en: 'Credit scoring modelers often employ receiver operating characteristic curves
     to illustrate the performance of their estimated model. The ROC curve shows the
     ratio of the sensitivity (sensitivity: accepted non-defaulted, to all non-defaulted)
@@ -515,12 +684,18 @@
     The `pROC` package contains the `roc` function for producing the ROC curve. The
     well-documented package can be installed in the usual way and the ROC curve can
     be plotted with the `plot` command.'
+  id: totrans-121
   prefs: []
   type: TYPE_NORMAL
+  zh: 信用评分模型构建者经常使用接收者操作特征曲线（ROC 曲线）来展示其估计模型的表现。ROC 曲线显示了灵敏度（灵敏度：接受未违约的样本与所有未违约样本的比值）与
+    1 减去特异性（特异性：拒绝违约的样本与所有违约样本的比值）的比值。`pROC` 包含 `roc` 函数，用于绘制 ROC 曲线。该文档完善的包可以通过常规方式安装，并且可以使用
+    `plot` 命令绘制 ROC 曲线。
 - en: Summary
+  id: totrans-122
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, we briefly introduced some of the most common methods related
     to credit risk modeling. However, there are several industrial approaches for
     handling default risk. The bases of the advanced methods are usually some of the
@@ -530,5 +705,8 @@
     copulas. The first step to model downgrade risk is knowledge about the principles
     of managing migration matrices and the CreditMetrics approach. Finally, we briefly
     outlined the possibilities of credit scoring in R.
+  id: totrans-123
   prefs: []
   type: TYPE_NORMAL
+  zh: 本章简要介绍了与信用风险建模相关的一些最常见方法。然而，处理违约风险的工业方法有很多。先进方法的基础通常是一些结构性和基于强度的方法。Copula 模型在建模信用组合风险方面仍然非常流行，特别是在结构化信用衍生品定价中。R
+    语言中有强大且全面的 copula 建模包。建模降级风险的第一步是了解管理迁移矩阵和 CreditMetrics 方法的原理。最后，我们简要概述了 R 中信用评分的可能性。
