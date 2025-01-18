@@ -3,7 +3,7 @@
 +   [第一章：量化金融是什么？](adv-quant-fin-cpp_01.md)
 +   [第二章：数学模型](adv-quant-fin-cpp_02.md)
 +   [第三章：数值方法](adv-quant-fin-cpp_03.md)
-+   [第四章. C++中的股票衍生品](adv-quant-fin-cpp_04.md)
++   [第四章：C++中的股票衍生品](adv-quant-fin-cpp_04.md)
 +   [第五章：C++外汇衍生品](adv-quant-fin-cpp_05.md)
 +   [第六章：C++利率衍生品](adv-quant-fin-cpp_06.md)
 +   [第七章：C++中的信用衍生品](adv-quant-fin-cpp_07.md)
