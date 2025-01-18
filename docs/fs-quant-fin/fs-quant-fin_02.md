@@ -1,4 +1,4 @@
-# 第二章. 进一步了解 F#
+# 第二章：进一步了解 F#
 
 本章是关于 F# 语言本身的更详细内容。教程方法将继续使用 Visual Studio 进行演示，并结合本书后半部分涉及构建最终交易系统的语言细节。本章将涵盖大多数语言构建块，并通过解释和示例进行讲解。虽然本章内容较多，但要理解这里提供的内容，对于后续的学习至关重要。
 
@@ -409,7 +409,7 @@ array1.[0]
 
 ```py
 array1.[0..2]
-This can be shortened further, for example, if you select the elements from the beginning to the element with index 2: array1.[..2] 
+This can be shortened further, for example, if you select the elements from the beginning to the element with index 2:array1.[..2] 
 ```
 
 同样的情况也适用于反向操作，选择从索引 2 到数组末尾的元素：

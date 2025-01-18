@@ -1,4 +1,4 @@
-# 第一章 时间序列分析
+# 第一章：时间序列分析
 
 时间序列分析关注的是随着时间推移收集的数据的分析。相邻的观察值通常是相互依赖的。因此，时间序列分析处理的是分析这种依赖关系的技术。
 
@@ -559,7 +559,7 @@ Data:
 ==========================================
 alpha:            1%
 Expected Exceed:   3.1
-Actual VaR Exceed:	5 Actual %:         1.6%
+Actual VaR Exceed:	5Actual %:         1.6%
 
 Unconditional Coverage (Kupiec)
 Null-Hypothesis:   Correct Exceedances
