@@ -1135,6 +1135,7 @@
   id: totrans-172
   prefs: []
   type: TYPE_NORMAL
+  zh: 然后，你需要计算对冲比率的均值和标准差，以及上下边界。在基于距离的模型中，我提出了使用静态均值和标准差的技术；然而，在这一部分，我展示了基于滚动窗口的均值和标准差，用于计算边界。由于均值和标准差将是时间的函数，因此上下边界也将随时间变化。我使用`rollapply()`函数计算每14个数据点的滚动均值和标准差：
 - en: '[PRE54]'
   id: totrans-173
   prefs: []
@@ -1146,6 +1147,7 @@
   id: totrans-174
   prefs: []
   type: TYPE_NORMAL
+  zh: 如果你查看前面的两个命令，你会看到参数n，这是一个任意值，应该进行优化。一旦你有了边界，你就可以进行信号生成，下面的代码可以实现这一操作：
 - en: '[PRE55]'
   id: totrans-175
   prefs: []
@@ -1161,6 +1163,7 @@
   id: totrans-176
   prefs: []
   type: TYPE_NORMAL
+  zh: 当对冲比率超过上界时，它会生成一个卖出信号（`-1`）；当对冲比率低于下界时，会生成一个买入信号（`1`）。然后，计算滞后`1`时刻的信号，并在对冲比率穿越滚动均值时生成退出信号。卖出信号表示卖空`1`单位的XOM并做多对冲比率与CVX的乘积；买入信号则表示买入`1`单位的XOM并做空对冲比率与CVX的乘积。你应该使用以下命令计算价差回报和交易回报：
 - en: '[PRE56]'
   id: totrans-177
   prefs: []
@@ -1175,16 +1178,19 @@
   id: totrans-178
   prefs: []
   type: TYPE_NORMAL
+  zh: 完成这些操作后，你需要分析这些信号的质量，因此你需要计算所有的交易回报指标，这些可以通过前面章节提到的命令来计算，特别是动量交易和基于距离的配对交易部分。你还需要使用样本内数据优化参数，并使用这些优化后的参数来测试样本外数据，真正评估策略在样本外数据上的表现。
 - en: Co-integration based pairs trading
   id: totrans-179
   prefs:
   - PREF_H3
   type: TYPE_NORMAL
+  zh: 基于协整的配对交易
 - en: Co-integration based pairs trading is the latest arsenal in pairs trading and
     its use is picking up very fast these days.
   id: totrans-180
   prefs: []
   type: TYPE_NORMAL
+  zh: 基于协整的配对交易是配对交易领域的最新武器，近年来其使用速度非常快。
 - en: 'Co-integration considers the regression of one price series against another
     price series. As these series are non-stationary, the regression results will
     be spurious if these series are not co-integrated. Co-integration becomes crucial
@@ -1195,6 +1201,7 @@
   id: totrans-181
   prefs: []
   type: TYPE_NORMAL
+  zh: 协整考虑了一系列价格与另一系列价格的回归。由于这些系列是非平稳的，如果这些系列没有协整关系，那么回归结果将是虚假的。当我们需要回归非平稳系列时，协整变得至关重要。你首先需要检查你所使用的时间序列是否是非平稳的。你需要将`tseries`包加载到工作空间中，且本部分使用的数据是2014年1月1日到2014年12月31日的数据：
 - en: '[PRE57]'
   id: totrans-182
   prefs: []
@@ -1204,6 +1211,7 @@
   id: totrans-183
   prefs: []
   type: TYPE_NORMAL
+  zh: 增广的`Dickey-Fuller`检验：
 - en: '[PRE58]'
   id: totrans-184
   prefs: []
@@ -1215,6 +1223,7 @@
   id: totrans-185
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到`Dicky-Fuller`统计量为`-1.4326`，高于`-3.43`。这意味着该序列是非平稳的，你也可以检查该序列的第一差分：
 - en: '[PRE59]'
   id: totrans-186
   prefs: []
@@ -1228,12 +1237,14 @@
   id: totrans-187
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于`diff`包含`NA`，你应该只考虑非NA值，并使用`adf.test()`来检验单位根。使用时间序列的第一差分得到的`Dickey-Fuller`统计量为`-11.97`，小于`-3.43`，这表明第一差分是平稳的，且表明XOM是1阶积分的，即`O(1)`。
 - en: 'Now I am going to fit the model for XOM and CVX using `lm()`. `lm()` corresponds
     to the linear model and it regresses XOM against CVX original prices and `0` in
     `lm()` means regression without intercept:'
   id: totrans-188
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在我要使用`lm()`来拟合XOM和CVX的模型。`lm()`对应于线性模型，它回归XOM相对于CVX的原始价格，`lm()`中的`0`表示没有截距的回归：
 - en: '[PRE60]'
   id: totrans-189
   prefs: []
@@ -1243,6 +1254,7 @@
   id: totrans-190
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用`summary()`命令查看模型的摘要：
 - en: '[PRE61]'
   id: totrans-191
   prefs: []
@@ -1259,6 +1271,7 @@
   id: totrans-192
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一步是提取来自名为`model`的变量的残差，并对其进行单位根测试，您可以使用以下命令来完成此操作。你可以看到输出中`Dickey-Fuller`统计量为`-2.6088`，大于`-3.43`，这意味着存在单位根。在概率论中，单位根有一个重要特性需要验证。单位根的存在会导致推断问题，因为具有单位根的时间序列会膨胀，不会收敛，或者持续发散。非平稳的时间序列具有单位根，它们不会收敛。单位根的存在意味着XOM和CVX并未协整：
 - en: '[PRE62]'
   id: totrans-193
   prefs: []
@@ -1271,11 +1284,13 @@
   id: totrans-194
   prefs: []
   type: TYPE_NORMAL
+  zh: 移动公司（XOM）和对冲比率乘以BP公司（BP），以及它们的残差。如果你查看价格序列，你会发现两者之间有很强的相关性。你必须找到另一个协整的配对，所以让我们尝试找另一个配对。让我向你展示**埃克森美孚**（**XOM**）和BP公司（BP）之间的协整关系。
 - en: 'Extract XOM and BP Price closing prices using `GetSymbols()` and use them to
     regress to establish the relationship:'
   id: totrans-195
   prefs: []
   type: TYPE_NORMAL
+  zh: 使用`GetSymbols()`提取XOM和BP的收盘价，并使用这些数据回归以建立它们之间的关系：
 - en: '[PRE63]'
   id: totrans-196
   prefs: []
@@ -1287,6 +1302,7 @@
   id: totrans-197
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里，`Dickey-Fuller`统计量为`-3.9007`，小于95%置信水平下的临界值（`-3.43`），所以这没有单位根，这对是平稳的：
 - en: '[PRE64]'
   id: totrans-198
   prefs: []
@@ -1299,6 +1315,7 @@
   id: totrans-199
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 5.7* 显示了XOM和对冲比率乘以BP价格序列及其价差。`plot()`和`lines()`用于绘制该图。现在，由于残差是均值回归的，因此下一步是使用以下命令生成界限和信号：'
 - en: '[PRE65]'
   id: totrans-200
   prefs: []
@@ -1309,6 +1326,7 @@
   id: totrans-201
   prefs: []
   type: TYPE_NORMAL
+  zh: 前面的两个命令有一个参数n，它是任意的，应该进行优化：
 - en: '[PRE66]'
   id: totrans-202
   prefs: []
@@ -1321,26 +1339,31 @@
   id: totrans-203
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 5.7* 显示了**埃克森美孚**（**XOM**）和对冲比率乘以BP公司（BP）的价格序列以及它们的残差。如果你查看价格序列，你可以看到这两个序列之间的紧密关系，并且这两个序列不会长时间偏离太远。如果它们有偏离的话，很快它们就会恢复接近：'
 - en: '![Co-integration based pairs trading](img/00082.jpeg)'
   id: totrans-204
   prefs: []
   type: TYPE_IMG
+  zh: '![基于协整的配对交易](img/00082.jpeg)'
 - en: 'Figure 5.7: Series of XOM and hedge ratio times BP along with their spread
     series'
   id: totrans-205
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 5.7：XOM和对冲比率乘以BP的序列以及它们的价差序列
 - en: As you have generated signals, you should calculate the performance of the strategy,
     as can be done using the commands I mentioned in the Momentum trading or Distance
     based pairs trading sections.
   id: totrans-206
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于你已经生成了信号，接下来应该计算策略的表现，方法可以参考我在动量交易或基于距离的配对交易部分中提到的命令。
 - en: Capital asset pricing model
   id: totrans-207
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 资本资产定价模型
 - en: 'The **capital asset pricing model** (**CAPM**) model helps to gauge risk contributed
     by security or portfolio to its benchmark and is measured by beta (![Capital asset
     pricing model](img/00033.jpeg)). Using the CAPM model, we can estimate the expected
@@ -1349,52 +1372,63 @@
   id: totrans-208
   prefs: []
   type: TYPE_NORMAL
+  zh: '**资本资产定价模型**（**CAPM**）帮助评估证券或投资组合对基准的风险贡献，风险通过贝塔值来衡量 (![资本资产定价模型](img/00033.jpeg))。通过CAPM模型，我们可以估计单个证券或投资组合的预期超额回报，这与其贝塔值成正比：'
 - en: '![Capital asset pricing model](img/00083.jpeg)'
   id: totrans-209
   prefs: []
   type: TYPE_IMG
+  zh: '![资本资产定价模型](img/00083.jpeg)'
 - en: 'Here:'
   id: totrans-210
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里：
 - en: '*E(Ri)*: Expected return of security'
   id: totrans-211
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*E(Ri)*：证券的预期回报'
 - en: '*E(Rm)*: Expected return of market'
   id: totrans-212
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*E(Rm)*: 市场预期收益率'
 - en: '*Ri*: Rate of return of security'
   id: totrans-213
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*Ri*: 证券的收益率'
 - en: '*Rf*: Risk Free rate of return'
   id: totrans-214
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*Rf*: 无风险收益率'
 - en: '*Rm*: Benchmark or market return'
   id: totrans-215
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '*Rm*: 基准或市场收益率'
 - en: '![Capital asset pricing model](img/00084.jpeg): Beta of the security'
   id: totrans-216
   prefs:
   - PREF_UL
   type: TYPE_NORMAL
+  zh: '![资本资产定价模型](img/00084.jpeg): 证券的贝塔值'
 - en: CVX is regressed against DJI using linear model as per equation 5.4.
   id: totrans-217
   prefs: []
   type: TYPE_NORMAL
+  zh: CVX 与 DJI 通过线性模型回归，如公式 5.4 所示。
 - en: 'Here I used zero as risk-free return in the following command:'
   id: totrans-218
   prefs: []
   type: TYPE_NORMAL
+  zh: 这里我在以下命令中使用了零作为无风险收益率：
 - en: '[PRE67]'
   id: totrans-219
   prefs: []
@@ -1407,11 +1441,15 @@
   id: totrans-220
   prefs: []
   type: TYPE_NORMAL
+  zh: 你可以看到上面的结果中的截距项是 alpha（`-0.0002013`），而 `ret_dji` 的系数是贝塔（`1.1034521`）。不过，你也可以使用
+    `PerformanceAnalytics` 包，通过 `CAPM.alpha()` 和 `CAPM.beta()` 来计算 CAPM 的 alpha 和
+    beta。
 - en: 'The following command shows how to use this whose result are same as preceding
     one:'
   id: totrans-221
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下命令展示了如何使用此方法，结果与之前相同：
 - en: '[PRE68]'
   id: totrans-222
   prefs: []
@@ -1423,6 +1461,7 @@
   id: totrans-223
   prefs: []
   type: TYPE_NORMAL
+  zh: 从 `CAPM.beta()` 获得的贝塔值与回归中的系数相同，而 `CAPM.alpha()` 与回归中的截距相同。你还可以看到收益率及其拟合线的散点图：
 - en: '[PRE69]'
   id: totrans-224
   prefs: []
@@ -1434,6 +1473,7 @@
   id: totrans-225
   prefs: []
   type: TYPE_NORMAL
+  zh: '*图 5.8* 显示拟合线具有正斜率，这意味着收益率之间存在正相关。我们可以使用以下命令验证这一说法：'
 - en: '[PRE70]'
   id: totrans-226
   prefs: []
@@ -1443,30 +1483,36 @@
   id: totrans-227
   prefs: []
   type: TYPE_IMG
+  zh: '![资本资产定价模型](img/00085.jpeg)'
 - en: 'Figure 5.8: Scatter plot of DJI and CVS return and its fitted line'
   id: totrans-228
   prefs: []
   type: TYPE_NORMAL
+  zh: '图 5.8: DJI 和 CVS 收益率的散点图及其拟合线'
 - en: Multi factor model
   id: totrans-229
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 多因子模型
 - en: The multi factor model can be used to decompose returns and calculate risk.
     The factors are constructed using pricing, fundamental, and analyst estimates
     data. I will use Systematic Investor Toolbox for this section.
   id: totrans-230
   prefs: []
   type: TYPE_NORMAL
+  zh: 多因子模型可以用来分解收益并计算风险。因子是通过定价、基本面和分析师预期数据构建的。在这一部分，我将使用系统化投资工具箱。
 - en: The `gzcon()` function creates a connection and reads data in compressed format.
     Once we create a connection, we also have to close the connection.
   id: totrans-231
   prefs: []
   type: TYPE_NORMAL
+  zh: '`gzcon()` 函数创建一个连接并读取压缩格式的数据。创建连接后，我们还需要关闭连接。'
 - en: 'The following commands explain this:'
   id: totrans-232
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下命令解释了这个过程：
 - en: '[PRE71]'
   id: totrans-233
   prefs: []
@@ -1477,6 +1523,7 @@
   id: totrans-234
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下函数用于从 [http://money.cnn.com](http://money.cnn.com) 获取道琼斯成分股数据，`join()` 来自系统化投资工具箱：
 - en: '[PRE72]'
   id: totrans-235
   prefs: []
@@ -1487,6 +1534,7 @@
   id: totrans-236
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一行代码调用了前面的函数，用于提取道琼斯成分股列表：
 - en: '[PRE73]'
   id: totrans-237
   prefs: []
@@ -1499,6 +1547,8 @@
   id: totrans-238
   prefs: []
   type: TYPE_NORMAL
+  zh: 以下命令解释了如何提取所有公司在 tickers 列表中过去 80 个月的基本面数据。这些命令会花费几分钟时间提取数据，因此建议在提取数据后保存数据，之后应使用
+    `load()` 命令加载它：
 - en: '[PRE74]'
   id: totrans-239
   prefs: []
@@ -1509,6 +1559,7 @@
   id: totrans-240
   prefs: []
   type: TYPE_NORMAL
+  zh: 下一组命令与之前的代码相同，但用于提取价格数据：
 - en: '[PRE75]'
   id: totrans-241
   prefs: []
@@ -1518,6 +1569,7 @@
   id: totrans-242
   prefs: []
   type: TYPE_NORMAL
+  zh: 后续的函数会创建各种日期格式的日期变量：
 - en: '[PRE76]'
   id: totrans-243
   prefs: []
@@ -1530,6 +1582,7 @@
   id: totrans-244
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你已经提取了价格和基本面数据，你应该使用这些数据来构建各种基本面因子，如每股收益、流通股数、市场市值、市值与账面价值比等。这个循环会为每个股票代码逐个计算基本面因子并创建一个列表：
 - en: '[PRE77]'
   id: totrans-245
   prefs: []
@@ -1540,6 +1593,7 @@
   id: totrans-246
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，我筛选了前面的数据，时间范围从 `1995` 年到 `2011` 年：
 - en: '[PRE78]'
   id: totrans-247
   prefs: []
@@ -1550,6 +1604,7 @@
   id: totrans-248
   prefs: []
   type: TYPE_NORMAL
+  zh: 所有股票的价格可以通过以下命令提取，并且 NAN 可以用之前的值替换：
 - en: '[PRE79]'
   id: totrans-249
   prefs: []
@@ -1562,6 +1617,7 @@
   id: totrans-250
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你需要使用基本因素和价格构建基本比率。我创建了三个比率；不过，你可以创建任何你想要考虑的比率。我创建了市值、市盈率比率和账面价值比率：
 - en: '[PRE80]'
   id: totrans-251
   prefs: []
@@ -1573,6 +1629,7 @@
   id: totrans-252
   prefs: []
   type: TYPE_NORMAL
+  zh: 由于这些比率的量纲可能不同，在继续之前，我们不应该忘记对其进行标准化。我计算了 Z 分数来标准化这些数据：
 - en: '[PRE81]'
   id: totrans-253
   prefs: []
@@ -1582,6 +1639,7 @@
   id: totrans-254
   prefs: []
   type: TYPE_NORMAL
+  zh: 计算所有标准化因子的平均值：
 - en: '[PRE82]'
   id: totrans-255
   prefs: []
@@ -1593,6 +1651,7 @@
   id: totrans-256
   prefs: []
   type: TYPE_NORMAL
+  zh: 到目前为止，我们有的是日数据，并且已经基于日数据创建了财务比率。你可以将其转换为任何你需要的频率。我将其转换为月频，并提取了每个月最后一天的数据：
 - en: '[PRE83]'
   id: totrans-257
   prefs: []
@@ -1602,6 +1661,7 @@
   id: totrans-258
   prefs: []
   type: TYPE_NORMAL
+  zh: 这就是你应该如何计算月度回报及其 `lag`：
 - en: '[PRE84]'
   id: totrans-259
   prefs: []
@@ -1612,6 +1672,7 @@
   id: totrans-260
   prefs: []
   type: TYPE_NORMAL
+  zh: 每个月最后一天的市值可以通过以下方式计算：
 - en: '[PRE85]'
   id: totrans-261
   prefs: []
@@ -1621,6 +1682,7 @@
   id: totrans-262
   prefs: []
   type: TYPE_NORMAL
+  zh: 提取每个月最后一天的所有比率：
 - en: '[PRE86]'
   id: totrans-263
   prefs: []
@@ -1633,6 +1695,7 @@
   id: totrans-264
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来你应该计算分位数，可以通过以下命令计算。我创建了五个分位数，并且使用盈利价格因子计算了每个分位数的下个月平均回报。分位数是通过按 EP 因子对股票进行月份排序来创建的：
 - en: '[PRE87]'
   id: totrans-265
   prefs: []
@@ -1644,6 +1707,7 @@
   id: totrans-266
   prefs: []
   type: TYPE_NORMAL
+  zh: 最高和最低极值非常极端，应该用来创建一个差距（Q5 - Q1）。这个差距的动态有助于设计和开发投资策略，即动量或均值回归：
 - en: '[PRE88]'
   id: totrans-267
   prefs: []
@@ -1654,6 +1718,7 @@
   id: totrans-268
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你应该运行横截面回归来估计 alpha 和投资组合负荷，这些可以通过以下命令计算：
 - en: '[PRE89]'
   id: totrans-269
   prefs: []
@@ -1664,11 +1729,13 @@
   id: totrans-270
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们还可以使用这些 alpha 和 beta 来估计未来的投资组合回报。
 - en: Portfolio construction
   id: totrans-271
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 投资组合构建
 - en: 'Investors are interested in reducing risk and maximizing return of their investment
     and creating a portfolio does this job provided we have constructed it by keeping
     in mind the investor risk-return profile. I will guide you through creating an
@@ -1679,6 +1746,8 @@
   id: totrans-272
   prefs: []
   type: TYPE_NORMAL
+  zh: 投资者的目标是减少风险并最大化投资回报，创建一个投资组合可以实现这一目标，前提是我们在构建时考虑了投资者的风险-回报特征。我将指导你如何创建一个有效前沿，帮助你根据预期回报衡量风险。为此，我将开始提取四个证券的数据。第一行代码创建一个新的环境来存储数据；接下来的几行是关于符号列表、数据起始日期，以及使用
+    `getSymbols()` 提取数据：
 - en: '[PRE90]'
   id: totrans-273
   prefs: []
@@ -1689,6 +1758,7 @@
   id: totrans-274
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来的 for 循环将个别股票数据存储在一个列表中，并计算当天的收益，以及一个包含所有投资组合股票收盘价的数据框：
 - en: '[PRE91]'
   id: totrans-275
   prefs: []
@@ -1699,6 +1769,7 @@
   id: totrans-276
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用以下命令计算每只股票的收益、平均收益以及协方差矩阵：
 - en: '[PRE92]'
   id: totrans-277
   prefs: []
@@ -1708,6 +1779,7 @@
   id: totrans-278
   prefs: []
   type: TYPE_NORMAL
+  zh: 我将使用以下权重来分配给投资组合：
 - en: '[PRE93]'
   id: totrans-279
   prefs: []
@@ -1719,6 +1791,8 @@
   id: totrans-280
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在你需要浏览链接 [http://faculty.washington.edu/ezivot/econ424/portfolio.r](http://faculty.washington.edu/ezivot/econ424/portfolio.r)，并将这个
+    R 代码保存到文件 `portfolio.R` 中。你应该使用以下命令来访问在 `portfolio.R` 中开发的函数：
 - en: '[PRE94]'
   id: totrans-281
   prefs: []
@@ -1730,6 +1804,7 @@
   id: totrans-282
   prefs: []
   type: TYPE_NORMAL
+  zh: 为了计算投资组合的预期收益和标准差，我们需要收益、权重和协方差矩阵。现在我们已经拥有所有数据，并可以使用以下命令来生成投资组合的预期收益和风险：
 - en: '[PRE95]'
   id: totrans-283
   prefs: []
@@ -1742,6 +1817,7 @@
   id: totrans-284
   prefs: []
   type: TYPE_NORMAL
+  zh: 全球最小方差投资组合可以使用以下命令获得。你可以看到这里的投资组合权重与前一个命令中的权重不同，这一组权重有助于生成标准差较低的投资组合：
 - en: '[PRE96]'
   id: totrans-285
   prefs: []
@@ -1753,6 +1829,7 @@
   id: totrans-286
   prefs: []
   type: TYPE_NORMAL
+  zh: 现在假设你想生成一个预期收益为`0.0002`的投资组合。以下命令将帮助生成该预期收益为`0.0002`的投资组合的权重和标准差：
 - en: '[PRE97]'
   id: totrans-287
   prefs: []
@@ -1763,6 +1840,7 @@
   id: totrans-288
   prefs: []
   type: TYPE_NORMAL
+  zh: 切线投资组合是一个风险资产组合，具有最高的夏普比率斜率。为了计算这一点，我使用了` tangency.portfolio()`函数：
 - en: '[PRE98]'
   id: totrans-289
   prefs: []
@@ -1775,16 +1853,19 @@
   id: totrans-290
   prefs: []
   type: TYPE_NORMAL
+  zh: 我们已经计算了全球最小方差投资组合，另一个具有最大预期收益的投资组合可以视为第二个投资组合。分别将这些投资组合称为*P1*和*P2*。现在，对于任何 ![投资组合构建](img/00032.jpeg)，可以按以下方式构建另一个投资组合：
 - en: '![Portfolio construction](img/00086.jpeg)'
   id: totrans-291
   prefs: []
   type: TYPE_IMG
+  zh: '![投资组合构建](img/00086.jpeg)'
 - en: 'The efficient frontier can be calculated using the following command. This
     generates `50` portfolios using ![Portfolio construction](img/00032.jpeg) in the
     range `-2` to `2`:'
   id: totrans-292
   prefs: []
   type: TYPE_NORMAL
+  zh: 可以使用以下命令计算有效前沿。这将生成`50`个投资组合，使用 ![投资组合构建](img/00032.jpeg)，范围从 `-2` 到 `2`：
 - en: '[PRE99]'
   id: totrans-293
   prefs: []
@@ -1795,6 +1876,7 @@
   id: totrans-294
   prefs: []
   type: TYPE_NORMAL
+  zh: 接下来，在*图 5.9*中，我绘制了有效前沿、最小方差和切线投资组合的红蓝点，以及切线与前沿的切点：
 - en: '[PRE100]'
   id: totrans-295
   prefs: []
@@ -1804,82 +1886,98 @@
   id: totrans-296
   prefs: []
   type: TYPE_IMG
+  zh: '![投资组合构建](img/00087.jpeg)'
 - en: 'Figure 5.9: Efficient frontier for portfolio and tangent line'
   id: totrans-297
   prefs: []
   type: TYPE_NORMAL
+  zh: 图 5.9：投资组合的有效前沿与切线
 - en: Questions
   id: totrans-298
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 问题
 - en: How do you import stock data into the R workspace from Yahoo Finance?
   id: totrans-299
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何从雅虎财经导入股票数据到 R 工作空间？
 - en: How do you generate a momentum strategy using moving average crossover?
   id: totrans-300
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何使用移动平均交叉生成动量策略？
 - en: Which package helps to calculate the performance metrics of a strategy?
   id: totrans-301
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 哪个包帮助计算策略的绩效指标？
 - en: How do you calculate the covariance matrix for a portfolio consisting of five
     stocks?
   id: totrans-302
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何计算一个由五只股票组成的投资组合的协方差矩阵？
 - en: Extract MSFT data from Yahoo and test that the closing price series is non-stationary.
   id: totrans-303
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 从雅虎提取 MSFT 数据，并测试收盘价系列是否是非平稳的。
 - en: Use the distance method to generate trading signals which exit when the spread
     reverts to mean.
   id: totrans-304
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 使用距离法生成交易信号，当价差回归均值时退出。
 - en: How do you test a pair of stocks for co-integration and write code to test it?
   id: totrans-305
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何测试一对股票的协整性，并编写代码进行测试？
 - en: How do you calculate hedge ratio and how does it helps in trading?
   id: totrans-306
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何计算对冲比率，它如何帮助交易？
 - en: How do you calculate portfolio beta? Show it using an example.
   id: totrans-307
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何计算投资组合的贝塔值？请用一个例子展示。
 - en: How do you use the fundamental factor to create quantiles and quantile spread?
   id: totrans-308
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何使用基本面因子创建分位数和分位数差距？
 - en: Write code to calculate portfolio expected `_return` and standard deviation.
   id: totrans-309
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 编写代码计算投资组合的预期`收益`和标准差。
 - en: How do you calculate the efficient frontier and plot it using the R command?
   id: totrans-310
   prefs:
   - PREF_OL
   type: TYPE_NORMAL
+  zh: 如何计算有效前沿并使用 R 命令绘制它？
 - en: Summary
   id: totrans-311
   prefs:
   - PREF_H1
   type: TYPE_NORMAL
+  zh: 总结
 - en: In this chapter, I presented different concepts of trading using R. I started
     with trend following strategy and explained in depth how the trading signals are
     generated and how various parameters related to its performance are captured.
@@ -1893,9 +1991,13 @@
   id: totrans-312
   prefs: []
   type: TYPE_NORMAL
+  zh: 在本章中，我介绍了使用R进行交易的不同概念。 我从趋势跟踪策略开始，深入解释了交易信号是如何生成的，以及如何捕捉与其表现相关的各种参数。 动量策略之后是使用三种不同方法进行配对交易。
+    第一种方法是基于距离的配对交易，第二种是基于相关性的，第三种也是最后一种方法是基于协整的配对交易。 有时，通过投资组合进行交易以控制风险和回报比是很重要的，为此我涵盖了资本资产定价、多因子模型和投资组合构建。
+    我使用Systematic Investor Toolbox来实现投资组合理念。
 - en: In the next chapter, I will explain trading strategies using machine learning
     algorithms, which are gaining in popularity. Machine learning algorithms learn
     automatically from historical market behavior and try to mimic this behavior.
   id: totrans-313
   prefs: []
   type: TYPE_NORMAL
+  zh: 在下一章中，我将解释使用机器学习算法的交易策略，这些策略越来越受欢迎。 机器学习算法会自动从历史市场行为中学习，并尝试模仿这种行为。
